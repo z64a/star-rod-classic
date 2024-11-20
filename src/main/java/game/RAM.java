@@ -33,8 +33,6 @@ public class RAM
 	public static final int BATTLE_LIB_END  		= 0x8029DA30;
 	// @formatter:on
 
-	// really, these are all 'move'
-
 	public static final int MOVE_MAX_SIZE = 0x8000; // largest move = 0x4340
 
 	public static final int BATTLE_MOVE_START = 0x802A1000;
