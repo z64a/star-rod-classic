@@ -1,0 +1,221 @@
+
+% functions, scripts, etc. only loaded when the game is paused
+
+{version=1.0}
+{scope=us:pause}
+
+% All pause_*_draw_contents functions are called with the following args:
+sig : draw_pause_tab : void : A0 menu_panel* tab, A1 int baseX, A2 int baseY, ...
+	A3 int width, SP[10] int height, SP[14] int opacity, SP[18] int darkening
+
+asm : 80242BA0, 135EE0 : pause_set_cursor_opacity : void : int targetValue "will interp to this value"
+% next two are related to setting the cursor position
+% asm : 80242BAC, 135EEC : ??? : void : int windowID, int posX, int posY
+% asm : 80242D04, 136044 : ??? : void : int windowID, int posX, int posY
+asm : 80242E6C, 1361AC : pause_interp_cursor "interps to target pos; also opacity" : void : void
+% a bunch of functions here for manipulating windows
+asm : 80243418, 136758 : pause_interp_text_scroll "for desc text in footer" : int deltaAfter : int deltaBefore
+asm : 8024346C, 1367AC : pause_interp_vertical_scroll : int deltaAfter : int deltaBefore
+asm : 802434DC, 13681C : pause_update_cursor "update pos and draw" : void : int "unused", int offsetX "always 0", int offsetY "always 0"
+% asm : 80243568 : ??? : void : void -- does nothing
+asm : 80243570, 1368B0 : pause_textbox_draw_contents  : @draw_pause_tab
+asm : 802437F4, 136B34 : pause_tutorial_draw_contents : @draw_pause_tab
+asm : 80244060, 1373A0 : pause_init : void : void
+asm : 802442A0, 1375E0 : pause_tutorial_input : void : uint* pressed, uint* held
+asm : 80244424, 137764 : pause_handle_input : void : #buttons pressedButtons, #buttons heldButtons
+asm : 80244708, 137A48 : pause_cleanup : void : void
+asm : 802447F4, 137B34 : pause_get_total_equipped_bp_cost : int : void
+asm : 80244858, 137B98 : pause_draw_rect : void : int ulx, int uly, int lrx, int lry, int tileDescriptor "typically 0", int uls "typically 0", int ult "typically 0", int dsdx "typically 400", int dtdy "typically 400"
+asm : 80244A4C, 137D8C : pause_sort_item_list : void : short* itemList, int listLength, code* comparator "(short*,short*)->(int)"
+% <-- end of file
+
+% start of file -->
+asm : 80244B90, 137ED0 : pause_tabs_draw_invis "stub function; invisible 'box' next to cursor" : @draw_pause_tab
+asm : 80244B98, 137ED8 : pause_tabs_draw_stats   : @draw_pause_tab
+asm : 80244CC0, 138000 : pause_tabs_draw_badges  : @draw_pause_tab
+asm : 80244DE8, 138128 : pause_tabs_draw_items   : @draw_pause_tab
+asm : 80244F10, 138250 : pause_tabs_draw_party   : @draw_pause_tab
+asm : 80245038, 138378 : pause_tabs_draw_spirits : @draw_pause_tab
+asm : 80245160, 1384A0 : pause_tabs_draw_map     : @draw_pause_tab
+% <-- end of file
+
+% start of file -->
+asm : 80245288, 1385C8 : pause_tabs_init "called when pausing" : void : bool* success
+asm : 80245354, 138694 : pause_tabs_handle_input : void : menu_panel*
+asm : 802455BC, 1388FC : pause_tabs_update : void : menu_panel*
+asm : 80245930, 138C70 : pause_tabs_cleanup "called when unpausing" : void : void
+% <-- end of file
+
+% start of file -->
+asm : 80245980, 138CC0 : pause_stats_draw_contents "dispatched via draw_box" : @draw_pause_tab
+asm : 80246AC8, 139E08 : pause_stats_init "called when pausing" : void : bool* success
+asm : 80246B74, 139EB4 : pause_stats_handle_input : void : menu_panel*
+asm : 80246F94, 13A2D4 : pause_stats_cleanup "called when unpausing" : void : void
+% <-- end of file
+
+% start of file -->
+asm : 80246FE0, 13A320 : pause_badges_comparator : int "1 if A > B, -1 if A <= B" : short* A, short* B
+asm : 80247054, 13A394 : pause_badges_count_all : int num : void
+asm : 802470B0, 13A3F0 : pause_badges_count_equipped : int num : void
+asm : 8024710C, 13A44C : pause_badges_get_pos_x : int posX : int page, int itemIndex
+asm : 80247168, 13A4A8 : pause_badges_get_pos_y : int posY : int page, int itemIndex
+asm : 802471D8, 13A518 : pause_badges_get_column: int column : int page, int itemIndex "Nth item for page P"
+asm : 80247220, 13A560 : pause_badges_get_row : int row : int page, int itemIndex "Nth item for page P"
+asm : 80247270, 13A5B0 : pause_badges_is_visible : bool bIsVisible : int posY
+asm : 80247298, 13A5D8 : pause_badges_scroll_offset_y : int afterY : int beforeY
+asm : 802472A8, 13A5E8 : pause_badges_scroll_offset_x : int beforeX : int beforeX
+asm : 802472B0, 13A5F0 : pause_badges_try_remove : int result "0 = InvalidID, 1, 2 = Success" : #itemID
+asm : 80247338, 13A678 : pause_badges_try_equip : int result "0 = AlreadyEquipped, 1 = NotEnoughBP, 2 = NotEnoughRoom, 3 = Success" : #itemID
+asm : 80247458, 13A798 : pause_badges_draw_bp_orbs : void : int type "0 = empty, 1 = unavailable, 2 = full", int posX, int posY
+asm : 80247508, 13A848 : pause_badges_draw_contents "dispatched via draw_box" : @draw_pause_tab
+asm : 80248D8C, 13C0CC : pause_badges_load_badges : void : int subtab "0 = all, 1 = equipped"
+asm : 80248FC0, 13C300 : pause_badges_init "called when pausing" : void : bool* success
+asm : 802490A8, 13C3E8 : pause_badges_handle_input : void : menu_panel*
+asm : 8024961C, 13C95C : pause_badges_update : void : menu_panel*
+asm : 80249758, 13CA98 : pause_badges_cleanup "called when unpausing" : void : void
+% <-- end of file
+
+% start of file -->
+asm : 802497B0, 13CAF0 : pause_items_comparator : int "1 if A > B, -1 if A <= B" : short* A, short* B
+asm : 802497D0, 13CB10 : pause_items_get_pos_x : int posX : int page, int itemIndex
+asm : 80249828, 13CB68 : pause_items_get_pos_y : int posY : int page, int itemIndex
+asm : 80249898, 13CBD8 : pause_items_get_column: int column : int page, int itemIndex "Nth item for page P"
+asm : 802498E0, 13CC20 : pause_items_get_row : int row : int page, int itemIndex "Nth item for page P"
+asm : 80249930, 13CC70 : pause_items_is_visible : bool bIsVisible : int posY
+asm : 80249958, 13CC98 : pause_items_scroll_offset_y : int afterY : int beforeY
+asm : 80249968, 13CCA8 : pause_items_scroll_offset_x : int beforeX : int beforeX
+asm : 80249970, 13CCB0 : pause_items_draw_contents "everything except text boxes" : @draw_pause_tab
+asm : 8024A4DC, 13D81C : pause_items_load_items : void : int subtab "0 = key, 1 = normal"
+asm : 8024A714, 13DA54 : pause_items_init "called when pausing" : void : bool* success
+asm : 8024A7D8, 13DB18 : pause_items_handle_input : void : menu_panel*
+asm : 8024AC54, 13DF94 : pause_items_update : void : menu_panel*
+asm : 8024AD90, 13E0D0 : pause_items_cleanup "called when unpausing" : void : void
+% <-- end of file
+
+% start of file -->
+asm : 8024ADE0, 13E120 : pause_partners_load_portrait : void : int menuPartnerIndex "menu order, not normal partner ID"
+asm : 8024AEF8, 13E238 : pause_partners_draw_contents "everything except text boxes" : @draw_pause_tab
+asm : 8024BBAC, 13EEEC : pause_partners_draw_title "name + super/ultra orbs" : void : menu_panel*, int posX, int posY, int offsetX
+asm : 8024BD38, 13F078 : pause_partners_draw_movelist : void : menu_panel*, int posX, int posY
+asm : 8024C048, 13F388 : pause_partners_draw_movelist_title "prints 'Abilities'" : void : menu_panel*, int posX, int posY
+asm : 8024C0A0, 13F3E0 : pause_partners_draw_movelist_flower "prints the flower icon" : void : menu_panel*, int posX, int posY
+asm : 8024C0E0, 13F420 : pause_partners_init "called when pausing" : void : bool* success
+asm : 8024C338, 13F678 : pause_partners_handle_input : void : menu_panel*
+asm : 8024C7A4, 13FAE4 : pause_partners_update : void : menu_panel*
+asm : 8024C984, 13FCC4 : pause_partners_cleanup "called when unpausing" : void : void
+% <-- end of file
+
+% start of file -->
+asm : 8024CA00, 13FD40 : pause_spirits_draw_contents "everything except text boxes" : @draw_pause_tab
+asm : 8024D294, 1405D4 : pause_spirits_draw_title "name in box" : void : menu_panel*, int posX, int posY, int offsetX
+asm : 8024D360, 1406A0 : pause_spirits_init "called when pausing" : void : bool* success
+asm : 8024D44C, 14078C : pause_spirits_handle_input : void : menu_panel*
+asm : 8024D800, 140B40 : pause_spirits_update : void : menu_panel*
+asm : 8024D8D8, 140C18 : pause_spirits_cleanup "called when unpausing" : void : void
+% <-- end of file
+
+% start of file -->
+% asm : 8024D930 : unknown -- unused?
+asm : 8024DA28, 140D68 : pause_map_draw_border_arrows : void : int imageIndex "0-3 -- selects arrow direction", int posX, int posY
+asm : 8024DB1C, 140E5C : pause_map_draw_contents "everything except text boxes" : @draw_pause_tab
+asm : 8024E54C, 14188C : pause_map_draw_title "name in box" : void : menu_panel*, int posX, int posY, int offsetX
+asm : 8024E604, 141944 : pause_map_init "called when pausing" : void : bool* success
+asm : 8024E878, 141BB8 : pause_map_handle_input : void : menu_panel*
+asm : 8024ECB0, 141FF0 : pause_map_update : void : menu_panel*
+asm : 8024EE2C, 14216C : pause_map_cleanup "called when unpausing" : void : void
+% <-- end of file
+
+% start of file -->
+asm : 8024EE80, 1421C0 : pause_get_menu_string : stringID : int index
+asm : 8024EE94, 1421D4 : pause_draw_menu_label "used for drawing text icons like 'hammer', 'flower points', etc" : void : int index "table of pointers at 8026F8D4", int posX, int posY
+% <-- end of file
+
+% END OF SECTION
+
+dat : 8024EF60 : PauseMenu_IconScripts : int[8]
+dat : 8024EF80 : PauseMenu_Tabs : menu_panel*[7]
+dat : 8024EF9C : PauseMenu_Cursor_Pos : int[2]
+dat : 8024EFA4 : PauseMenu_Cursor_Opacity : int
+dat : 8024EFA8 : PauseMenu_Cursor_TargetPos : int[2]
+dat : 8024EFB0 : PauseMenu_Cursor_GoalOpacity : int
+
+dat : 8024F0AC : PauseMenu_TextScrollInterpEasingLUT : byte[16`]
+dat : 8024F0BC : PauseMenu_PageScrollInterpEasingLUT : byte[16`]
+dat : 8024F0CC : PauseMenu_Tutorial_AnimIDs : int[3][4]
+dat : 8024F1D0 : PauseMenu_TabIDs : byte[6]
+dat : 8024F1D8 : PauseMenu_WindowIDs_TabButtons : byte[6]
+dat : 8024F1E0 : PauseMenu_WindowIDs_TabContents : byte[6]
+dat : 8024F1E8 : PauseMenu_WindowBlueprints : menu_window_bp[7]
+dat : 8024F2E4 : PauseMenu_CurrentTabIndex : int
+dat : 8024F2E8 : PauseMenu_TabStrings : int[6]
+dat : 8024F4D0 : BadgeMenu_CommonIconScripts : ptr[22`]
+dat : 8024F600 : PartnerMenu_CommonIconScripts : ptr[8]
+dat : 8024F620 : PartnerMenu_Viewport : int[4]
+dat : 8024F630 : PartnerMenu_Animations : int[4][8]
+dat : 8024F6B0 : PartnerMenu_PartnerIDs : int[8]
+dat : 8024F6D0 : PartnerMenu_Bios : int[8]
+dat : 8024F6F0 : PartnerTab_FirstMove : int[8]
+dat : 8024F718 : PartnerMenu_PortraitNames : char*[9]
+dat : 8024F750 : PartnerMenu_Gfx_InitPortrait : int[28`]
+dat : 8024F7C0 : PartnerMenu_LeftPortraitID : int
+dat : 8024F7C4 : PartnerMenu_RightPortraitID : int
+dat : 8024F7C8 : PartnerMenu_WindowBlueprints : menu_window_bp[5]
+dat : 8024F87C : PartnerMenu_RotationInterpEasingLUT : byte[16`]
+dat : 8024F88C : PauseMenu_PartnerTab : menu_tab
+dat : 8024F8B0 : SpiritsMenu_Viewport : int[4]
+dat : 8024F9C8 : SpiritsMenu_WindowBlueprints : menu_window_bp[2]
+dat : 8024FA10 : SpiritsMenu_Tab : menu_tab
+dat : 802502b8 : MapMenu_MapSpaces : PauseMapSpace[34]
+dat : 80250560 : MapMenu_ArrowAnimLUT : int[12]
+dat : 80250590 : MapMenu_WindowBlueprints : menu_window_bp[7]
+dat : 8025068C : MapMenu_Tab : menu_tab
+dat : 802700C0 : PauseMenu_HeldButtons : int
+dat : 802700C4 : PauseMenu_PressedButtons : int
+dat : 802700C8 : PauseMenu_CurrentDescString : int
+dat : 802700CC : PauseMenu_CurrentDescIconScript : ptr
+dat : 802700D4 : PauseMenu_CurrentTab : byte
+dat : 802700E8 : PauseMenu_CommonIconIDs : int[8]
+dat : 80270108 : PauseMenu_DescBox_String : int
+dat : 8027010C : PauseMenu_DescBox_NumLines : int
+dat : 80270110 : PauseMenu_DescBox_CurrentLine : int
+dat : 80270114 : PauseMenu_DescBox_YOffset : int
+dat : 80270118 : PauseMenu_DescBox_IconScript : ptr
+dat : 8027011C : PauseMenu_Tutorial_SpriteInstanceIDs : int[3]
+dat : 80270130 : PauseMenu_TabIconIDs : int[6]
+dat : 80270150 : StatsMenu_IconIDs : int[12`]
+dat : 80270180 : BadgeMenu_ItemIDs : short[128`]
+dat : 80270280 : BadgeMenu_CurrentPage : int
+dat : 80270288 : BadgeMenu_Pages : PauseItemPage[20`]
+dat : 80270378 : BadgeMenu_SelectedIndex : int
+dat : 80270380 : BadgeMenu_SelectedItemID : int
+dat : 80270384 : BadgeMenu_NumItems : short
+dat : 8027038C : BadgeMenu_CurrentScrollPos : int
+dat : 80270390 : BadgeMenu_GoalScrollPos : int
+dat : 80270398 : BadgeMenu_Level : int
+dat : 8027039C : BadgeMenu_CurrentTab : int
+dat : 802703A0 : BadgeMenu_bShowNotEnoughBP : int
+dat : 80270400 : ItemMenu_ItemIDs : short[100`]
+dat : 802704C8 : ItemMenu_CurrentPage : int
+dat : 802704D0 : ItemMenu_Pages : PauseItemPage[20`]
+dat : 802705C0 : ItemMenu_SelectedIndex : int
+dat : 802705C8 : ItemMenu_SelectedItemID : int
+dat : 802705CC : ItemMenu_NumItems : short
+dat : 802705D4 : ItemMenu_CurrentScrollPos : int
+dat : 802705D8 : ItemMenu_GoalScrollPos : int
+dat : 802705E0 : ItemMenu_Level : int
+dat : 802705E4 : ItemMenu_CurrentTab : int
+dat : 80270628 : ItemMenu_ScrollUpIconID : int
+dat : 80270640 : PartnerMenu_CommonIconIDs : int[8]
+dat : 80270660 : PartnerMenu_AnimIDs : int[8]
+dat : 80270680 : PartnerMenu_AvailablePartner : int[8]
+dat : 802706A0 : PartnerMenu_SelectedPartner : int
+dat : 802706A4 : PartnerMenu_SelectedMove : int
+dat : 802706A8 : PartnerMenu_CurrentRotationAngle : float
+dat : 802706AC : PartnerMenu_bIsCheckingMoves : int
+dat : 802706B0 : PartnerMenu_NumPartners : int
+
+dat : 80270714 : MapMenu_TargetPosX : float
+dat : 80270718 : MapMenu_TargetPosY : float
+dat : 8027071C : MapMenu_SnapToIndex : int
+dat : 80270720 : MapMenu_SnapToIndexB : int
+dat : 80270724 : MapMenu_SnapToSpacesInRange : int

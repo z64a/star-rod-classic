@@ -1,0 +1,17 @@
+% battle_popup
+type: ram
+size: 1C
+fields:
+{
+	  0 : field_0x0          : int
+	  4 : field_0x4          : code
+	  8 : field_0x8          : int
+	  C : field_0xc          : code
+%	 10 : UNK 2
+	 12 : messageIndex       : short
+	 14 : duration           : short
+	 16 : field_0x16         : ubyte
+	 17 : field_0x17         : ubyte
+	 18 : field_0x18         : int
+}
+

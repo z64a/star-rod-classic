@@ -1,0 +1,28 @@
+% model_animator
+type: ram
+size: 2E0
+fields:
+{
+	  0 : flags              : int        % 100 = flipZ, 200 = flipY, 400 = flipX, 8000 = mesh mode
+	  4 : renderMode         : ubyte      % set by 802cd348
+%	  5 : UNK 3
+	  8 : animReadPos        : uint*
+	  C : savedReadPos       : uint*
+	 10 : rootNode           : animator_node*
+	 14 : nextUniqueID?      : ubyte
+	 15 : treeIndexToNodeID  : byte[122`]
+%	 8F : UNK 1
+	 90 : nextUpdateTime     : float      % set to 1.0 after each update
+	 94 : timeScale          : float      % default: 1.0
+	 98 : mtx                : matrix4s
+	 D8 : vertexArray        : f3dex2_vertex**
+	 DC : animationBuffer    : ptr
+	 E0 : staticNodes        : static_animator_node*[122`]
+	2C8 : staticRoot         : static_animator_node**
+	2CC : treeIndexPos       : int        % in the staticNodes array
+	2D0 : savedTreePos       : int
+	2D4 : fpRenderCallback   : code
+	2D8 : renderCallbackArg  : int
+%	2DC : UNK 4
+}
+

@@ -1,0 +1,19 @@
+% unk_model_data
+type: ram
+size: A0
+fields:
+{
+	  0 : flags              : short
+	  2 : field_0x2          : short
+	  4 : matrixRDP_N        : matrix4s*
+	  8 : node               : model_node*
+	  C : matrixRDP_M        : matrix4s*
+	 10 : matrixA            : matrix4f
+	 50 : matrixB            : matrix4f
+	 90 : center             : float[3`]
+	 9C : modeTreeIndex      : ubyte
+	 9D : otherModelTreeIndex : ubyte
+	 9E : renderMode         : ubyte
+	 9F : field_0x9f         : ubyte
+}
+

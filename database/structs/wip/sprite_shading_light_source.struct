@@ -1,0 +1,13 @@
+% sprite_shading_light_source
+type: ram
+size: 18
+fields:
+{
+	  0 : flags              : ubyte      % 1 = enable, 4 = 1/r, 8 = (1/r)^2, no others found
+	  1 : color              : byte[3`]   % rgb
+	  4 : pos                : float[3`]  % world position
+	 10 : falloff            : float      % ~ (1/distance)^2 ?
+	 14 : unk_14             : ubyte      % always zero? never read?
+%	 15 : UNK 3
+}
+

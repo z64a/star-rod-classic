@@ -1,0 +1,13 @@
+% Light
+type: ram
+size: C
+fields:
+{
+	  0 : col                : byte[3`]
+%	  3 : UNK 1
+	  4 : colc               : byte[3`]
+%	  7 : UNK 1
+	  8 : dir                : char[3`]
+%	  B : UNK 1
+}
+

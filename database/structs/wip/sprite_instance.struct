@@ -1,0 +1,12 @@
+% sprite_instance
+type: ram
+size: 14
+fields:
+{
+	  0 : spriteIndex        : int
+	  4 : componentList      : sprite_component**
+	  8 : spriteData         : spr_header*
+	  C : currentAnimID      : uint
+	 10 : unk_10             : int
+}
+

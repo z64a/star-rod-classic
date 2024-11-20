@@ -1,0 +1,16 @@
+% partnertab_state
+type: ram
+size: 78
+fields:
+{
+	  0 : field_0x0          : int[8`]
+	 20 : field_0x20         : int[8`]
+	 40 : field_0x40         : int[8`]
+	 60 : selectedIndex      : int
+	 64 : field_0x64         : int
+	 68 : field_0x68         : int
+	 6C : field_0x6c         : int
+	 70 : partnerCount       : int
+%	 74 : UNK 4
+}
+

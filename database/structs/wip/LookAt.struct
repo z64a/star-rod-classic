@@ -1,0 +1,8 @@
+% LookAt
+type: ram
+size: 18
+fields:
+{
+	  0 : light              : Light[2`]
+}
+

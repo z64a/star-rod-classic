@@ -1,0 +1,252 @@
+
+add		800F48F4	Function
+add		800F4944	Function
+add		800F4C6C	Function
+
+add		800f7c8c	IntTable
+name	800f7c8c	PlayerActionTable
+size	800f7c8c	270
+newline	800f7c8c	4
+
+add		800f807c	IntTable
+name	800f807c	PartnerTable
+size	800f807c	2C0
+newline	800f807c	8
+
+name	801041A8	StatusHeartRGBA32
+name	801045B0	StatusFlowerRGBA32
+
+add		801049B0	HudElementScript
+name	801049B0	HudScript_ArrowLeft
+name	801049D8	HudScript_ArrowRight
+name	80104A00	HudScript_HandPointer
+name	80104A28	HudScript_AnimatedHandPointer
+
+name	80104A70	HudScript_FilledCircle
+name	80104A98	HudScript_EmptyCircle
+
+add		80104AC0	SparkleScript
+name	80104AC0	CoinSparkle
+
+name	80104BEC	HudScript_StatusSPShine
+name	80104C10	HudScript_StatusStarPiece
+
+name	80104C68	HudScript_Asleep
+name	80104CC4	HudScript_AsleepBegin
+name	80104E64	HudScript_AsleepEnd
+
+name	80104FBC	HudScript_Electrified
+name	801050A8	HudScript_ElectrifiedBegin
+name	801052D8	HudScript_ElectrifiedEnd
+
+name	80105430	HudScript_Paralyzed
+name	8010551C	HudScript_ParalyzedBegin
+name	8010574C	HudScript_ParalyzedEnd
+
+name	801058A4	HudScript_Dizzy
+name	80105900	HudScript_DizzyBegin
+name	80105AA0	HudScript_DizzyEnd
+
+name	80105BF8	HudScript_Poisoned
+name	80105C54	HudScript_PoisonedBegin
+name	80105DF4	HudScript_PoisonedEnd
+
+name	80105F4C	HudScript_Frozen
+name	80105FA8	HudScript_FrozenBegin
+name	80106148	HudScript_FrozenEnd
+
+name	801062A0	HudScript_Weakened
+name	801062DC	HudScript_WeakenedBegin
+name	8010645C	HudScript_WeakenedEnd
+
+name	801065B4	HudScript_Stopped
+name	80106610	HudScript_StoppedBegin
+name	801067B0	HudScript_StoppedEnd
+
+name	80106908	HudScript_Shrunk
+name	80106964	HudScript_ShrunkBegin
+name	80106B04	HudScript_ShrunkEnd
+
+name	80106C5C	HudScript_Transparent
+name	80106CD8	HudScript_TransparentBegin
+name	80106E98	HudScript_TransparentEnd
+
+name	80106FF0	HudScript_BoostJump
+name	8010701C	HudScript_BoostJumpBegin
+name	8010717C	HudScript_BoostJumpEnd
+name	801072E8	HudScript_BoostHammer
+name	80107314	HudScript_BoostHammerBegin
+name	80107474	HudScript_BoostHammerEnd
+name	801075E0	HudScript_BoostPartner
+name	8010760C	HudScript_Surprise
+
+name	80107638	HudScript_FPCost
+name	80107664	HudScript_FPCostReduced
+name	80107690	HudScript_FPCostReducedTwice
+name	801076BC	HudScript_NotEnoughFP
+
+name	801076E8	HudScript_POWCost
+name	80107714	HudScript_POWCostReduced
+name	80107740	HudScript_POWCostReducedTwice
+name	8010776C	HudScript_NotEnoughPOW
+
+name	80107798	HudScript_GreenArrowDown
+name	801077E4	HudScript_GreenArrowUp
+
+name	80107830	HudScript_UnusedPinkFrame
+name	8010785C	HudScript_UnusedDigit1
+name	80107888	HudScript_UnusedDigit2
+name	801078B4	HudScript_UnusedDigit3
+
+name	801078E0	HudScript_RedBar1
+name	8010790C	HudScript_EmptyBar
+name	80107938	HudScript_RedBar2
+
+name	80107964	HudScript_MarioHead
+
+name	80107990	HudScript_Eldstar
+name	801079BC	HudScript_EldstarDisabled
+name	801079E8	HudScript_Mamar
+name	80107A14	HudScript_MamarDisabled
+name	80107A40	HudScript_Skolar
+name	80107A6C	HudScript_SkolarDisabled
+name	80107A98	HudScript_Muskular
+name	80107AC4	HudScript_MuskularDisabled
+name	80107AF0	HudScript_Misstar
+name	80107B1C	HudScript_MisstarDisabled
+name	80107B48	HudScript_Klevar
+name	80107B74	HudScript_KlevarDisabled
+name	80107BA0	HudScript_Kalmar
+name	80107BCC	HudScript_KalmarDisabled
+name	80107BF8	HudScript_StarBeam
+name	80107C24	HudScript_StarBeamDisabled
+name	80107C50	HudScript_PeachBeam
+name	80107C7C	HudScript_PeachBeamDisabled
+
+name	80107CA8	HudScript_Partner0
+name	80107CD0	HudScript_Partner0Disabled
+name	80107CF8	HudScript_Goombario
+name	80107D20	HudScript_GoombarioDisabled
+name	80107D48	HudScript_Kooper
+name	80107D70	HudScript_KooperDisabled
+name	80107D98	HudScript_Bombette
+name	80107DC0	HudScript_BombetteDisabled
+
+name	80107DE8	HudScript_Parakarry
+name	80107E10	HudScript_ParakarryDisabled
+name	80107E38	HudScript_Bow
+name	80107E60	HudScript_BowDisabled
+name	80107E88	HudScript_Watt
+name	80107EB0	HudScript_WattDisabled
+name	80107ED8	HudScript_Sushie
+name	80107F00	HudScript_SushieDisabled
+name	80107F28	HudScript_Lakilester
+name	80107F50	HudScript_LakilesterDisabled
+name	80107F78	HudScript_Partner9
+name	80107FA0	HudScript_Partner9Disabled
+name	80107FC8	HudScript_PartnerA
+name	80107FF0	HudScript_PartnerADisabled
+name	80108018	HudScript_PartnerB
+name	80108040	HudScript_PartnerBDisabled
+
+add		80108090	HudElementScript
+add		80108518	HudElementScript
+
+name	80108068	HudScript_StatusTimes
+name	80108090	HudScript_StatusSlash
+name	801080B8	HudScript_StatusDigit0
+name	801080E0	HudScript_StatusDigit1
+name	80108108	HudScript_StatusDigit2
+name	80108130	HudScript_StatusDigit3
+name	80108158	HudScript_StatusDigit4
+name	80108180	HudScript_StatusDigit5
+name	801081A8	HudScript_StatusDigit6
+name	801081D0	HudScript_StatusDigit7
+name	801081F8	HudScript_StatusDigit8
+name	80108220	HudScript_StatusDigit9
+name	80108248	HudScript_StatusHP
+name	80108270	HudScript_StatusFP
+name	80108298	HudScript_StatusSPIncrement1
+name	801082C0	HudScript_StatusSPIncrement2
+name	801082E8	HudScript_StatusSPIncrement3
+name	80108310	HudScript_StatusSPIncrement4
+name	80108338	HudScript_StatusSPIncrement5
+name	80108360	HudScript_StatusSPIncrement6
+name	80108388	HudScript_StatusSPIncrement7
+name	801083B0	HudScript_StatusSPEmptyIncrement
+name	801083D8	HudScript_StatusStar1
+name	80108400	HudScript_StatusStar2
+name	80108428	HudScript_StatusStar3
+name	80108450	HudScript_StatusStar4
+name	80108478	HudScript_StatusStar5
+name	801084A0	HudScript_StatusStar6
+name	801084C8	HudScript_StatusStar7
+name	801084F0	HudScript_StatusStarEmpty
+name	80108518	HudScript_StatusHeart
+name	80108538	HudScript_StatusFlower
+name	80108558	HudScript_StatusCoin
+name	801086AC	HudScript_StatusStarPoint
+name	80108744	HudScript_MenuBoots1
+name	8010876C	HudScript_MenuBoots1Disabled
+name	80108794	HudScript_MenuBoots2
+name	801087BC	HudScript_MenuBoots2Disabled
+name	801087E4	HudScript_MenuBoots3
+name	8010880C	HudScript_MenuBoots3Disabled
+name	80108834	HudScript_MenuHammer1
+name	8010885C	HudScript_MenuHammer1Disabled
+name	80108884	HudScript_MenuHammer2
+name	801088AC	HudScript_MenuHammer2Disabled
+name	801088D4	HudScript_MenuHammer3
+name	801088FC	HudScript_MenuHammer3Disabled
+name	80108924	HudScript_MenuItem
+name	8010894C	HudScript_MenuItemDisabled
+name	80108974	HudScript_MenuStarPower
+name	8010899C	HudScript_MenuStarPowerDisabled
+
+name	801089C4	HudScript_Peril
+name	80108A14	HudScript_Danger
+name	80108A64	HudScript_Refund
+name	80108AAC	HudScript_Happy
+name	80108AD4	HudScript_HPDrain
+name	80108AFC	HudScript_BlueMeter
+
+name	80108B28	HudScript_AButton
+name	80108B54	HudScript_AButtonDown
+name	80108B80	HudScript_MashAButton
+name	80108BBC	HudScript_PressAButton
+name	80108BF8	HudScript_SlowlyPressAButton
+name	80108C34	HudScript_SlowlyMashAButton
+
+name	80108C70	HudScript_StartButton
+name	80108C9C	HudScript_StartButtonDown
+name	80108CC8	HudScript_MashStartButton
+name	80108D04	HudScript_PressStartButton
+name	80108D40	HudScript_StartButtonText
+
+name	80108D6C	HudScript_RotateStickCW
+name	80108E1C	HudScript_StickNeutral
+name	80108E48	HudScript_StickHoldLeft
+name	80108E80	HudScript_StickBackAndForth
+name	80108F30	HudScript_StickMashLeft
+name	80108F90	HudScript_StickTapLeft
+name	80108FF0	HudScript_StickTapNeutral
+name	8010908C	HudScript_StickHoldDown
+name	801090C4	HudScript_StickMashDown
+name	80109124	HudScript_StickTapDown
+name	80109184	HudScript_StickSlowlyTapDown
+name	801091E4	HudScript_StickTapRight
+
+name	80109244	HudScript_RunAwayOK
+name	80109270	HudScript_MenuTimes
+name	80109298	HudScript_PartnerRank1A
+name	801092C0	HudScript_PartnerRank1B
+name	801092E8	HudScript_PartnerRank2A
+name	80109310	HudScript_PartnerRank2B
+name	80109338	HudScript_MoveDiamond
+name	80109360	HudScript_MoveBlueOrb
+name	80109388	HudScript_MoveGreenOrb
+name	801093B0	HudScript_MoveRedOrb
+name	801093D8	HudScript_MoveDiamondDisabled
+name	80109400	HudScript_MoveBlueOrbDisabled
+name	80109428	HudScript_MoveGreenOrbDisabled
+name	80109450	HudScript_MoveRedOrbDisabled

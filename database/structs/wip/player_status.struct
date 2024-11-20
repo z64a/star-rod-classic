@@ -1,0 +1,79 @@
+% player_status
+% from 8010EFC8
+type: ram
+size: 288
+fields:
+{
+	  0 : flags1             : int
+	  4 : flags2             : uint
+	  8 : framesOnGround     : short      % Number of frames since last jump landed
+%	  A : UNK 2
+	  C : peachDisguise      : ubyte
+	  D : field_0xd          : ubyte
+	  E : alpha              : ubyte
+	  F : field_0xf          : ubyte
+	 10 : blinkTimer         : short
+	 12 : moveFrames         : short
+	 14 : enableCollisionOverlapsCheck : ubyte
+	 15 : statusMenuCounter?inputEnabledCounter? : ubyte      % whether the C-up menu can appear
+	 16 : lastGoodPosition   : short[3`]
+	 1C : extraVelocity?     : float[3`]
+	 28 : position           : float[3`]
+	 34 : field_0x34         : float
+	 38 : field_0x38         : float
+%	 3C : UNK 8
+	 44 : landPos            : float[2`]
+%	 4C : UNK 4
+	 50 : jumpApexHeight     : float
+	 54 : currentSpeed       : int
+	 58 : walkSpeed          : float
+	 5C : runSpeed           : float
+%	 60 : UNK 4
+	 64 : field_0x64         : float
+	 68 : normalPitch        : float
+	 6C : field_0x6c         : float
+	 70 : gravityIntegrator  : float[4`]
+	 80 : targetYaw          : float
+	 84 : currentYaw         : float
+	 88 : field_0x88         : float
+	 8C : pitch              : float
+	 90 : field_0x90         : int
+	 94 : field_0x94         : int
+	 98 : field_0x98         : int
+	 9C : field_0x9c         : int
+	 A0 : heading            : float
+	 A4 : trueAnim           : int        % accounting for facing angle, etc
+	 A8 : spriteFacingAngle  : float      % angle of sprite, relative to camera, from 0 to 180
+%	 AC : UNK 4
+	 B0 : colliderHeight     : short
+	 B2 : colliderDiameter   : short
+	 B4 : actionState        : ubyte
+	 B5 : prevActionState    : ubyte
+	 B6 : fallState?         : ubyte
+%	 B7 : UNK 1
+	 B8 : anim               : int
+	 BC : asleep             : short
+	 BE : renderMode         : ubyte
+	 BF : field_0xbf         : ubyte
+	 C0 : framesInAir        : short
+	 C2 : field_0xc2         : short
+	 C4 : field_0xc4         : ubyte
+	 C5 : field_0xc5         : ubyte
+	 C6 : interactingWithID  : short      % collider/entity/npc ID giving ! prompt (-1 if none)
+	 C8 : encounteredNPC     : NPC*
+	 CC : shadowID           : int
+%	 D0 : UNK 8
+	 D8 : field_0xd8         : int
+	 DC : currentButtons     : int
+	 E0 : pressedButtons     : int
+	 E4 : heldButtons        : int
+	 E8 : stickAxis          : float[2`]
+	 F0 : currentButtonsBuffer : int[10`]
+	118 : pressedButtonsBuffer : int[10`]
+	140 : heldButtonsBuffer  : int[10`]
+	168 : stickXBuffer       : float[10`]
+	190 : stickYBuffer       : float[10`]
+	1B8 : inputBufPos        : int
+%	1BC : UNK CC
+}
+

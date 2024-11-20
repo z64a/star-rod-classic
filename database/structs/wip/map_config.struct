@@ -1,0 +1,15 @@
+% map_config
+type: ram
+size: 20
+fields:
+{
+	  0 : mapName            : char*
+	  4 : header             : map_data_header*
+	  8 : dmaStart           : int
+	  C : dmaEnd             : int
+	 10 : dmaDest            : int*
+	 14 : backgroundTexture  : int*
+	 18 : init               : int*
+	 1C : flags              : int
+}
+

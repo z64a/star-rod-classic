@@ -1,0 +1,12 @@
+PlayerFlags1	% namespace
+playerFlags1	% library name
+false	% reversed
+
+% flags at 8010EFC8
+
+00000002 = Jumping
+00000004 = Falling
+00002000 = InputDisabled
+02000000 = HasConversationNpc
+04000000 = CameraDoesntFollow
+80000000 = ActionStateChanged

@@ -1,0 +1,16 @@
+% collision_current_ray
+% found at 800A4230
+type: ram
+size: 40
+fields:
+{
+	  0 : origin             : float[3`]
+	  C : direction          : float[3`]
+	 18 : hitPosition        : float[3`]
+	 24 : hitDistance        : float
+	 28 : hitNormal          : float[3`]
+	 34 : colliderTable      : ptr
+	 38 : zoneTable          : ptr
+%	 3C : UNK 4
+}
+

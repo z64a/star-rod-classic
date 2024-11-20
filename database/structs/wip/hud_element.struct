@@ -1,0 +1,35 @@
+% hud_element
+type: ram
+size: 54
+fields:
+{
+	  0 : flags              : uint
+	  4 : readPos            : uint*
+	  8 : startReadPos       : uint*
+	  C : ptrSavedPos        : uint*
+	 10 : imageAddr          : uint*
+	 14 : paletteAddr        : uint*
+	 18 : memOffset          : uint
+	 1C : hudTransform       : hud_transform*
+	 20 : field_0x20         : float
+	 24 : field_0x24         : float
+	 28 : unkImgScale        : float[2`]
+	 30 : uniformScale       : float      % initialized to 1.0
+	 34 : dSdX               : int        % X.10 fmt (divide by 1024.0 to get float)
+	 38 : dTdY               : int        % X.10 fmt (divide by 1024.0 to get float)
+	 3C : renderPosX         : short
+	 3E : renderPosY         : short
+	 40 : texelOffset        : byte[2`]   % offset the sprite by a number of texels, same as screenOffset if icon scale = 1.0
+	 42 : screenOffset       : byte[3`]
+	 45 : drawSizePreset     : ubyte      % from cmd 5
+	 46 : tileSizePreset     : ubyte
+	 47 : updateTimer        : ubyte
+	 48 : sizeX              : ubyte      % screen size?
+	 49 : sizeY              : ubyte      % screen size?
+	 4A : opacity            : ubyte
+	 4B : tint               : byte[3`]
+	 4E : customImageSize    : byte[2`]
+	 50 : customDrawSize     : byte[2`]
+%	 52 : UNK 2
+}
+

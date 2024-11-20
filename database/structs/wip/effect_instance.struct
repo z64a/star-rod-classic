@@ -1,0 +1,12 @@
+% effect_instance
+type: ram
+size: 14
+fields:
+{
+	  0 : flags              : int
+	  4 : effectIndex        : int        % the effect ID value (0x00-0x86)
+	  8 : matrixCount        : int
+	  C : instanceData       : effect_instance_data*
+	 10 : staticData         : effect_data*
+}
+

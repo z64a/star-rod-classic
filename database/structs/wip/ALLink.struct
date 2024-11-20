@@ -1,0 +1,9 @@
+% ALLink
+type: ram
+size: 8
+fields:
+{
+	  0 : next               : ALLink*
+	  4 : prev               : ALLink*
+}
+

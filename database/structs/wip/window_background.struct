@@ -1,0 +1,13 @@
+% window_background
+type: ram
+size: C
+fields:
+{
+	  0 : imgData            : ptr
+	  4 : packedTileFormat   : ubyte      % upper = fmt, lower = depth; e.g., 31 = CI-8
+	  5 : width              : ubyte
+	  6 : height             : ubyte
+%	  7 : UNK 4
+	  B : size               : ubyte
+}
+

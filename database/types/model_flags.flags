@@ -1,0 +1,14 @@
+ModelFlags	% namespace
+modelFlags	% library name
+false	% reversed
+
+0002 = Enabled
+0008 = TransformGroupMember
+0010 = UsesCustomGfx
+0080 = HasLocalVertexCopy
+0100 = UseCameraUnkMatrix
+%0200 = set when all dimensions < 100?
+0400 = HasTransformApplied
+0800 = HasTexPanner
+1000 = UsesTransformMatrix
+%2000 = 

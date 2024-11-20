@@ -1,0 +1,12 @@
+% window_style_preset
+type: ram
+size: B
+fields:
+{
+	  0 : backgroundPresetID : ubyte      % from table of 2 at 8010BAE8
+	  1 : cornersPresetID    : ubyte      % from table of 9 at 8010BB00
+	  2 : combineModePresetID : ubyte      % selects Gfx[2] from table of 4 at 8010bb90
+	  3 : color1             : byte[4`]   % RGBA
+	  7 : color2             : byte[4`]   % RGBA
+}
+

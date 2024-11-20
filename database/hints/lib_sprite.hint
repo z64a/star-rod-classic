@@ -1,0 +1,14 @@
+add		802DF3F0	DisplayList
+name	802DF3F0	GfxComponentMode0
+
+add		802DF428	DisplayList
+name	802DF428	GfxComponentMode1
+
+add		802DF460	DisplayList
+name	802DF460	GfxComponentMode2
+
+add		802DF490	DisplayList
+name	802DF490	GfxComponentMode3
+
+add		802DF390	VertexTable
+name	802DF390	DefaultSpriteQuad

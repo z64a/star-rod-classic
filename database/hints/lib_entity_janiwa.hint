@@ -1,0 +1,47 @@
+
+add		802BC788	EntityBP
+name	802BC788	CymbalPlant
+
+add		802BC7AC	EntityBP
+name	802BC7AC	PinkFlower
+
+add 	802BC7D0	EntityBP
+
+add		802BC7F4	EntityBP
+name	802BC7F4	SpinningFlower
+
+add 	802BCBD8	EntityBP
+name	802BCBD8	BellbellPlant
+
+add 	802BCBFC	EntityBP
+name	802BCBFC	TrumpetPlant
+
+add 	802BCC20	EntityBP
+name	802BCC20	SpongyFlower
+
+add 	802BCC44	EntityBP
+name	802BCC44	ResetSpongyFlower
+
+add 	802BCC68	EntityBP
+name	802BCC68	SpongyFlowerGrab
+
+add 	802BCC8C	EntityBP
+name	802BCC8C	SpongyFlowerEnvelop
+
+add 	802BCCB0	EntityBP
+name	802BCCB0	SpongyFlowerBeginChew
+
+add 	802BCCD4	EntityBP
+name	802BCCD4	SpongyFlowerChewing
+
+add 	802BCCF8	EntityBP
+name	802BCCF8	SpongyFlowerSpitOut
+
+add 	802BCD1C	EntityBP
+name	802BCD1C	SpongyFlowerReset1
+
+add 	802BCD40	EntityBP
+name	802BCD40	SpongyFlowerReset2
+
+add 	802BCD9C	EntityBP
+name	802BCD9C	RedArrowSigns

@@ -1,0 +1,7 @@
+{
+    "editor.formatOnSaveMode": "modifications",
+    "editor.rulers": [
+        140
+    ],
+    "trailing-spaces.deleteModifiedLinesOnly": true,
+}

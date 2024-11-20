@@ -1,0 +1,64 @@
+#new:Script $##PREFIXScript_Foliage_SearchBush
+{
+    0:  UseIntBuffer  *Var[0]
+    C:  Get4Int  *Var[1] *Var[2] *Var[3] *Var[4]
+   24:  Call  GetPlayerPos  ( *Var[5] *Var[F] *Var[7] )
+   3C:  Thread
+   44:      Set   *Flag[00]  .False
+   54:      If  *Var[1]  !=  00000000
+   64:          Loop  00000005
+   70:              UseIntBuffer  *Var[1]
+   7C:              Get1Int  *Var[2]
+   88:              Loop  *Var[2]
+   94:                  Get1Int  *Var[3]
+   A0:                  Call  $##PREFIXFunction_Foliage_TransformModel    ( *Var[3] *Fixed[0.1] 00000001 *Var[F] 00000000 )
+   C0:                  If  *Flag[00]  ==  .False
+   D0:                      Set   *Flag[00]  .True
+   E0:                      Call  PlaySoundAtModel  ( *Var[3] 00000153 00000000 )
+   F8:                  EndIf
+  100:              EndLoop
+  108:              Wait  1`
+  114:              UseIntBuffer  *Var[1]
+  120:              Get1Int  *Var[2]
+  12C:              Loop  *Var[2]
+  138:                  Get1Int  *Var[3]
+  144:                  Call  $##PREFIXFunction_Foliage_TransformModel    ( *Var[3] *Fixed[0.1] FFFFFFFF *Var[F] 00000000 )
+  164:              EndLoop
+  16C:              Wait  1`
+  178:          EndLoop
+  180:          UseIntBuffer  *Var[1]
+  18C:          Get1Int  *Var[2]
+  198:          Loop  *Var[2]
+  1A4:              Get1Int  *Var[3]
+  1B0:              Call  TranslateModel    ( *Var[3] 00000000 00000000 00000000 )
+  1CC:          EndLoop
+  1D4:          Wait  1`
+  1E0:      EndIf
+  1E8:  EndThread
+  1F0:  Thread
+  1F8:      If  *Var[2]  !=  00000000
+  208:          UseIntBuffer  *Var[2]
+  214:          Get1Int  *Var[3]
+  220:          Loop  *Var[3]
+  22C:              Get1Int  *Var[4]
+  238:              Get3Int  *Var[5] *Var[6] *Var[7]
+  24C:              Get3Int  *Var[8] *Var[9] *Var[A]
+  260:              If  *Var[A]  ==  00000000
+  270:                  Call  DropItemEntity    ( *Var[4] *Var[5] *Var[6] *Var[7] *Var[8] *Var[9] )
+  294:              Else
+  29C:                  Call  GetValueByRef ( *Var[A] *Var[B] )
+  2B0:                  If  *Var[B]  ==  00000000
+  2C0:                      Call  SetValueByRef     ( *Var[A] 00000001 )
+  2D4:                      Call  DropItemEntity    ( *Var[4] *Var[5] *Var[6] *Var[7] *Var[8] *Var[9] )
+  2F8:                  EndIf
+  300:              EndIf
+  308:          EndLoop
+  310:      EndIf
+  318:  EndThread
+  320:  Wait  15`
+  32C:  If  *Var[4]  !=  00000000
+  33C:      ExecWait  *Var[4]
+  348:  EndIf
+  350:  Return
+  358:  End
+}

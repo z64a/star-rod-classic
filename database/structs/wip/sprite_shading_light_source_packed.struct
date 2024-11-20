@@ -1,0 +1,17 @@
+% sprite_shading_light_source_packed
+type: ram
+size: 10
+fields:
+{
+	  0 : field_0x0          : ubyte
+	  1 : R                  : ubyte
+	  2 : G                  : ubyte
+	  3 : B                  : ubyte
+	  4 : x                  : short
+	  6 : y                  : short
+	  8 : z                  : short
+	  A : field_0xa          : float
+	  E : field_0xe          : ubyte
+%	  F : UNK 1
+}
+

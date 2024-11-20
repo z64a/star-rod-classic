@@ -1,0 +1,11 @@
+% mdl_tree_info
+type: ram
+size: 4
+fields:
+{
+	  0 : modelID            : ubyte
+	  1 : treeDepth          : ubyte
+	  2 : textureID          : ubyte
+	  3 : _padding_03        : ubyte
+}
+

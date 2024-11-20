@@ -1,0 +1,10 @@
+#new:Script $Script_ScriptedSpring_FollowCam
+{
+	Loop
+		Call  GetPlayerPos  ( *Var[0] *Var[1] *Var[2] )
+		Call  SetCamTarget  ( .Cam:Default *Var[0] *Var[1] *Var[2] )
+		Wait  1`
+	EndLoop
+	Return
+	End
+}

@@ -1,0 +1,22 @@
+% advanced_door
+type: ram
+size: 64
+fields:
+{
+	  0 : field_0x0          : int
+	  4 : flags2             : int
+	  8 : field_0x8          : short
+	  A : field_0xa          : short
+	  C : field_0xc          : float[4`]
+	 1C : field_0x1c         : float[4`]
+	 2C : scrOpenDoor        : bytecode*
+	 30 : scrMoveWalls       : bytecode*
+	 34 : scrDropDoor        : bytecode*
+	 38 : scrToggleVis       : bytecode*
+	 3C : modelGroupID       : int
+	 40 : bgColor            : int[3`]
+%	 4C : UNK 10
+	 5C : npcList            : ptr
+	 60 : outerColliderID    : int
+}
+

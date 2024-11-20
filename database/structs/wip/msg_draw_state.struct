@@ -1,0 +1,34 @@
+% msg_draw_state
+type: ram
+size: 54
+fields:
+{
+	  0 : clipX              : int[2`]    % characters beyond this pos get skipped
+	  8 : clipY              : int[2`]    % characters beyond this pos get skipped
+	 10 : stringScale        : float[2`]
+	 18 : charScale          : float[2`]
+	 20 : drawBufferPos      : int        % string gets printed here and read for display
+	 24 : savedPos           : short[2`]
+	 28 : savedColor         : ubyte
+	 29 : field_0x29         : ubyte
+%	 2A : UNK 1
+	 2B : framePalette       : ubyte      % used when printing letters
+	 2C : field_0x2c         : ubyte
+%	 2D : UNK 1
+	 2E : centerPos          : ubyte
+%	 2F : UNK 1
+	 30 : visiblePrintedCount : int
+	 34 : printModeFlags     : ushort     % C0 = center, 10 = drawing image
+%	 36 : UNK 2
+	 38 : effectFlags        : uint
+	 3C : font               : short      % 0 or 1
+	 3E : fontVariant        : short
+	 40 : currentPosX        : short
+	 42 : nextPos            : short[2`]
+	 46 : textStartPos       : short[2`]  % relative to textbox
+	 4A : textColor          : short
+	 4C : printBuffer        : byte*
+	 50 : nextCounter        : ubyte      % related to closing messages and cmd FA
+%	 51 : UNK 3
+}
+

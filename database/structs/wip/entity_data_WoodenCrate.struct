@@ -1,0 +1,22 @@
+% entity_data_WoodenCrate
+type: ram
+size: 394
+fields:
+{
+	  0 : field_0x0          : int
+	  4 : globalFlagIndex    : short
+%	  6 : UNK 2
+	  8 : fragmentsGfx       : ptr
+	  C : basePosY           : float
+	 10 : fragmentState      : byte[36`]
+	 34 : moveAngle          : byte[36`]  % XZ, scaled to make (0,255) -> (0,360) degrees
+	 58 : rotX               : byte[36`]  % scaled to make (0,255) -> (0,360) degrees
+	 7C : rotY               : byte[36`]  % scaled to make (0,255) -> (0,360) degrees
+	 A0 : lateralSpeed       : byte[36`]
+	 C4 : fallSpeed          : float[36`]
+	154 : posX               : float[36`]
+	1E4 : posY               : float[36`]
+	274 : posZ               : float[36`]
+	304 : moveRate?          : float[36`]
+}
+

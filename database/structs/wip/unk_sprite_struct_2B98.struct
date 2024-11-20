@@ -1,0 +1,8 @@
+% unk_sprite_struct_2B98
+type: ram
+size: 2B98
+fields:
+{
+	  0 : field_0x0          : sprite_deformation[90`]
+}
+

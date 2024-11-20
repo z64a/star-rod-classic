@@ -1,0 +1,21 @@
+% actor_part_movement
+% exact size
+type: ram
+size: 8C
+fields:
+{
+	  0 : currentMovePos     : float[3`]
+	  C : goalPos            : float[3`]  % target for lerps
+	 18 : startMovePos       : float[3`]  % used for lerps
+	 24 : jumpAccel          : float
+	 28 : moveSpeed          : float
+	 2C : jumpVelocity       : float
+	 30 : moveAngle          : float
+	 34 : moveDist           : float      % planar xz for jump
+	 38 : moveTime           : short      % frames
+	 3A : arcAmplitudeScale  : short
+	 3C : moveElapsed        : int        % used for lerps
+%	 40 : UNK C
+	 4C : varTable           : int[16`]
+}
+

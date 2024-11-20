@@ -1,0 +1,240 @@
+
+{version=1.0}
+{scope=us:common}
+
+dat : 8007FF20 : HudScript_HandPointDownLoop : hud_script
+dat : 800800A0 : HudScript_HandPointDown : hud_script
+dat : 800801D8 : HudScript_HandPointDownHeld : hud_script
+dat : 80080208 : HudScript_HandPointLeftLoop : hud_script
+dat : 80080388 : HudScript_HandPointLeft : hud_script
+dat : 800804C0 : HudScript_HandPointLeftHeld : hud_script
+
+dat : 801049B0 : HudScript_ArrowLeft : hud_script
+dat : 801049D8 : HudScript_ArrowRight : hud_script
+dat : 80104A00 : HudScript_HandPointer : hud_script
+dat : 80104A28 : HudScript_AnimatedHandPointer : hud_script
+
+dat : 80104A70 : HudScript_FilledCircle : hud_script
+dat : 80104A98 : HudScript_EmptyCircle : hud_script
+
+dat : 80104AC0 : CoinSparkle : sparkle_script
+
+dat : 80104BEC : HudScript_StatusSPShine : hud_script
+dat : 80104C10 : HudScript_StatusStarPiece : hud_script
+
+dat : 80104C68 : HudScript_Asleep : hud_script
+dat : 80104CC4 : HudScript_AsleepBegin : hud_script
+dat : 80104E64 : HudScript_AsleepEnd : hud_script
+
+dat : 80104FBC : HudScript_Electrified : hud_script
+dat : 801050A8 : HudScript_ElectrifiedBegin : hud_script
+dat : 801052D8 : HudScript_ElectrifiedEnd : hud_script
+
+dat : 80105430 : HudScript_Paralyzed : hud_script
+dat : 8010551C : HudScript_ParalyzedBegin : hud_script
+dat : 8010574C : HudScript_ParalyzedEnd : hud_script
+
+dat : 801058A4 : HudScript_Dizzy : hud_script
+dat : 80105900 : HudScript_DizzyBegin : hud_script
+dat : 80105AA0 : HudScript_DizzyEnd : hud_script
+
+dat : 80105BF8 : HudScript_Poisoned : hud_script
+dat : 80105C54 : HudScript_PoisonedBegin : hud_script
+dat : 80105DF4 : HudScript_PoisonedEnd : hud_script
+
+dat : 80105F4C : HudScript_Frozen : hud_script
+dat : 80105FA8 : HudScript_FrozenBegin : hud_script
+dat : 80106148 : HudScript_FrozenEnd : hud_script
+
+dat : 801062A0 : HudScript_Weakened : hud_script
+dat : 801062DC : HudScript_WeakenedBegin : hud_script
+dat : 8010645C : HudScript_WeakenedEnd : hud_script
+
+dat : 801065B4 : HudScript_Stopped : hud_script
+dat : 80106610 : HudScript_StoppedBegin : hud_script
+dat : 801067B0 : HudScript_StoppedEnd : hud_script
+
+dat : 80106908 : HudScript_Shrunk : hud_script
+dat : 80106964 : HudScript_ShrunkBegin : hud_script
+dat : 80106B04 : HudScript_ShrunkEnd : hud_script
+
+dat : 80106C5C : HudScript_Transparent : hud_script
+dat : 80106CD8 : HudScript_TransparentBegin : hud_script
+dat : 80106E98 : HudScript_TransparentEnd : hud_script
+
+dat : 80106FF0 : HudScript_BoostJump : hud_script
+dat : 8010701C : HudScript_BoostJumpBegin : hud_script
+dat : 8010717C : HudScript_BoostJumpEnd : hud_script
+dat : 801072E8 : HudScript_BoostHammer : hud_script
+dat : 80107314 : HudScript_BoostHammerBegin : hud_script
+dat : 80107474 : HudScript_BoostHammerEnd : hud_script
+dat : 801075E0 : HudScript_BoostPartner : hud_script
+dat : 8010760C : HudScript_Surprise : hud_script
+
+dat : 80107638 : HudScript_FPCost : hud_script
+dat : 80107664 : HudScript_FPCostReduced : hud_script
+dat : 80107690 : HudScript_FPCostReducedTwice : hud_script
+dat : 801076BC : HudScript_NotEnoughFP : hud_script
+
+dat : 801076E8 : HudScript_POWCost : hud_script
+dat : 80107714 : HudScript_POWCostReduced : hud_script
+dat : 80107740 : HudScript_POWCostReducedTwice : hud_script
+dat : 8010776C : HudScript_NotEnoughPOW : hud_script
+
+dat : 80107798 : HudScript_GreenArrowDown : hud_script
+dat : 801077E4 : HudScript_GreenArrowUp : hud_script
+
+dat : 80107830 : HudScript_UnusedPinkFrame : hud_script
+dat : 8010785C : HudScript_UnusedDigit1 : hud_script
+dat : 80107888 : HudScript_UnusedDigit2 : hud_script
+dat : 801078B4 : HudScript_UnusedDigit3 : hud_script
+
+dat : 801078E0 : HudScript_RedBar1 : hud_script
+dat : 8010790C : HudScript_EmptyBar : hud_script
+dat : 80107938 : HudScript_RedBar2 : hud_script
+
+dat : 80107964 : HudScript_MarioHead : hud_script
+
+dat : 80107990 : HudScript_Eldstar : hud_script
+dat : 801079BC : HudScript_EldstarDisabled : hud_script
+dat : 801079E8 : HudScript_Mamar : hud_script
+dat : 80107A14 : HudScript_MamarDisabled : hud_script
+dat : 80107A40 : HudScript_Skolar : hud_script
+dat : 80107A6C : HudScript_SkolarDisabled : hud_script
+dat : 80107A98 : HudScript_Muskular : hud_script
+dat : 80107AC4 : HudScript_MuskularDisabled : hud_script
+dat : 80107AF0 : HudScript_Misstar : hud_script
+dat : 80107B1C : HudScript_MisstarDisabled : hud_script
+dat : 80107B48 : HudScript_Klevar : hud_script
+dat : 80107B74 : HudScript_KlevarDisabled : hud_script
+dat : 80107BA0 : HudScript_Kalmar : hud_script
+dat : 80107BCC : HudScript_KalmarDisabled : hud_script
+dat : 80107BF8 : HudScript_StarBeam : hud_script
+dat : 80107C24 : HudScript_StarBeamDisabled : hud_script
+dat : 80107C50 : HudScript_PeachBeam : hud_script
+dat : 80107C7C : HudScript_PeachBeamDisabled : hud_script
+
+dat : 80107CA8 : HudScript_Partner0 : hud_script
+dat : 80107CD0 : HudScript_Partner0Disabled : hud_script
+dat : 80107CF8 : HudScript_Goombario : hud_script
+dat : 80107D20 : HudScript_GoombarioDisabled : hud_script
+dat : 80107D48 : HudScript_Kooper : hud_script
+dat : 80107D70 : HudScript_KooperDisabled : hud_script
+dat : 80107D98 : HudScript_Bombette : hud_script
+dat : 80107DC0 : HudScript_BombetteDisabled : hud_script
+
+dat : 80107DE8 : HudScript_Parakarry : hud_script
+dat : 80107E10 : HudScript_ParakarryDisabled : hud_script
+dat : 80107E38 : HudScript_Bow : hud_script
+dat : 80107E60 : HudScript_BowDisabled : hud_script
+dat : 80107E88 : HudScript_Watt : hud_script
+dat : 80107EB0 : HudScript_WattDisabled : hud_script
+dat : 80107ED8 : HudScript_Sushie : hud_script
+dat : 80107F00 : HudScript_SushieDisabled : hud_script
+dat : 80107F28 : HudScript_Lakilester : hud_script
+dat : 80107F50 : HudScript_LakilesterDisabled : hud_script
+dat : 80107F78 : HudScript_Partner9 : hud_script
+dat : 80107FA0 : HudScript_Partner9Disabled : hud_script
+dat : 80107FC8 : HudScript_PartnerA : hud_script
+dat : 80107FF0 : HudScript_PartnerADisabled : hud_script
+dat : 80108018 : HudScript_PartnerB : hud_script
+dat : 80108040 : HudScript_PartnerBDisabled : hud_script
+
+dat : 80108068 : HudScript_StatusTimes : hud_script
+dat : 80108090 : HudScript_StatusSlash : hud_script
+dat : 801080B8 : HudScript_StatusDigit0 : hud_script
+dat : 801080E0 : HudScript_StatusDigit1 : hud_script
+dat : 80108108 : HudScript_StatusDigit2 : hud_script
+dat : 80108130 : HudScript_StatusDigit3 : hud_script
+dat : 80108158 : HudScript_StatusDigit4 : hud_script
+dat : 80108180 : HudScript_StatusDigit5 : hud_script
+dat : 801081A8 : HudScript_StatusDigit6 : hud_script
+dat : 801081D0 : HudScript_StatusDigit7 : hud_script
+dat : 801081F8 : HudScript_StatusDigit8 : hud_script
+dat : 80108220 : HudScript_StatusDigit9 : hud_script
+dat : 80108248 : HudScript_StatusHP : hud_script
+dat : 80108270 : HudScript_StatusFP : hud_script
+dat : 80108298 : HudScript_StatusSPIncrement1 : hud_script
+dat : 801082C0 : HudScript_StatusSPIncrement2 : hud_script
+dat : 801082E8 : HudScript_StatusSPIncrement3 : hud_script
+dat : 80108310 : HudScript_StatusSPIncrement4 : hud_script
+dat : 80108338 : HudScript_StatusSPIncrement5 : hud_script
+dat : 80108360 : HudScript_StatusSPIncrement6 : hud_script
+dat : 80108388 : HudScript_StatusSPIncrement7 : hud_script
+dat : 801083B0 : HudScript_StatusSPEmptyIncrement : hud_script
+dat : 801083D8 : HudScript_StatusStar1 : hud_script
+dat : 80108400 : HudScript_StatusStar2 : hud_script
+dat : 80108428 : HudScript_StatusStar3 : hud_script
+dat : 80108450 : HudScript_StatusStar4 : hud_script
+dat : 80108478 : HudScript_StatusStar5 : hud_script
+dat : 801084A0 : HudScript_StatusStar6 : hud_script
+dat : 801084C8 : HudScript_StatusStar7 : hud_script
+dat : 801084F0 : HudScript_StatusStarEmpty : hud_script
+dat : 80108518 : HudScript_StatusHeart : hud_script
+dat : 80108538 : HudScript_StatusFlower : hud_script
+dat : 80108558 : HudScript_StatusCoin : hud_script
+dat : 801086AC : HudScript_StatusStarPoint : hud_script
+dat : 80108744 : HudScript_MenuBoots1 : hud_script
+dat : 8010876C : HudScript_MenuBoots1Disabled : hud_script
+dat : 80108794 : HudScript_MenuBoots2 : hud_script
+dat : 801087BC : HudScript_MenuBoots2Disabled : hud_script
+dat : 801087E4 : HudScript_MenuBoots3 : hud_script
+dat : 8010880C : HudScript_MenuBoots3Disabled : hud_script
+dat : 80108834 : HudScript_MenuHammer1 : hud_script
+dat : 8010885C : HudScript_MenuHammer1Disabled : hud_script
+dat : 80108884 : HudScript_MenuHammer2 : hud_script
+dat : 801088AC : HudScript_MenuHammer2Disabled : hud_script
+dat : 801088D4 : HudScript_MenuHammer3 : hud_script
+dat : 801088FC : HudScript_MenuHammer3Disabled : hud_script
+dat : 80108924 : HudScript_MenuItem : hud_script
+dat : 8010894C : HudScript_MenuItemDisabled : hud_script
+dat : 80108974 : HudScript_MenuStarPower : hud_script
+dat : 8010899C : HudScript_MenuStarPowerDisabled : hud_script
+
+dat : 801089C4 : HudScript_Peril : hud_script
+dat : 80108A14 : HudScript_Danger : hud_script
+dat : 80108A64 : HudScript_Refund : hud_script
+dat : 80108AAC : HudScript_Happy : hud_script
+dat : 80108AD4 : HudScript_HPDrain : hud_script
+dat : 80108AFC : HudScript_BlueMeter : hud_script
+
+dat : 80108B28 : HudScript_AButton : hud_script
+dat : 80108B54 : HudScript_AButtonDown : hud_script
+dat : 80108B80 : HudScript_MashAButton : hud_script
+dat : 80108BBC : HudScript_PressAButton : hud_script
+dat : 80108BF8 : HudScript_SlowlyPressAButton : hud_script
+dat : 80108C34 : HudScript_SlowlyMashAButton : hud_script
+
+dat : 80108C70 : HudScript_StartButton : hud_script
+dat : 80108C9C : HudScript_StartButtonDown : hud_script
+dat : 80108CC8 : HudScript_MashStartButton : hud_script
+dat : 80108D04 : HudScript_PressStartButton : hud_script
+dat : 80108D40 : HudScript_StartButtonText : hud_script
+
+dat : 80108D6C : HudScript_RotateStickCW : hud_script
+dat : 80108E1C : HudScript_StickNeutral : hud_script
+dat : 80108E48 : HudScript_StickHoldLeft : hud_script
+dat : 80108E80 : HudScript_StickBackAndForth : hud_script
+dat : 80108F30 : HudScript_StickMashLeft : hud_script
+dat : 80108F90 : HudScript_StickTapLeft : hud_script
+dat : 80108FF0 : HudScript_StickTapNeutral : hud_script
+dat : 8010908C : HudScript_StickHoldDown : hud_script
+dat : 801090C4 : HudScript_StickMashDown : hud_script
+dat : 80109124 : HudScript_StickTapDown : hud_script
+dat : 80109184 : HudScript_StickSlowlyTapDown : hud_script
+dat : 801091E4 : HudScript_StickTapRight : hud_script
+
+dat : 80109244 : HudScript_RunAwayOK : hud_script
+dat : 80109270 : HudScript_MenuTimes : hud_script
+dat : 80109298 : HudScript_PartnerRank1A : hud_script
+dat : 801092C0 : HudScript_PartnerRank1B : hud_script
+dat : 801092E8 : HudScript_PartnerRank2A : hud_script
+dat : 80109310 : HudScript_PartnerRank2B : hud_script
+dat : 80109338 : HudScript_MoveDiamond : hud_script
+dat : 80109360 : HudScript_MoveBlueOrb : hud_script
+dat : 80109388 : HudScript_MoveGreenOrb : hud_script
+dat : 801093B0 : HudScript_MoveRedOrb : hud_script
+dat : 801093D8 : HudScript_MoveDiamondDisabled : hud_script
+dat : 80109400 : HudScript_MoveBlueOrbDisabled : hud_script
+dat : 80109428 : HudScript_MoveGreenOrbDisabled : hud_script
+dat : 80109450 : HudScript_MoveRedOrbDisabled : hud_script

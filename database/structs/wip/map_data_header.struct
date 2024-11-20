@@ -1,0 +1,21 @@
+% map_data_header
+% located at 800A41E8
+type: ram
+size: 40
+fields:
+{
+	  0 : modelTreeRoot      : model_node*
+	  4 : stageCollision     : ptr
+%	  8 : UNK 8
+	 10 : scriptMain         : bytecode*
+	 14 : entryList          : float[4]*
+	 18 : numEntries         : int
+%	 1C : UNK C
+	 28 : modelNameList      : char**
+	 2C : colliderNameList   : char**
+	 30 : zoneNameList       : char**
+%	 34 : UNK 4
+	 38 : backgroundImage    : ptr
+	 3C : mapTattle          : int
+}
+

@@ -1,0 +1,12 @@
+% msg_image_data
+type: ram
+size: 14
+fields:
+{
+	  0 : raster             : byte*
+	  4 : palette            : short*
+	  8 : size               : short[2`]
+	  C : format             : int
+	 10 : tmemOffset         : int        % usually zero
+}
+

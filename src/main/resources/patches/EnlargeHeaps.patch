@@ -1,0 +1,206 @@
+
+/%
+default values:
+80268000 = CollisionBase
+802FB800 = WorldBase
+8034F800 = SpriteBase
+803DA800 = BattleBase
+801AA000 = AudioBase
+
+18000 = CollisionSize
+54000 = WorldSize
+40000 = SpriteSize
+4 = SpriteSizeUpper
+25800 = BattleSize
+56000 = AudioSize
+%/
+
+/%
+	World
+	Start	802FB800
+	End 	8034F800
+	Size	54000
+%/
+
+@Hook $create_audio_system[40] % 8004AB40
+{
+	LI		A1, ##[VALUE:AudioBase]
+	LI		A2, ##[VALUE:AudioSize]
+	JAL		~Func:alHeapInit
+	RESERVED
+	J		8004AB48
+	NOP
+}
+
+% 00006000 --> 8002AC00
+@Function $general_heap_create[4]
+{
+	SW		RA, 10 (SP)
+	LA		A0, ##[VALUE:WorldBase]
+	LIO		A1, ##[VALUE:WorldSize]
+	JAL		~Func:_heap_create
+	RESERVED
+}
+
+% 00006028 --> 8002AC28
+@Function $general_heap_malloc[8]
+{
+	LA		A0, ##[VALUE:WorldBase]
+}
+
+% 00006050 --> 8002AC50
+@Function $general_heap_malloc_tail[8]
+{
+	LA		A0, ##[VALUE:WorldBase]
+}
+
+% 00006078 --> 8002AC78
+@Function $general_heap_free[8]
+{
+	LA		A0, ##[VALUE:WorldBase]
+}
+
+/%
+	Battle
+	Start	803DA800
+	End 	80400000
+	Size	25800
+%/
+
+% 000060A0 --> 8002ACA0
+@Function $battle_heap_create[8]
+{
+	LA		A0, ##[VALUE:BattleBase]
+	LIO		A1, ##[VALUE:BattleSize]
+	JAL		~Func:_heap_create
+	RESERVED
+}
+
+% 000060E4 --> 8002ACE4
+@Function $heap_malloc[1C]
+{
+	LA		A0, ##[VALUE:BattleBase]
+}
+
+% 0000612C --> 8002AD2C
+@Function $heap_free[2C]
+{
+	LA		A0, ##[VALUE:BattleBase]
+}
+
+/%
+% other battle heap creation code
+% 0316D90[164] --> 802AE164
+@Function 316EF4
+{
+	LA		A0, ##[VALUE:BattleBase]
+}
+%/
+
+/%
+	Collision
+	Start	80268000
+	End 	80280000
+	Size	18000
+%/
+
+% 00006174 --> 8002AD74
+@Function $collision_heap_create[8]
+{
+	LA		A0, ##[VALUE:CollisionBase]
+	LIO		A1, ##[VALUE:CollisionSize]
+	JAL		~Func:_heap_create
+	RESERVED
+}
+
+% 000061B0 --> 8002ADB0
+@Function $collision_heap_malloc
+{
+[18]	LA		A0, ##[VALUE:CollisionBase]
+[28]	LA		A0, ##[VALUE:BattleBase]
+}
+
+% 000061F4 --> 8002ADF4
+@Function $collision_heap_free
+{
+[18]	LA		A0, ##[VALUE:BattleBase]
+[28]	LA		A0, ##[VALUE:CollisionBase]
+}
+
+/%
+	Sprite
+	Start	8034F800
+	End 	8038F800
+	Size	40000
+%/
+
+% 001009E8 --> 802DD8F8
+@Function $spr_init_sprites
+{
+[C]		LA		A0, ##[VALUE:SpriteBase]
+[28]	LUI		A1, ##[VALUE:SpriteSizeUpper]
+}
+
+% 000FEE30 --> 802DBD40
+@Function $spr_init_quad_cache {
+[4] 	LIO		A0, ##[VALUE:SpriteBase]
+}
+
+
+% D0A9C --> 8013A39C
+@Function D0A9C {
+	LIO		A0, ##[VALUE:SpriteBase]
+}
+
+% D0AC8 --> 8013A3C8
+@Function D0AC8 {
+	LIO		A0, ##[VALUE:SpriteBase]
+}
+
+% 001016D8 --> 802DE5E8
+@Function $spr_free_sprite {
+[D8]	LIO		A0, ##[VALUE:SpriteBase]
+[F0]	LIO		A0, ##[VALUE:SpriteBase]
+[100]	LIO		A0, ##[VALUE:WorldBase]
+}
+
+% 00101BFC --> 802DEB0C
+@Function $spr_load_sprite {
+[AC]	LIO		A0, ##[VALUE:SpriteBase]	% 101CA8 --> 802DEBB8
+[C8]	LIO		A0, ##[VALUE:SpriteBase]	% 101CC4 --> 802DEBD4
+}
+
+% 00101E50 --> 802DED60
+@Function $spr_init_player_raster_cache {
+[40]	LIO		A0, ##[VALUE:SpriteBase]
+}
+
+% 001020FC --> 802DF00C
+@Function $spr_load_npc_extra_anims {
+[28C]	LIO		A0, ##[VALUE:SpriteBase]
+}
+
+% 001023C8 --> 802DF2D8
+@Function $spr_allocate_components {
+[30]	LIO		A0, ##[VALUE:SpriteBase]
+[40]	LIO		A0, ##[VALUE:WorldBase]		% 102408 --> 802DF318
+}
+
+% sprite heap references in end_00 and end_01 are now handled by default map patches
+/%
+@Function DF9168 {
+	LIO		A0, ##[VALUE:SpriteBase]
+}
+
+@Function DF91B8 {
+	LIO		A0, ##[VALUE:SpriteBase]
+}
+
+@Function E07AD8 {
+	LIO		A0, ##[VALUE:SpriteBase]
+}
+
+@Function E07B28 {
+	LIO		A0, ##[VALUE:SpriteBase]
+}
+%/

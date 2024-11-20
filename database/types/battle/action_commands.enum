@@ -1,0 +1,28 @@
+ActionCommand	% namespace
+actionCommand	% library name
+false	% reversed
+
+% 00 unused
+01 = Jump
+02 = Smash
+03 = Flee
+04 = BreakFree
+05 = Whirlwind
+06 = StopLeech
+% 07 unused
+08 = DizzyShell
+09 = FireShell
+% 0A unused?
+0B = Bomb			% mash A to fill gauge
+0C = BodySlam		% (and ElectroDash) hold A until gauge fills
+0D = AirLift		% mash A
+0E = AirRaid		% rapidly press left
+0F = Squirt			
+10 = PowerShock		% mash A
+11 = MegaShock		
+12 = Smack			
+13 = SpinySurge		% press left repeatedly
+14 = Hurricane		% mash A+B
+15 = Spook
+16 = WaterBlock
+17 = TidalWave

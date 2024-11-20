@@ -1,0 +1,14 @@
+% msg_charset
+type: ram
+size: C
+fields:
+{
+	  0 : texSizeX           : ubyte
+	  1 : texSizeY           : ubyte
+	  2 : unk_02             : ubyte
+	  3 : newlineY           : ubyte
+	  4 : charRasterSize     : short      % in bytes
+	  6 : _pad_06            : byte[2`]
+	  8 : rasters            : msg_char_data*
+}
+

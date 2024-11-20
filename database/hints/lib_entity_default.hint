@@ -1,0 +1,21 @@
+
+add		802BCD68	EntityBP
+name	802BCD68	Padlock
+
+add		802BCD8C	EntityBP
+name	802BCD8C	PadlockRedFrame
+
+add		802BCDB0	EntityBP
+name	802BCDB0	PadlockRedFace
+
+add 	802BCDD4	EntityBP
+name	802BCDD4	PadlockBlueFace
+
+add 	802BCE84	EntityBP
+name	802BCE84	BoardedFloor
+
+add 	802BCF00	EntityBP
+name	802BCF00	BombableRock1
+
+add 	802BCF24	EntityBP
+name	802BCF24	BombableRock2

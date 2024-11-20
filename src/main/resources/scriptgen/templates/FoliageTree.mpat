@@ -1,0 +1,111 @@
+#new:Script $##PREFIXScript_Foliage_ShakeTree
+{
+    0:  SetTimescale  *Fixed[2.0]
+    C:  UseIntBuffer  *Var[0]
+   18:  Get4Int  *Var[1] *Var[2] *Var[3] *Var[4]
+   30:  Get1Int  *Var[5]
+   3C:  Call  GetPlayerPos  ( *Var[6] *Var[F] *Var[8] )
+   54:  Call  PlaySound     ( 00000165 )
+   64:  Call  PlaySound     ( 00000166 )
+   74:  Thread
+   7C:      Set   *Flag[00]  .False
+   8C:      If  *Var[1]  !=  00000000
+   9C:          Wait  1`
+   A8:          Loop  00000005
+   B4:              UseIntBuffer  *Var[1]
+   C0:              Get1Int  *Var[2]
+   CC:              Loop  *Var[2]
+   D8:                  Get1Int  *Var[3]
+   E4:                  Call  $##PREFIXFunction_Foliage_TransformModel    ( *Var[3] *Fixed[0.1] *Fixed[0.2] *Var[F] 00000000 )
+  104:                  If  *Flag[00]  ==  .False
+  114:                      Set   *Flag[00]  .True
+  124:                      Call  PlaySoundAtModel  ( *Var[3] 00000166 00000000 )
+  13C:                  EndIf
+  144:              EndLoop
+  14C:              Wait  1`
+  158:              UseIntBuffer  *Var[1]
+  164:              Get1Int  *Var[2]
+  170:              Loop  *Var[2]
+  17C:                  Get1Int  *Var[3]
+  188:                  Call  $##PREFIXFunction_Foliage_TransformModel    ( *Var[3] *Fixed[0.1] *Fixed[-0.2] *Var[F] 00000000 )
+  1A8:              EndLoop
+  1B0:              Wait  1`
+  1BC:          EndLoop
+  1C4:          UseIntBuffer  *Var[1]
+  1D0:          Get1Int  *Var[2]
+  1DC:          Loop  *Var[2]
+  1E8:              Get1Int  *Var[3]
+  1F4:              Call  TranslateModel    ( *Var[3] 00000000 00000000 00000000 )
+  210:          EndLoop
+  218:          Wait  1`
+  224:      EndIf
+  22C:  EndThread
+  234:  Thread
+  23C:      Set   *Flag[00]  .False
+  24C:      If  *Var[2]  !=  00000000
+  25C:          Loop  00000005
+  268:              UseIntBuffer  *Var[2]
+  274:              Get1Int  *Var[3]
+  280:              Loop  *Var[3]
+  28C:                  Get1Int  *Var[4]
+  298:                  Call  $##PREFIXFunction_Foliage_TransformModel    ( *Var[4] *Fixed[0.1] *Fixed[0.2] *Var[F] 00000000 )
+  2B8:                  If  *Flag[00]  ==  .False
+  2C8:                      Set   *Flag[00]  .True
+  2D8:                      Call  PlaySoundAtModel  ( *Var[4] 00000165 00000000 )
+  2F0:                  EndIf
+  2F8:              EndLoop
+  300:              Wait  1`
+  30C:              UseIntBuffer  *Var[2]
+  318:              Get1Int  *Var[3]
+  324:              Loop  *Var[3]
+  330:                  Get1Int  *Var[4]
+  33C:                  Call  $##PREFIXFunction_Foliage_TransformModel    ( *Var[4] *Fixed[0.1] *Fixed[-0.2] *Var[F] 00000000 )
+  35C:              EndLoop
+  364:              Wait  1`
+  370:          EndLoop
+  378:          UseIntBuffer  *Var[2]
+  384:          Get1Int  *Var[3]
+  390:          Loop  *Var[3]
+  39C:              Get1Int  *Var[4]
+  3A8:              Call  TranslateModel    ( *Var[4] 00000000 00000000 00000000 )
+  3C4:          EndLoop
+  3CC:          Wait  1`
+  3D8:      EndIf
+  3E0:  EndThread
+  3E8:  Thread
+  3F0:      If  *Var[3]  !=  00000000
+  400:          UseIntBuffer  *Var[3]
+  40C:          Get1Int  *Var[4]
+  418:          Loop  *Var[4]
+  424:              Get1Int  *Var[5]
+  430:              Get3Int  *Var[6] *Var[7] *Var[8]
+  444:              Get3Int  *Var[9] *Var[A] *Var[B]
+  458:              If  *Var[B]  ==  00000000
+  468:                  Call  DropItemEntity    ( *Var[5] *Var[6] *Var[7] *Var[8] *Var[9] *Var[A] )
+  48C:              Else
+  494:                  Call  GetValueByRef ( *Var[B] *Var[C] )
+  4A8:                  If  *Var[C]  ==  00000000
+  4B8:                      Call  SetValueByRef     ( *Var[B] 00000001 )
+  4CC:                      Call  DropItemEntity    ( *Var[5] *Var[6] *Var[7] *Var[8] *Var[9] *Var[A] )
+  4F0:                  EndIf
+  4F8:              EndIf
+  500:          EndLoop
+  508:      EndIf
+  510:  EndThread
+  518:  Thread
+  520:      If  *Var[4]  !=  00000000
+  530:          UseIntBuffer  *Var[4]
+  53C:          Get1Int  *Var[5]
+  548:          Loop  *Var[5]
+  554:              Get3Int  *Var[6] *Var[7] *Var[8]
+  568:              Call  PlayEffect    ( ~FX:DropLeaves:Random *Var[6] *Var[7] *Var[8] 00000064 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 )
+  5AC:          EndLoop
+  5B4:      EndIf
+  5BC:  EndThread
+  5C4:  If  *Var[5]  !=  00000000
+  5D4:      ExecWait  *Var[5]
+  5E0:  EndIf
+  5E8:  Wait  15`
+  5F4:  Return
+  5FC:  End
+}

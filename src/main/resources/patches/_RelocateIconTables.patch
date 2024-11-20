@@ -1,0 +1,110 @@
+
+% table: 065A80 - 066508 ==> 8008A680
+
+% -------------------------------
+% engine
+
+@Function 80104 % <==> 800E6C54
+{
+LIO		T2, $Global_MenuIconTable
+}
+
+@Function CC720 % <==> 80247CA4
+{
+LIO		T2, $Global_MenuIconTable
+}
+
+% -------------------------------
+% engine (00E79B0, 00FEE30)
+% delta = 801DB650
+
+% $Function_802D6420
+@Function FAE54 % <==> 802D64A4
+{
+LIO		T3, $Global_MenuIconTable
+}
+
+% $Function_802D663C
+@Function FB070 % <==> 802D66C0
+{
+LIO		T3, $Global_MenuIconTable
+}
+
+% -------------------------------
+% menu data (0135EE0, 0163400)
+% delta = 8010CCC0
+
+@Function 13B028	
+{
+LIO		T2, $Global_MenuIconTable	% disabled icon
+}
+
+@Function 13B058 % <==> 80247D18
+{
+LIO		T2, $Global_MenuIconTable	% enabled icon
+}
+
+@Function 13D1C4 % <==> 80249E84
+{
+LIO		T3, $Global_MenuIconTable
+}
+
+@Function 13D1F8 % <==> 80249EB8
+{
+LIO		T3, $Global_MenuIconTable
+}
+
+@Function 13AFE4 % <==> 80247CA4
+{
+LIO		T2, $Global_MenuIconTable
+}
+
+% -------------------------------
+% battle script lib @ 80230000
+% delta = 800D1720
+
+@Function 18D6E4 % <==> 8025EE04
+{
+LIO		A1, $Global_MenuIconTable
+ADDU	A1, A1, V0
+}
+
+@Function 18DAA4 % <==> 8025F1C4
+{
+LIO		A1, $Global_MenuIconTable
+ADDU	A1, A1, V0
+}
+
+% -------------------------------
+% 0415D90 to 04309A0? battle menus?
+% delta = 7FE8B270
+
+@Function 41B570 % <==> 802A67E0
+{
+LIO		T6, $Global_MenuIconTable
+}
+
+@Function 41BB84 % <==> 802A6DF4
+{
+LIO		T6, $Global_MenuIconTable
+}
+
+@Function 41BE54 % <==> 802A70C4
+{
+LIO		T6, $Global_MenuIconTable
+}
+
+@Function 41C434 % <==> 802A76A4
+{
+LIO		T6, $Global_MenuIconTable
+}
+
+% -------------------------------
+% map script lib @ 80280000
+% delta = 7FA9F180
+
+% $Function_80280954
+@Function 7E1894 % <==> 80280A14
+{
+LIO		A1, $Global_MenuIconTable
+}

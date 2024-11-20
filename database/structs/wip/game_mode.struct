@@ -1,0 +1,14 @@
+% game_mode
+type: ram
+size: 18
+fields:
+{
+	  0 : flags              : short
+%	  2 : UNK 2
+	  4 : fpInitState        : code
+	  8 : fpStepState        : code
+	  C : fpUnk              : code       % run by (unused?) function 80112eec
+	 10 : fpDrawUI           : code
+	 14 : fpDrawAuxUI        : code
+}
+

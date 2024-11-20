@@ -1,0 +1,9 @@
+EnemyFlags	% namespace
+enemyFlags	% library name
+false	% reversed
+
+01000000 = IgnoreTouch
+02000000 = IgnoreJump
+04000000 = IgnoreHammer
+%10000000	SPIN? partner?
+%20000000	BUMP?

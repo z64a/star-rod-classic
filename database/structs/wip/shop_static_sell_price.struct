@@ -1,0 +1,10 @@
+% shop_static_sell_price
+type: ram
+size: C
+fields:
+{
+	  0 : itemID             : int
+	  4 : newSalePrice       : int
+	  8 : unk_08             : int
+}
+

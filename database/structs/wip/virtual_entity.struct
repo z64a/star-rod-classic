@@ -1,0 +1,19 @@
+% virtual_entity
+type: ram
+size: 60
+fields:
+{
+	  0 : entityModelIndex   : int
+	  4 : pos                : float[3`]
+	 10 : rot                : float[3`]
+	 1C : scale              : float[3`]
+	 28 : goalPos            : float[3`]
+	 34 : moveDist           : float
+	 38 : moveAngle          : float
+	 3C : moveSpeed          : float
+	 40 : jumpGravity        : float
+	 44 : jumpVelocity       : float
+	 48 : moveTime           : float
+%	 4C : UNK 14
+}
+

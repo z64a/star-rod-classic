@@ -1,0 +1,12 @@
+% model_local_vertex_copy
+type: ram
+size: 1C
+fields:
+{
+	  0 : numVertices        : int
+	  4 : minVertexAddr      : f3dex2_vertex*
+	  8 : gfxCopy            : pointer[2`]
+	 10 : verticesCopy       : pointer[2`]
+	 18 : unk_18             : int
+}
+

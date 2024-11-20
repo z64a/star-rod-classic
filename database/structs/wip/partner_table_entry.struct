@@ -1,0 +1,23 @@
+% partner_table_entry
+type: ram
+size: 40
+fields:
+{
+	  0 : dmaStart           : int
+	  4 : dmaEnd             : int
+	  8 : dmaDest            : int
+	  C : isFlying           : int
+	 10 : fpInit             : code       % called before anything else here
+	 14 : scrOnTakeOut       : bytecode*  % run when partner is taken out
+	 18 : scrUseAbility      : bytecode*  % ability implementation
+	 1C : scrOnUpdate        : bytecode*  % run every frame
+	 20 : scrOnPutAway       : bytecode*  % run when partner is put away
+	 24 : spriteID           : int        % only used to determine sprite
+	 28 : fpTestEnemyCollision : code       % args: enemy*, called to check if ability should trigger a first-strike
+	 2C : fpCanUseAbility    : code       % special check for using ability
+	 30 : fpCanPause         : code
+	 34 : fpBeforeBattle     : code       % called right after screen fades to black
+	 38 : fpAfterBattle      : code       % called before screen fades in from black
+	 3C : scrWhileRiding     : bytecode*  % used by watt, sushi, and lakilester
+}
+

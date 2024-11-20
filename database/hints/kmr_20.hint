@@ -1,0 +1,34 @@
+
+add 	80252DC0	DataTable
+newline	80252DC0	4
+
+add 	80242B04	Function
+name	80242B04	Function_ShowRecordsPopup
+
+add 	80242A3C	Function
+name	80242A3C	Function_GetRecordValues
+
+add 	80244D24	IntTable
+name 	80244D24	LetterStoryRequirements
+newline	80244D24	4
+
+add 	80244D54	IntTable
+name 	80244D54	LetterSenderStringIDs
+newline	80244D54	4
+
+add 	80244D84	IntTable
+name 	80244D84	LetterBodyStringIDs
+newline	80244D84	4
+
+add 	80244DB4	IntTable
+name 	80244DB4	LetterDmaOffsets
+newline	80244DB4	2
+
+add 	80244FA0	IntTable
+name 	80244FA0	DiaryStoryRequirements
+newline	80244FA0	4
+
+add 	80244FD0	IntTable
+name 	80244FD0	DiaryEntryStringIDs
+newline	80244FD0	4
+

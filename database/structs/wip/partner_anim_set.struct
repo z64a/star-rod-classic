@@ -1,0 +1,16 @@
+% partner_anim_set
+type: ram
+size: 24
+fields:
+{
+	  0 : default            : int        % Usually a still sprite
+	  4 : walk               : int
+	  8 : jump               : int
+	  C : fall               : int
+	 10 : fly                : int
+	 14 : idle               : int
+	 18 : run                : int
+	 1C : talk               : int
+	 20 : hurt               : int
+}
+

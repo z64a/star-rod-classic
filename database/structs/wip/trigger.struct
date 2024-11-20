@@ -1,0 +1,22 @@
+% trigger
+type: ram
+size: 38
+fields:
+{
+	  0 : genericFlagIndex   : short
+	  2 : field_0x2          : short
+	  4 : colliderID?        : short
+	  6 : panelFlagIndex     : short
+	  8 : targetIndex        : int        % can be colliderID, flag index, etc
+	  C : functionHandler    : code
+	 10 : scriptStart        : bytecode*
+	 14 : runningScript      : script_context*
+	 18 : priority           : int        % also float posY?
+	 1C : scriptVars         : int[3`]
+	 28 : ownerEntity        : int
+	 2C : field_0x2c         : int
+	 30 : fromInputArg3      : ubyte
+%	 31 : UNK 3
+	 34 : runningScriptID    : int
+}
+

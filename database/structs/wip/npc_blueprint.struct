@@ -1,0 +1,11 @@
+% npc_blueprint
+type: ram
+size: 10
+fields:
+{
+	  0 : flags              : int
+	  4 : initialAnimation   : int
+	  8 : onUpdate           : code
+	  C : onRender           : code
+}
+

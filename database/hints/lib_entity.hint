@@ -1,0 +1,190 @@
+
+add		802E92F0	IntTable
+
+add		802EA860	IntTable
+size	802EA860	10
+
+add		802EA870	IntTable	% probably a byte[5][3]
+size	802EA870	10
+
+name	802E97D8	GfxSquareShadow
+name	802E9800	GfxCircularShadow
+
+add		802E99DC	EntityScript
+add		802E9DEC	EntityScript
+add		802E9E54	EntityScript
+add		802E9E80	EntityScript
+add		802EAD7C	EntityScript
+add		802EA310	EntityScript
+add		802E9830	EntityModelScript
+add		802EAE7C	EntityModelScript
+add		802EA744	EntityModelScript
+add		802EA760	EntityModelScript
+
+add		802E98BC	EntityBP
+name	802E98BC	CircularShadowA
+
+add		802E98E0	EntityBP
+name	802E98E0	CircularShadowB
+
+add		802E9904	EntityBP
+name	802E9904	SquareShadow
+
+add 	802E9A18	EntityBP
+name	802E9A18	Entity_SavePoint
+
+add 	802E9BB0	EntityBP
+name	802E9BB0	Entity_RedSwitch
+
+add 	802E9BD4	EntityBP
+name	802E9BD4	Entity_BlueSwitch
+
+add 	802E9BF8	EntityBP
+name	802E9BF8	Entity_HugeBlueSwitch
+
+add 	802E9C1C	EntityBP
+name	802E9C1C	Entity_GreenStompSwitch
+
+add 	802EA07C	EntityBP
+name	802EA07C	Entity_InactiveRedBlock
+
+add		802EA0A0	EntityBP
+name	802EA0A0	Entity_InactiveYellowBlock
+
+add 	802EA0C4	EntityBP
+name	802EA0C4	Entity_BrickBlock
+
+add 	802EA0E8	EntityBP
+name	802EA0E8	Entity_MultiCoinBrick
+
+add 	802EA10C	EntityBP
+name	802EA10C	Entity_Hammer1Block
+
+add 	802EA130	EntityBP
+name	802EA130	Entity_Hammer1BlockWide
+
+add 	802EA154	EntityBP
+name	802EA154	Entity_Hammer1BlockThick
+
+add 	802EA178	EntityBP
+name	802EA178	Entity_Hammer1BlockTiny
+
+add 	802EA19C	EntityBP
+name	802EA19C	Entity_Hammer2Block
+
+add 	802EA1C0	EntityBP
+name	802EA1C0	Entity_Hammer2BlockWide
+
+add 	802EA1E4	EntityBP
+name	802EA1E4	Entity_Hammer2BlockThick
+
+add 	802EA208	EntityBP
+name	802EA208	Entity_Hammer2BlockTiny
+
+add 	802EA22C	EntityBP
+name	802EA22C	Entity_Hammer3Block
+
+add 	802EA250	EntityBP
+name	802EA250	Entity_Hammer3BlockWide
+
+add 	802EA274	EntityBP
+name	802EA274	Entity_Hammer3BlockThick
+
+add 	802EA298	EntityBP
+name	802EA298	Entity_Hammer3BlockTiny
+
+add 	802EA2BC	EntityBP
+name	802EA2BC	Entity_PushBlock
+
+add 	802EA2E0	EntityBP
+name	802EA2E0	Entity_PowBlock
+
+add 	802EA564	EntityBP
+name	802EA564	Entity_YellowBlock
+
+add 	802EA588	EntityBP
+name	802EA588	Entity_HiddenYellowBlock
+
+add 	802EA5AC	EntityBP
+name	802EA5AC	Entity_RedBlock
+
+add 	802EA5D0	EntityBP
+name	802EA5D0	Entity_HiddenRedBlock
+
+add 	802EA5F4	EntityBP
+name	802EA5F4	Entity_SingleTriggerBlock
+
+add 	802EA7E0	EntityBP
+name	802EA7E0	Entity_HealingBlock
+
+add 	802EA910	EntityBP
+name	802EA910	Entity_SuperBlock
+
+add 	802EAA30	EntityBP
+name	802EAA30	Entity_ScriptSpring
+
+add 	802EAA54	EntityBP
+name	802EAA54	Entity_SimpleSpring
+
+add 	802EAB04	EntityBP
+name	802EAB04	Entity_HiddenPanel
+
+add 	802EAE0C	EntityBP
+name	802EAE0C	Entity_GiantChest
+
+add 	802EAE30	EntityBP
+name	802EAE30	Entity_Chest
+
+add 	802EAF80	EntityBP
+name	802EAF80	Entity_BlueWarpPipe
+
+add 	802EAED4	EntityBP
+name	802EAED4	Entity_WoodenCrate
+
+add 	802EAFDC	EntityBP
+name	802EAFDC	Entity_Signpost
+
+add		802E9C8C	EntityBP
+name	802E9C8C	Entity_ShatteringHammer1Block
+
+add		802E9CB0	EntityBP
+name	802E9CB0	Entity_ShatteringHammer2Block
+
+add		802E9CD4	EntityBP
+name	802E9CD4	Entity_ShatteringHammer3Block
+
+add		802E9CF8	EntityBP
+name	802E9CF8	Entity_ShatteringHammer1BlockTiny
+
+add		802E9D1C	EntityBP
+name	802E9D1C	Entity_ShatteringHammer2BlockTiny
+
+add		802E9D40	EntityBP
+name	802E9D40	Entity_ShatteringHammer3BlockTiny
+
+add		802E9D64	EntityBP
+name	802E9D64	Entity_ShatteringBrickBlock
+
+add		802EA618	EntityBP
+name	802EA618	Entity_HitGroundedYellowBlock
+
+add		802EA63C	EntityBP
+name	802EA63C	Entity_HitFloatingYellowBlock
+
+add		802EA660	EntityBP
+name	802EA660	Entity_HitRedBlock
+
+add		802EA798	EntityBP
+name	802EA798	Entity_EmptyHealingBlock
+
+add		802EA7BC	EntityBP
+name	802EA7BC	Entity_HealingBlockContent
+
+add		802EA934	EntityBP
+name	802EA934	Entity_SuperBlockHitEffect1
+
+add		802EA958	EntityBP
+name	802EA958	Entity_RedSuperBock
+
+add		802EA97C	EntityBP
+name	802EA97C	Entity_SuperBlockHitEffect2

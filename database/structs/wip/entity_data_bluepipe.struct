@@ -1,0 +1,14 @@
+% entity_data_bluepipe
+type: ram
+size: 1C
+fields:
+{
+%	  0 : UNK 4
+	  4 : timer              : int
+	  8 : field_0x8          : int
+	  C : entryID            : int
+%	 10 : UNK 4
+	 14 : shouldAppearGlobalFlag : int
+%	 18 : UNK 4
+}
+

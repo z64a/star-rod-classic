@@ -1,0 +1,15 @@
+DebuffType	% namespace
+debuffType	% library name
+false		% reversed
+
+00001000 = Sleep
+00002000 = Static
+00004000 = Frozen
+00010000 = Paralyzed
+00020000 = Poison
+00040000 = Dizzy
+00080000 = Shrink
+00100000 = Stone
+00200000 = Stop
+01000000 = Daze
+04000000 = Invisible

@@ -1,0 +1,9 @@
+% icon_cache_entry
+type: ram
+size: 8
+fields:
+{
+	  0 : key                : int
+	  4 : addr               : ptr
+}
+

@@ -1,0 +1,187 @@
+
+% 000000CC 000000NN --> NN0000CC (yields best Yay0 compression), N = nonzero constant
+
+% dm = 801DB650
+
+% ===============================================
+% ExecuteCommand
+% -----------------------------------------------
+	
+@Function EBDFC % <==> 802C744C
+{
+	LBU		V0, 3 (V1)	% get opcode
+	SB		V0, 2 (S0)	% save opcode
+}
+	
+@Hook EBE04 % <==> 802C7454
+{
+	LBU		A0, 0 (V1)	% check for packed length
+	BNEL	A0, R0, .Packed
+	ADDI	A0, A0, -1	% packed bytes are length+1
+	ADDIU	V1, V1, 4
+	LW		A0, 0 (V1)	% get length from next word
+	.Packed
+	J		802C745C
+	NOP
+}
+
+% ===============================================
+% FindLabels
+% -----------------------------------------------
+
+% remove unused instruction for clarity
+@Function E7B3C % <==> 802C318C
+{
+	NOP		% LW	V0, 0 (V1)	
+}
+
+% in Function_si_FindLabels (E7AF8 --> 802C3148)
+@Hook E7B34 % <==> 802C3184
+{
+	LBU		A1, 3 (V1)
+	LBU		V0, 0 (V1)	% check for packed length
+	BNEL	V0, R0, .Packed
+	ADDI	V0, V0, -1	% packed bytes are length+1
+	ADDIU	V1, V1, 4
+	LW		V0, 0 (V1)	% get length from next word
+	.Packed
+	J		802C3190
+	NOP
+}
+
+% ===============================================
+% SkipIf
+% -----------------------------------------------
+	
+@Hook ED2BC % <==> 802C890C
+{
+	LBU		V0, 3 (A0)
+	LBU		V1, 0 (A0)
+	BNEL	V1, R0, .Packed
+	ADDI	V1, V1, -1	% packed bytes are length+1
+	ADDIU	A0, A0, 4
+	LW		V1, 0 (A0)
+	.Packed
+	J		802C8918
+	NOP
+}
+	
+@Hook ED338 % <==> 802C8988
+{
+	LBU		V0, 3 (A0)
+	LBU		V1, 0 (A0)
+	BNEL	V1, R0, .Packed
+	ADDI	V1, V1, -1	% packed bytes are length+1
+	ADDIU	A0, A0, 4
+	LW		V1, 0 (A0)
+	.Packed
+	J		802C8994
+	NOP
+}
+	
+% ===============================================
+% Goto Next Case
+% -----------------------------------------------
+
+@Hook ED428 % <==> 802C8A78
+{
+	LBU		V1, 3 (A0)
+	LBU		V0, 0 (A0)
+	ADDIU	A2, A0, 4
+	BNEL	V0, R0, .Packed
+	ADDI	V0, V0, -1	% packed bytes are length+1
+	ADDIU	A2, A0, 8
+	LW		V0, 4 (A0)
+   	.Packed
+	J		802C8A84
+	NOP
+}
+
+% ===============================================
+% Goto Endcase
+% -----------------------------------------------
+	
+@Hook ED3B0 % <==> 802C8A00
+{
+	LBU		V1, 3 (A0)
+	LBU		V0, 0 (A0)
+	ADDIU	A2, A0, 4
+	BNEL	V0, R0, .Packed
+	ADDI	V0, V0, -1	% packed bytes are length+1
+	ADDIU	A2, A0, 8
+	LW		V0, 4 (A0)
+	.Packed
+	J		802C8A08
+	NOP
+}
+
+% ===============================================
+% Goto Endloop
+% -----------------------------------------------
+
+@Hook ED4A8 % --> 802C8AF8
+{
+	LBU		A0, 3 (V1)
+	LBU		V0, 0 (V1)
+	BNEL	V0, R0, .Packed
+	ADDI	V0, V0, -1	% packed bytes are length+1
+	ADDIU	V1, V1, 4
+	LW		V0, 0 (V1)
+	.Packed
+	J		 802C8B04
+	NOP
+}
+	
+% ===============================================
+% HandleThread
+% -----------------------------------------------
+
+@Hook EB644 % --> 802C6C94
+{
+	LBU		V1, 3 (A1)
+	LBU		V0, 0 (A1)
+	BNEL	V0, R0, .Packed
+	ADDI	V0, V0, -1	% packed bytes are length+1
+	LW		V1, 0 (A1)
+	ADDIU   A1, A1, 4
+	LW		V0, 0 (A1)
+	.Packed
+	ADDIU   A1, A1, 4
+	J		 802C6CA4
+	NOP
+}
+
+/%
+@Hook EB644 % <==> 802C6C94
+{
+	LBU		V1, 3 (A1)
+	LBU		V0, 0 (A1)
+	BNEL	V0, R0, .Packed
+	ADDI	V0, V0, -1	% packed bytes are length+1
+	ADDIU	A1, A1, 4
+	LW		V0, 0 (A1)
+	.Packed
+	J		802C6CA0
+	NOP
+}
+%/
+
+	
+% ===============================================
+% HandleChildThread
+% -----------------------------------------------
+
+@Hook EB738 % --> 802C6D88
+{
+	LBU		V1, 3 (A0)
+	LBU		V0, 0 (A0)
+	BNEL	V0, R0, .Packed
+	ADDI	V0, V0, -1	% packed bytes are length+1
+	LW		V1, 0 (A0)
+	ADDIU   A0, A0, 4
+	LW		V0, 0 (A0)
+	.Packed
+	ADDIU   A0, A0, 4
+	J		 802C6D98
+	NOP
+}

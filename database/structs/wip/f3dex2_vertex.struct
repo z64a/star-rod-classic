@@ -1,0 +1,12 @@
+% f3dex2_vertex
+type: ram
+size: 10
+fields:
+{
+	  0 : pos                : short[3`]
+%	  6 : UNK 2
+	  8 : uv                 : short[2`]
+	  C : color              : byte[3`]
+	  F : alpha              : ubyte
+}
+

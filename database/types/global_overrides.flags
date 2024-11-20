@@ -1,0 +1,18 @@
+GlobalOverrides	% namespace
+globalOverrides	% library name
+false	% reversed
+
+% flags at 8009A650
+
+000002 = DisableRenderWorld % do not render world
+% 000010 = draw messages in front of icons?
+000020 = EnableTransitionStencil
+% 000040 = do not tick battle cooldown (maybe ‘pop-up menu open’)
+000100 = DisableBattles % do not start battles
+% 000400 = do not update animations; do not begin FX (they are queued until this is cleared)
+% 000800 = do not update effects; also do not start animations?
+%0XY00 = X nibble copied from Y at the end of each game step
+010000 = WindowsInFrontOfCurtains  % draw windows in front of curtains (drawn behind when 0)
+040000 = DisableMenus % pause and partner/item popups
+100000 = MessagesInFrontOfCurtains % draw messages in front of curtains (drawn behind when 0)
+200000 = CantPickUpItems

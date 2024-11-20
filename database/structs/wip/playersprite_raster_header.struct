@@ -1,0 +1,10 @@
+% playersprite_raster_header
+type: ram
+size: C
+fields:
+{
+	  0 : groupIndices       : int
+	  4 : rasterInfo         : int
+	  8 : imageList          : int
+}
+

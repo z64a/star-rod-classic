@@ -1,0 +1,22 @@
+% window
+% size verified
+type: ram
+size: 20
+fields:
+{
+	  0 : flags              : ubyte      % 20 = hidden, 1 = disabled
+	  1 : panelID?           : ubyte
+	  2 : field_0x2          : ubyte      % related to hierarchy somehow, sibiling? group?
+	  3 : parent?            : ubyte
+	  4 : fp_update?         : code
+	  8 : fp_pending?        : code
+	  C : posX               : short
+	  E : posY               : short
+	 10 : width              : short
+	 12 : height             : short
+	 14 : fpDrawContents     : code
+	 18 : field_0x18         : int        % menu_tab pointer for pause menu tabs
+	 1C : updateCounter      : ubyte
+%	 1D : UNK 3
+}
+

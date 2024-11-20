@@ -1,0 +1,30 @@
+EntityFlags	% namespace
+entityFlags	% library name
+false	% reversed
+
+00000001 = Hidden
+00000002 = DrawIfCloseHideMode1					% when 80151310 == 1
+00000004 = HasDynamicShadow						% shadow position recomputed every frame
+00000008 = HasAnimatedModel
+00000010 = SkipUpdateTransformMatrix			% could mean it doesnt move
+00000020 = SkipUpdateInverseRotationMatrix		% could mean it doesnt rotate
+00000040 = ContinuousCollision					% could mean it doesnt rotate
+
+00000200 = SetShadowFlag200
+
+00000800 = SquareShadow
+00001000 = ShowsInspectPrompt
+00002000 = AlwaysFaceCamera
+
+00010000 = DetectedCollision
+00020000 = BlockBeingHit						% on set, item is ejected
+
+00040000 = DrawIfCloseHideMode2					% when 80151310 == 2
+00080000 = IgnoreDistanceCulling
+
+
+01000000 = BoundScriptDirty
+04000000 = PendingFullDelete					% delete static data as well
+20000000 = PendingInstanceDelete				% delete entity instance data
+40000000 = SkipUpdate
+% 80000000 = Created

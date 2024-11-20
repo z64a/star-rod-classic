@@ -1,0 +1,12 @@
+% hit_static_collider
+type: ram
+size: C
+fields:
+{
+	  0 : aabbOffset         : short
+	  2 : nextSibling        : short
+	  4 : child              : short
+	  6 : numTriangles       : short
+	  8 : trianglesOffset    : int
+}
+

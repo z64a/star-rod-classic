@@ -1,0 +1,14 @@
+% msg_font_glyph_data
+% result of querying msg_get_glyph for raster/palette of a given character
+type: ram
+size: C
+fields:
+{
+	  0 : raster             : byte*
+	  4 : palette            : short*
+	  8 : texSizeX           : ubyte
+	  9 : texSizeY           : ubyte
+	  A : charWidth          : ubyte
+	  B : charHeight         : ubyte
+}
+

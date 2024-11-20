@@ -1,0 +1,20 @@
+% menu_tab
+type: ram
+size: 1C
+fields:
+{
+	  0 : field_0x0          : ubyte
+	  1 : field_0x1          : ubyte
+	  2 : field_0x2          : ubyte
+	  3 : field_0x3          : ubyte
+	  4 : field_0x4          : ubyte
+	  5 : field_0x5          : ubyte
+	  6 : field_0x6          : ubyte
+	  7 : field_0x7          : ubyte
+	  8 : field_0x8          : byte*
+	  C : fpInit             : code
+	 10 : fpHandleInput      : code
+	 14 : fpUpdate           : code
+	 18 : fpCleanup          : code
+}
+

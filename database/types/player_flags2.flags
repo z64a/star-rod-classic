@@ -1,0 +1,15 @@
+PlayerFlags2	% namespace
+playerFlags2	% library name
+false	% reversed
+
+% flags at 8010EFCC
+00001 = HoldingWatt
+00010 = InteractPromptAvailable
+00020 = SpeechPromptAvailable
+00080 = UsingPulseStone
+00200 = GetStarSpirit
+00400 = Shivering
+01000 = UsingPeachPhysics
+02000 = InDisguise
+04000 = 8BitMario
+10000 = Spinning

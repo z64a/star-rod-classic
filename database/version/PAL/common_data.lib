@@ -1,0 +1,101 @@
+
+% system/global functions, scripts, etc.
+% excludes 'overlay memory': 80200000 - 802C3000
+
+{version=1.0}
+{scope=pal:common}
+
+%{ DATA =====================================================
+
+
+dat : 80071334 : GameStatus : game_status
+dat : 800714ac : CurrentGameStatus : game_status*
+
+/%
+dat : 800741D0 : MatrixStackPos : short
+
+
+dat : 80074240 : MaxRumbleDuration : short
+
+dat : 800776B8 : GameModeBlueprints : game_mode_bp[18`]
+dat : 80077820 : GameModeBlueprintList : game_mode_bp*[18`]
+
+dat : 8009A648 : FirstStrikeBasePosX : short
+dat : 8009A64C : MasterGfxEnd : gfx*
+
+dat : 8009A654 : CurrentDisplayContext : jp_display_context*
+
+dat : 8009A614 : CurrentIterCamIndex : short
+
+dat : 8009E700 : GameMode : short
+
+% dat : 800b1dcc : Cameras : camera[4]
+
+dat : 800D9210 : ShapeAssetName : char[24`]
+dat : 800D9228 : AlHeap : ALHeap
+
+dat : 800DC050 : BattleStatus : battle_status
+
+dat : 80112EE0 : DefaultSpriteQuad : vertex[4]
+
+dat : 80113010 : SpriteAnimTimeScale : float
+dat : 80113014 : PlayerSpriteSets : spr_player_set[7]
+dat : 80113074 : bAllocateComponentsOnWorldHeap : int
+
+dat : 80113098 : PlayerSprites : sprite_anim_data*[13`]
+dat : 801130CC : CurrentPlayerSpriteIndex : int
+dat : 801130D0 : PlayerSpritesMaxComponents : int
+dat : 801130D8 : PlayerCurrentAnimInfo : current_player_anim_info[3]
+dat : 80113100 : NpcSprites : sprite_anim_data*[234`]
+dat : 801134A8 : NpcSpriteInstanceCount : byte[234`]
+dat : 80113598 : SpriteInstances : sprite_instance[51`]
+dat : 80113994 : SpriteQuadCachePtr : sprite_quad**
+dat : 80113998 : SpriteQuadSizes : int[22`]
+
+dat : 80113A00 : SpriteYay0DmaArgs : int[2]
+dat : 80113A08 : CurrentPlayerRasters : int[101`]
+dat : 80113B9C : PlayerRasterSetsLoaded : int
+dat : 80113BA0 : PlayerRasterBufferSetOffsets : int[13`]
+dat : 80113BE0 : PlayerRasterBuffer : int[736`]
+dat : 80114760 : PlayerRasterHeader : spr_player_raster_header
+dat : 80114770 : PlayerRasterSets : int[14`]
+dat : 801147A8 : PlayerRasterCacheSize : int
+dat : 801147AC : PlayerRasterMaxSize : int
+dat : 801147B0 : SpriteDataHeader : spritedata_header
+dat : 801147C0 : PlayerRasterCache : spr_player_cache_entry[18`]
+
+dat : 8010ed70 : PartnerActionStatus : partner_action_status
+
+dat : 8010F118 : UIStatus : ui_status
+dat : 8010F188 : PlayerStatus : player_status
+dat : 8010F410 : PlayerSpinState : player_spin_state
+dat : 8010F450 : PlayerData : player_data
+
+dat : 8015F4D0 : CollisionStatus : collision_status
+
+dat : 80164000 : DisplayContexts : display_context[2`]
+
+dat : 802DA480 : CurrentMapFlags : int*
+dat : 802DA484 : CurrentMapVars  : int*
+dat : 802DA488 : NumScripts : int
+dat : 802DA490 : WorldScripts   : script_instance*[128`]
+dat : 802DA690 : BattleScripts  : script_instance*[128`]
+dat : 802DA890 : CurrentScripts : script_instance**
+dat : 802DA898 : ScriptIndices : int[128`]
+dat : 802DAA98 : ScriptIDs : int[128`]
+
+dat : 802DB5C0 : BattleVirtualEntities  : virtual_entity*[64`]
+dat : 802DB6C0 : WorldVirtualEntities   : virtual_entity*[64`]
+dat : 802DB7C0 : CurrentVirtualEntities : virtual_entity**
+
+dat : 802DBC70 : WorldMapFlags  : int[3]
+dat : 802DBC7C : DoorModelsSwingCW  : int[3]
+dat : 802DBC88 : PushBlockGrids : push_block_grid*[8]
+dat : 802DBCA8 : WorldMapVars   : int[16`]
+dat : 802DBCE8 : BattleMapVars  : int[16`]
+dat : 802DBD28 : DoorModelsSwingCCW : int[3]
+dat : 802DBD34 : BattleMapFlags : int[3]
+
+dat : 802FB800 : WorldHeapBase : heap_node
+%/
+%} END DATA =================================================

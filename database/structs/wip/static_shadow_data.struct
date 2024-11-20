@@ -1,0 +1,12 @@
+% static_shadow_data
+type: ram
+size: 24
+fields:
+{
+	  0 : flags              : short
+%	  2 : UNK 6
+	  8 : animModelNode      : static_animator_node**
+	  C : onCreateCallback   : code
+%	 10 : UNK 14
+}
+

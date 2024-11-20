@@ -1,0 +1,16 @@
+% trigger_bp
+type: ram
+size: 20
+fields:
+{
+	  0 : flags              : int
+	  4 : colliderIndex      : short
+%	  6 : UNK 2
+	  8 : flagIndex          : int
+	  C : function           : code
+%	 10 : UNK 4
+	 14 : field_0x14         : int
+	 18 : inputArg3          : int
+	 1C : field_0x1c         : int
+}
+

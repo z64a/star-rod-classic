@@ -1,0 +1,24 @@
+% model
+type: ram
+size: B0
+fields:
+{
+	  0 : flags              : short
+	  2 : modelID            : short
+	  4 : currentMatix?      : matrix4s*
+	  8 : modelNode          : model_node*
+	  C : groupData          : model_group_data*
+	 10 : currentSpecialMatrix? : int*
+%	 14 : UNK 4
+	 18 : specialMatrix      : matrix4s
+	 58 : transformMatrix    : matrix4f
+	 98 : center             : float[3`]  % Created by retype action
+	 A4 : texPannerID        : ubyte
+	 A5 : specialDisplayListID : ubyte
+	 A6 : renderMode         : ubyte      % Created by retype action
+	 A7 : field_0xa7         : ubyte
+	 A8 : textureID          : ubyte
+	 A9 : field_0xa9         : ubyte
+%	 AA : UNK 6
+}
+

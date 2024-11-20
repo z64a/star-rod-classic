@@ -1,0 +1,187 @@
+
+add		802834D8	Actor
+name	802834D8	Player
+
+add		80281104	IntTable
+name	80281104	ActorTypeNameIDs
+size	80281104	350
+newline	80281104	8
+
+add		80281468	IntTable
+name	80281468	ActorTypeSoundTable
+size	80281468	1730
+newline	80281468	7
+
+add		80282B98	IntTable
+name	80282B98	ActorTypeTattleIDs
+size	80282B98	350
+newline	80282B98	8
+
+add		80282EE8	IntTable
+name	80282EE8	ActorTypeCamOffsets
+size	80282EE8	350
+newline	80282EE8	8
+
+% why doesnt this one work?
+add		80283500	PartsTable
+name	80283500	Mario_PartsTable
+size	80283500	24
+
+add		80284044	IntTable
+name	80284044	ActorTypeGroups
+size	80284044	30
+newline	80284044	4
+
+add		80283F10	IntTable
+name	80283F10	PartnerMoveTable
+size	80283F10	F0
+newline	80283F10	5
+
+add		80283420	DefenseTable
+name	80283420	Mario_DefenseTable
+
+% add		80244A50	Function
+add		80245AD0	Function
+add		8025E190	Function
+add		80255FE0	Function
+add		80268938	Function
+add		80268AF8	Function
+
+add		80283238	IdleAnimations
+name	80283238	Mario_IdleAnimations
+
+add		802832D4	IdleAnimations
+name	802832D4	Mario_IdleAnimations_Defend
+
+add		80283370	IdleAnimations
+name	80283370	Mario_IdleAnimations_OuttaSight
+
+add		8028340C	IdleAnimations
+name	8028340C	Peach_IdleAnimations
+
+add		80283770	IntTable
+name	80283770	StringIDs_Messages
+
+add		802838C4	IntTable
+name	802838C4	StringIDs_Actors
+
+add		80293B80	IntTable
+name	80293B80	ItemScriptItemIDs
+
+add		80293C04	IntTable
+name	80293C04	ItemScriptTable
+size	80293C04	200
+newline	80293C04	4
+
+add		80293E04	IntTable
+
+add		802944C0	IntTable
+name	802944C0	ActionCommandTable
+size	802944C0	120
+newline	802944C0	3
+
+add		802946E0	IntTable
+
+add		80293E80	IntTable
+name	80293E80	MoveScriptTable
+size	80293E80	310
+newline	80293E80	4
+
+name	80291F80	HudScript_HPBar
+name	80291FA8	HudScript_HPDigit0
+name	80291FD0	HudScript_HPDigit1
+name	80291FF8	HudScript_HPDigit2
+name	80292020	HudScript_HPDigit3
+name	80292048	HudScript_HPDigit4
+name	80292070	HudScript_HPDigit5
+name	80292098	HudScript_HPDigit6
+name	802920C0	HudScript_HPDigit7
+name	802920E8	HudScript_HPDigit8
+name	80292110	HudScript_HPDigit9
+
+name	80292138	HudScript_YellowArrow
+
+name	80292160	HudScript_MenuFlee
+name	80292188	HudScript_MenuFleeDisabled
+
+name	802921B0	HudScript_MenuDefend
+name	802921D8	HudScript_MenuDefendDisabled
+name	80292200	HudScript_MenuStrategies
+name	80292228	HudScript_MenuStrategiesDisabled
+name	80292250	HudScript_MenuPouch
+name	80292278	HudScript_MenuPouchDisabled
+name	802922A0	HudScript_MenuDoNothing
+name	802922C8	HudScript_MenuDoNothingDisabled
+
+name	802922F0	HudScript_TimingBar1Chance
+
+name	8029231C	HudScript_BButton
+name	80292348	HudScript_BButtonHeld
+name	80292374	HudScript_MashBButton1
+name	802923B0	HudScript_PressBButton
+name	802923FC	HudScript_MashBButton2
+name	80292438	HudScript_CLeftButton
+name	80292464	HudScript_CLeftButtonHeld
+name	80292490	HudScript_MashCLeftButton
+name	802924CC	HudScript_CRightButton
+name	802924F8	HudScript_CRightButtonHeld
+name	80292524	HudScript_MashCRightButton1
+name	80292560	HudScript_MashCRightButton2
+name	8029259C	HudScript_CUpButton
+name	802925C8	HudScript_CUpButtonHeld
+name	802925F4	HudScript_MashCUpButton
+name	80292630	HudScript_CDownButton
+name	8029265C	HudScript_CDownButtonHeld
+name	80292688	HudScript_MashCDownButton1
+name	802926C4	HudScript_PressCDownButton
+name	80292710	HudScript_MashCDownButton2
+
+name	8029275C	HudScript_TimingWait
+name	80292788	HudScript_TimingReady
+name	802927B4	HudScript_TimingBlink
+name	802927F0	HudScript_TimingCharge4a
+name	8029281C	HudScript_TimingCharge1
+name	80292848	HudScript_TimingCharge4b
+name	80292874	HudScript_TimingCharge2
+name	802928A0	HudScript_TimingCharge4c
+name	802928CC	HudScript_TimingCharge3
+
+name	802928F8	HudScript_RunningAway
+
+name	80292974	HudScript_100pct
+name	80292A2C	HudScript_RightOn
+
+name	80292AFC	HudScript_TimingBar3Chances
+name	80292B28	HudScript_TimingGaugeResult
+name	80292B54	HudScript_TimingOK
+name	80292B80	HudScript_TimingMiss
+name	80292BAC	HudScript_FillGaugeResult
+name	80292BD8	HudScript_ProjectorReel
+name	80292C00	HudScript_ProjectorSpot
+name	80292C28	HudScript_ProjectorBeam
+
+name	80292C50	HudScript_SwapZ
+name	80292C7C	HudScript_SwapArrowLeft
+name	80292CB8	HudScript_SwapArrowRight
+
+name	80292D1C	HudScript_AimMarkerA
+name	80292DB4	HudScript_AimMarkerB
+name	80292E4C	HudScript_AimMarkerC
+name	80292EE4	HudScript_AimMarkerD
+name	80292F7C	HudScript_AimMarkerE
+name	80293014	HudScript_AimMarkerF
+name	802930AC	HudScript_AimMarkerG
+name	80293144	HudScript_AimMarkerH
+name	802931DC	HudScript_AimShimmerA
+name	80293274	HudScript_AimShimmerB
+name	8029330C	HudScript_AimShimmerC
+name	802933A4	HudScript_AimShimmerD
+name	8029343C	HudScript_AimShimmerE
+name	802934D4	HudScript_AimShimmerF
+name	8029356C	HudScript_AimShimmerG
+name	80293604	HudScript_AimShimmerH
+name	8029369C	HudScript_AimReticle
+name	802936D4	HudScript_AimTarget
+name	8029370C	HudScript_AimBlinkA
+name	80293764	HudScript_AimBlinkB
+name	802937C4	HudScript_AimBlinkC

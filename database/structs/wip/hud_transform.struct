@@ -1,0 +1,14 @@
+% hud_transform
+type: ram
+size: F0
+fields:
+{
+	  0 : unkArrayIndex      : int        % 80156954
+	  4 : pos                : float[3`]
+	 10 : rot                : float[3`]
+	 1C : scale              : float[3`]
+	 28 : rotPivotOffset     : short[2`]
+%	 2C : UNK 4
+	 30 : matrices           : matrix4s[3`]
+}
+

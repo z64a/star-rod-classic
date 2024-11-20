@@ -1,0 +1,55 @@
+
+% battle loading code
+@Hook:Global 80072C18 % 4E018
+{
+	% dmacopy to 804E0000-80500000
+	LIO		A2, 804E0000
+	JAL		8002973C
+	RESERVED
+	% decode Yay0 from 804E0000 to dest
+	LW		A1, C (S1)
+	LIO		A0, 804E0000
+	JAL		8006EDF0
+	RESERVED
+	% jump back
+	J		80072C20
+	ADDIU	V1, V1, 8
+}
+
+% LoadBattleSection
+@Hook:Battle 80269E10
+{
+   	% dmacopy to 804E0000-80500000
+   	LW		A2, C (V0)
+	SW		A2, 14 (SP) % unused stack var
+	LIO		A2, 804E0000
+	JAL		8002973C
+    RESERVED
+	% decode Yay0 from 804E0000 to dest
+	LW		A1, 14 (SP) % unused stack var
+	LIO		A0, 804E0000
+	JAL		8006EDF0
+	RESERVED
+	J		80269E18
+	NOP
+}
+
+/%
+% LoadBattleDmaData
+@Hook:Battle 80253690 % 181F70
+{	
+	% dmacopy to 804E0000-80500000
+	SW		A2, 14 (SP) % unused stack var
+	LIO		A2, 804E0000
+	JAL		8002973C
+	RESERVED
+	% decode Yay0 from 804E0000 to dest
+	LW		A1, 14 (SP) % unused stack var
+	LIO		A0, 804E0000
+	JAL		8006EDF0
+	RESERVED
+	% jump back
+	J		8025369C
+	ADDIU	V0, R0, 2
+}
+%/

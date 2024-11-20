@@ -1,0 +1,52 @@
+# Compiled class files
+*.class
+
+# VM crash logs
+hs_err_pid*
+replay_pid*
+
+# eclipse builds
+/bin/
+
+# gradle files
+.gradle
+/build/
+
+# Local experiments
+/src/main/java/analysis/
+/src/main/java/compiler/
+
+# Temporary Star Rod runtime files
+database/include/**
+logs/**
+
+# Old lists TODO cleanup
+/build/**
+/build-dev/**
+/build-user/**
+/target/**
+/bin/**
+
+/temp/**
+/docs/**
+/yay0/**
+
+/cfg/**
+/logs/**
+/backups/**
+*.backup
+*.log
+/target/
+pom.xml
+/build-dev/
+
+# Eclipse settings
+.settings/*
+!.settings/org.eclipse.buildship.core.prefs
+!.settings/org.eclipse.core.resources.prefs
+!.settings/org.eclipse.jdt.core.prefs
+!.settings/org.eclipse.jdt.ui.prefs
+
+# Vscode settings
+.vscode/*
+!.vscode/settings.json

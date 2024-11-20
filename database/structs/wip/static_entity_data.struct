@@ -1,0 +1,18 @@
+% static_entity_data
+type: ram
+size: 24
+fields:
+{
+	  0 : flags              : short
+	  2 : userDataSize       : short
+	  4 : renderCommandList  : uint*
+	  8 : modelAnimationNodes : static_animator_node**
+	  C : fpInit             : code
+	 10 : updateCommandList  : uint*
+	 14 : fpHandleCollision  : code
+	 18 : dmaStart           : int
+	 1C : dmaEnd             : int
+	 20 : entityType         : ubyte
+	 21 : aabbSize           : byte[3`]
+}
+

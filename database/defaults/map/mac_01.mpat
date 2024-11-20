@@ -1,0 +1,4 @@
+@ $Function_8024522C
+{
+  [A4]  LA        A3, $Global_ItemHudScripts
+}

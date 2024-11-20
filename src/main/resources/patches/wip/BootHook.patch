@@ -1,0 +1,44 @@
+/%
+// change JAL address that jumps to this function
+		// 000013DC <-> 80025FDC
+		rp.seek("Boot Hook", 0x13DC);
+		rp.writeInt(0x0C009710);
+
+%/
+% load boot code to 80240000 on start-up
+/%
+% $Function_entry_point
+@Function 1000 % 80025C00
+{
+	LA			T0, 8009A5B0
+	LA			T1, 00041F50
+	.o10
+	SW			R0, 0 (T0)
+	SW			R0, 4 (T0)
+	ADDI		T0, T0, 8
+	ADDI		T1, T1, FFF8
+	BNE			T1, R0, .o10
+	NOP
+	LA			SP, 800B6590
+	%
+	LI		A0, ##[VALUE:StartBootCode]
+	LI		A1, ##[VALUE:EndBootCode]
+	LI		A2, 80240000
+	JAL		8002973C % dmacopy
+	NOP
+	%
+	LA			T2, $Function_nuBoot
+	JR			T2
+	NOP
+}
+%/
+
+% good empty area at 8005E9A4 as well
+
+/%
+PADDING: 80025C40 to 80025C60 (00001040 to 00001060)
+00000000 00000000 
+00000000 00000000 
+00000000 00000000 
+00000000 00000000
+%/

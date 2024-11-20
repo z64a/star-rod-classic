@@ -1,0 +1,17 @@
+% cam_init_data
+type: ram
+size: 12
+fields:
+{
+	  0 : flags              : short
+	  2 : type               : ubyte
+%	  3 : UNK 1
+	  4 : viewWidth          : short
+	  6 : viewHeight         : short
+	  8 : viewStartX         : short
+	  A : viewStartY         : short
+	  C : nearClip           : short
+	  E : farClip            : short
+	 10 : vfov               : short
+}
+

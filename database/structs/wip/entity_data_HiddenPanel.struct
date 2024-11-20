@@ -1,0 +1,27 @@
+% entity_data_HiddenPanel
+type: ram
+size: 7C
+fields:
+{
+	  0 : state              : ubyte
+	  1 : stateTimer         : ubyte
+	  2 : flipping           : ubyte      % probably...
+	  3 : hasItem            : ubyte
+	  4 : field_0x4          : ubyte
+%	  5 : UNK 1
+	  6 : globalFlagIndex    : short
+	  8 : blockingNpcID      : int        % an NPC standing on the panel can prevent it from flipping over
+	  C : blockingNpcFlagsToSet : int
+	 10 : itemID             : int
+	 14 : itemEntityIndex    : int
+	 18 : pos                : int[3`]
+	 24 : baseHeight         : float
+	 28 : bounceHeight       : float
+	 2C : arcPhase           : float
+	 30 : angularVelocity    : float
+	 34 : mtx                : matrix4f
+	 74 : modelIndex         : short
+%	 76 : UNK 2
+	 78 : vertexData         : ptr
+}
+

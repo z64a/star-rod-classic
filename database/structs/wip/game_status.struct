@@ -1,0 +1,107 @@
+% game_status
+% from 80074024
+type: ram
+size: 178
+fields:
+{
+	  0 : currentButtons     : uint
+	  4 : altCurrentButtons  : uint       % input used for batte when flag 80000 set
+	  8 : field_0x8          : uint
+	  C : field_0xc          : uint
+	 10 : pressedButtons     : uint       % bits = 1 for frame of button press
+	 14 : altPressedButtons  : uint       % input used for batte when flag 80000 set
+%	 18 : UNK 8
+	 20 : heldButtons        : uint       % bits = 1 every 4th frame during hold
+	 24 : altHeldButtons     : uint       % input used for batte when flag 80000 set
+%	 28 : UNK 8
+	 30 : prevButtons        : uint       % from previous frame
+%	 34 : UNK C
+	 40 : stickX             : ubyte      % with deadzone
+	 41 : altStickX          : ubyte      % input used for batte when flag 80000 set
+%	 42 : UNK 2
+	 44 : stickY             : ubyte      % with deadzone
+	 45 : altStickY          : ubyte      % input used for batte when flag 80000 set
+%	 46 : UNK 2
+	 48 : field_0x48         : short
+%	 4A : UNK 6
+	 50 : field_0x50         : short
+%	 52 : UNK 6
+	 58 : field_0x58         : short
+%	 5A : UNK 6
+	 60 : field_0x60         : short
+%	 62 : UNK 6
+	 68 : demoButtonInput    : short
+	 6A : demoStickX         : ubyte
+	 6B : demoStickY         : ubyte
+	 6C : mainScriptID       : int
+	 70 : isBattleState      : ubyte      % (0 = no, 1 = yes, 2 = ???)
+	 71 : demoState          : ubyte      % (0 = not demo, 1 = map demo, 2 = demo map changing)
+	 72 : nextDemoScene      : ubyte      % which part of the demo to play next
+	 73 : contBitPattern     : ubyte
+	 74 : debugEnemyContact  : ubyte      % 0 = start battles (normal), 1 = nothing happens, 2 = defeat enemies on contact, 3 = auto-defeat all enemies in battle, 4 = automatically run away
+	 75 : debugQuizmo        : ubyte      % 1 = bypass chuck quizmo spawn checks
+	 76 : field_0x76         : ubyte
+	 77 : field_0x77         : ubyte
+	 78 : disableScripts     : ubyte
+	 79 : field_0x79         : ubyte
+	 7A : musicEnabled       : ubyte      % (0 = no music, doesnt affect SFX)
+%	 7B : UNK 1
+	 7C : field_0x7c         : ubyte
+	 7D : field_0x7d         : ubyte
+	 7E : peachFlags         : ubyte      % (1 = isPeach, 2 = isTransformed, 4 = hasUmbrella)
+	 7F : peachDisguise      : ubyte      % (1 = koopatrol, 2 = hammer bros, 3 = clubba)
+	 80 : peachCookingItem   : ubyte      % from anim table at 802B6430
+	 81 : field_0x81         : ubyte      % chooses input sets above, unknown how many there are
+	 82 : field_0x82         : ubyte
+	 83 : field_0x83         : ubyte
+	 84 : playerSpriteSet    : ubyte      % 0 = normal, 4 = peach, ...
+%	 85 : UNK 1
+	 86 : areaID             : short
+	 88 : prevArea           : short
+	 8A : changedArea        : short      % (1 = yes)
+	 8C : mapID              : short
+	 8E : entryID            : short
+	 90 : field_0x90         : short
+	 92 : field_0x92         : short
+	 94 : exitTangent        : float
+	 98 : playerPos          : float[3`]
+	 A4 : playerYaw          : float
+	 A8 : creditsViewportMode : ubyte      % if -1, use standard camera viewport. otherwise, use (smaller) credits viewport
+	 A9 : field_0xa9         : ubyte
+	 AA : demoFlags          : ubyte      % 1 = is demo battle
+	 AB : field_0xab         : ubyte
+	 AC : introState         : ubyte
+	 AD : introCounter       : ubyte
+	 AE : bSkipIntro         : ubyte      % when true, the intro ends
+	 AF : field_0xaf         : ubyte
+	 B0 : field_0xb0         : ubyte
+%	 B1 : UNK 5
+	 B6 : fadeAlpha          : short
+	 B8 : fadeColor          : short[3`]
+%	 BE : UNK 5E
+	11C : playerGrounHitTraceAngles : float[3`]
+	128 : playerGroundTraceHitNormal : float[3`]
+	134 : frameCounter       : short
+%	136 : UNK 2
+	138 : nextRNG            : int
+	13C : field_0x13c        : short
+%	13E : UNK 2
+	140 : shopItemEntities   : shop_item_entity*
+	144 : mapShop            : shop*
+	148 : backgroundFlags    : short      % (bit 2 is also used for something)
+	14A : backgroundMinW     : short
+	14C : backgroundMinH     : short
+	14E : backgroundMaxW     : short
+	150 : backgroundMaxH     : short
+	152 : backgroundXOffset  : short      % (used for parallax scroll)
+	154 : backgroundRaster   : ptr
+	158 : backgroundPalette  : ptr
+	15C : backgroundAlphaWithFog : short
+	15E : unk_15E            : short
+	160 : savedPos           : short[3`]
+	166 : saveSlot           : ubyte
+	167 : loadType           : ubyte      % (0 = from map, 1 = from main menu)
+	168 : saveID             : int
+%	16C : UNK C
+}
+

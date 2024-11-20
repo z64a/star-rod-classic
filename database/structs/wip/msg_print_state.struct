@@ -1,0 +1,100 @@
+% msg_print_state
+type: ram
+size: 558
+fields:
+{
+	  0 : srcBuffer          : byte*
+	  4 : printBufferPos     : short
+%	  6 : UNK 2
+	  8 : stringID           : int
+	  C : srcBufferPos       : short
+	  E : currentPrintDelay  : short
+	 10 : printBuffer        : byte[1088`] % slightly larger than source buffer
+	450 : printBufferSize    : short
+	452 : effectFrameCounter : short
+	454 : font               : ubyte
+	455 : fontVariant        : ubyte
+	456 : windowOffsetPos    : short[2`]  % offset from baseWindowPos. used to animated window pos?
+	45A : windowBasePos      : short[2`]  % ex: set by the parameters for choice style
+	45E : printDelayTime     : ubyte      % delay to print each chunk
+	45F : charsPerChunk      : ubyte      % how many chars to print at once
+	460 : curLinePos         : short      % position along current line
+	462 : field_0x462        : short
+	464 : field_0x464        : ubyte
+%	465 : UNK 1
+	466 : nextLinePos?       : short
+	468 : lineCount          : ubyte
+%	469 : UNK 3
+	46C : field_0x46c        : short
+	46E : field_0x46e        : short
+	470 : currentAnimFrame   : ubyte      % 0,1,2,3
+%	471 : UNK 3
+	474 : animTimers         : short[4`]
+	47C : rewindArrowAnimState : ubyte
+%	47D : UNK 1
+	47E : rewindArrowBlinkCounter : short
+	480 : field_0x480        : short
+	482 : rewindArrowPos     : short[2`]
+	486 : currentLine        : ubyte
+	487 : unkArraySize       : ubyte
+	488 : lineEndPos         : short[4`]
+%	490 : UNK 38
+	4C8 : field_0x4c8        : short
+%	4CA : UNK 2
+	4CC : field_0x4cc        : short
+	4CE : maxOption          : ubyte
+%	4CF : UNK 1
+	4D0 : cursorPosX         : short[6`]
+	4DC : cursorPosY         : short[6`]
+	4E8 : currentOption      : ubyte
+	4E9 : madeChoice         : ubyte
+	4EA : cancelOption       : ubyte
+%	4EB : UNK 1
+	4EC : targetOption       : ubyte
+	4ED : unkCounter         : ubyte
+	4EE : selectedOption     : ubyte
+%	4EF : UNK 9
+	4F8 : windowState        : ubyte
+%	4F9 : UNK 3
+	4FC : stateFlags         : int
+	500 : delayFlags?        : short
+%	502 : UNK 2
+	504 : closedWritebackBool? : int*       % if not null, writes 1 here when message closes
+	508 : style              : ubyte
+	509 : fadeInCounter      : ubyte
+	50A : initOpenPos        : short[2`]  % where the message originates from, in screen-space coords
+	50E : openStartPos       : short[2`]
+	512 : fadeOutCounter     : ubyte
+%	513 : UNK 1
+	514 : windowSize         : short[2`]
+	518 : speechSoundType    : ubyte
+	519 : volume             : ubyte
+	51A : field_0x51a        : ubyte
+%	51B : UNK 1
+	51C : speechVolume?Pitch? : short
+%	51E : UNK 2
+	520 : speechSoundID_A    : int
+	524 : speechSoundID_B    : int
+	528 : varBufReadPos      : short
+	52A : field_0x52a        : ubyte
+	52B : currentImageIndex  : ubyte
+	52C : varImageScreenPos  : short[2`]  % in addition, posX=0 is taken as 'dont draw'
+	530 : varImgHasBorder    : ubyte
+	531 : varImgFinalAlpha   : ubyte
+	532 : varImgAlphaFadeStep : ubyte      % how much to fade in per frame
+	533 : varImageDisplayState : ubyte      % 0 = fade in, 1 = fully visible, 2 = fade out
+	534 : varImageFadeTimer  : short      % # frames faded in
+	536 : stringHeight       : short      % from msg_get_properties (numLines * font.lineHeight)
+	538 : stringWidth        : short      % from msg_get_properties
+	53A : maxLineChars       : ubyte      % from msg_get_properties
+	53B : numLines           : ubyte      % from msg_get_properties
+	53C : maxLinesPerPage    : ubyte      % from msg_get_properties
+%	53D : UNK 3
+	540 : sizeScale          : float
+	544 : letterBackgroundImg : ptr        % on the heap
+	548 : letterBackgroundPal : ptr        % on the heap
+	54C : letterContentImg   : ptr        % on the heap
+	550 : letterContentPal   : ptr        % on the heap
+%	554 : UNK 4
+}
+

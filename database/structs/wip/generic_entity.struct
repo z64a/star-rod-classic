@@ -1,0 +1,10 @@
+% generic_entity
+type: ram
+size: C
+fields:
+{
+	  0 : flags              : int
+	  4 : fpUpdate           : code
+	  8 : fpRender           : code
+}
+

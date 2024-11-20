@@ -1,0 +1,11 @@
+% msg_voice
+type: ram
+size: C
+fields:
+{
+	  0 : soundA             : int
+	  4 : soundB             : int
+	  8 : field_0x8          : short
+	  A : volume?pitch?      : short
+}
+

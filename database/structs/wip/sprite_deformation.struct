@@ -1,0 +1,38 @@
+% sprite_deformation
+type: ram
+size: 7C
+fields:
+{
+	  0 : field_0x0          : ubyte
+	  1 : field_0x1          : ubyte
+	  2 : field_0x2          : ubyte
+	  3 : field_0x3          : ubyte
+	  4 : field_0x4          : ubyte
+	  5 : field_0x5          : ubyte
+	  6 : field_0x6          : ubyte
+%	  7 : UNK 1
+	  8 : field_0x8          : short
+	  A : field_0xa          : short
+	  C : field_0xc          : short
+	  E : field_0xe          : short
+	 10 : field_0x10         : short
+%	 12 : UNK 2
+	 14 : flags              : int
+%	 18 : UNK 4
+	 1C : deformType?        : int
+	 20 : field_0x20         : float[3`]
+	 2C : field_0x2c         : int
+	 30 : field_0x30         : int[3`]
+	 3C : field_0x3c         : float[3`]
+%	 48 : UNK 4
+	 4C : field_0x4c         : int[2`]
+%	 54 : UNK 8
+	 5C : buf                : byte*
+	 60 : bufSize            : short
+%	 62 : UNK 2
+	 64 : field_0x64         : int
+	 68 : field_0x68         : pointer[2`] % selected by display context
+	 70 : field_0x70         : pointer[2`]
+	 78 : someOtherModeLBits : int
+}
+

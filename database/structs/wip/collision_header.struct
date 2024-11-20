@@ -1,0 +1,17 @@
+% collision_header
+type: ram
+size: 20
+fields:
+{
+	  0 : numColliders       : short
+%	  2 : UNK 2
+	  4 : treeOffset         : int
+	  8 : numVerts           : short
+%	  A : UNK 2
+	  C : triangleTableOffset : int
+	 10 : bbTableSize        : short
+%	 12 : UNK 2
+	 14 : bbTableOffset      : int
+%	 18 : UNK 8
+}
+

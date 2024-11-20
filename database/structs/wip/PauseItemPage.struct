@@ -1,0 +1,13 @@
+% PauseItemPage
+type: ram
+size: C
+fields:
+{
+	  0 : enabled            : ubyte      % nonzero means this page has contents
+	  1 : listStart          : ubyte      % starting point in item list for this page's contents
+	  2 : numColumns         : ubyte
+	  3 : numRows            : ubyte
+	  4 : startIndex         : int        % unclear how this differs from listStart, these two always have the same values
+	  8 : count              : int        % how many items this page contains
+}
+

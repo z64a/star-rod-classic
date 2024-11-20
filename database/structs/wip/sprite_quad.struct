@@ -1,0 +1,8 @@
+% sprite_quad
+type: ram
+size: 40
+fields:
+{
+	  0 : field_0x0          : f3dex2_vertex[4`]
+}
+

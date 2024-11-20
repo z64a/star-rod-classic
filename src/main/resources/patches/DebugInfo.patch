@@ -1,0 +1,6650 @@
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% CONSTANTS
+%{
+#reserve C  $DebugMapName
+#reserve 4  $DebugBattleID
+#reserve 20 $DebugStageName
+
+% menu states
+#define .StateNone				0
+#define .StateMainMenu			1
+#define .StateAreaSelect		2
+#define .StateMapSelect			3
+#define .StateEntrySelect		4
+#define .StateBattleSelect		5
+#define .StateStorySelect		6
+#define .StateSoundMenu			7
+#define .StateQuickSave			8
+#define .StateEditPartners		9
+#define .StateEditInventory		A
+#define .StateEditMemory		B
+#define .StateViewCollision		C
+% sound menu substates
+#define .StatePlaySound			D
+#define .StateStopSound			E
+% inventory editor substates
+#define .StateEditItems			F
+#define .StateEditBadges		10
+#define .StateEditKeys			11
+#define .StateEditGear			12
+#define .StateEditStats			13
+#define .StateEditCoins			14
+#define .StateEditStarPoints	15
+#define .StateEditStarPieces	16
+
+% These entries must match codes defined above!
+#new:Data $JumpTable_Submenus
+{
+$UpdateMainMenu
+$UpdateAreaSelect
+$UpdateMapSelect
+$UpdateEntrySelect		% 4
+$UpdateBattleSelect
+$UpdateStoryProgress
+$UpdateSoundMenu
+$UpdateQuickSave		% 8
+$UpdateEditPartners
+$UpdateEditInventory
+$UpdateEditRAM
+$UpdateViewCollision	% C
+% sound menu substates
+$UpdatePlaySound
+$UpdateStopSound
+% inventory editor substates
+$UpdateEditItems
+$UpdateEditBadges		% 10
+$UpdateEditKeys
+$UpdateEditGear
+$UpdateEditStats
+$UpdateEditCoins		% 14
+$UpdateEditStarPoints
+$UpdateEditStarPieces
+}
+
+% keep all data in one big struct and maintain a pointer to it in S0
+#reserve 100	$DebugState
+
+% offsets for fields in the DebugState data
+
+#define .Hold				0
+#define .Press				10
+#define .Release			20
+
+#define .ShowDetails		30
+#define .GodModeActive		31
+#define .SpeedModeActive	32
+#define .DebugMenuState		33
+#define .DebugStateChanged	34
+#define .MainMenuPos		35
+
+#define .CountDir			36
+#define .FrameCount			37
+
+#define .AreaMenuPos		38
+#define .MapMenuPos			39
+#define .MapMenuScroll		3A
+#define .EntryValue			3B
+#define .MapMinCol			3C
+#define .MapMaxCol			3D
+#define .LastAreaSelected	3E
+
+#define .BattleValue1		40
+#define .BattleValue2		41
+#define .BattleMapID		42
+#define .BattleDigit		43
+
+#define .StoryValue			44
+#define .StoryDigit0		45
+#define .StoryDigit1		46
+#define .StoryDigitPos		47
+
+#define .SoundValue			48 % and 49
+#define .SoundMenuPos		4A
+
+#define .QuickSaveMenuPos	4B
+#define .InventoryMenuPos	4C
+
+#define .StarPiecesValue	4D
+#define .StarPointsValue	4E
+#define .CoinsValue			50
+#define .StatsMenuPos		52
+#define .Initialized		54
+
+#define .HighlightColor		7C
+
+#define .StringBuffer		80
+#define .PrintfBuffer		C0
+
+#reserve 10 $PartnerData
+#define .PartnerGameData	8010F2AC
+% bytes 0-11 for partner unlock/level
+#define .PartnerMenuPos		12`
+
+#define .DefaultColor		0
+#define .HoverColor			3
+#define .SelectColor		8
+
+#define .DefaultStyle		0
+#define .RainbowStyle		4 % C is also fine
+
+#define .BattleState		5
+
+#define	.SoundAccept		5
+#define	.SoundCancel		6
+#define	.SoundSave			9
+#define	.SoundHeal			63
+
+#new:ASCII $fmtMapName
+{
+"Map: %7s (%X)"
+}
+
+#new:ASCII $fmtStageName
+{
+"Stage:  %-15s"
+}
+
+#new:ASCII $strPos
+{
+"Pos:"
+}
+
+#new:ASCII $fmtCoord
+{
+"%5d"
+}
+
+#new:ASCII $fmtAction
+{
+"ActionState: %02X"
+}
+
+#new:ASCII $fmtBattle
+{
+"Battle:  %02X-%02X (%X)"
+}
+
+#new:ASCII $strGodMode
+{
+"(GOD MODE)"
+}
+
+#new:ASCII $strWatchTitle
+{
+"Watch List:"
+}
+
+#new:ASCII $strHeapTitle
+{
+"Heap Usage:"
+}
+
+#new:ASCII $strHeapCollision
+{
+"Collision"
+}
+
+#new:ASCII $strHeapWorld
+{
+"World"
+}
+
+#new:ASCII $strHeapSprite
+{
+"Sprite"
+}
+
+#new:ASCII $strHeapBattle
+{
+"Battle"
+}
+
+#new:ASCII $fmtPercent
+{
+"%4.1f%%"
+}
+
+#new:ASCII $fmtHeapUsage
+{
+"%5X"
+}
+
+#new:ASCII $fmtScriptCount
+{
+"%d scripts running"
+}
+
+#new:ASCII $fmtDebugVar
+{
+"Debug[%X]"
+}
+
+#string $arrowLeft
+{
+[LEFT][END]
+}
+
+#string $arrowRight
+{
+[RIGHT][END]
+}
+
+#string $arrowUp
+{
+[UP][END]
+}
+
+#string $arrowDown
+{
+[DOWN][END]
+}
+
+#new:ASCII $strEntry
+{
+"Entry:"
+}
+
+#new:ASCII $fmtEntry
+{
+"%2X"
+}
+
+#new:ASCII $fmtInteger
+{
+"%d"
+}
+
+#new:ASCII $fmtDigit
+{
+"%01X"
+}
+
+#new:ASCII $fmtByte
+{
+"%02X"
+}
+
+#new:ASCII $fmtHalf
+{
+"%04X"
+}
+
+#new:ASCII $fmtWord
+{
+"%08X"
+}
+
+#new:ASCII $fmtFloat
+{
+"%f"
+}
+
+#new:ASCII $strValue
+{
+"Set Value:"
+}
+
+#new:ASCII $strFormation
+{
+"Set Battle:"
+}
+
+#new:ASCII $strDash
+{
+"-"
+}
+
+#new:ASCII $strParenL
+{
+"("
+}
+
+#new:ASCII $strParenR
+{
+")"
+}
+
+#new:ASCII $strUnderConstruction
+{
+"Coming Soon"
+%}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% LAYOUT
+%{
+
+#define .MainMenuPosX		26`
+#define .MainMenuPosY		60`
+
+#define .RowSpacing			15`
+#define .BottomRowY			222` %204`
+
+#define .OffsetRow0			0
+#define .OffsetRow1			15`
+#define .OffsetRow2			30`
+#define .OffsetRow3			45`
+#define .OffsetRow4			60`
+#define .OffsetRow5			75`
+#define .OffsetRow6			90`
+#define .OffsetRow7			105`
+#define .OffsetRow8			120`
+#define .OffsetRow9			135`
+#define .OffsetRow10		150`
+
+#define	.MainBoxPosX		.MainMenuPosX[-10`]
+#define	.MainBoxPosY		.MainMenuPosY[-4`]
+#define	.MainBoxWidth		96`
+#define	.MainBoxHeight		.OffsetRow10[8`]
+
+#define .MemoryViewPosX		21`
+#define .MemoryViewPosY		.MainMenuPosY
+
+#define	.MemoryBoxPosX		.MainBoxPosX
+#define	.MemoryBoxPosY		.MainBoxPosY
+#define	.MemoryBoxWidth		288`
+#define	.MemoryBoxHeight	152`
+
+#define .SubmenuPosX		140`
+#define .SubmenuPosY		.MainMenuPosY
+
+#define	.SubBoxPosX			.SubmenuPosX[-10`]
+#define	.SubBoxPosY			.SubmenuPosY[-4`]
+%#define	.SubBoxWidth		96`
+%#define	.SubBoxHeight		144`
+%}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% SETUP AND HOOKS
+%{
+
+% Call our debug menu
+@Hook 82758		% <--> 800E92A8
+{
+	JAL			$PrintDebugMain
+	NOP
+	LW			S8, 88 (SP)
+	J			800E92B0
+	LW			RA, 8C (SP)
+}
+
+% Save the map name on map change
+@Hook 35BF0		% <--> 8005A7F0
+{
+	ADDU		S2, V0, V1
+	LW			A2, 0 (S2)
+	% push regs we plan to use
+	ADDIU		SP, SP, -C
+	SW			S1, 0 (SP)
+	SW			S2, 4 (SP)
+	SW			S3, 8 (SP)
+	% prepare registers
+	OR			S1, A2, R0
+	LIO			S3, $DebugMapName
+	% S1 = char* source, S2 = char c, S3 = char* dest
+	.NextChar
+	LBU			S2, 0 (S1)
+	BEQ			S2, R0, .Done
+	NOP
+	SB			S2, 0 (S3)
+	ADDIU		S1, S1, 1
+	BEQ			R0, R0, .NextChar
+	ADDIU		S3, S3, 1
+	.Done
+	SB			R0, 0 (S3)
+	% pop regs and return
+	LW			S1, 0 (SP)
+	LW			S2, 4 (SP)
+	LW			S3, 8 (SP)
+	J			8005A7F8
+	ADDIU		SP, SP, C
+}
+
+% Save the battle ID on battle load
+@Hook 4E090
+{
+	LI			V0, 800DC4EC
+	LW			V0, 0 (V0) % get the stage ID
+	ADDIU		V0, V0, 1  % convert battle ID format
+	ANDI		V0, V0, FFFF
+	SLL			V1, A0, 10
+	OR			V1, V1, V0
+	LI			V0, $DebugBattleID
+	SW			V1, 0 (V0)
+	SAW			A0, 800DC4E8
+	J			80072C9C
+	ADDIU		SP, SP, FFE8
+}
+
+% Save stage name
+@Hook 16FBB0 % 802412D0
+{
+	% push regs we plan to use
+	ADDIU		SP, SP, -C
+	SW			S1, 0 (SP)
+	SW			S2, 4 (SP)
+	SW			S3, 8 (SP)
+	% copy string
+	LIO			S1, $DebugStageName
+	COPY		S2, A0
+	.NextChar
+	LBU			S3, 0 (S2)
+	BEQ			S3, R0, .Done
+	NOP
+	SB			S3, 0 (S1)
+	ADDIU		S1, S1, 1
+	B			.NextChar
+	ADDIU		S2, S2, 1
+	.Done
+	SB			R0, -1 (S1) % e
+	SB			R0, -2 (S1) % p
+	SB			R0, -3 (S1) % a
+	SB			R0, -4 (S1) % h
+	SB			R0, -5 (S1) % s
+	SB			R0, -6 (S1) % _
+	% pop regs
+	LW			S1, 0 (SP)
+	LW			S2, 4 (SP)
+	LW			S3, 8 (SP)
+	ADDIU		SP, SP, C
+	% complete hook
+	JAL			8005ACE8
+	ADDIU		A1, SP, 18
+	J			802412DC
+	COPY		S0, V0
+}
+
+% Override damage from Mario
+@Hook 1A2B98	% <--> 802742B8
+{
+	LIO			V0, $DebugState
+	LBU			V0, .GodModeActive (V0)
+	BNEL		V0, R0, .Return
+	ADDIU		V0, R0, 99`
+	JAL			802C7ABC % get_variable
+	NOP
+	.Return 
+	J			802742C0
+	ADDIU		S0, S0, 4
+}
+
+% Override damage to Mario in DamageTarget
+@Hook 1AB620	% <--> 8027CCB4
+{
+	LIO			V0, $DebugState
+	LBU			V0, .GodModeActive (V0)
+	BNEL		V0, R0, .GodMode
+	DADDU		V0, R0, R0
+	JAL			802C7ABC % get_variable
+	NOP
+	B			.Return
+	NOP
+	.GodMode
+	SW			R0, 190 (S1) % status
+	.Return 
+	J			8027CD48
+	ADDIU		S0, S0, 4
+}
+
+% Override damage from partners
+@Hook 1AE700	% <--> 8027FE20
+{
+	LIO			V0, $DebugState
+	LBU			V0, .GodModeActive (V0)
+	BNEL		V0, R0, .Return
+	ADDIU		V0, R0, 99`
+	JAL			802C7ABC % get_variable
+	NOP
+	.Return
+	J			8027FE28
+	ADDIU		S0, S0, 4	
+}
+
+% Skip enemy encounters when going fast!
+@Hook  1AE78	% <--> 8003FA78
+{
+	LIO			V0, $DebugState
+	LBU			V0, .SpeedModeActive (V0)
+	BEQ			V0, R0, .Return
+	NOP
+	J			800408F4
+	NOP
+	.Return
+	LUI			T0, 7FFF
+	J			8003FA80
+	ORI			T0, T0, FFFF
+}
+
+/%
+@Hook 19964 % <--> 8003E564
+{
+	LIO			V0, $DebugState
+	LBU			V0, .SpeedModeActive (V0)
+	BNE			V0, R0, .Return
+	NOP
+	JAL			8003F7CC
+	NOP
+	.Return
+	J			8003E56C
+	NOP
+}
+%/
+
+/%
+% Replace this little function
+@Function EEDB0	% <--> 802CA400
+	PUSH		RA
+	JAL			$OverrideMap
+	NOP
+	ADDIU		V0, R0, 1
+	JPOP		RA
+	
+#new:Function $OverrideMap
+	LIO			V0, $DebugState
+	LBU			V0, .WarpModeActive (V0)
+	BNE			V0, R0, .DoOverride
+	NOP
+	J			802CA304
+	DADDU		A1, R0, R0
+	.DoOverride
+	% force test map to load
+	ADDIU		SP, SP, FFD0
+	SW			S0, 18 (SP)
+	SW			S1, 1C (SP)
+	SW			S2, 20 (SP)
+	SW			S3, 24 (SP)
+	SW			S4, 28 (SP)
+	SW			RA, 2C (SP)
+	DADDU		S2, A0, R0
+	DADDU		S4, A1, R0
+	% get map ID
+	LIO			A0, ##[VALUE:DebugMapPointer]
+	ADDIU		A1, SP, 10
+	JAL			8005ABF8 % get_map_IDs_by_name
+	ADDIU		A2, SP, 12
+	LUI			V0, 8007
+	ADDIU		V0, V0, 419C
+	LW			V1, 0 (V0)
+	LHU			V0, 10 (SP)
+	SH			V0, 86 (V1)
+	LHU			V0, 12 (SP)
+	SH			V0, 8C (V1)
+	SH			V0, 8E (V1)
+	J			802CA3CC
+	DADDU		S3, R0, R0
+
+% Overide battle
+@Hook 1CBE8		% <--> 800417E8
+	LIO			V0, $DebugState
+	LBU			V0, .WarpModeActive (V0)
+	BEQ			V0, R0, .Return
+	NOP
+	LAW			V0, ##[VALUE:DebugBattlePointer]
+	SW			V0, 44 (S4)
+	.Return
+	LH			A0, 46 (S4)
+	LUI			AT, 800E
+	J			800417F4
+	SW			A0, C4EC (AT)
+%/
+%}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% INPUT
+%{
+
+#reserve 18 $Buttons
+
+#define .DownBits		00
+#define .PrevBits		04
+#define .HoldBits		08
+#define .PressBits		0C
+#define .ReleaseBits	10
+
+#define	.A			0	% 8000
+#define	.B			1	% 4000
+#define	.Z			2	% 2000
+#define	.Start		3	% 1000
+#define	.D-up		4	% 0800
+#define	.D-down		5	% 0400
+#define	.D-left		6	% 0200
+#define	.D-right	7	% 0100
+#define	.L			8	% 0020
+#define	.R			9	% 0010
+#define	.C-up		A	% 0008
+#define	.C-down		B	% 0004
+#define	.C-left		C	% 0002
+#define	.C-right	D	% 0001
+
+#new:Data $ButtonMask
+{
+80000000 40000000 20000000 10000000 08000000 04000000 02000000 01000000
+00200000 00100000 00080000 00040000 00020000 00010000
+}
+
+#new:Function $UpdateButtons
+{
+	#DEF		S0, *Data
+	LIO			A0, $Buttons
+	LW			V1, .DownBits (A0)
+	SW			V1, .PrevBits (A0)
+	LAW			V0, 800B1D68 % 800B0ED4 % what about ~8010F0A4?
+	SW			V0, .DownBits (A0)
+	AND			A1, V0, V1
+	SW			A1, .HoldBits (A0)
+	XOR			A1, V0, V1
+	AND			V0, V0, A1
+	AND			V1, V1, A1
+	SW			V0, .PressBits (A0)
+	SW			V1, .ReleaseBits (A0)
+	% get discrete input flags
+	PUSH		S1, S2
+	LIO			S1, $ButtonMask
+	LIO			S2, $DebugState
+	% check press masks
+	LOOP		S2 = 0,14`
+		LW			A1, .HoldBits (A0)	
+		LW			A2, .PressBits (A0)	
+		LW			A3, .ReleaseBits (A0)	
+		LW			V1, 0 (S1)
+		AND			A1, A1, V1
+		AND			A2, A2, V1
+		AND			A3, A3, V1
+		ADDIU		V1, R0, 1
+		%
+		ADDIU		V0, *Data, .Hold
+		DADDU		V0, S2, V0
+		BEQL		A1, R0, 8
+		SB			R0, 0 (V0)
+		SB			V1, 0, (V0)
+		%
+		ADDIU		V0, *Data, .Press
+		DADDU		V0, S2, V0
+		BEQL		A2, R0, 8
+		SB			R0, 0 (V0)
+		SB			V1, 0, (V0)
+		%
+		ADDIU		V0, *Data, .Release
+		DADDU		V0, S2, V0
+		BEQL		A3, R0, 8
+		SB			R0, 0 (V0)
+		SB			V1, 0, (V0)
+		%
+		ADDIU		S1, S1, 4
+	ENDLOOP
+	% set highlight color
+	LB			V0, .Hold[.R] (*Data)
+	BNEL		V0, R0, 8
+	ADDIU 		V1, R0, .SelectColor
+	ADDIU 		V1, R0, .HoverColor
+	SW			V1, .HighlightColor (*Data)
+	#UNDEF		S0
+	POP			S1, S2
+	JR			RA
+	NOP
+%}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% MAIN
+%{
+#new:Function $PrintDebugMain
+{
+	PUSH		RA, S0, F0, F2
+	LIO			S0, $DebugState
+	#DEF		S0, *Data
+	% have to initialize print buffer for it to work properly on hardware
+	LBU			A0, .Initialized (*Data)
+	BNE			A0, R0, .InitDone
+	NOP
+	SAW			R0, 802DACA0
+	ADDIU		V0, R0, 1
+	SB			V0, .Initialized (*Data)
+	.InitDone
+	JAL			$UpdateButtons
+	NOP
+	JAL			$PrintBasicInfo
+	NOP
+	.CheckMenuOpen
+	LBU			A0, .DebugMenuState (*Data)
+	BNE			A0, R0, .MenuOpen
+	NOP
+	LB			V0, .Press[.D-left] (*Data)
+	BEQ			V0, R0, .MenuClosed
+	NOP
+	ADDIU		A0, R0, .StateMainMenu
+	SB			A0, .DebugMenuState (*Data)
+	B			.Done
+	NOP
+	.MenuOpen
+	% dont update or draw if a submenu is open
+	LIO			V1, 8010CD00
+	LH			V0, 0 (V1)
+	BNE			V0, R0, .Done
+	NOP
+	JAL			$UpdateSubMenu
+	NOP
+	BNE			V0, R0, .Done
+	NOP
+	.MenuClosed
+	% check for D-right press
+	LB			V0, .Press[.D-right] (*Data)
+	BEQ			V0, R0, .CheckGodToggle
+	NOP
+	% toggle flag
+	LBU			V0, .ShowDetails (*Data)
+	XORI		V0, V0, 01
+	SB			V0, .ShowDetails (*Data)
+	.CheckGodToggle
+	LB			V0, .Press[.D-down] (*Data)
+	BEQ			V0, R0, .KeepSpeedCorrect
+	NOP
+	LBU			V0, .GodModeActive (*Data)
+	XORI		V0, V0, 01
+	SB			V0, .GodModeActive (*Data)
+	.KeepSpeedCorrect
+	LIO			V1, 8010F020
+	LBU			V0, .SpeedModeActive (*Data)
+	BEQ			V0, R0, .CheckSpeedToggle
+	NOP
+	% check walk
+	LWC1		F2, 0 (V1)
+	LIF			F0, 6.0
+	C.EQ.S		F0, F2
+	BC1FL		4
+	SWC1		F0, 0 (V1)
+	% check run
+	LWC1		F2, 4 (V1)
+	LIF			F0, 12.0
+	C.EQ.S		F0, F2
+	BC1FL		4
+	SWC1		F0, 4 (V1)
+	.CheckSpeedToggle
+	LB			V0, .Press[.D-up] (*Data)
+	BEQ			V0, R0, .DrawDetails
+	NOP
+	LBU			V0, .SpeedModeActive (*Data)
+	XORI		V0, V0, 01
+	SB			V0, .SpeedModeActive (*Data)
+	BEQ			V0, R0, .Off
+	NOP
+	LIF			F0, 6.0
+	SWC1		F0, 0 (V1)
+	LIF			F0, 12.0
+	SWC1		F0, 4 (V1)
+	B			.DrawDetails
+	NOP
+	.Off
+	LIF			F0, 2.0
+	SWC1		F0, 0 (V1)
+	LIF			F0, 4.0
+	SWC1		F0, 4 (V1)
+	.DrawDetails
+	LBU			V0, .ShowDetails (*Data)
+	BEQ			V0, R0, .Done
+	NOP
+	JAL			$PrintDetailedInfo
+	NOP
+	.Done
+	#UNDEF		S0
+	JPOP		RA, S0, F0, F2
+%}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% UTILITY FUNCTIONS
+%{
+
+% ================================================
+% ASCIItoPM
+% ------------------------------------------------
+% Converts a null-terminated ASCII string to a PM
+% text string.
+% ------------------------------------------------
+% A0 = *out
+% A1 = null-terminated ascii string
+#new:Function $ASCIItoPM
+{
+	PUSH		RA
+	ADDIU		V1, R0, 20
+	.ReadChar
+	LB			V0, 0 (A0)
+	BEQ			V0, R0, .Done
+	ADDIU		A0, A0, 1
+	BEQL		V0, V1, .PutChar
+	ADDIU		V0, R0, F7
+	SUB			V0, V0, V1
+	BLTZ		V0, .Done
+	NOP
+	.PutChar
+	SB			V0, 0 (A1)
+	BEQ			R0, R0	.ReadChar
+	ADDIU		A1, A1, 1
+	.Done
+	ADDIU		V0, V0, FD
+	SB			V0, 0 (A1)
+	JPOP		RA
+}
+	
+% ================================================
+% DrawStringASCII
+% Draws an ASCII string at a specified screen
+% position (posX, posY). Handles conversion to
+% PM string format and sets print style.
+% ------------------------------------------------
+% A0 = char* string
+% A1 = posX
+% A2 = posY
+% A3 = color
+#new:Function $DrawStringASCII
+{
+	PUSH		RA, S1, S2
+	#DEF 		S0, *Data
+	ADDIU		SP, SP, -10 % heap (after push!)
+	COPY		S1, A1
+	COPY		S2, A2
+	ADDIU		A2, *Data, .StringBuffer
+	% clear string buffer
+	ADDIU		V0, A2, 40
+	ADDIU		V0, V0, -4
+	BNE			V0, A2, -8
+	SW			R0, 0 (V0)
+	% buffer is ready
+	LIO			A1, FF0D0C0C	% settings for the string
+	SW			A1, 0 (A2)
+	JAL			$ASCIItoPM
+	ADDIU		A1, A2, 4   % dont overwrite the settings
+	ADDIU 		A0, *Data, .StringBuffer
+	COPY 		A1, S1		% pos X
+	COPY 		A2, S2		% pos Y
+	SW 			A3, 10 (SP)	% color
+	LI 			A3, FF		% opacity
+	SW 			R0, 14 (SP) % special
+	JAL			801264EC % draw_string
+	NOP
+	ADDIU		SP, SP, 10 % heap (before pop!)
+	#UNDEF 		S0
+	JPOP		RA, S1, S2
+}
+
+% ================================================
+% DrawSpecialStringASCII
+% Draws an ASCII string at a specified screen
+% position (posX, posY). Handles conversion to
+% PM string format and sets print style.
+% ------------------------------------------------
+% A0 = char* string
+% A1 = posX
+% A2 = posY
+% A3 = color
+% T0 = effect
+% T1 = alpha
+#new:Function $DrawSpecialStringASCII
+{
+	PUSH		RA, S1, S2, S3
+	#DEF 		S0, *Data
+	ADDIU		SP, SP, -10 % heap (after push!)
+	COPY		S1, A1
+	COPY		S2, A2
+	ADDIU		A2, *Data, .StringBuffer
+	% clear string buffer
+	ADDIU		V0, A2, 40
+	ADDIU		V0, V0, -4
+	BNE			V0, A2, -8
+	SW			R0, 0 (V0)
+	% buffer is ready
+	LIO			A1, FF0D0C0C	% settings for the string
+	SW			A1, 0 (A2)
+	JAL			$ASCIItoPM
+	ADDIU		A1, A2, 4   % dont overwrite the settings
+	ADDIU 		A0, *Data, .StringBuffer
+	COPY 		A1, S1		% pos X
+	COPY 		A2, S2		% pos Y
+	SW 			A3, 10 (SP)	% color
+	COPY 		A3, T1		% opacity
+	SW 			T0, 14 (SP) % special
+	JAL			801264EC % draw_string
+	NOP
+	ADDIU		SP, SP, 10 % heap (before pop!)
+	#UNDEF 		S0
+	JPOP		RA, S1, S2, S3
+}
+
+% ================================================
+% DrawMonospacedStringASCII
+% Draws an ASCII string at a specified screen
+% position (posX, posY). Handles conversion to
+% PM string format and sets print style.
+% ------------------------------------------------
+% A0 = char* string
+% A1 = posX
+% A2 = posY
+% A3 = color
+#new:Function $DrawMonospacedStringASCII
+{
+	PUSH		RA, S1, S2
+	#DEF 		S0, *Data
+	ADDIU		SP, SP, -10 % heap (after push!)
+	DADDU		S1, A1, R0
+	DADDU		S2, A2, R0
+	ADDIU		A2, *Data, .StringBuffer
+	% clear string buffer
+	ADDIU		V0, A2, 40
+	ADDIU		V0, V0, -4
+	BNE			V0, A2, -8
+	SW			R0, 0 (V0)
+	% buffer is ready
+	LIO			A1, FF0D0C0C	% settings for the string
+	SW			A1, 0 (A2)
+	LIO			A1, FF0B0A00	% settings for the string
+	SW			A1, 4 (A2)
+	JAL			$ASCIItoPM
+	ADDIU		A1, A2, 7   % dont overwrite the settings
+	ADDIU 		A0, *Data, .StringBuffer
+	DADDU 		A1, S1, R0	% pos X
+	DADDU 		A2, S2, R0	% pos Y
+	DADDU		V0, A3, R0	% color
+	ORI 		A3, R0, FF	% opacity
+	SW 			V0, 10 (SP) 
+	ORI			V0, R0, 0  % special
+	SW 			V0, 14 (SP) 
+	JAL			801264EC % draw_string
+	NOP
+	ADDIU		SP, SP, 10 % heap (before pop!)
+	#UNDEF 		S0
+	JPOP		RA, S1, S2
+}
+
+% ================================================
+% DrawStringID
+% Draws the string associated with a string ID at
+% a specified screen position (posX, posY). Prepends
+% debug printing style to the string.
+% ------------------------------------------------
+% A0 = stringID
+% A1 = posX
+% A2 = posY
+% A3 = color
+#new:Function $DrawStringID
+{
+	PUSH		RA, S1, S2, S3, S4
+	#DEF 		S0, *Data
+	COPY		S1, A1
+	COPY		S2, A2
+	COPY		S3, A3
+	ADDIU		A2, *Data, .StringBuffer
+	% clear string buffer
+	ADDIU		V0, A2, 40
+	ADDIU		V0, V0, -4
+	BNE			V0, A2, -8
+	SW			R0, 0 (V0)
+	% buffer is ready
+	ADDIU		A2, A2, 19`
+	ADDIU		V0, R0, FFF0
+	AND			A2, A2, V0
+	COPY		S4, A2
+	% A0 is already stringID
+	JAL			80125804 % dma_load_string
+	COPY		A1, A2
+	ADDIU		SP, SP, -10	% heap (after push!)
+	COPY		A0, S4
+	ADDIU		A0, A0, -4
+	LIO			V0, FF0D0C0C	% settings for the string
+	SW			V0, 0 (A0)
+	COPY		A1, S1
+	COPY		A2, S2
+	ORI 		A3, R0, FF	% opacity
+	SW 			S3, 10 (SP) 
+	ORI			V0, R0, 0  % special
+	JAL			801264EC % draw_string
+	SW 			V0, 14 (SP) 
+	ADDIU		SP, SP, 10 % heap (before pop!)
+	#UNDEF 		S0
+	JPOP		RA, S1, S2, S3, S4
+}
+	
+% A0 = posX
+% A1 = posY
+% A2 = sizeX
+% A3 = sizeY
+% T0 = style
+% T1 = opacity
+#new:Function $DrawMenuBox
+{
+	ADDIU		SP, SP, -58
+	SW			RA, 50 (SP)
+	% setup call to DrawBox
+	SW			R0, 10 (SP)	% posZ
+	SW			A2, 14 (SP)	% width
+	SW			A3, 18 (SP) % height
+	SW			T1, 1C (SP) % opacity
+	COPY		A2, A0 % posX
+	COPY		A3, A1 % posY
+	CLEAR		A0 % flags
+	COPY		A1, T0 % flags
+	SW			R0, 20 (SP) % fogRGB
+	SW			R0, 24 (SP) % scaleX (unused)
+	SW			R0, 28 (SP) % scaleY (unused)
+	SW			R0, 2C (SP) % rotX (unused)
+	SW			R0, 30 (SP) % rotY (unused)
+	SW			R0, 34 (SP) % rotZ (unused)
+	SW			R0, 38 (SP) % unk func
+	SW			R0, 3C (SP) % unk func arg0
+	SW			R0, 40 (SP) % txMtx (unused)
+	SW			R0, 44 (SP) % txShiftY (unused)
+	SW			R0, 48 (SP) % txShiftX (unused)
+	JAL			800F52E0 % draw_box
+	SW			R0, 4C (SP) % unk
+	LW			RA, 50 (SP)
+	JR			RA
+	ADDIU		SP, SP, 58
+%}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% REUSABLE EDITABLE HALFWORD
+%{
+
+% ex: editing digit 1 of 0xABCD = ABCD 0A0B 0C0D 0100
+#reserve 8 $EditHalf
+#define .EditHalfValue		0
+#define .EditHalfDigit0		2
+#define .EditHalfDigit1		3
+#define .EditHalfDigit2		4
+#define .EditHalfDigit3		5
+#define .EditHalfDigitPos	6
+
+#new:Function $SplitHalf
+{
+	LIO			A0, $EditHalf
+	LHU			V0, .EditHalfValue (A0)
+	ANDI		V1, V0, F
+	SB			V1, .EditHalfDigit3 (A0)
+	SRL			V0, V0, 4
+	ANDI		V1, V0, F
+	SB			V1, .EditHalfDigit2 (A0)
+	SRL			V0, V0, 4
+	ANDI		V1, V0, F
+	SB			V1, .EditHalfDigit1 (A0)
+	SRL			V0, V0, 4
+	ANDI		V1, V0, F
+	SB			V1, .EditHalfDigit0 (A0)
+	JR			RA
+	NOP
+}
+
+#new:Function $JoinHalf
+{
+	LIO			A0, $EditHalf
+	LBU			V0, .EditHalfDigit0 (A0)
+	LBU			V1, .EditHalfDigit1 (A0)
+	SLL			V0, V0, 4
+	DADDU		V0, V0, V1
+	LBU			V1, .EditHalfDigit2 (A0)
+	SLL			V0, V0, 4
+	DADDU		V0, V0, V1
+	LBU			V1, .EditHalfDigit3 (A0)
+	SLL			V0, V0, 4
+	DADDU		V0, V0, V1
+	SH			V0, .EditHalfValue (A0)
+	JR			RA
+	NOP
+}
+
+% handles input to change digits and change value of digits
+#new:Function $NavigateHalf
+{
+	PUSH		RA, S1
+	LIO			S1, $EditHalf
+	LBU			A0, .EditHalfDigitPos (S1)
+	ADDIU		A1, R0, 0
+	JAL			$NavigateHorizontalWrappedMenu1D
+	ADDIU		A2, R0, 3
+	SB			V0, .EditHalfDigitPos (S1)
+	% do digit change
+	DADDU		V1, S1, V0
+	LBU			A0, .EditHalfDigit0 (V1)
+	ADDIU		A1, R0, 0
+	JAL			$NavigateVerticalWrappedMenu1D
+	ADDIU		A2, R0, F
+	LBU			V1, .EditHalfDigitPos (S1)
+	DADDU		V1, S1, V1
+	SB			V0, .EditHalfDigit0 (V1)
+	JPOP		RA, S1
+}
+	
+% A0 = value of half to read/write
+% V0 = returns new value
+#new:Function $DoEditHalf
+{
+	PUSH		RA, S1
+	LIO			S1, $EditHalf
+	SH			A0, .EditHalfValue (S1)
+	JAL			$SplitHalf
+	NOP
+	JAL			$NavigateHalf
+	NOP
+	JAL			$JoinHalf
+	NOP
+	LHU			V0, .EditHalfValue (S1)
+	JPOP		RA, S1
+}
+	
+% A0 = startDigit
+% A1 = endDigit
+% A2 = startX
+% A3 = posY
+#new:Function $DrawEditHalf
+{
+	PUSH		RA, S1, S2, S3, S4, S5, S8
+	#DEF		S0, *Data
+	COPY		S1, A1
+	COPY		S2, A2
+	COPY		S3, A3
+	LW			S4, .HighlightColor (*Data)
+	LIO			S5, $EditHalf
+	LOOP		S8 = A0,S1
+		% call to printf
+		LIO			A1, $fmtDigit
+		DADDU		A2, S5, S8
+		LBU			A2, .EditHalfDigit0 (A2)	% get digit value
+		JAL			800654F0 % sprintf
+		ADDIU		A0, *Data, .PrintfBuffer
+		% call to drawstring
+		COPY 		A1, S2
+		COPY		A2, S3
+		LB			V0, .EditHalfDigitPos (S5)
+		ADDIU		V1, R0, -1
+		BEQL		V0, V1, 10
+		DADDU 		A3, S4, R0
+		BEQL		V0, S8, 8
+		DADDU 		A3, S4, R0
+		ADDIU 		A3, R0, .DefaultColor
+		JAL			$DrawStringASCII
+		ADDIU		A0, *Data, .PrintfBuffer
+		ADDIU		S2, S2, 7`
+	ENDLOOP
+	#UNDEF		S0
+	JPOP		RA, S1, S2, S3, S4, S5, S8
+%}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% REUSABLE EDITABLE WORD
+%{
+
+% ex: editing digit 1 of 0x6789ABCD = 6789ABCD 06070809 ABCD0A0B 0100
+#reserve 10 $EditWord
+#define .EditWordValue		0
+#define .EditWordDigit0		4
+#define .EditWordDigit1		5
+#define .EditWordDigit2		6
+#define .EditWordDigit3		7
+#define .EditWordDigit4		8
+#define .EditWordDigit5		9
+#define .EditWordDigit6		A
+#define .EditWordDigit7		B
+#define .EditWordDigitPos	C
+
+#new:Function $SplitWord
+{
+	LIO			A0, $EditWord
+	LW			V0, .EditWordValue (A0)
+	ANDI		V1, V0, F
+	SB			V1, .EditWordDigit7 (A0)
+	SRL			V0, V0, 4
+	ANDI		V1, V0, F
+	SB			V1, .EditWordDigit6 (A0)
+	SRL			V0, V0, 4
+	ANDI		V1, V0, F
+	SB			V1, .EditWordDigit5 (A0)
+	SRL			V0, V0, 4
+	ANDI		V1, V0, F
+	SB			V1, .EditWordDigit4 (A0)
+	SRL			V0, V0, 4
+	ANDI		V1, V0, F
+	SB			V1, .EditWordDigit3 (A0)
+	SRL			V0, V0, 4
+	ANDI		V1, V0, F
+	SB			V1, .EditWordDigit2 (A0)
+	SRL			V0, V0, 4
+	ANDI		V1, V0, F
+	SB			V1, .EditWordDigit1 (A0)
+	SRL			V0, V0, 4
+	ANDI		V1, V0, F
+	SB			V1, .EditWordDigit0 (A0)
+	JR			RA
+	NOP
+}
+
+#new:Function $JoinWord
+{
+	LIO			A0, $EditWord
+	LBU			V0, .EditWordDigit0 (A0)
+	LBU			V1, .EditWordDigit1 (A0)
+	SLL			V0, V0, 4
+	DADDU		V0, V0, V1
+	LBU			V1, .EditWordDigit2 (A0)
+	SLL			V0, V0, 4
+	DADDU		V0, V0, V1
+	LBU			V1, .EditWordDigit3 (A0)
+	SLL			V0, V0, 4
+	DADDU		V0, V0, V1
+	LBU			V1, .EditWordDigit4 (A0)
+	SLL			V0, V0, 4
+	DADDU		V0, V0, V1
+	LBU			V1, .EditWordDigit5 (A0)
+	SLL			V0, V0, 4
+	DADDU		V0, V0, V1
+	LBU			V1, .EditWordDigit6 (A0)
+	SLL			V0, V0, 4
+	DADDU		V0, V0, V1
+	LBU			V1, .EditWordDigit7 (A0)
+	SLL			V0, V0, 4
+	DADDU		V0, V0, V1
+	SW			V0, .EditWordValue (A0)
+	JR			RA
+	NOP
+}
+
+% handles input to change digits and change value of digits
+#new:Function $NavigateWord
+{
+	PUSH		RA, S1
+	LIO			S1, $EditWord
+	LBU			A0, .EditWordDigitPos (S1)
+	ADDIU		A1, R0, 0
+	JAL			$NavigateHorizontalWrappedMenu1D
+	ADDIU		A2, R0, 7
+	SB			V0, .EditWordDigitPos (S1)
+	% do digit change
+	DADDU		V1, S1, V0
+	LBU			A0, .EditWordDigit0 (V1)
+	ADDIU		A1, R0, 0
+	JAL			$NavigateVerticalWrappedMenu1D
+	ADDIU		A2, R0, F
+	LBU			V1, .EditWordDigitPos (S1)
+	DADDU		V1, S1, V1
+	SB			V0, .EditWordDigit0 (V1)
+	JPOP		RA, S1
+}
+	
+% A0 = value of half to read/write
+% V0 = returns new value
+#new:Function $DoEditWord
+{
+	PUSH		RA, S1
+	LIO			S1, $EditWord
+	SW			A0, .EditWordValue (S1)
+	JAL			$SplitWord
+	NOP
+	JAL			$NavigateWord
+	NOP
+	JAL			$JoinWord
+	NOP
+	LW			V0, .EditWordValue (S1)
+	JPOP		RA, S1
+}
+	
+% A0 = digit spacing
+% A1 = startX
+% A2 = posY
+#new:Function $DrawEditWord
+{
+	PUSH		RA, S1, S2, S3, S4, S5, S8
+	#DEF		S0, *Data
+	#DEF		S1, *Spacing
+	#DEF		S2, *PosX
+	#DEF		S3, *PosY
+	COPY		*Spacing, A0
+	COPY		*PosX, A1
+	COPY		*PosY, A2
+	LW			S4, .HighlightColor (*Data)
+	LIO			S5, $EditWord
+	LOOP		S8 = 0,8
+		% call to printf
+		LIO			A1, $fmtDigit
+		DADDU		A2, S5, S8
+		LBU			A2, .EditWordDigit0 (A2)	% get digit value
+		JAL			800654F0 % sprintf
+		ADDIU		A0, *Data, .PrintfBuffer
+		% call to drawstring
+		COPY 		A1, *PosX
+		COPY		A2, *PosY
+		LB			V0, .EditWordDigitPos (S5)
+		ADDIU		V1, R0, -1
+		BEQL		V0, V1, 10
+		DADDU 		A3, S4, R0
+		BEQL		V0, S8, 8
+		DADDU 		A3, S4, R0
+		ADDIU 		A3, R0, .DefaultColor
+		JAL			$DrawStringASCII
+		ADDIU		A0, *Data, .PrintfBuffer
+		DADDU		*PosX, *PosX, *Spacing
+	ENDLOOP
+	#UNDEF		All
+	JPOP		RA, S1, S2, S3, S4, S5, S8
+%}
+}
+
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% REUSABLE EDITABLE VALUE 0-999
+%{
+
+% ex: editing digit 1 of 954 = 03BA 0905 0401
+#reserve 8 $EditDecimal
+#define .EditDecimalValue		0
+#define .EditDecimalDigit100	2
+#define .EditDecimalDigit10		3
+#define .EditDecimalDigit1		4
+#define .EditDecimalDigitPos	5
+
+% A0 = $EditDecimal
+#new:Function $SplitDecimal
+{
+	LHU			V0, .EditDecimalValue (A0)
+	ADDIU		V1, R0, 10`
+	DIV			V0, V1
+	MFHI		V0 % reminder
+	SB			V0, .EditDecimalDigit1 (A0)
+	MFLO		V0 % quotient
+	DIV			V0, V1
+	MFHI		V0 % reminder
+	SB			V0, .EditDecimalDigit10 (A0)
+	MFLO		V0 % quotient
+	SB			V0, .EditDecimalDigit100 (A0)
+	JR			RA
+	NOP
+}
+
+% A0 = $EditDecimal
+#new:Function $JoinDecimal
+{
+	LBU			V0, .EditDecimalDigit100 (A0)
+	ADDIU		AT, R0, 10`
+	MULT		V0, AT
+	MFLO		V0	% H*10
+	LBU			V1, .EditDecimalDigit10 (A0)
+	DADDU		V0, V0, V1
+	MULT		V0, AT
+	MFLO		V0	% H*100 + T*10
+	LBU			V1, .EditDecimalDigit1 (A0)
+	DADDU		V0, V0, V1
+	SH			V0, .EditDecimalValue (A0)
+	JR			RA
+	NOP
+}
+
+% handles input to change digits and change value of digits
+% A0 = $EditDecimal
+% A1 = startDigit
+% A2 = endDigit
+#new:Function $NavigateDecimal
+{
+	PUSH		RA, S1
+	COPY		S1, A0
+	JAL			$NavigateHorizontalWrappedMenu1D
+	LBU			A0, .EditDecimalDigitPos (S1)
+	SB			V0, .EditDecimalDigitPos (S1)
+	% do digit change
+	DADDU		V1, S1, V0
+	LBU			A0, .EditDecimalDigit100 (V1)
+	ADDIU		A1, R0, 0
+	JAL			$NavigateVerticalWrappedMenu1D
+	ADDIU		A2, R0, 9
+	LBU			V1, .EditDecimalDigitPos (S1)
+	DADDU		V1, S1, V1
+	SB			V0, .EditDecimalDigit100 (V1)
+	JPOP		RA, S1
+}
+	
+% A0 = value of half to read/write
+% A1 = number of digits, 1-3
+% V0 = returns new value
+#new:Function $DoEditDecimal
+{
+	PUSH		RA, S1, S2
+	LIO			S1, $EditDecimal
+	ADDIU		V0, R0, 3
+	SUB			S2, V0, A1
+	SH			A0, .EditDecimalValue (S1)
+	JAL			$SplitDecimal
+	COPY		A0, S1
+	COPY		A1, S2
+	JAL			$NavigateDecimal
+	ADDIU		A2, R0, 2
+	COPY		A0, S1
+	JAL			$JoinDecimal
+	COPY		A0, S1
+	LHU			V0, .EditDecimalValue (S1)
+	JPOP		RA, S1, S2
+}
+	
+% A0 = numDigits
+% A1 = startX
+% A2 = posY
+#new:Function $DrawEditDecimal
+{
+	PUSH		RA, S1, S2, S3, S4, S5, S8
+	#DEF		S0, *Data
+	#DEF		S2, *PosX
+	#DEF		S3, *PosY
+	COPY		S1, A1
+	ADDIU		V0, R0, 3
+	SUB			V0, V0, A0
+	COPY		*PosX, A1
+	COPY		*PosY, A2
+	LW			S4, .HighlightColor (*Data)
+	LIO			S5, $EditDecimal
+	LOOP		S8 = V0,3
+		% call to printf
+		LIO			A1, $fmtInteger
+		DADDU		A2, S5, S8
+		LBU			A2, .EditDecimalDigit100 (A2)	% get digit value
+		JAL			800654F0 % sprintf
+		ADDIU		A0, *Data, .PrintfBuffer
+		% call to drawstring
+		COPY 		A1, *PosX
+		COPY		A2, *PosY
+		LBU			V0, .EditDecimalDigitPos (S5)
+		BEQ			V0, S8, 8
+		DADDU 		A3, S4, R0
+		ADDIU 		A3, R0, .DefaultColor
+		JAL			$DrawStringASCII
+		ADDIU		A0, *Data, .PrintfBuffer
+		ADDIU		*PosX, *PosX, 8`
+	ENDLOOP
+	#UNDEF		S0, S2, S3
+	JPOP		RA, S1, S2, S3, S4, S5, S8
+%}	
+}
+	
+% ================================================
+% PrintHeapUsage
+% ------------------------------------------------
+% A0 = ptr* char[] name
+% A1 = ptr* heap
+% A2 = ptr* posY
+%{
+
+% A0 = ptr* heap
+% ret V0 = bytes used
+% ret V1 = capacity
+#new:Function $CheckHeapUsage
+{
+	DADDU		V0, R0, R0 % counter = 0
+	LW			V1, C (A0) % save capacity
+	.ReadNode
+	ADDIU		V0, V0, 10 % account for header
+	LW			A1, 0 (A0)
+	LW			A2, 4 (A0)
+	LH			A3, 8 (A0)
+	BNEL		A3, R0, .NextNode
+	DADDU		V0, V0, A2 % add size
+	.NextNode
+	BNE			A1, R0, .ReadNode
+	DADDU		A0, A1, R0
+	JR			RA
+	NOP
+}
+	
+#new:Function $PrintHeapUsage
+{
+	PUSH		RA, S1, S2, S3, S4, S5, F0
+	#DEF 		S0, *Data
+	DADDU		S1, A1, R0
+	DADDU		S2, A2, R0
+	ORI 		A1, R0, .PrintHeapPosX[4`]
+	JAL			$DrawStringASCII
+	ADDIU		A3, R0, .DefaultColor
+	% analyze the heap
+	JAL			$CheckHeapUsage
+	DADDU		A0, S1, R0
+	% done: V0 = bytes used, V1 = capacity
+	% print usage amount
+	DADDU		S3, V0, R0		% args for printf
+	DADDU		S4, V1, R0		% args for printf
+	LIO			A1, $fmtHeapUsage
+	COPY		A2, S3
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	ADDIU		A0, *Data, .PrintfBuffer
+	ORI 		A1, R0, .PrintHeapPosX[50`]
+	DADDU 		A2, S2, R0		% pos Y
+	JAL			$DrawStringASCII
+	ADDIU		A3, R0, .DefaultColor
+	% compute percent
+	MTC1		S3, F0
+	CVT.D.W		F0, F0
+	MTC1		S4, F2
+	CVT.D.W		F2, F2
+	ADDIU		V0, R0, 100`
+	MTC1		V0, F4
+	CVT.D.W		F4, F4
+	DIV.D		F0, F0, F2
+	MUL.D		F0, F0, F4
+	% format for %f requires a double
+	% is there a better way to load it from COP1?
+	ADDIU		SP, SP, -8
+	SDC1		F0, 0 (SP)
+	LW			A2, 0 (SP)
+	LW			A3, 4 (SP)
+	ADDIU		SP, SP, 8
+	% print usage percent
+	LIO			A1, $fmtPercent
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	ADDIU		A0, *Data, .PrintfBuffer
+	ORI 		A1, R0, .PrintHeapPosX[90`]
+	DADDU 		A2, S2, R0		% pos Y
+	JAL			$DrawStringASCII
+	ADDIU		A3, R0, .DefaultColor
+	#UNDEF 		S0
+	JPOP		RA, S1, S2, S3, S4, S5, F0
+%}
+}
+
+% ================================================
+% PrintBasicInfo
+% Always printed
+% ------------------------------------------------
+% expects: S0 = Data
+% ------------------------------------------------
+%{
+#new:Function $PrintBasicInfo
+{
+	PUSH		RA, F0, S1
+	#DEF		S0, *Data
+	#DEF		S1, *Style
+	% standard way to check for isBattle?
+	LAW			V1, 8007419C
+	LB			V0, 70 (V1)
+	BNE			V0, R0, .DrawBattleString
+	NOP
+	/%
+	% check current npc state
+	LAW			A1, 8009A600
+	ORI			A2, R0, .BattleState
+	BEQ			A1, A2, .DrawBattleString
+	%/
+	LBU			V0, .SpeedModeActive (*Data)
+	BEQ			V0, R0, 8
+	LI			*Style, .DefaultStyle
+	LI			*Style, .RainbowStyle
+	% print map name
+	.DrawMapString
+	LIO			A1, $fmtMapName
+	LIO			A2, $DebugMapName
+	LHU			A3, 8E (V1)
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	ADDIU		A0, *Data, .PrintfBuffer
+	ORI 		A1, R0, 220`	% pos X
+	ORI 		A2, R0, .BottomRowY
+	ADDIU 		A3, R0, .DefaultColor
+	COPY 		T0, *Style
+	JAL			$DrawSpecialStringASCII
+	LI			T1, 255`
+	% print position
+	LIO			A0, $strPos
+	ORI 		A1, R0, 20`		% pos X
+	ORI 		A2, R0, .BottomRowY
+	ADDIU 		A3, R0, .DefaultColor
+	COPY 		T0, *Style
+	JAL			$DrawSpecialStringASCII
+	LI			T1, 255`
+	% print x coord
+	LAF			F0, 8010EFF0
+	CVT.W.S		F0, F0
+	MFC1		A2, F0
+	LIO			A1, $fmtCoord
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	ADDIU		A0, *Data, .PrintfBuffer
+	ORI 		A1, R0, 30 		% pos X
+	ORI 		A2, R0, .BottomRowY
+	ADDIU 		A3, R0, .DefaultColor
+	COPY 		T0, *Style
+	JAL			$DrawSpecialStringASCII
+	LI			T1, 255`
+	% print y coord
+	LAF			F0, 8010EFF4
+	CVT.W.S		F0, F0
+	MFC1		A2, F0
+	LIO			A1, $fmtCoord
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	ADDIU		A0, *Data, .PrintfBuffer
+	ORI 		A1, R0, 50 		% pos X
+	ORI 		A2, R0, .BottomRowY
+	ADDIU 		A3, R0, .DefaultColor
+	COPY 		T0, *Style
+	JAL			$DrawSpecialStringASCII
+	LI			T1, 255`
+	% print z coord
+	LAF			F0, 8010EFF8
+	CVT.W.S		F0, F0
+	MFC1		A2, F0
+	LIO			A1, $fmtCoord
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	ADDIU		A0, *Data, .PrintfBuffer
+	ORI 		A1, R0, 70 		% pos X
+	ORI 		A2, R0, .BottomRowY
+	ADDIU 		A3, R0, .DefaultColor
+	COPY 		T0, *Style
+	JAL			$DrawSpecialStringASCII
+	LI			T1, 255`
+	% print god mode notice if active
+	LBU			V0, .GodModeActive (*Data)
+	BEQ			V0, R0, .Done
+	NOP
+	LIO			A0, $strGodMode
+	ORI 		A1, R0, 158`	% pos X
+	ORI 		A2, R0, .BottomRowY
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, 5
+	B			.Done
+	NOP
+	.DrawBattleString
+	LIO			A0, $DebugBattleID
+	LB			A2, 0 (A0)
+	LB			A3, 1 (A0)
+	LH			V0, 2 (A0)
+	ADDIU		SP, SP, -8		% stack alloc for arg
+	SW			V0, 10 (SP)
+	LIO			A1, $fmtBattle
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	ADDIU		SP, SP, 8		% stack free
+	ADDIU		A0, *Data, .PrintfBuffer
+	ORI 		A1, R0, 200`	% pos X
+	ORI 		A2, R0, .BottomRowY
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	LIO			A1, $fmtStageName
+	LIO			A2, $DebugStageName
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	ADDIU		A0, *Data, .PrintfBuffer
+	ORI 		A1, R0, 20`	% pos X
+	ORI 		A2, R0, .BottomRowY
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% print god mode if active
+	LBU			V0, .GodModeActive (*Data)
+	BEQ			V0, R0, .Done
+	NOP
+	LIO			A0, $strGodMode
+	ORI 		A1, R0, 128`	% pos X
+	ORI 		A2, R0, .BottomRowY
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, 5
+	.Done
+	##[IF:LogVars]
+	JAL			$UpdateVarConsole
+	NOP
+	##[ENDIF]
+	#UNDEF		S0, S1
+	JPOP		RA, F0, S1
+%}
+}
+	
+% ================================================
+% PrintDetailedInfo
+% Only printed when details are toggled on
+% ------------------------------------------------
+% Uses:
+% S1 = watchlist position pointer
+% S2 = watchlist entry counter
+% S3 = watchlist print position
+% S4 = current length
+%{
+#define	.PrintHeapPosX		174` %144`
+#define .PrintHeapPosY		55`
+
+#define .WatchListPosX		20`
+
+#new:Function $PrintDetailedInfo
+{
+	PUSH		RA, S1, S2, S3, S4, F0, F1
+	#DEF		S0, *Data
+	% print title
+	LIO			A0, $strHeapTitle
+	ORI 		A1, R0, .PrintHeapPosX
+	ORI 		A2, R0,	.PrintHeapPosY
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% "Collision"
+	LIO			A0, $strHeapCollision
+	LIO			A1, $Global_CollisionHeap
+	JAL			$PrintHeapUsage
+	ORI 		A2, R0, .PrintHeapPosY[14`]
+	% "World"
+	LIO			A0, $strHeapWorld
+	LIO			A1, $Global_WorldHeap
+	JAL			$PrintHeapUsage
+	ORI 		A2, R0, .PrintHeapPosY[28`]
+	% "Sprite"
+	LIO			A0, $strHeapSprite
+	LIO			A1, $Global_SpriteHeap
+	JAL			$PrintHeapUsage
+	ORI 		A2, R0, .PrintHeapPosY[42`]
+	% "Battle"
+	LIO			A0, $strHeapBattle
+	LIO			A1, $Global_BattleHeap
+	JAL			$PrintHeapUsage
+	ORI 		A2, R0, .PrintHeapPosY[56`]
+	% print running scripts count
+	DADDU		A2, R0, R0
+	DADDU		A3, R0, R0
+	LAW			V1, 802DA890
+	.ScriptCountLoop
+	LW			V0, 0 (V1)
+	BNEL		V0, R0, 4
+	ADDIU		A2, A2, 1
+	ADDIU		A3, A3, 1
+	SLTI		V0, A3, 80
+	BNE			V0, R0, .ScriptCountLoop
+	ADDIU		V1, V1, 4
+	% done counting, print the result
+	LIO			A1, $fmtScriptCount
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	ADDIU		A0, *Data, .PrintfBuffer
+	ORI 		A1, R0, .PrintHeapPosX[8`]
+	ORI 		A2, R0, .PrintHeapPosY[72`]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% print the PrintVar debug value
+	/%
+	LIO			A0, 802DACA0	% Script command PrintVar writes here
+	LW			V0, 0 (A0)
+	BEQ			V0, R0, .PrintDebugVars
+	NOP
+	ORI 		A1, R0, .PrintHeapPosX[8`]
+	ORI 		A2, R0, .PrintHeapPosY[86`]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	%/
+	.PrintDebugVars
+	CLEAR		S2
+	ADDIU		S3, R0, .PrintHeapPosY[100`]
+	.NextDebugVar
+	BEQI		S2, 4, .PrintWatchList
+	NOP
+	JAL			$GetDebugValueType
+	COPY		A0, S2
+	BEQI		V0, 1, .PrintInt
+	NOP
+	BEQI		V0, 2, .PrintFloat
+	NOP
+	B			.NextDebugVar
+	ADDIU		S2, S2, 1
+	.PrintInt
+	JAL			$GetDebugValue
+	COPY		A0, S2
+	COPY		A2, V0
+	LI			A1, $fmtWord
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	ADDIU		A0, *Data, .PrintfBuffer
+	ORI 		A1, R0, .PrintHeapPosX[70`]
+	COPY 		A2, S3
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	B			.PrintDebugVarName
+	NOP
+	.PrintFloat
+	JAL			$GetDebugValue
+	COPY		A0, S2
+	JAL			802C4920 % fixed_var_to_float
+	COPY		A0, V0
+	% format for %f requires a double on args A2/A3
+	CVT.D.S		F0, F0
+	ADDIU		SP, SP, -8
+	SDC1		F0, 0 (SP)
+	LW			A2, 0 (SP)
+	LW			A3, 4 (SP)
+	ADDIU		SP, SP, 8
+	LI			A1, $fmtFloat
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	ADDIU		A0, *Data, .PrintfBuffer
+	ORI 		A1, R0, .PrintHeapPosX[70`]
+	COPY 		A2, S3
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	B			.PrintDebugVarName
+	NOP
+	.PrintDebugVarName
+	COPY		A2, S2
+	LI			A1, $fmtDebugVar
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	ADDIU		A0, *Data, .PrintfBuffer
+	ORI 		A1, R0, .PrintHeapPosX
+	COPY 		A2, S3
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	
+	ADDIU		S3, S3, 15`
+	B			.NextDebugVar
+	ADDIU		S2, S2, 1
+	
+	.PrintWatchList
+	LIO			S1, ##[VALUE:WatchListPointer]
+	LW			S2, 0 (S1)
+	ADDIU		S1, S1, 4
+	ADDIU		S3, R0, .PrintHeapPosY
+	BEQ			S2, R0, .Done
+	NOP
+	% print title
+	LIO			A0, $strWatchTitle
+	ORI 		A1, R0, .WatchListPosX
+	ORI 		A2, R0, .PrintHeapPosY
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	.NextWatchEntry
+	BEQ			S2, R0, .Done
+	ADDIU		S3, S3, 15`
+	.PrintName
+	% print entry name
+	ADDIU		A0, S1, 8		% string
+	ORI 		A1, R0, .WatchListPosX[4`]
+	COPY 		A2, S3			% pos Y
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% read entry and load value
+	LW			A1, 4, (S1) % ref
+	LHU			V0, 0, (S1) % category
+	BEQ			V0, R0, .LoadFromAddr
+	LHU			S4, 2, (S1) % len
+	.LoadFromVar
+	JAL			802C7ABC
+	NOP			% already have A1 = ref
+	ANDI		V0, V0, FF
+	B			.DoneLoading
+	NOP			% result is on V0
+	.LoadFromAddr
+	BNEI		S4, 1, .CheckHalf
+	LBU			V0, 0 (A1)
+	B			.DoneLoading
+	ANDI		V0, V0, FF
+	.CheckHalf
+	BNEI		S4, 2, .CheckWord
+	LHU			V0, 0 (A1)
+	B			.DoneLoading
+	ANDI		V0, V0, FFFF
+	.CheckWord
+	BEQI		S4, 4, .DoneLoading
+	LW			V0, 0 (A1)
+	BEQIL		S4, 108, .DoneLoading
+	LDC1		F0, 0 (A1)
+	% default = float = 104
+	LWC1		F0, 0 (A1)
+	CVT.D.S		F0, F0
+	.DoneLoading
+	% get print format
+	LIO			A1, $fmtDigit
+	BEQ			S4, R0, .DoneFormat
+	COPY		A2, V0
+	LIO			A1, $fmtByte
+	BEQI		S4, 1, .DoneFormat
+	COPY		A2, V0
+	LIO			A1, $fmtHalf
+	BEQI		S4, 2, .DoneFormat
+	COPY		A2, V0
+	LIO			A1, $fmtWord
+	BEQI		S4, 4, .DoneFormat
+	COPY		A2, V0
+	% format for %f requires a double
+	% is there a better way to load it from COP1?
+	ADDIU		SP, SP, -8
+	SDC1		F0, 0 (SP)
+	LW			A2, 0 (SP)
+	LW			A3, 4 (SP)
+	ADDIU		SP, SP, 8
+	LIO			A1, $fmtFloat
+	.DoneFormat
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	ADDIU		A0, *Data, .PrintfBuffer
+	ORI 		A1, R0, .WatchListPosX[88`]
+	COPY 		A2, S3			% pos Y
+	JAL			$DrawStringASCII
+	ADDIU		A3, R0, .DefaultColor
+	/%
+	
+	% format for %f requires a double
+	% is there a better way to load it from COP1?
+	ADDIU		SP, SP, -8
+	SDC1		F0, 0 (SP)
+	LW			A2, 0 (SP)
+	LW			A3, 4 (SP)
+	ADDIU		SP, SP, 8
+	.DoneFormat
+	% print formatted entry value
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	ADDIU		A0, *Data, .PrintfBuffer
+	ORI 		A1, R0, .WatchListPosX[88`]
+	COPY 		A2, S3			% pos Y
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	%/
+	% next entry
+	ADDIU		S1, S1, 18
+	B			.NextWatchEntry
+	ADDIU		S2, S2, -1
+	.Done
+	#UNDEF		S0
+	JPOP		RA, S1, S2, S3, S4, F0, F1
+%}
+}
+	
+% MENU HELPERS
+% ------------------------------------------------
+% expect: S0 = $DebugState
+%{
+% ================================================
+% NavigateVerticalMenu1D
+% ------------------------------------------------
+% A0 = list position
+% A1 = list min (inclusive)
+% A2 = list max (inclusive)
+% ------------------------------------------------
+% returns: V0 = new list position
+% ------------------------------------------------
+#new:Function $NavigateVerticalMenu1D
+{
+	#DEF 		A0, *Pos
+	#DEF 		A1, *Min
+	#DEF 		A2, *Max
+	#DEF 		V1, *Delta
+	DADDU		*Delta, R0, R0
+	LB			V0, .Press[.D-down] (S0)
+	BNEL		V0, R0, 4
+	ADDI		*Delta, *Delta, -1
+	LB			V0, .Press[.D-up] (S0)
+	BNEL		V0, R0, 4
+	ADDIU		*Delta, *Delta, 1
+	DADDU		*Pos, *Pos, *Delta
+	#UNDEF		V1
+	BLT			*Pos, *Min, .Done
+	DADDU		V0, *Min, R0
+	BGT			*Pos, *Max, .Done
+	DADDU		V0, *Max, R0
+	DADDU		V0, *Pos, R0
+	.Done
+	JR			RA
+	NOP
+}
+	
+% ================================================
+% NavigateVerticalWrappedMenu1D
+% ------------------------------------------------
+% A0 = list position
+% A1 = list min (inclusive)
+% A2 = list max (inclusive)
+% ------------------------------------------------
+% returns: V0 = new list position
+% ------------------------------------------------
+#new:Function $NavigateVerticalWrappedMenu1D
+{
+	#DEF 		A0, *Pos
+	#DEF 		A1, *Min
+	#DEF 		A2, *Max
+	#DEF 		V1, *Delta
+	DADDU		*Delta, R0, R0
+	LB			V0, .Press[.D-down] (S0)
+	BNEL		V0, R0, 4
+	ADDI		*Delta, *Delta, -1
+	LB			V0, .Press[.D-up] (S0)
+	BNEL		V0, R0, 4
+	ADDIU		*Delta, *Delta, 1
+	DADDU		*Pos, *Pos, *Delta
+	#UNDEF		V1
+	BLT			*Pos, *Min, .Done
+	DADDU		V0, *Max, R0
+	BGT			*Pos, *Max, .Done
+	DADDU		V0, *Min, R0
+	DADDU		V0, *Pos, R0
+	.Done
+	JR			RA
+	NOP
+}
+	
+% ================================================
+% NavigateVerticalWrappedMenu1D
+% ------------------------------------------------
+% A0 = list position
+% A1 = list min (inclusive)
+% A2 = list max (inclusive)
+% ------------------------------------------------
+% returns: V0 = new list position
+% ------------------------------------------------
+#new:Function $NavigateVerticalWrappedMenu1D_Reversed
+{
+	#DEF 		A0, *Pos
+	#DEF 		A1, *Min
+	#DEF 		A2, *Max
+	#DEF 		V1, *Delta
+	DADDU		*Delta, R0, R0
+	LB			V0, .Press[.D-up] (S0)
+	BNEL		V0, R0, 4
+	ADDI		*Delta, *Delta, -1
+	LB			V0, .Press[.D-down] (S0)
+	BNEL		V0, R0, 4
+	ADDIU		*Delta, *Delta, 1
+	DADDU		*Pos, *Pos, *Delta
+	#UNDEF		V1
+	BLT			*Pos, *Min, .Done
+	DADDU		V0, *Max, R0
+	BGT			*Pos, *Max, .Done
+	DADDU		V0, *Min, R0
+	DADDU		V0, *Pos, R0
+	.Done
+	JR			RA
+	NOP
+}
+	
+% ================================================
+% NavigateHorizontalMenu1D
+% ------------------------------------------------
+% A0 = list position
+% A1 = list min (inclusive)
+% A2 = list max (inclusive)
+% ------------------------------------------------
+% returns: V0 = new list position
+% ------------------------------------------------
+#new:Function $NavigateHorizontalMenu1D
+{
+	#DEF 		A0, *Pos
+	#DEF 		A1, *Min
+	#DEF 		A2, *Max
+	#DEF 		V1, *Delta
+	DADDU		*Delta, R0, R0
+	LB			V0, .Press[.D-left] (S0)
+	BNEL		V0, R0, 4
+	ADDI		*Delta, *Delta, -1
+	LB			V0, .Press[.D-right] (S0)
+	BNEL		V0, R0, 4
+	ADDIU		*Delta, *Delta, 1
+	DADDU		*Pos, *Pos, *Delta
+	#UNDEF		V1
+	BLT			*Pos, *Min, .Done
+	DADDU		V0, *Min, R0
+	BGT			*Pos, *Max, .Done
+	DADDU		V0, *Max, R0
+	DADDU		V0, *Pos, R0
+	.Done
+	JR			RA
+	NOP
+}
+	
+% ================================================
+% NavigateHorizontalWrappedMenu1D
+% ------------------------------------------------
+% A0 = list position
+% A1 = list min (inclusive)
+% A2 = list max (inclusive)
+% ------------------------------------------------
+% returns: V0 = new list position
+% ------------------------------------------------
+#new:Function $NavigateHorizontalWrappedMenu1D
+{
+	#DEF 		A0, *Pos
+	#DEF 		A1, *Min
+	#DEF 		A2, *Max
+	#DEF 		V1, *Delta
+	DADDU		*Delta, R0, R0
+	LB			V0, .Press[.D-left] (S0)
+	BNEL		V0, R0, 4
+	ADDI		*Delta, *Delta, -1
+	LB			V0, .Press[.D-right] (S0)
+	BNEL		V0, R0, 4
+	ADDIU		*Delta, *Delta, 1
+	DADDU		*Pos, *Pos, *Delta
+	#UNDEF		V1
+	BLT			*Pos, *Min, .Done
+	DADDU		V0, *Max, R0
+	BGT			*Pos, *Max, .Done
+	DADDU		V0, *Min, R0
+	DADDU		V0, *Pos, R0
+	.Done
+	JR			RA
+	NOP
+}
+
+% ================================================
+% NavigateWrappedMenu2D
+% (1D indices increase across rows)
+% ------------------------------------------------
+% A0 = list position
+% A1 = list max
+% A2 = num rows
+% ------------------------------------------------
+% returns: V0 = new list position
+% ------------------------------------------------
+#new:Function $NavigateWrappedMenu2D
+{
+	#DEF 		A0, *Pos
+	#DEF 		A1, *Max
+	#DEF 		A2, *NumRows
+	#DEF 		T0, *NumCols
+	#DEF 		T1, *NumSlots
+	% calculate num cols
+	DIV			*Max, *NumRows
+	MFHI		V0
+	MFLO		*NumCols
+	BNEL		V0, R0, 4
+	ADDIU		*NumCols, *NumCols, 1
+	MULT		*NumRows, *NumCols
+	MFLO		*NumSlots
+	.CheckUp
+	LB			V0, .Press[.D-up] (S0)
+	BEQ			V0, R0, .CheckDown
+	NOP
+	ADDIU		*Pos, *Pos, -1
+	BLTZL		*Pos, .CheckUpWrap
+	DADDU		*Pos, *Pos, *NumRows
+	DIV			*Pos, *NumRows
+	MFHI		V0
+	ADDIU		V0, V0, 1
+	BEQL		V0, *NumRows, .CheckUpWrap
+	DADDU		*Pos, *Pos, *NumRows
+	.CheckUpWrap
+	BLT			*Pos, *Max, .CheckDown
+	NOP
+	B			.CheckUpWrap
+	ADDIU		*Pos, *Pos, -1	
+	.CheckDown
+	LB			V0, .Press[.D-down] (S0)
+	BEQ			V0, R0, .CheckLeft
+	NOP
+	ADDIU		*Pos, *Pos, 1
+	DIV			*Pos, *NumRows
+	MFHI		V0
+	BEQL		V0, R0, .CheckLeft
+	SUBU		*Pos, *Pos, *NumRows
+	BLT			*Pos, *Max, .CheckLeft
+	MFLO		V0
+	MULT		V0, *NumRows
+	MFLO		*Pos
+	.CheckLeft
+	LB			V0, .Press[.D-left] (S0)
+	BEQ			V0, R0, .CheckRight
+	NOP
+	SUBU		*Pos, *Pos, *NumRows
+	BGE			*Pos, R0, .CheckRight
+	NOP
+	DADDU		*Pos, *Pos, *NumSlots
+	.CheckLeftWrap
+	BLT			*Pos, *Max, .CheckRight
+	NOP
+	B			.CheckLeftWrap
+	SUBU		*Pos, *Pos, *NumRows
+	.CheckRight
+	LB			V0, .Press[.D-right] (S0)
+	BEQ			V0, R0, .Done
+	NOP
+	DADDU		*Pos, *Pos, *NumRows
+	BLT			*Pos, *Max, .Done
+	NOP
+	SUBU		*Pos, *Pos, *NumSlots
+	.CheckRightWrap
+	BGE			*Pos, R0, .Done
+	NOP
+	B			.CheckRightWrap
+	DADDU		*Pos, *Pos, *NumRows
+	.Done
+	JR			RA
+	DADDU		V0, R0, *Pos
+}
+	
+% ================================================
+% NavigateWrappedMenu2D_ColumnMajor
+% (1D indices increase across columns)
+% ------------------------------------------------
+% A0 = list position
+% A1 = list max
+% A2 = num cols
+% ------------------------------------------------
+% returns: V0 = new list position
+% ------------------------------------------------
+#new:Function $NavigateWrappedMenu2D_ColumnMajor
+{
+	#DEF 		A0, *Pos
+	#DEF 		A1, *Max
+	#DEF 		A2, *NumRows
+	#DEF 		T0, *NumCols
+	#DEF 		T1, *NumSlots
+	% calculate num cols
+	DIV			*Max, *NumRows
+	MFHI		V0
+	MFLO		*NumCols
+	BNEL		V0, R0, 4
+	ADDIU		*NumCols, *NumCols, 1
+	MULT		*NumRows, *NumCols
+	MFLO		*NumSlots
+	.CheckUp
+	LB			V0, .Press[.D-left] (S0)
+	BEQ			V0, R0, .CheckDown
+	NOP
+	ADDIU		*Pos, *Pos, -1
+	BLTZL		*Pos, .CheckUpWrap
+	DADDU		*Pos, *Pos, *NumRows
+	DIV			*Pos, *NumRows
+	MFHI		V0
+	ADDIU		V0, V0, 1
+	BEQL		V0, *NumRows, .CheckUpWrap
+	DADDU		*Pos, *Pos, *NumRows
+	.CheckUpWrap
+	BLT			*Pos, *Max, .CheckDown
+	NOP
+	B			.CheckUpWrap
+	ADDIU		*Pos, *Pos, -1	
+	.CheckDown
+	LB			V0, .Press[.D-right] (S0)
+	BEQ			V0, R0, .CheckLeft
+	NOP
+	ADDIU		*Pos, *Pos, 1
+	DIV			*Pos, *NumRows
+	MFHI		V0
+	BEQL		V0, R0, .CheckLeft
+	SUBU		*Pos, *Pos, *NumRows
+	BLT			*Pos, *Max, .CheckLeft
+	MFLO		V0
+	MULT		V0, *NumRows
+	MFLO		*Pos
+	.CheckLeft
+	LB			V0, .Press[.D-up] (S0)
+	BEQ			V0, R0, .CheckRight
+	NOP
+	SUBU		*Pos, *Pos, *NumRows
+	BGE			*Pos, R0, .CheckRight
+	NOP
+	DADDU		*Pos, *Pos, *NumSlots
+	.CheckLeftWrap
+	BLT			*Pos, *Max, .CheckRight
+	NOP
+	B			.CheckLeftWrap
+	SUBU		*Pos, *Pos, *NumRows
+	.CheckRight
+	LB			V0, .Press[.D-down] (S0)
+	BEQ			V0, R0, .Done
+	NOP
+	DADDU		*Pos, *Pos, *NumRows
+	BLT			*Pos, *Max, .Done
+	NOP
+	SUBU		*Pos, *Pos, *NumSlots
+	.CheckRightWrap
+	BGE			*Pos, R0, .Done
+	NOP
+	B			.CheckRightWrap
+	DADDU		*Pos, *Pos, *NumRows
+	.Done
+	JR			RA
+	DADDU		V0, R0, *Pos
+%}
+}
+
+% ================================================
+% UpdateMainMenu
+% ------------------------------------------------
+% Uses:
+% S6 = main menu position
+% S7 = text highlight color
+% S8 = draw counter
+% ------------------------------------------------
+%{
+#define .NumMenuOptions		10`
+
+#new:ASCII $mainMenuFullRestore
+{
+"Full Restore"
+}
+
+#new:ASCII $mainMenuQuickSave
+{
+"Save/Load"
+}
+
+#new:ASCII $mainMenuMapSelect
+{
+"Map Select"
+}
+
+#new:ASCII $mainMenuBattleSelect
+{
+"Battle Select"
+}
+
+#new:ASCII $mainSetStory
+{
+"Set Story Byte"
+}
+
+#new:ASCII $mainMenuPlaySound
+{
+"Sound Player"
+}
+
+#new:ASCII $mainMenuEditPartners
+{
+"Edit Partners"
+}
+
+#new:ASCII $mainMenuEditInventory
+{
+"Edit Inventory"
+}
+
+#new:ASCII $mainMenuEditRAM
+{
+"Edit Memory"
+}
+
+#new:ASCII $mainMenuViewCollision
+{
+"View Collision"
+}
+
+#new:Data $MainMenuJumpTable
+{
+$UpdateMainMenu[.ChooseFullHeal]
+$UpdateMainMenu[.ChooseQuickSave]
+$UpdateMainMenu[.ChooseMapSelect]
+$UpdateMainMenu[.ChooseBattleSelect]
+$UpdateMainMenu[.ChooseStorySelect]
+$UpdateMainMenu[.ChoosePlaySound]
+$UpdateMainMenu[.ChooseEditPartners]
+$UpdateMainMenu[.ChooseEditInventory]
+$UpdateMainMenu[.ChooseEditMemory]
+$UpdateMainMenu[.ChooseViewCollision]
+}
+
+#new:Data $MainMenuOptions
+{
+$mainMenuFullRestore
+$mainMenuQuickSave
+$mainMenuMapSelect
+$mainMenuBattleSelect
+$mainSetStory
+$mainMenuPlaySound
+$mainMenuEditPartners
+$mainMenuEditInventory
+$mainMenuEditRAM
+$mainMenuViewCollision
+}
+
+#new:Function $UpdateMainMenu
+{
+	PUSH		RA, S6, S7, S8
+	#DEF		S0, *Data
+	LBU			S6, .MainMenuPos (*Data)
+	% check for exit (D-left or L)
+	LB			V0, .Press[.D-left] (*Data)
+	LB			V1, .Press[.L] (*Data)
+	OR			V0, V0, V1
+	BNEL		V0, R0, .Done
+	SB			R0, .DebugMenuState (*Data)
+	% check for selection (D-right or R)
+	.CheckSelect
+	LW			S7, .HighlightColor (*Data)
+	LB			V0, .Release[.D-right] (*Data)
+	LB			V1, .Release[.R] (*Data)
+	OR			V0, V0, V1
+	BEQ			V0, R0, .NoSelection
+	NOP
+	% do selection
+	ADDIU		V1, R0, 1
+	SB			V1, .DebugStateChanged (*Data)
+	SLL			V1, S6, 2
+	LTW			V0, V1 ($MainMenuJumpTable)
+	JR			V0
+	NOP
+	.ChooseMapSelect
+	ADDIU		V1, R0, .StateAreaSelect
+	SB			V1, .DebugMenuState (*Data)
+	B			.DrawMenu
+	NOP
+	.ChooseBattleSelect
+	ADDIU		V1, R0, .StateBattleSelect
+	SB			V1, .DebugMenuState (*Data)
+	B			.DrawMenu
+	NOP
+	.ChooseStorySelect
+	ADDIU		V1, R0, .StateStorySelect
+	SB			V1, .DebugMenuState (*Data)
+	B			.DrawMenu
+	NOP
+	.ChoosePlaySound
+	ADDIU		V1, R0, .StateSoundMenu
+	SB			V1, .DebugMenuState (*Data)
+	B			.DrawMenu
+	NOP
+	.ChooseFullHeal
+	JAL			80149CB4 % play_sound
+	ADDIU		A0, R0, .SoundHeal
+	LIO			V0, 8010F290
+	LBU			V1, 3 (V0)
+	SB			V1, 2 (V0)
+	LBU			V1, 6 (V0)
+	SB			V1, 5 (V0)
+	LBU			V1, 28E (V0)
+	SB			V1, 290 (V0)
+	SB			R0, 291 (V0)
+	B			.DrawMenu
+	NOP
+	.ChooseQuickSave
+	ADDIU		V1, R0, .StateQuickSave
+	SB			V1, .DebugMenuState (*Data)
+	B			.DrawMenu
+	NOP
+	.ChooseEditPartners
+	ADDIU		V1, R0, .StateEditPartners
+	SB			V1, .DebugMenuState (*Data)
+	B			.DrawMenu
+	NOP
+	.ChooseEditInventory
+	ADDIU		V1, R0, .StateEditInventory
+	SB			V1, .DebugMenuState (*Data)
+	B			.DrawMenu
+	NOP
+	.ChooseEditMemory
+	ADDIU		V1, R0, .StateEditMemory
+	SB			V1, .DebugMenuState (*Data)
+	B			.DrawMenu
+	NOP
+	.ChooseViewCollision
+	ADDIU		V1, R0, .StateViewCollision
+	SB			V1, .DebugMenuState (*Data)
+	B			.DrawMenu
+	NOP
+	.NoSelection
+	% check for navigation
+	DADDU		V1, R0, R0
+	LB			V0, .Press[.D-down] (*Data)
+	BNEL		V0, R0, 4
+	ADDI		V1, V1, 1
+	LB			V0, .Press[.D-up] (*Data)
+	BNEL		V0, R0, 4
+	ADDI		V1, V1, -1
+	DADDU		S6, S6, V1
+	% clamp range
+	BLTZL		S6, .StoreResult
+	ADDIU		S6, S6, .NumMenuOptions
+	ADDIU		V0, R0, .NumMenuOptions
+	BGEL		S6, V0, .StoreResult
+	SUBU		S6, S6, V0
+	.StoreResult
+	SB			S6, .MainMenuPos (*Data)
+	B			.DrawMenu
+	NOP
+	% still draw the menu from subscreens by JR here
+	.DrawInactiveMenu
+	PUSH		RA, S6, S7, S8
+	LBU			S6, .MainMenuPos (*Data)
+	ADDIU 		S7, R0, .HoverColor
+	.DrawMenu
+	% draw bg
+	ADDIU		A0, R0, .MainBoxPosX
+	ADDIU		A1, R0, .MainBoxPosY
+	ADDIU		A2, R0, .MainBoxWidth
+	ADDIU		A3, R0, .MainBoxHeight
+%	LIO			T0, $CustomStyle
+	LIO			T0, 4
+	JAL			$DrawMenuBox
+	ADDIU		T1, R0, C0
+	LOOP		S8 = 0, .NumMenuOptions
+%	ADDIU		S8, R0, 0
+	.DrawLoop
+		BEQ			S6, S8, 8
+		DADDU 		A3, S7, R0 % select/choose
+		ADDIU 		A3, R0, .DefaultColor
+		SLL			V0, S8, 2
+		LTW			A0, V0 ($MainMenuOptions)
+		ORI 		A1, R0, .MainMenuPosX
+		ADDIU		A2, R0, .RowSpacing
+		MULT		A2, S8
+		MFLO		A2
+		JAL			$DrawStringASCII
+		ADDIU 		A2, A2, .MainMenuPosY
+	% increment loop
+%	ADDIU		S8, S8, 1
+%	ADDIU		V0, R0, .NumMenuOptions
+%	BNE			S8, V0, .DrawLoop
+%	NOP
+	ENDLOOP
+	.Done
+	#UNDEF		S0
+	JPOP		RA, S6, S7, S8
+%}
+}
+
+% ================================================
+% UpdateSubMenu
+% ------------------------------------------------
+% A0 = current state
+% V0 = new state
+% ------------------------------------------------
+%{
+
+#new:Function $UpdateSubMenu
+{
+	PUSH		RA
+	#DEF		S0, *Data
+	% update back-and-forth counter
+	LBU			V0, .FrameCount (*Data)
+	LBU			V1, .CountDir (*Data)
+	BEQL		V1, R0, .CountUp
+	ADDIU		V0, V0, 1
+	ADDIU		V0, V0, -1
+	BEQL		V0, R0, .CountDone
+	SB			R0, .CountDir (*Data)
+	B			.CountDone
+	NOP
+	.CountUp
+	ADDIU		V1, R0, 1
+	ADDIU		AT, R0, 24`
+	BEQL		V0, AT, .CountDone
+	SB			V1, .CountDir (*Data)
+	.CountDone
+	SB			V0, .FrameCount (*Data)
+	% run menu handler
+	ADDIU		A0, A0, -1
+	SLL			V1, A0, 2
+	LTW			V0, V1 ($JumpTable_Submenus)
+	LIO			RA, $UpdateSubMenu[.Done]
+	JR			V0
+	NOP
+	.Done
+	LBU			V0, .DebugMenuState (*Data)
+	#UNDEF		S0
+	JPOP		RA
+%}
+}
+	
+% ================================================
+% UpdateAreaSelect
+% ------------------------------------------------
+% expects: S0 = DebugState
+% ------------------------------------------------
+% Uses:
+% S6 = area table
+% S7 = list position
+% S8 = select/hover color
+% ------------------------------------------------
+%{
+#define .AreaSizeX	30`
+
+#new:Function $UpdateAreaSelect
+{
+	PUSH		RA, S1, S2, S3, S6, S7
+	#DEF		S0, *Data
+	#DEF 		S1, *AreaCount
+	#DEF 		S2, *NumRows
+	#DEF 		S3, *NumCols
+	SB			R0, .DebugStateChanged (*Data)
+	% count areas and compute shape
+	ADDIU		*AreaCount, R0, -1
+	LIO			S6, $Global_MapConfigTable
+	.Counting
+	ADDIU		*AreaCount, *AreaCount, 1
+	LW			V0, 4 (S6)
+	BNEL		V0, R0, .Counting
+	ADDIU		S6, S6, 10
+	% get grid shape
+	% n x 1?
+	SLTI		V0, *AreaCount, 7`
+	BEQ			V0, R0, C
+	COPY		*NumRows, *AreaCount
+	B			.ShapeDone
+	ADDIU		*NumCols, R0, 1
+	% 6 x 2?
+	SLTI		V0, *AreaCount, 13`
+	BEQ			V0, R0, C
+	ADDIU		*NumRows, R0, 6
+	B			.ShapeDone
+	ADDIU		*NumCols, R0, 2
+	% 6 x 3?
+	SLTI		V0, *AreaCount, 19`
+	BEQ			V0, R0, C
+	ADDIU		*NumRows, R0, 6
+	B			.ShapeDone
+	ADDIU		*NumCols, R0, 3
+	% 6 x 4?
+	SLTI		V0, *AreaCount, 25`
+	BEQ			V0, R0, C
+	ADDIU		*NumRows, R0, 6
+	B			.ShapeDone
+	ADDIU		*NumCols, R0, 4
+	% 6 x 5?
+	SLTI		V0, *AreaCount, 31`
+	BEQ			V0, R0, C
+	ADDIU		*NumRows, R0, 6
+	B			.ShapeDone
+	ADDIU		*NumCols, R0, 5
+	% 7 x 5?
+	SLTI		V0, *AreaCount, 36`
+	BEQ			V0, R0, C
+	ADDIU		*NumRows, R0, 7
+	B			.ShapeDone
+	ADDIU		*NumCols, R0, 5
+	% 8 x 5?
+	SLTI		V0, *AreaCount, 41`
+	BEQ			V0, R0, C
+	ADDIU		*NumRows, R0, 8
+	B			.ShapeDone
+	ADDIU		*NumCols, R0, 5
+	% 8 x 6 is the maximum size
+	ADDIU		*NumRows, R0, 8
+	ADDIU		*NumCols, R0, 6
+	.ShapeDone
+	% check for exit (L)
+	LB			V0, .Press[.L] (*Data)
+	ADDIU		V1, R0, .StateMainMenu
+	BNEL		V0, R0, .Done
+	SB			V1, .DebugMenuState (*Data)
+	% check for selection (R)
+	LB			V0, .Release[.R] (*Data)
+	BEQ			V0, R0, .NoSelection
+	NOP
+%	JAL			80149CB4 % play_sound
+%	ADDIU		A0, R0, .SoundAccept
+	.Selected
+	% load maps and change state
+	ADDIU		V1, R0, .StateMapSelect
+	SB			V1, .DebugMenuState (*Data)
+	SB			R0 .MapMinCol (*Data)
+	ADDIU		V1, R0, .MapNumCols
+	ADDIU		V1, V1, -1
+	SB			V1 .MapMaxCol (*Data)
+	LBU			V0, .AreaMenuPos (*Data)
+	LBU			V1, .LastAreaSelected (*Data)
+	BNEL		V0, V1, 4
+	SB			R0, .MapMenuPos (*Data)
+	B			.Draw
+	SB			V0, .LastAreaSelected (*Data)
+	% count the areas
+	.NoSelection
+	% done counting, do navigation
+	LBU			A0, .AreaMenuPos (*Data)
+	COPY		A1, *AreaCount
+	JAL			$NavigateWrappedMenu2D
+	COPY		A2, *NumRows
+	SB			V0, .AreaMenuPos (*Data)
+	.Draw
+	% draw bg
+	ADDIU		A0, R0, .SubBoxPosX
+	ADDIU		A1, R0, .SubBoxPosY[.OffsetRow1]
+	% compute box width
+	ADDIU		A2, R0, .AreaSizeX
+	MULT		A2, *NumCols
+	MFLO		A2
+	ADDIU		A2, A2, 8
+	% compute box height
+	ADDIU		A3, R0, .RowSpacing
+	MULT		A3, *NumRows
+	MFLO		A3
+	ADDIU		A3, A3, 8
+%	LIO			T0, $CustomStyle
+	LIO			T0, 14
+	JAL			$DrawMenuBox
+	ADDIU		T1, R0, C0
+	.DrawAreaNames
+	% draw the area names
+	#DEF 		S6, *AreaTablePos
+	#DEF 		S7, *LoopCount
+	ADDIU		*LoopCount, R0, 0
+	LIO			*AreaTablePos, $Global_MapConfigTable
+	.DrawAreaLoopBody
+	LW			V0, 4 (*AreaTablePos)
+	BEQ			V0, R0, .Done
+	NOP
+	COPY		V0, *NumRows
+	DIV			*LoopCount, V0
+	MFLO		T1
+	MFHI		T2
+	ADDIU		T0, R0, .AreaSizeX
+	MULT		T1, T0
+	MFLO		T1
+	ADDIU		T0, R0, .RowSpacing
+	MULT		T2, T0
+	MFLO		T2
+	ADDIU		A1, T1, .SubmenuPosX
+	ADDIU		A2, T2, .SubmenuPosY[.OffsetRow1]
+	LBU			V0, .AreaMenuPos (*Data)
+	BNE			V0, *LoopCount, 8
+	ADDIU 		A3, R0, .DefaultColor
+	LW			A3, .HighlightColor (*Data)
+	LW			A0, 8 (*AreaTablePos)
+	JAL			$DrawStringASCII
+	NOP
+	% next
+	ADDIU		*LoopCount, *LoopCount, 1
+	B			.DrawAreaLoopBody
+	ADDIU		*AreaTablePos, *AreaTablePos, 10
+	.Done
+	#UNDEF		All
+	POP			RA, S1, S2, S3, S6, S7
+	LIO			V0, $UpdateMainMenu[.DrawInactiveMenu]
+	JR			V0
+	NOP
+%}
+}
+	
+% ================================================
+% UpdateMapSelect
+% ------------------------------------------------
+% expects: S0 = DebugState
+% ------------------------------------------------
+%{
+#define .MapNumRows		6`
+#define .MapNumCols		3`		% num to display
+#define .MapNumCells	18`		% product of MapNumRows and MapNumCols
+#define .MapSizeX		50`
+
+#new:Function $UpdateMapSelect
+{
+	PUSH		RA, S1, S2, S3, S4, S6, S7, S8
+	#DEF		S0, *Data
+	#DEF		S3, *NumRows
+	#DEF		S4, *NumCols
+	#DEF		S7, *NumMaps
+	#DEF		S8, *MapTablePos
+	LIO			S6, $Global_MapConfigTable
+	LBU			V0, .AreaMenuPos (*Data)
+	SLL			V0, V0, 4
+	DADDU		S6, V0, S6
+	LW			*NumMaps, 0 (S6)
+	LW			*MapTablePos, 4 (S6)
+	% check for exit (L)
+	LB			V0, .Press[.L] (*Data)
+	ADDIU		V1, R0, .StateAreaSelect
+	BNEL		V0, R0, .BeginDraw
+	SB			V1, .DebugMenuState (*Data)
+	% check for selection (R)
+	LB			V0, .Release[.R] (*Data)
+	BEQ			V0, R0, .NoSelection
+	NOP
+%	JAL			80149CB4 % play_sound
+%	ADDIU		A0, R0, .SoundAccept
+	.Selected
+	% do selection
+	ADDIU		V1, R0, .StateEntrySelect
+	B			.BeginDraw
+	SB			V1, .DebugMenuState (*Data)
+	% count the areas
+	.NoSelection
+	% do navigation
+	ADDIU		A2, R0, .MapNumRows
+	DADDU		A1, R0, *NumMaps
+	LBU			A0, .MapMenuPos (*Data)
+	JAL			$NavigateWrappedMenu2D
+	NOP
+	SB			V0, .MapMenuPos (*Data)
+	% determine columns to show
+	#DEF		A1, *SelectedCol
+	#DEF		A2, *MinCol
+	#DEF		A3, *MaxCol
+	ADDIU		V1, R0, .MapNumRows
+	DIV			V0, V1
+	MFLO		*SelectedCol
+	LBU			*MinCol .MapMinCol (*Data)
+	LBU			*MaxCol .MapMaxCol (*Data)
+	ADDIU		V1, R0, .MapNumCols
+	ADDIU		V1, V1, -1
+	BGT			*SelectedCol, *MaxCol, .ScrollRight
+	NOP
+	BLT			*SelectedCol, *MinCol, .ScrollLeft
+	NOP
+	B			.BeginDraw
+	NOP
+	.ScrollRight
+	SB			*SelectedCol .MapMaxCol (*Data)
+	SUBU 		V0, *SelectedCol, V1
+	SB			V0, .MapMinCol (*Data)
+	BLTZL		V0, 4
+	SB			R0, .MapMinCol (*Data)
+	B			.BeginDraw
+	NOP
+	.ScrollLeft
+	SB			*SelectedCol .MapMinCol (*Data)
+	DADDU 		V0, *SelectedCol, V1
+	SB			V0, .MapMaxCol (*Data)
+	B			.BeginDraw
+	NOP
+	#UNDEF		A1, A2, A3
+	.BeginDraw
+	% determine box size
+	% n x 1?
+	SLTI		V0, *NumMaps, 7`
+	BEQ			V0, R0, C
+	COPY		*NumRows, *NumMaps
+	B			.ShapeDone
+	ADDIU		*NumCols, R0, 1
+	% 6 x 2?
+	SLTI		V0, *NumMaps, 13`
+	BEQ			V0, R0, C
+	ADDIU		*NumRows, R0, 6
+	B			.ShapeDone
+	ADDIU		*NumCols, R0, 2
+	% 6 x 3?
+	SLTI		V0, *NumMaps, 19`
+	BEQ			V0, R0, C
+	ADDIU		*NumRows, R0, 6
+	B			.ShapeDone
+	ADDIU		*NumCols, R0, 3
+	% 7 x 3 makes extra room for the arrows
+	ADDIU		*NumRows, R0, 7
+	ADDIU		*NumCols, R0, 3
+	.ShapeDone
+	% draw bg
+	ADDIU		A0, R0, .SubBoxPosX
+	ADDIU		A1, R0, .SubBoxPosY[.OffsetRow1]
+	% compute box width
+	ADDIU		A2, R0, .MapSizeX
+	MULT		A2, *NumCols
+	MFLO		A2
+	ADDIU		A2, A2, 8
+	% compute box height
+	ADDIU		A3, R0, .RowSpacing
+	MULT		A3, *NumRows
+	MFLO		A3
+	ADDIU		A3, A3, 8
+%	LIO			T0, $CustomStyle
+	LIO			T0, 14
+	JAL			$DrawMenuBox
+	ADDIU		T1, R0, C0
+	% try drawing arrows
+	LB			V0, .FrameCount (*Data)
+	ADDIU		V1, R0, 4`			
+	DIV			V0, V1
+	MFLO		S1
+	ADDIU		SP, SP, -10
+	LBU			V0 .MapMinCol (*Data)
+	BEQ			V0, R0, .LeftArrowDone
+	NOP
+	LIO			A0, $arrowLeft
+	ADDIU 		A1, R0, .SubmenuPosX[3`]
+	SUBU		A1, A1, S1
+	ADDIU 		A2, R0, .SubmenuPosY[103`]
+	ADDIU		V0, R0, .DefaultColor
+	ORI 		A3, R0, FF	% opacity
+	SW 			V0, 10 (SP) 
+	ORI			V0, R0, 0   % special
+	SW 			V0, 14 (SP) 
+	JAL			801264EC % draw_string
+	NOP
+	.LeftArrowDone
+	ADDIU		V1, R0, .MapNumRows
+	ADDIU		V0, *NumMaps, -1
+	DIV			V0, V1
+	MFLO		V0
+	LBU			V1 .MapMaxCol (*Data)
+	BGE			V1, V0, .RightArrowDone
+	NOP
+	LIO			A0, $arrowRight
+	ADDIU 		A1, R0, .SubmenuPosX[120`]
+	DADDU		A1, A1, S1
+	ADDIU 		A2, R0, .SubmenuPosY[103`]
+	ADDIU		V0, R0, .DefaultColor
+	ORI 		A3, R0, FF	% opacity
+	SW 			V0, 10 (SP) 
+	ORI			V0, R0, 0   % special
+	SW 			V0, 14 (SP) 
+	JAL			801264EC % draw_string
+	NOP
+	.RightArrowDone
+	ADDIU		SP, SP, 10
+	#DEF		S1, *MapIndex
+	#DEF		S2, *LoopCount
+	LBU			V0 .MapMinCol (*Data)
+	ADDIU		V1, R0, .MapNumRows
+	MULT		V0, V1
+	MFLO		*MapIndex
+	SLL			V0, *MapIndex, 5
+	DADDU		*MapTablePos, *MapTablePos, V0
+	DADDU		*LoopCount, R0, R0
+	.DrawMapNames
+	BGE			*MapIndex, *NumMaps, .Done
+	NOP
+	ADDIU		V0, R0, .MapNumCells
+	BGE			*LoopCount, V0, .Done
+	NOP
+	ADDIU		V0, R0, .MapNumRows
+	DIV			*LoopCount, V0
+	MFLO		T1
+	MFHI		T2
+	ADDIU		T0, R0, .MapSizeX
+	MULT		T1, T0
+	MFLO		T1
+	ADDIU		T0, R0, .RowSpacing
+	MULT		T2, T0	
+	MFLO		T2
+	ADDIU		A1, T1, .SubmenuPosX
+	ADDIU		A2, T2, .SubmenuPosY[.OffsetRow1]
+	LBU			V0, .MapMenuPos (*Data)
+	BNE			V0, *MapIndex, 8
+	ADDIU 		A3, R0, .DefaultColor
+	LW			A3, .HighlightColor (*Data)
+	LW			A0, 0 (*MapTablePos)
+	JAL			$DrawStringASCII
+	NOP
+	ADDIU		*MapTablePos, *MapTablePos, 20
+	ADDIU		*MapIndex, *MapIndex, 1
+	B			.DrawMapNames
+	ADDIU		*LoopCount, *LoopCount, 1	
+	NOP
+	.Done
+	#UNDEF		All
+	POP			RA, S1, S2, S3, S4, S6, S7, S8
+	LIO			V0, $UpdateMainMenu[.DrawInactiveMenu]
+	JR			V0
+	NOP
+%}
+}
+
+% ================================================
+% UpdateEntrySelect
+% ------------------------------------------------
+% expects: S0 = DebugState
+% ------------------------------------------------
+%{
+#new:Function $UpdateEntrySelect
+{
+	PUSH		RA, S7, S8
+	#DEF		S0, *Data
+	#DEF		S7, *MapNamePointer
+	% load the map name
+	LIO			S8, $Global_MapConfigTable
+	LBU			V0, .AreaMenuPos (*Data)
+	SLL			V0, V0, 4
+	DADDU		S8, S8, V0
+	LW			V1, 4 (S8)
+	LBU			V0, .MapMenuPos (*Data)
+	SLL			V0, V0, 5
+	DADDU		S8, V0, V1
+	LW			*MapNamePointer, 0 (S8)
+	% check for exit (L)
+	LB			V0, .Press[.L] (*Data)
+	ADDIU		V1, R0, .StateMapSelect
+	BNEL		V0, R0, .Done
+	SB			V1, .DebugMenuState (*Data)
+	% check for selection (R)
+	LB			V0, .Release[.R] (*Data)
+	BEQ			V0, R0, .NoSelection
+	NOP
+%	JAL			80149CB4 % play_sound
+%	ADDIU		A0, R0, .SoundAccept
+	.Selected
+	% go to the map
+	ADDIU		V1, R0, .StateNone
+	SB			V1, .DebugMenuState (*Data)
+	DADDU		A0, R0, *MapNamePointer
+	JAL			$WarpToMap
+	LBU			A1, .EntryValue (*Data)
+	.NoSelection
+	% do navigation
+	DADDU		V1, R0, R0
+	LB			V0, .Press[.D-down] (*Data)
+	BNEL		V0, R0, 4
+	ADDI		V1, V1, -1
+	LB			V0, .Press[.D-up] (*Data)
+	BNEL		V0, R0, 4
+	ADDI		V1, V1, 1
+	LBU			V0, .EntryValue (*Data)
+	DADDU		V0, V0, V1
+	% clamp range
+	BLTZL		V0, .StoreResult
+	DADDU		V0, R0, R0
+	ADDIU		V1, R0, 80
+	BGTL		V0, V1, .StoreResult
+	DADDU		V0, V1, R0
+	.StoreResult
+	SB			V0, .EntryValue (*Data)
+	% draw bg
+	ADDIU		A0, R0, .SubBoxPosX
+	ADDIU		A1, R0, .SubBoxPosY[.OffsetRow1]
+	ADDIU		A2, R0, 80`
+	ADDIU		A3, R0, .OffsetRow2[8`]
+%	LIO			T0, $CustomStyle
+	LIO			T0, 14
+	JAL			$DrawMenuBox
+	ADDIU		T1, R0, C0
+	% draw text
+	DADDU		A0, R0, *MapNamePointer
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow1]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	LIO			A0, $strEntry
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow2]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	%
+	LIO			A1, $fmtEntry
+	LBU			A2, .EntryValue (*Data)
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	ORI 		A1, R0, .SubmenuPosX[40`]
+	ORI 		A2, R0, .SubmenuPosY[.OffsetRow2]
+	LW			A3, .HighlightColor (*Data)
+	JAL			$DrawStringASCII
+	ADDIU		A0, *Data, .PrintfBuffer
+	%
+	.Done
+	#UNDEF		S0, S7
+	POP			RA, S7, S8
+	LIO			V0, $UpdateMainMenu[.DrawInactiveMenu]
+	JR			V0
+	NOP
+}
+	
+% A0 = pointer to map name
+% A1 = entrance ID
+#new:Function $WarpToMap
+{
+	PUSH		RA, S6, S7
+	DADDU		S6, A1, R0
+	ADDIU		SP, SP, -10
+	ADDIU		A1, SP, 10
+	JAL			8005ABF8 % get_map_IDs_by_name
+	ADDIU		A2, SP, 12
+	LHU			V0, 10 (SP)
+	LHU			V1, 12 (SP)
+	ADDIU		SP, SP, 10
+	LIA			S7, 8007419C
+	LW			A0, 0 (S7)
+	SH			V0, 86 (A0)	% store area ID
+	SH			V1, 8C (A0) % store map ID
+	LW			V1, 0 (S7)
+	SH			S6, 8E (V1) % store entry ID
+	JAL			801382A0
+	ADDIU		A0, R0, 0	% special effect type here
+	JAL			800334F0
+	ADDIU		A0, R0, 5
+	JPOP		RA, S6, S7
+%}
+}
+	
+% ================================================
+% UpdateBattleSelect
+% ------------------------------------------------
+% expects: S0 = DebugState
+% ------------------------------------------------
+%{
+
+@Hook 19C9C % 8003E8BC from kill_enemy()
+{
+	ADDIU	AT, R0, DEAD
+	BEQ		A0, AT, .Dummy
+	SW		R0, 30 (S0)
+	JAL		8003AAEC % get_npc_unsafe
+	NOP
+	J		8003E8A4
+	NOP
+	.Dummy
+	J		8003E8AC
+	NOP
+}
+	
+@Hook 1CD9C % 8004199C (pre-battle)
+{
+	ADDIU	AT, R0, DEAD
+	BEQ		A0, AT, .Dummy
+	COPY	S1, S0
+	JAL		8003AAEC % get_npc_unsafe
+	NOP
+	J		800419A4
+	NOP
+	.Dummy
+	LW			V0, 94 (S0)
+	LIA			A0, 8010EFC8
+	BEQ			V0, R0, .Done
+	ADDIU		A1, R0, FF
+	LW			V1, 90 (S0)
+	BEQ			V1, A1, .Done
+	NOP
+	LW			V0, 98 (S0)
+	ADDIU		V0, V0, 1
+	SW			V0, 98 (S0)
+	SLTI		V0, V0, B
+	BNE			V0, R0, .o80
+	ADDIU		V0, R0, A
+	SW			V0, 98 (S0)
+	.o80
+	LW			V0, 98 (S0)
+	ADDU		V0, V1, V0
+	SW			V0, 90 (S0)
+	SLTI		V0, V0, 100
+	BEQL		V0, R0, .o98
+	SW			A1, 90 (S0)
+	.o98
+	% remove reference to NPC position
+	/%
+	LWC1		F30, 38 (A3)
+	LWC1		F26, 3C (A3)
+	LWC1		F28, 40 (A3)
+	%/
+	% use player pos instead
+	LWC1		F30, 28 (A0)
+	LWC1		F26, 2C (A0)
+	LWC1		F28, 30 (A0)
+	%
+	LIO			AT, C4778000
+	MTC1		AT, F0
+	LWC1		F20, 28 (A0)
+	LWC1		F24, 2C (A0)
+	LWC1		F22, 30 (A0)
+	C.LT.S		F26, F0
+	NOP
+	BC1F		.oD8
+	NOP
+	MOV.S		F30, F20
+	MOV.S		F26, F24
+	MOV.S		F28, F22
+	.oD8
+	LAW			V0, 8007419C
+	LB			V1, 71 (V0)
+	ADDIU		V0, R0, 2
+	BNE			V1, V0, .o1DC
+	NOP
+	LWC1		F2, 90 (S0)
+	CVT.S.W		F2, F2
+	MFC1		A1, F2
+	JAL			80137DA4
+	ADDIU		A0, R0, A
+	LUI			A1, 437F
+	JAL			801380D4
+	ADDIU		A0, R0, 1
+	ADDIU		A0, R0, 1
+	CLEAR		A1
+	COPY		A2, A1
+	JAL			80137E10
+	COPY		A3, A1
+	LIA			S0, 80077410
+	LW			A0, 0 (S0)
+	MFC1		A1, F20
+	MFC1		A3, F22
+	LIF			F0, 20.0
+	ADDIU		V0, SP, 20
+	SW			V0, 10 (SP)
+	ADD.S		F24, F24, F0
+	ADDIU		V0, SP, 24
+	SW			V0, 14 (SP)
+	MFC1		A2, F24
+	ADDIU		V0, SP, 28
+	JAL			8002E538
+	SW			V0, 18 (SP)
+	LW			A0, 0 (S0)
+	MFC1		A1, F30
+	MFC1		A3, F28
+	LIF			F0, 15.0
+	ADDIU		V0, SP, 2C
+	SW			V0, 10 (SP)
+	ADD.S		F26, F26, F0
+	ADDIU		V0, SP, 30
+	SW			V0, 14 (SP)
+	MFC1		A2, F26
+	ADDIU		V0, SP, 34
+	JAL			8002E538
+	SW			V0, 18 (SP)
+	ADDIU		A0, R0, 1
+	CLEAR		A1
+	LW			A2, 20 (SP)
+	LW			T0, 2C (SP)
+	LW			A3, 24 (SP)
+	LW			V1, 30 (SP)
+	SUBU		A2, A2, T0
+	SRL			V0, A2, 1F
+	ADDU		A2, A2, V0
+	SRAV		A2, A2, A0
+	ADDU		A2, A2, T0
+	SUBU		A3, A3, V1
+	SRL			V0, A3, 1F
+	ADDU		A3, A3, V0
+	BEQ			R0, R0, .o2C4
+	SRAV		A3, A3, A0
+	.o1DC
+	LWC1		F2, 90 (S1)
+	CVT.S.W		F2, F2
+	MFC1		A1, F2
+	JAL			80137D88
+	ADDIU		A0, R0, A
+	LUI			A1, 437F
+	JAL			801380D4
+	CLEAR		A0
+	CLEAR		A0
+	COPY		A1, A0
+	COPY		A2, A0
+	JAL			80137E10
+	COPY		A3, A0
+	LIA			S0, 80077410
+	LW			A0, 0 (S0)
+	MFC1		A1, F20
+	MFC1		A3, F22
+	LIF			F0, 20.0
+	ADDIU		V0, SP, 20
+	SW			V0, 10 (SP)
+	ADD.S		F24, F24, F0
+	ADDIU		V0, SP, 24
+	SW			V0, 14 (SP)
+	MFC1		A2, F24
+	ADDIU		V0, SP, 28
+	JAL			8002E538
+	SW			V0, 18 (SP)
+	LW			A0, 0 (S0)
+	MFC1		A1, F30
+	MFC1		A3, F28
+	LIF			F0, 15.0
+	ADDIU		V0, SP, 2C
+	SW			V0, 10 (SP)
+	ADD.S		F26, F26, F0
+	ADDIU		V0, SP, 30
+	SW			V0, 14 (SP)
+	MFC1		A2, F26
+	ADDIU		V0, SP, 34
+	JAL			8002E538
+	SW			V0, 18 (SP)
+	CLEAR		A0
+	COPY		A1, A0
+	LW			A2, 20 (SP)
+	LW			T0, 2C (SP)
+	LW			A3, 24 (SP)
+	LW			V1, 30 (SP)
+	SUBU		A2, A2, T0
+	SRL			V0, A2, 1F
+	ADDU		A2, A2, V0
+	SRA			A2, A2, 1
+	ADDU		A2, A2, T0
+	SUBU		A3, A3, V1
+	SRL			V0, A3, 1F
+	ADDU		A3, A3, V0
+	SRA			A3, A3, 1
+	.o2C4
+	JAL			80137E4C
+	ADDU		A3, A3, V1
+	.Done
+	J			80041C30 % [2CC]
+	NOP
+}
+
+% EnemyCount is set to zero to prevent iterating through enemies.
+% This prevents a crash at 8004251C that occurs after battle when
+% it attempts to call kill_enemy for each enemy.
+#new:Data $DummyEncounter	% 80412754 [48] 8041279C
+{
+% len = 4C
+% [44] = (short) battle
+% [46] = (short) stage
+% [48] = (short) encounterID
+00000000 $DummyEnemy 00000000 00000000
+00000000 00000000 00000000 00000000
+00000000 00000000 00000000 00000000
+00000000 00000000 00000000 00000000
+00000000 0000DEAD 00000000 00000000
+00000000 00000000 00000000
+}
+
+#new:Data $DummyEnemy % 804127B0 [8] 804127B8
+{
+% len = F0
+00000020 00000000 DEAD0000 00000000 00000000 00000000 00000000 00000000 % 20
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 % 40
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 % 60
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 % 80
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 % A0
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 % C0
+00000000 00000000 00000000 00000000 00000000 $DummyDropTable 00000000 00000000 % E0
+00000000 00000000 00000000 00000000 
+}
+
+#new:Data $DummyDropTable
+{
+8005008A 000A0000 00000000 00000000 00000000 00000000 00000000 00000000 
+00000000 00000000 00000000 00000000 00001999 66650002 4CCC2666 59980002 
+3FFF3FFF 4CCC0002 3FFF6665 3FFF0002 33327FFF 26660002 26660000 00000000 
+00000000 00000000 00000000 00000000 00001999 59980002 3FFF2666 4CCC0002 
+3FFF3FFF 3FFF0002 33326665 33320002 33327FFF 26660002 33320000 00000000 
+00000000 00000000 00000000 00000000 00000000 00000000
+}
+
+% crashes after battle at 800483A4
+#new:Function $StartDebugBattle
+{
+	% *script
+	ADDIU		SP, SP, -30
+	SW			S0, 10 (SP)
+	SW			S1, 14 (SP)
+	SW			S2, 18 (SP)
+	SW			S3, 1C (SP)
+	SW			S4, 20 (SP)
+	SW			S5, 24 (SP)
+	SW			RA, 28 (SP)
+	#DEF		S0, *DummyEncounter
+	#DEF		S1, *DummyEnemy
+	LIO			*DummyEncounter, $DummyEncounter
+	LIO			*DummyEnemy, $DummyEnemy
+	% push regs and copy args
+	LIA			S3, 800B0F10
+	ADDIU		V0, R0, 1
+	SB			V0, 5 (S3)					% set encounter state
+	SW			*DummyEncounter, 88 (S3)	% set current encounter
+	SW			*DummyEnemy, 8C (S3)		% set current enemy
+	SB			V0, 5 (*DummyEnemy)			% set encountered flag -- REMOVE THIS?
+	ADDIU		V0, R0, FFFF
+	SB			R0, 4 (S3)
+	SB			R0, 11 (S3)
+	SW			V0, 14 (S3) % no song override
+	SW			V0, 18 (S3)
+	% no need to kill main/aux
+	JAL			800E0178
+	NOP
+	JAL			800EF628
+	NOP
+	% CUT -- no need to start scripts?
+	ADDIU		V0, R0, 1
+	SW			R0, 90 (S3)
+	SW			R0, 94 (S3)
+	SB			V0, 12 (S3)
+	ADDIU		V0, R0, 3
+	SAW			V0, 8009A600
+	ADDIU		V0, R0, 1
+	SAW			V0, 8009A678
+	SAW			R0, 8009A5D0
+	% pop regs and return
+	#UNDEF		All
+	LW			RA, 28 (SP)
+	LW			S5, 24 (SP)
+	LW			S4, 20 (SP)
+	LW			S3, 1C (SP)
+	LW			S2, 18 (SP)
+	LW			S1, 14 (SP)
+	LW			S0, 10 (SP)
+	JR			RA
+	ADDIU		SP, SP, 30
+}
+
+#new:Function $UpdateBattleSelect
+{
+	PUSH		RA
+	#DEF		S0, *Data
+	LBU			V1, .DebugStateChanged (*Data)
+	BEQ			V1, R0, .CheckInputs
+	SB			R0, .DebugStateChanged (*Data)
+	% initialize
+	LAW			V0, ##[VALUE:DebugBattlePointer]
+	SLL			V1, V0, 16`
+	SRL			V1, V1, 16`
+	SB			V1, .BattleMapID (*Data)
+	SRL			V0, V0, 16`
+	ANDI		V1, V0, FF
+	SB			V1, .BattleValue2 (*Data)
+	SRL			V1, V0, 8`
+	SB			V1, .BattleValue1 (*Data)
+	.CheckInputs
+	% check for exit (L)
+	LB			V0, .Press[.L] (*Data)
+	ADDIU		V1, R0, .StateMainMenu
+	BNEL		V0, R0, .Done
+	SB			V1, .DebugMenuState (*Data)
+	% check for selection (R)
+	LB			V0, .Release[.R] (*Data)
+	BEQ			V0, R0, .NoSelection
+	NOP
+	% do selection
+	ADDIU		V1, R0, .StateNone
+	SB			V1, .DebugMenuState (*Data)
+	DADDU		A0, R0, R0
+	LBU			V0, .BattleValue1 (*Data)
+	SLL			V0, V0, 24`
+	OR			A0, A0, V0
+	LBU			V0, .BattleValue2 (*Data)
+	SLL			V0, V0, 16`
+	OR			A0, A0, V0
+	LB			V0, .BattleMapID (*Data)
+	SLL			V0, V0, 16`
+	SRL			V0, V0, 16`
+	OR			A0, A0, V0
+	SAW			A0, ##[VALUE:DebugBattlePointer]
+	LIO			V0, $DummyEncounter
+	SW			A0, 44 (V0)
+	JAL			$StartDebugBattle
+	NOP
+	B			.Draw
+	NOP
+	.NoSelection
+	% do digit selection
+	LBU			A0, .BattleDigit (*Data)
+	ADDIU		A1, R0, 0
+	JAL			$NavigateHorizontalMenu1D
+	ADDIU		A2, R0, 2
+	SB			V0, .BattleDigit (*Data)
+	% do digit change
+	LBU			V0, .BattleDigit (*Data)
+	BEQ			V0, R0, .NavValue1
+	ADDIU		V1, R0, 1
+	BEQ			V0, V1, .NavValue2
+	NOP
+	.NavStageID
+	LB			A0, .BattleMapID (*Data)
+	ADDIU		A0, A0, 1
+	ADDIU		A1, R0, 0
+	JAL			$NavigateVerticalMenu1D
+	ADDIU		A2, R0, 81
+	ADDIU		V0, V0, -1
+	SB			V0, .BattleMapID (*Data)
+	B			.Draw
+	NOP
+	.NavValue2
+	LBU			A0, .BattleValue2 (*Data)
+	ADDIU		A1, R0, 0
+	JAL			$NavigateVerticalMenu1D
+	ADDIU		A2, R0, 80
+	SB			V0, .BattleValue2 (*Data)
+	B			.Draw
+	NOP
+	.NavValue1
+	LBU			A0, .BattleValue1 (*Data)
+	ADDIU		A1, R0, 0
+	JAL			$NavigateVerticalMenu1D
+	ADDIU		A2, R0, 80
+	SB			V0, .BattleValue1 (*Data)
+	% navigation done
+	.Draw
+	% draw bg
+	ADDIU		A0, R0, .SubBoxPosX
+	ADDIU		A1, R0, .SubBoxPosY[.OffsetRow1]
+	ADDIU		A2, R0, 104`
+	ADDIU		A3, R0, .OffsetRow2[8`]
+%	LIO			T0, $CustomStyle
+	LIO			T0, 14
+	JAL			$DrawMenuBox
+	ADDIU		T1, R0, C0
+	% draw text
+	LIO			A0, $strFormation
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow1]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% value 1
+	LIO			A1, $fmtByte
+	LBU			A2, .BattleValue1 (*Data)
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	LBU			V0, .BattleDigit (*Data)
+	BNE			V0, R0, 8
+	ADDIU 		A3, R0, .DefaultColor
+	LW			A3, .HighlightColor (*Data)
+	ORI 		A1, R0, .SubmenuPosX[10`]
+	ORI 		A2, R0, .SubmenuPosY[.OffsetRow2]
+	JAL			$DrawStringASCII
+	ADDIU		A0, *Data, .PrintfBuffer
+	% draw
+	LIO			A0, $strDash
+	ADDIU		A1, R0, .SubmenuPosX[26`]
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow2]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% value 2
+	LIO			A1, $fmtByte
+	LBU			A2, .BattleValue2 (*Data)
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	LBU			V0, .BattleDigit (*Data)
+	ADDIU		V1, R0, 1
+	BNE			V0, V1, 8
+	ADDIU 		A3, R0, .DefaultColor
+	LW			A3, .HighlightColor (*Data)
+	ORI 		A1, R0, .SubmenuPosX[35`]
+	ORI 		A2, R0, .SubmenuPosY[.OffsetRow2]
+	JAL			$DrawStringASCII
+	ADDIU		A0, *Data, .PrintfBuffer
+	% draw
+	LIO			A0, $strParenL
+	ADDIU		A1, R0, .SubmenuPosX[55`]
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow2]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% map
+	LIO			A1, $fmtByte
+	LBU			A2, .BattleMapID (*Data)
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	LBU			V0, .BattleDigit (*Data)
+	ADDIU		V1, R0, 2
+	BNE			V0, V1, 8
+	ADDIU 		A3, R0, .DefaultColor
+	LW			A3, .HighlightColor (*Data)
+	ORI 		A1, R0, .SubmenuPosX[63`]
+	ORI 		A2, R0, .SubmenuPosY[.OffsetRow2]
+	JAL			$DrawStringASCII
+	ADDIU		A0, *Data, .PrintfBuffer
+	% draw
+	LIO			A0, $strParenR
+	ADDIU		A1, R0, .SubmenuPosX[77`]
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow2]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	.Done
+	#UNDEF		S0
+	POP			RA
+	LIO			V0, $UpdateMainMenu[.DrawInactiveMenu]
+	JR			V0
+	NOP
+%}
+}
+	
+% ================================================
+% UpdateStoryProgress
+% ------------------------------------------------
+% expects: S0 = DebugState
+% ------------------------------------------------
+%{
+#new:Function $UpdateStoryProgress
+{
+	PUSH		RA
+	#DEF		S0, *Data
+	LBU			V1, .DebugStateChanged (*Data)
+	BEQ			V1, R0, .CheckInputs
+	SB			R0, .DebugStateChanged (*Data)
+	% initialize
+	LABU		V0, 800DBD70
+	SB			V0, .StoryValue (*Data)
+	.CheckInputs
+	% check for exit (L)
+	LB			V0, .Press[.L] (*Data)
+	ADDIU		V1, R0, .StateMainMenu
+	BNEL		V0, R0, .Done
+	SB			V1, .DebugMenuState (*Data)
+	% check for selection (R)
+	LB			V0, .Release[.R] (*Data)
+	BEQ			V0, R0, .NoSelection
+	NOP
+	JAL			80149CB4 % play_sound
+	ADDIU		A0, R0, .SoundAccept
+	.Selected
+	% store value
+	LB			V0, .StoryValue (*Data)
+	SAB			V0, 800DBD70
+	B			.Draw
+	NOP
+	.NoSelection
+	LBU			V0, .StoryValue (*Data)
+	ANDI		V1, V0, F
+	SB			V1, .StoryDigit1 (*Data)
+	SRL			V0, V0, 4
+	SB			V0, .StoryDigit0 (*Data)
+	% do digit selection
+	LBU			A0, .StoryDigitPos (*Data)
+	ADDIU		A1, R0, 0
+	JAL			$NavigateHorizontalMenu1D
+	ADDIU		A2, R0, 1
+	SB			V0, .StoryDigitPos (*Data)
+	% do digit change
+	LBU			V0, .StoryDigitPos (*Data)
+	BEQ			V0, R0, .NavDigit0
+	NOP
+	.NavDigit1
+	LBU			A0, .StoryDigit1 (*Data)
+	ADDIU		A1, R0, 0
+	ADDIU		A2, R0, F
+	JAL			$NavigateVerticalWrappedMenu1D
+	DADDU		A3, S3, R0
+	SB			V0, .StoryDigit1 (*Data)
+	B			.StoreResult
+	NOP
+	.NavDigit0
+	LBU			A0, .StoryDigit0 (*Data)
+	ADDIU		A1, R0, 0
+	ADDIU		A2, R0, F
+	JAL			$NavigateVerticalWrappedMenu1D
+	DADDU		A3, S3, R0
+	SB			V0, .StoryDigit0 (*Data)
+	% navigation done
+	.StoreResult
+	LBU			V0, .StoryDigit0 (*Data)
+	LBU			V1, .StoryDigit1 (*Data)
+	SLL			V0, V0, 4
+	DADDU		V0, V0, V1
+	SB			V0, .StoryValue (*Data)
+	.Draw
+	% draw box
+	ADDIU		A0, R0, .SubBoxPosX
+	ADDIU		A1, R0, .SubBoxPosY[.OffsetRow1]
+	ADDIU		A2, R0, 164`
+	ADDIU		A3, R0, .OffsetRow3[8`]
+%	LIO			T0, $CustomStyle
+	LIO			T0, 14
+	JAL			$DrawMenuBox
+	ADDIU		T1, R0, C0
+	% draw text
+	LIO			A0, $strValue
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow1]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	
+	% draw story value name
+	LI			A0, ##[VALUE:StoryProgressNames]
+	LB			V0, .StoryValue (*Data)
+	ADDIU		V0, V0, 80
+	SLL			V0, V0, 2
+	DADDU		A0, A0, V0
+	LW			A0, 0 (A0)
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow3]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	
+	% digit 0
+	LIO			A1, $fmtDigit
+	LBU			A2, .StoryDigit0 (*Data)
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	LBU			V0, .StoryDigitPos (*Data)
+	BNE			V0, R0, 8
+	ADDIU 		A3, R0, .DefaultColor
+	LW			A3, .HighlightColor (*Data)
+	ORI 		A1, R0, .SubmenuPosX[35`]
+	ORI 		A2, R0, .SubmenuPosY[.OffsetRow2]
+	JAL			$DrawStringASCII
+	ADDIU		A0, *Data, .PrintfBuffer
+	%digit 1
+	LIO			A1, $fmtDigit
+	LBU			A2, .StoryDigit1 (*Data)
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	LBU			V0, .StoryDigitPos (*Data)
+	BEQ			V0, R0, 8
+	ADDIU 		A3, R0, .DefaultColor
+	LW			A3, .HighlightColor (*Data)
+	ORI 		A1, R0, .SubmenuPosX[43`]
+	ORI 		A2, R0, .SubmenuPosY[.OffsetRow2]
+	JAL			$DrawStringASCII
+	ADDIU		A0, *Data, .PrintfBuffer
+	.Done
+	#UNDEF		S0
+	POP			RA
+	LIO			V0, $UpdateMainMenu[.DrawInactiveMenu]
+	JR			V0
+	NOP
+%}
+}
+	
+% ================================================
+% UpdatePlaySound
+% ------------------------------------------------
+% expects: S0 = DebugState
+% ------------------------------------------------
+%{
+
+#new:ASCII $strPlaySound
+{
+"Play Sound"
+}
+
+#new:ASCII $strStopSound
+{
+"Stop Sound"
+}
+
+#new:Data $SoundMenuOptions
+{
+$strPlaySound
+$strStopSound
+}
+
+#define .SoundMenuLength 2
+#define .SoundMenuLastIndex .SoundMenuLength[-1]
+
+#new:Function $UpdateSoundMenu
+{
+	PUSH		RA, S4, S5, S7
+	#DEF		S0, *Data
+	SB			R0, .DebugStateChanged (*Data)
+	% check for exit (L)
+	LB			V0, .Press[.L] (*Data)
+	ADDIU		V1, R0, .StateMainMenu
+	BNEL		V0, R0, .Done
+	SB			V1, .DebugMenuState (*Data)
+	% check for selection (R)
+	LB			V0, .Release[.R] (*Data)
+	BEQ			V0, R0, .NoSelection
+	NOP
+	.Selected
+	% open submenu
+	ADDIU		V1, R0, 1
+	SB			V1, .DebugStateChanged (*Data)
+	LBU			V0, .SoundMenuPos (*Data)
+	ADDIU		V1, V0, .StatePlaySound
+	B			.Draw
+	SB			V1, .DebugMenuState (*Data)
+	.NoSelection
+	% do navigation
+	LBU			A0, .SoundMenuPos (*Data)
+	ADDIU		A1, R0, 0
+	JAL			$NavigateVerticalWrappedMenu1D_Reversed
+	ADDIU		A2, R0, .SoundMenuLastIndex
+	B			.Draw
+	SB			V0, .SoundMenuPos (*Data)
+	% only draw menu from subscreens by JR here
+	.DrawEntry
+	PUSH		RA, S4, S5, S7
+	.Draw
+	% draw bg
+	ADDIU		A0, R0, .SubBoxPosX
+	ADDIU		A1, R0, .SubBoxPosY[.OffsetRow1]
+	ADDIU		A2, R0, 80`
+	ADDIU		A3, R0, .OffsetRow2[8`]
+%	LIO			T0, $CustomStyle
+	LIO			T0, 14
+	JAL			$DrawMenuBox
+	ADDIU		T1, R0, C0
+	% draw string
+	ADDIU		S4, R0, .SubmenuPosY[.OffsetRow1]
+	LIO			S5, $SoundMenuOptions
+	LOOP		S7 = 0, .SoundMenuLength
+		ADDIU		A1, R0, .SubmenuPosX
+		COPY		A2, S4
+		LBU			V0, .SoundMenuPos (*Data)
+		BNEL		V0, S7, .DrawString
+		ADDIU 		A3, R0, .DefaultColor
+		
+		LBU			V0, .DebugMenuState (*Data)
+		LI			V1, .StateSoundMenu
+		BNEL		V0, V1, .DrawString
+		ADDIU 		A3, R0, .HoverColor
+		LW			A3, .HighlightColor (*Data)
+		
+		.DrawString
+		JAL			$DrawStringASCII
+		LW			A0, 0 (S5)
+		ADDIU		S4, S4, .RowSpacing
+		ADDIU		S5, S5, 4
+	ENDLOOP
+	LAW			S4, 80159AD0
+	CLEAR		S5
+	CLEAR		S7
+	.NextLogicalSound
+	BEQI		S5, 10`, .Done
+	NOP
+	ADDIU		S5, S5, 1
+	LW			V0, 0 (S4)
+	ANDI		V0, V0, 1
+	BEQL		V0, R0, .NextLogicalSound
+	ADDIU		S4, S4, 1C
+	LW			V0, 4 (S4)
+	% print it
+	ADDIU		S7, S7, 1
+	B			.NextLogicalSound
+	ADDIU		S4, S4, 1C
+	.Done
+	#UNDEF		S0
+	POP			RA, S4, S5, S7
+	LIO			V0, $UpdateMainMenu[.DrawInactiveMenu]
+	JR			V0
+	NOP
+%}
+}
+
+% 80159ad0
+
+#new:ASCII $strSoundID
+{
+"Sound ID:"
+}
+
+#new:Function $UpdatePlaySound
+{
+	PUSH		RA
+	#DEF		S0, *Data
+	SB			R0, .DebugStateChanged (*Data)
+	% check for exit (L)
+	ADDIU		V1, R0, .StateSoundMenu
+	LB			V0, .Press[.L] (*Data)
+	BNEL		V0, R0, .Done
+	SB			V1, .DebugMenuState (*Data)
+	% check for selection (R)
+	LB			V0, .Release[.R] (*Data)
+	BEQ			V0, R0, .EditDigits
+	NOP
+	.Selected
+	% play the sound
+	LHU			A0, .SoundValue (*Data)
+	JAL			80149CB4 % play_sound
+	NOP
+	B			.Draw
+	NOP
+	.EditDigits
+	% edit value
+	JAL			$DoEditHalf
+	LHU			A0, .SoundValue (*Data)
+	SH			V0, .SoundValue (*Data)
+	.Draw
+	% draw bg
+	ADDIU		A0, R0, .SubBoxPosX
+	ADDIU		A1, R0, .SubBoxPosY[.OffsetRow4]
+	ADDIU		A2, R0, 70`
+	ADDIU		A3, R0, .OffsetRow2[8`]
+%	LIO			T0, $CustomStyle
+	LIO			T0, 14
+	JAL			$DrawMenuBox
+	ADDIU		T1, R0, C0
+	% draw text
+	LIO			A0, $strSoundID
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow4]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	ADDIU		A0, R0, 0
+	ADDIU		A1, R0, 4
+	ADDIU 		A2, A1, .SubmenuPosX % [35`]
+	JAL			$DrawEditHalf
+	ADDIU		A3, R0, .SubmenuPosY[.OffsetRow5]
+	.Done
+	#UNDEF		S0
+	POP			RA
+	LIO			V0, $UpdateSoundMenu[.DrawEntry]
+	JR			V0
+	NOP
+%}
+}
+
+#new:Function $UpdateStopSound
+{
+	PUSH		RA
+	#DEF		S0, *Data
+	SB			R0, .DebugStateChanged (*Data)
+	% check for exit (L)
+	ADDIU		V1, R0, .StateSoundMenu
+	LB			V0, .Press[.L] (*Data)
+	BNEL		V0, R0, .Done
+	SB			V1, .DebugMenuState (*Data)
+	% check for selection (R)
+	LB			V0, .Release[.R] (*Data)
+	BEQ			V0, R0, .EditDigits
+	NOP
+	.Selected
+	% play the sound
+	LHU			A0, .SoundValue (*Data)
+	JAL			80149c6c % stop_sound
+	NOP
+	B			.Draw
+	NOP
+	.EditDigits
+	% edit value
+	JAL			$DoEditHalf
+	LHU			A0, .SoundValue (*Data)
+	SH			V0, .SoundValue (*Data)
+	.Draw
+	% draw bg
+	ADDIU		A0, R0, .SubBoxPosX
+	ADDIU		A1, R0, .SubBoxPosY[.OffsetRow4]
+	ADDIU		A2, R0, 70`
+	ADDIU		A3, R0, .OffsetRow2[8`]
+%	LIO			T0, $CustomStyle
+	LIO			T0, 14
+	JAL			$DrawMenuBox
+	ADDIU		T1, R0, C0
+	% draw text
+	LIO			A0, $strSoundID
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow4]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	ADDIU		A0, R0, 0
+	ADDIU		A1, R0, 4
+	ADDIU 		A2, A1, .SubmenuPosX % [35`]
+	JAL			$DrawEditHalf
+	ADDIU		A3, R0, .SubmenuPosY[.OffsetRow5]
+	.Done
+	#UNDEF		S0
+	POP			RA
+	LIO			V0, $UpdateSoundMenu[.DrawEntry]
+	JR			V0
+	NOP
+%}
+}
+
+% ================================================
+% UpdateQuickSave
+% ------------------------------------------------
+% expects: S0 = DebugState
+% ------------------------------------------------
+%{
+
+#new:ASCII $strQuickCancel
+{
+"Cancel"
+}
+
+#new:ASCII $strQuickSave
+{
+"Quick Save"
+}
+
+#new:ASCII $strQuickLoad
+{
+"Reload"
+}
+
+#new:Data $QuickSaveOptions
+{
+$strQuickCancel
+$strQuickSave
+$strQuickLoad
+}
+
+#new:Function $UpdateQuickSave
+{
+	PUSH		RA, S5, S6
+	#DEF		S0, *Data
+	SB			R0, .DebugStateChanged (*Data)
+	% check for exit (L)
+	LB			V0, .Press[.L] (*Data)
+	ADDIU		V1, R0, .StateMainMenu
+	BNEL		V0, R0, .Done
+	SB			V1, .DebugMenuState (*Data)
+	% check for selection (R)
+	LB			V0, .Release[.R] (*Data)
+	BEQ			V0, R0, .NoSelection
+	NOP
+%	JAL			80149CB4 % play_sound
+%	ADDIU		A0, R0, .SoundAccept
+	.Selected
+	% execute the option
+	LBU			V0, .QuickSaveMenuPos (*Data)
+	ADDIU		V1, R0, .StateMainMenu
+	BEQL		V0, R0, .Done
+	SB			V1, .DebugMenuState (*Data)
+	ADDIU		V1, R0, 1
+	BEQ			V0, V1, .QuickSave
+	NOP
+	.QuickLoad
+	ADDIU		V1, R0, .StateNone
+	SB			V1, .DebugMenuState (*Data)
+	LAW			V1, 8007419C
+	JAL			8002B2D0 % fio_load_game
+	LBU			A0, 166 (V1)
+	JAL			801382A0
+	ADDIU		A0, R0, 0	% special effect type here
+	JAL			800334F0
+	ADDIU		A0, R0, 7
+	B			.Draw
+	NOP
+	.QuickSave
+	JAL			80149CB4 % play_sound
+	ADDIU		A0, R0, .SoundSave
+	LAW			V0, 800F7B30	% player info
+	LAW			V1, 8007419C	% save info
+	% copy current x
+	LWC1		F0, 28 (V0)
+	TRUNC.W.S	F2, F0
+	MFC1		A0, F2
+	NOP			% needed? used by SaveGameAtPlayerPosition
+	SH			A0, 160 (V1)
+	% copy current y
+	LWC1		F0, 2C (V0)
+	TRUNC.W.S	F2, F0
+	MFC1		A0, F2
+	NOP			% needed? used by SaveGameAtPlayerPosition
+	SH			A0, 162 (V1)
+	% copy current z
+	LWC1		F0, 30 (V0)
+	TRUNC.W.S	F2, F0
+	MFC1		A0, F2
+	NOP			% needed? used by SaveGameAtPlayerPosition
+	SH			A0, 164 (V1)
+	JAL			8002B374 % fio_save_game
+	LBU			A0, 166 (V1)
+	.NoSelection
+	% do option selection
+	LBU			A0, .QuickSaveMenuPos (*Data)
+	ADDIU		A1, R0, 0
+	JAL			$NavigateVerticalWrappedMenu1D_Reversed
+	ADDIU		A2, R0, 2
+	SB			V0, .QuickSaveMenuPos (*Data)
+	.Draw
+	% draw bg
+	ADDIU		A0, R0, .SubBoxPosX
+	ADDIU		A1, R0, .SubBoxPosY[.OffsetRow1]
+	ADDIU		A2, R0, 75`
+	ADDIU		A3, R0, .OffsetRow3[8`]
+%	LIO			T0, $CustomStyle
+	LIO			T0, 14
+	JAL			$DrawMenuBox
+	ADDIU		T1, R0, C0
+	ADDIU		S4, R0, .SubmenuPosY[.OffsetRow1]
+	LIO			S5, $QuickSaveOptions
+	LOOP		S6 = 0,3
+		LBU			V0, .QuickSaveMenuPos (*Data)
+		BNE			V0, S6, 8
+		ADDIU 		A3, R0, .DefaultColor
+		LW			A3, .HighlightColor (*Data)
+		ADDIU		A1, R0, .SubmenuPosX
+		COPY		A2, S4
+		JAL			$DrawStringASCII
+		LW			A0, 0 (S5)
+		ADDIU		S4, S4, .RowSpacing
+		ADDIU		S5, S5, 4
+	ENDLOOP
+	.Done
+	#UNDEF		S0
+	POP			RA, S5, S6
+	LIO			V0, $UpdateMainMenu[.DrawInactiveMenu]
+	JR			V0
+	NOP
+%}
+}
+
+% ================================================
+% UpdateEditPartners
+% ------------------------------------------------
+% expects: S0 = DebugState
+% ------------------------------------------------
+%{
+#new:Function $UpdateEditPartners
+{
+	PUSH		RA, S4, S5, S6, S7
+	#DEF		S0, *Data
+	LBU			V1, .DebugStateChanged (*Data)
+	BEQ			V1, R0, .CheckInputs
+	SB			R0, .DebugStateChanged (*Data)
+	% initialize
+	LIO			T0, .PartnerGameData
+	LIO			T1, $PartnerData
+	LOOP 		T2 = 0,11`
+		LBU		V1, 0 (T0)
+		BEQ		V1, R0, .NextPartner
+		CLEAR	V1
+		LBU		V1, 1 (T0)
+		ADDIU	V1, V1, 1
+		.NextPartner
+		SB		V1, 0 (T1)
+		ADDIU	T0, T0, 8
+		ADDIU	T1, T1, 1
+	ENDLOOP
+	.CheckInputs
+	% check for exit (L)
+	LB			V0, .Press[.L] (*Data)
+	ADDIU		V1, R0, .StateMainMenu
+	BNEL		V0, R0, .Done
+	SB			V1, .DebugMenuState (*Data)
+	% check for selection (R)
+	LB			V0, .Release[.R] (*Data)
+	BEQ			V0, R0, .NoSelection
+	NOP
+	JAL			80149CB4 % play_sound
+	ADDIU		A0, R0, .SoundAccept
+	.Selected
+	% save values
+	LIO			T0, .PartnerGameData
+	LIO			T1, $PartnerData
+	LOOP 		T2 = 0,11`
+		LBU		V1, 0 (T1)
+		BEQ		V1, R0, .ClearPartner
+		NOP
+		ADDIU	V0, R0, 1
+		ADDIU	V1, V1, -1
+		SB		V0, 0 (T0)
+		SB		V1, 1 (T0)
+		B		.Next
+		NOP
+		.ClearPartner
+		SB		R0, 0 (T0)
+		SB		R0, 1 (T0)
+		.Next
+		ADDIU	T0, T0, 8
+		ADDIU	T1, T1, 1
+	ENDLOOP
+	B			.Draw
+	NOP
+	.NoSelection
+	% do partner selection
+	LIO			S6, $PartnerData
+	LBU			A0, .PartnerMenuPos (S6)
+	ADDIU		A1, R0, 0
+	JAL			$NavigateVerticalWrappedMenu1D_Reversed
+	ADDIU		A2, R0, 10`
+	SB			V0, .PartnerMenuPos (S6)
+	% do value change
+	DADDU		S6, S6, V0
+	LBU			A0, 0 (S6)
+	ADDIU		A1, R0, 0
+	JAL			$NavigateHorizontalWrappedMenu1D
+	ADDIU		A2, R0, 3
+	SB			V0, 0 (S6)
+	% navigation done
+	.Draw
+	% draw bg
+	ADDIU		A0, R0, .SubBoxPosX
+	ADDIU		A1, R0, .SubBoxPosY
+	ADDIU		A2, R0, 92`
+	ADDIU		A3, R0, 162`
+%	LIO			T0, $CustomStyle
+	LIO			T0, 14
+	JAL			$DrawMenuBox
+	ADDIU		T1, R0, C0
+	% draw string
+	ADDIU		S4, R0, .SubmenuPosY
+	LIO			S5, 8008EF30
+	LIO			S6, $PartnerData
+	LOOP		S7 = 0,11`
+		% print digit
+		LIO			A1, $fmtDigit
+		DADDU		A2, S6, S7
+		LBU			A2, 0 (A2)
+		JAL			800654F0 % sprintf
+		ADDIU		A0, *Data, .PrintfBuffer
+		% call to drawstring
+		ADDIU		A1, R0, .SubmenuPosX
+		COPY		A2, S4
+		LBU			V0, .PartnerMenuPos (S6)
+		BNE			V0, S7, 8
+		ADDIU 		A3, R0, .DefaultColor
+		LW			A3, .HighlightColor (*Data)
+		JAL			$DrawStringASCII
+		ADDIU		A0, *Data, .PrintfBuffer
+		% print name from (8008EF30 + i * 0x10)
+		LW			A0, 0 (S5)
+		ADDIU		A1, R0, .SubmenuPosX[15`]
+		COPY		A2, S4
+		JAL			$DrawStringID
+		ADDIU 		A3, R0, .DefaultColor
+		% next partner
+		ADDIU		S4, S4, 14`
+		ADDIU		S5, S5, 10
+	ENDLOOP
+	.Done
+	#UNDEF		S0
+	POP			RA, S4, S5, S6, S7
+	LIO			V0, $UpdateMainMenu[.DrawInactiveMenu]
+	JR			V0
+	NOP
+%}
+}
+
+% ================================================
+% UpdateEditInventory
+% ------------------------------------------------
+% expects: S0 = DebugState
+% ------------------------------------------------
+%{
+#new:ASCII $strInventoryItems
+{
+"Items"
+}
+
+#new:ASCII $strInventoryBadges
+{
+"Badges"
+}
+
+#new:ASCII $strInventoryKeys
+{
+"Key Items"
+}
+
+#new:ASCII $strInventoryGear
+{
+"Equipment"
+}
+
+#new:ASCII $strInventoryStats
+{
+"Stats"
+}
+
+#new:ASCII $strInventoryCoins
+{
+"Coins"
+}
+
+#new:ASCII $strInventoryStarPoints
+{
+"Star Points"
+}
+
+#new:ASCII $strInventoryStarPieces
+{
+"Star Pieces"
+}
+
+#new:Data $EditInventoryOptions
+{
+$strInventoryItems
+$strInventoryBadges
+$strInventoryKeys
+$strInventoryGear
+$strInventoryStats
+$strInventoryCoins
+$strInventoryStarPoints
+$strInventoryStarPieces
+}
+
+#define .InventoryMenuLength 8
+#define .InventoryMenuLastIndex .InventoryMenuLength[-1]
+
+#new:Function $UpdateEditInventory
+{
+	PUSH		RA, S4, S5, S7
+	#DEF		S0, *Data
+	SB			R0, .DebugStateChanged (*Data)
+	% check for exit (L)
+	LB			V0, .Press[.L] (*Data)
+	ADDIU		V1, R0, .StateMainMenu
+	BNEL		V0, R0, .Done
+	SB			V1, .DebugMenuState (*Data)
+	% check for selection (R)
+	LB			V0, .Release[.R] (*Data)
+	BEQ			V0, R0, .NoSelection
+	NOP
+	.Selected
+	% open submenu
+	ADDIU		V1, R0, 1
+	SB			V1, .DebugStateChanged (*Data)
+	LBU			V0, .InventoryMenuPos (*Data)
+	ADDIU		V1, V0, .StateEditItems
+	B			.Draw
+	SB			V1, .DebugMenuState (*Data)
+	.NoSelection
+	% do navigation
+	LBU			A0, .InventoryMenuPos (*Data)
+	ADDIU		A1, R0, 0
+	JAL			$NavigateVerticalWrappedMenu1D_Reversed
+	ADDIU		A2, R0, .InventoryMenuLastIndex
+	B			.Draw
+	SB			V0, .InventoryMenuPos (*Data)
+	% only draw menu from subscreens by JR here
+	.DrawEntry
+	PUSH		RA, S4, S5, S7
+	.Draw
+	% draw bg
+	ADDIU		A0, R0, .SubBoxPosX
+	ADDIU		A1, R0, .SubBoxPosY[.OffsetRow1]
+	ADDIU		A2, R0, 80`
+	ADDIU		A3, R0, .OffsetRow8[8`]
+%	LIO			T0, $CustomStyle
+	LIO			T0, 14
+	JAL			$DrawMenuBox
+	ADDIU		T1, R0, C0
+	% draw string
+	ADDIU		S4, R0, .SubmenuPosY[.OffsetRow1]
+	LIO			S5, $EditInventoryOptions
+	LOOP		S7 = 0, .InventoryMenuLength
+		ADDIU		A1, R0, .SubmenuPosX
+		COPY		A2, S4
+		LBU			V0, .InventoryMenuPos (*Data)
+		BNE			V0, S7, 8
+		ADDIU 		A3, R0, .DefaultColor
+		LW			A3, .HighlightColor (*Data)
+		JAL			$DrawStringASCII
+		LW			A0, 0 (S5)
+		ADDIU		S4, S4, .RowSpacing
+		ADDIU		S5, S5, 4
+	ENDLOOP
+	.Done
+	#UNDEF		S0
+	POP			RA, S4, S5, S7
+	LIO			V0, $UpdateMainMenu[.DrawInactiveMenu]
+	JR			V0
+	NOP
+%}
+}
+
+% ================================================
+% UpdateEditItems
+% ------------------------------------------------
+% expects: S0 = DebugState
+% ------------------------------------------------
+%{
+#new:ASCII $strItemsTitle
+{
+"Items:"
+}
+
+#new:ASCII $strItemEmpty
+{
+"empty"
+}
+
+#new:ASCII $strItemInvalid
+{
+"invalid"
+}
+	
+#new:Data $ItemsData % enough room for 128 item slots (for badges)
+{
+00000000 00000000
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+}
+
+#new:Data $ConsumablesMenuInfo
+{
+00000003
+}
+
+#new:Data $KeysMenuInfo
+{
+00000003
+}
+
+#new:Data $BadgesMenuInfo
+{
+00000003
+}
+
+#define .ItemsMenuPos		0
+#define .ItemsScrollPos		1
+#define .ItemsDigitPos		3
+
+#define .ItemsCount			0
+#define .ItemsMenuState		1 	% 0 = selecting item slot, 1 = editing digits
+#define .ItemsMenuInfo		4
+#define .ItemsIDs			8
+
+% A0 = address
+% A1 = count
+% assumes S1 = $ItemsData
+#new:Function $LoadItems
+{
+	SB			A1, .ItemsCount (S1)
+	ADDIU		V1, S1, .ItemsIDs
+	LOOP		V0 = 0,A1
+		LHU			T0, 0 (A0)
+		SH			T0, 0 (V1)
+		ADDIU		A0, A0, 2
+		ADDIU		V1, V1, 2
+	ENDLOOP
+	JR			RA
+	NOP
+}
+	
+% A0 = address
+% assumes S1 = $ItemsData
+#new:Function $SaveItems
+{
+	LBU			A1, .ItemsCount (S1)
+	ADDIU		V1, S1, .ItemsIDs
+	LOOP		V0 = 0,A1
+		LHU			T0, 0 (V1)
+		SH			T0, 0 (A0)
+		ADDIU		A0, A0, 2
+		ADDIU		V1, V1, 2
+	ENDLOOP
+	JR			RA
+	NOP
+}
+
+% A0 = posX
+% A1 = posY
+% assumes S1 = $ItemsData
+#new:Function $DrawItems
+{
+	PUSH		RA, S2, S3, S4, S5, S6, S7, S8
+	#DEF		S0, *Data
+	#DEF		S2, *PosX
+	#DEF		S3, *PosY
+	#DEF		S4, *AnimShift
+	#DEF		S5, *DrawStart
+	#DEF		S6, *DrawLimit
+	#DEF		S7, *ItemList
+	#DEF		S8, *CurrentItem
+	COPY		*PosX, A0
+	COPY		*PosY, A1
+	% calculate list start offset (first entry to draw)
+	LW			V1, .ItemsMenuInfo (S1)
+	LBU			V0, .ItemsMenuPos (V1)
+	LBU			*DrawStart, .ItemsScrollPos (V1)
+	ADDIU		*DrawLimit, *DrawStart, 10`
+	LBU			V1, .ItemsCount (S1)
+	BGTL		*DrawLimit, V1, 4
+	COPY		*DrawLimit, V1
+	% offset the item list
+	ADDIU		*ItemList, S1, .ItemsIDs
+	SLL			V1, *DrawStart, 1
+	DADDU		*ItemList, *ItemList, V1
+	% arrows
+	.TryArrows
+	LB			V0, .FrameCount (*Data)
+	ADDIU		V1, R0, 4`			
+	DIV			V0, V1
+	MFLO		*AnimShift
+	ADDIU		SP, SP, -10
+	BEQ			*DrawStart, R0, .UpArrowDone
+	NOP
+	LIO			A0, $arrowUp
+	ADDIU 		A1, *PosX, 128`
+	ADDIU 		A2, *PosY, 4`
+	SUBU		A2, A2, *AnimShift
+	ADDIU		V0, R0 .DefaultColor
+	ORI 		A3, R0, FF	% opacity
+	SW 			V0, 10 (SP) 
+	ORI			V0, R0, 0   % special
+	SW 			V0, 14 (SP) 
+	JAL			801264EC % draw_string
+	NOP
+	.UpArrowDone
+	LBU			V0, .ItemsCount (S1)
+	BLE			V0, *DrawLimit, .DownArrowDone
+	NOP
+	LIO			A0, $arrowDown
+	ADDIU 		A1, *PosX, 128`
+	ADDIU 		A2, *PosY, 128`
+	DADDU		A2, A2, *AnimShift
+	ADDIU		V0, R0 .DefaultColor
+	ORI 		A3, R0, FF	% opacity
+	SW 			V0, 10 (SP) 
+	ORI			V0, R0, 0   % special
+	SW 			V0, 14 (SP) 
+	JAL			801264EC % draw_string
+	NOP
+	.DownArrowDone
+	ADDIU		SP, SP, 10
+	%/
+	% clamp limit
+	/%
+	LB			V0, .ItemsCount (S1)
+	%/	
+	#UNDEF		S4
+	#DEF		S4, *Current
+	LOOP		*Current = *DrawStart,*DrawLimit
+		% print slot digit
+		LIO			A1, $fmtByte
+		COPY		A2, *Current
+		JAL			800654F0 % sprintf
+		ADDIU		A0, *Data, .PrintfBuffer
+		COPY		A1, *PosX
+		COPY		A2, *PosY
+		% slot highlighting
+		LBU			V1, .ItemsMenuState (S1)
+		BNEL		V1, R0, 18
+		ADDIU 		A3, R0, .DefaultColor
+		LW			V1, .ItemsMenuInfo (S1)
+		LBU			V1, .ItemsMenuPos (V1)
+		BEQL		V1, *Current, 8
+		LW			A3, .HighlightColor (*Data)
+		ADDIU 		A3, R0, .DefaultColor
+		JAL			$DrawStringASCII
+		ADDIU		A0, *Data, .PrintfBuffer
+		% print item ID
+		LHU			*CurrentItem, 0 (*ItemList)
+		LIO			V1, $EditHalf
+		JAL			$SplitHalf
+		SH			*CurrentItem, .EditHalfValue (V1)
+		% item ID highlighting
+		LW			V0, .ItemsMenuInfo (S1)
+		LBU			V0, .ItemsDigitPos (V0)
+		LBU			V1, .ItemsMenuState (S1)
+		BEQL		V1, R0, .SetHighlightDigit
+		ADDIU		V0, R0, -2
+		LW			V1, .ItemsMenuInfo (S1)
+		LBU			V1, .ItemsMenuPos (V1)
+		BNEL		V1, *Current, .SetHighlightDigit
+		ADDIU		V0, R0, -2
+		.SetHighlightDigit
+		LIO			V1, $EditHalf
+		SB			V0, .EditHalfDigitPos (V1)
+		ADDIU		A0, R0, 1
+		ADDIU		A1, R0, 4
+		COPY		A2, *PosX
+		ADDIU		A2, A2, 20`
+		JAL			$DrawEditHalf
+		COPY		A3, *PosY
+		% check item name
+		COPY		A1, *PosX
+		ADDIU		A1, A1, 50`
+		COPY		A2, *PosY
+		ADDIU 		A3, R0, .DefaultColor
+		BEQ			*CurrentItem, R0, .DrawEmpty
+		NOP
+		% print item name from (800878E0 + itemID * 0x20) (clamped to 0-16C)
+		ADDIU		V1, R0, 16C
+		BGT			*CurrentItem, V1, .DrawInvalid
+		NOP
+		SLL			V1, *CurrentItem, 4
+		DADDU		V1, V1, V1
+		LIO			V0, 800878E0
+		DADDU		V0, V0, V1
+		LW			A0, 0 (V0)
+		BEQ			A0, R0, .DrawInvalid
+		NOP
+		JAL			$DrawStringID
+		NOP
+		B			.NextItem
+		NOP
+		.DrawEmpty
+		LIO			A0, $strItemEmpty
+		JAL			$DrawStringASCII
+		NOP
+		B			.NextItem
+		NOP
+		.DrawInvalid
+		LIO			A0, $strItemInvalid
+		JAL			$DrawStringASCII
+		NOP
+		.NextItem
+		ADDIU		*PosY, *PosY, 15`
+		ADDIU		*ItemList, *ItemList, 2
+	ENDLOOP
+	#UNDEF		All
+	JPOP		RA, S2, S3, S4, S5, S6, S7, S8
+}
+
+% args: ptrList, num entries, ptrMenuInfo
+#new:Function $UpdateEditItemList
+{
+	PUSH		RA, S1, S2, S3, S4
+	#DEF		S0, *Data
+	COPY		S4, A0
+	LIO			S1, $ItemsData
+	SW			A2, .ItemsMenuInfo (S1)
+	LBU			V1, .DebugStateChanged (*Data)
+	BEQ			V1, R0, .CheckCancel
+	SB			R0, .DebugStateChanged (*Data)
+	% initialize
+	% A0/A1 already set
+	JAL			$LoadItems
+	SB			R0, .ItemsMenuState (S1)
+	% check for exit (L)
+	.CheckCancel
+	LB			V0, .Press[.L] (*Data)
+	BEQ			V0, R0, .CheckSelect
+	NOP
+	LBU			V0, .ItemsMenuState (S1)
+	BNE			V0, R0, .EditingDigitsCancel
+	NOP
+	POP			RA, S1, S2, S3, S4
+	ADDIU		V1, R0, .StateEditInventory
+	LIO			V0, $UpdateEditInventory[.DrawEntry]
+	JR			V0
+	SB			V1, .DebugMenuState (*Data)
+	.EditingDigitsCancel
+	SB			R0, .ItemsMenuState (S1)
+	B			.Draw
+	NOP
+	% check for selection (R)
+	.CheckSelect
+	LB			V0, .Release[.R] (*Data)
+	BEQ			V0, R0, .NoSelection
+	NOP
+	.Selected
+	LBU			V0, .ItemsMenuState (S1)
+	BNE			V0, R0, .EditingDigitsAcion
+	NOP
+	ADDIU		V1, R0, 1
+	SB			V1, .ItemsMenuState (S1)
+	B			.Draw
+	NOP
+	.EditingDigitsAcion
+	COPY		A0, S4
+	JAL			$SaveItems
+	RESERVED
+	B			.Draw
+	NOP
+	.NoSelection
+	LBU			V0, .ItemsMenuState (S1)
+	BNE			V0, R0, .EditingDigitsNav
+	NOP
+	% navigation while scrolling through item slots
+	LW			A0, .ItemsMenuInfo (S1)
+	LBU			A0, .ItemsMenuPos (A0)
+	ADDIU		A1, R0, 0
+	LBU			A2, .ItemsCount (S1)
+	JAL			$NavigateVerticalWrappedMenu1D_Reversed
+	ADDIU		A2, A2, -1
+	LW			V1, .ItemsMenuInfo (S1)
+	LBU			A0, .ItemsScrollPos (V1)
+	SLT			AT, V0, A0
+	BNEL		AT, R0, .DoneScrolling
+	SB			V0, .ItemsScrollPos (V1)
+	ADDIU		AT, R0, 9`
+	SUB			A1, V0, AT
+	SLT			AT, A0, A1
+	BNEL		AT, R0, .DoneScrolling 
+	SB			A1, .ItemsScrollPos (V1)
+	.DoneScrolling
+	B			.Draw
+	SB			V0, .ItemsMenuPos (V1)
+	% navigation while editing item ID digits
+	.EditingDigitsNav
+	LW			A0, .ItemsMenuInfo (S1)
+	LBU			A0, .ItemsMenuPos (A0)
+	SLL			A0, A0, 1
+	DADDU		S2, S1, A0
+	% edit value
+	LIO			S3, $EditHalf
+	LW			V1, .ItemsMenuInfo (S1)
+	LBU			V0, .ItemsDigitPos (V1)
+	SB			V0, .EditHalfDigitPos (S3)
+	JAL			$DoEditHalf
+	LHU			A0, .ItemsIDs (S2)
+	SH			V0, .ItemsIDs (S2)
+	LBU			V0, .EditHalfDigitPos (S3)
+	LW			V1, .ItemsMenuInfo (S1)
+	SB			V0, .ItemsDigitPos (V1)
+	.Draw
+	% draw bg
+	ADDIU		A0, R0, .SubBoxPosX
+	ADDIU		A1, R0, .SubBoxPosY
+	ADDIU		A2, R0, 160`
+	ADDIU		A3, R0, .OffsetRow10[8`]
+%	LIO			T0, $CustomStyle
+	LIO			T0, 14
+	JAL			$DrawMenuBox
+	ADDIU		T1, R0, C0
+	/%
+	LIO			A0, $strItemsTitle
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	%/
+	ADDIU		A0, R0, .SubmenuPosX
+	JAL			$DrawItems
+	ADDIU		A1, R0, .SubmenuPosY
+	.Done
+	#UNDEF		S0
+	POP			RA, S1, S2, S3, S4
+	LIO			V0, $UpdateMainMenu[.DrawInactiveMenu]
+	JR			V0
+	NOP
+}
+
+#new:Function $UpdateEditItems
+{
+	LIO			A0, 8010F444
+	LIO			A2, $ConsumablesMenuInfo
+	LIO			V0, $UpdateEditItemList
+	JR			V0
+	ADDIU		A1, R0, 10`
+}
+
+#new:Function $UpdateEditBadges
+{
+	LIO			A0, 8010F344
+	LIO			A2, $BadgesMenuInfo
+	LIO			V0, $UpdateEditItemList
+	JR			V0
+	ADDIU		A1, R0, 128`
+}
+	
+#new:Function $UpdateEditKeys
+{
+	LIO			A0, 8010F304
+	LIO			A2, $KeysMenuInfo
+	LIO			V0, $UpdateEditItemList
+	JR			V0
+	ADDIU		A1, R0, 32`
+%}
+}
+	
+% ================================================
+% UpdateEditGear
+% ------------------------------------------------
+% expects: S0 = DebugState
+% ------------------------------------------------
+%{
+#new:ASCII $strGearTitle
+{
+"Equipment:"
+}
+
+#new:ASCII $strGearHammer
+{
+"Hammer"
+}
+
+#new:ASCII $strGearBoots
+{
+"Boots"
+}
+	
+#new:Data $PlayerGearData
+{
+00000000
+}
+
+#define .GearHammer		0
+#define .GearBoots		1
+#define .GearMenuPos	2
+
+#new:Function $UpdateEditGear
+{
+	PUSH		RA, S1, S2
+	#DEF		S0, *Data
+	LIO			S1, $PlayerGearData
+	LBU			V1, .DebugStateChanged (*Data)
+	BEQ			V1, R0, .CheckCancel
+	SB			R0, .DebugStateChanged (*Data)
+	% initialize
+	LIO			T0, 8010F290
+	LBU			V1, 0 (T0)
+	SB			V1, .GearBoots (S1)
+	LBU			V1, 1 (T0)
+	SB			V1, .GearHammer (S1)
+	.CheckCancel % check for exit (L)
+	LB			V0, .Press[.L] (*Data)
+	BEQ			V0, R0, .CheckSelect
+	NOP
+	POP			RA, S1, S2
+	ADDIU		V1, R0, .StateEditInventory
+	LIO			V0, $UpdateEditInventory[.DrawEntry]
+	JR			V0
+	SB			V1, .DebugMenuState (*Data)
+	.CheckSelect % check for selection (R)
+	LB			V0, .Release[.R] (*Data)
+	BEQ			V0, R0, .NoSelection
+	NOP
+	.Selected
+	% action
+	LIO			T0, 8010F290
+	LBU			V1, .GearBoots (S1)
+	SB			V1, 0 (T0)
+	LBU			V1, .GearHammer (S1)
+	SB			V1, 1 (T0)
+	B			.Draw
+	NOP
+	.NoSelection
+	% select stat
+	LBU			A0, .GearMenuPos (S1)
+	ADDIU		A1, R0, 0
+	JAL			$NavigateVerticalWrappedMenu1D_Reversed
+	ADDIU		A2, R0, 1
+	SB			V0, .GearMenuPos (S1)
+	% change stat
+	DADDU		S2, S1, V0
+	LBU			A0, 0 (S2)
+	ADDIU		A1, R0, 0
+	JAL			$NavigateHorizontalWrappedMenu1D
+	ADDIU		A2, R0, 2
+	SB			V0, 0 (S2)
+	.Draw
+	ADDIU		A0, R0, .SubBoxPosX
+	ADDIU		A1, R0, .SubBoxPosY[.OffsetRow1]
+	ADDIU		A2, R0, 88`
+	ADDIU		A3, R0, .OffsetRow3[8`]
+%	LIO			T0, $CustomStyle
+	LIO			T0, 14
+	JAL			$DrawMenuBox
+	ADDIU		T1, R0, C0
+	LIO			A0, $strGearTitle
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow1]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% print "hammer"
+	LIO			A0, $strGearHammer
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow2]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% format digit
+	LIO			A1, $fmtInteger
+	LBU			A2, .StatsHP (S1)
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	% draw the digit
+	ADDIU		A1, R0, .SubmenuPosX[60`]
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow2]
+	LBU			V0, .GearMenuPos (S1)
+	ADDIU		V1, R0, 0
+	BNE			V0, V1, 8
+	ADDIU 		A3, R0, .DefaultColor
+	LW			A3, .HighlightColor (*Data)
+	JAL			$DrawStringASCII
+	ADDIU		A0, *Data, .PrintfBuffer
+	% print "boots"
+	LIO			A0, $strGearBoots
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow3]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% format digit
+	LIO			A1, $fmtInteger
+	LBU			A2, .StatsFP (S1)
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	% draw the digit
+	ADDIU		A1, R0, .SubmenuPosX[60`]
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow3]
+	LBU			V0, .GearMenuPos (S1)
+	ADDIU		V1, R0, 1
+	BNE			V0, V1, 8
+	ADDIU 		A3, R0, .DefaultColor
+	LW			A3, .HighlightColor (*Data)
+	JAL			$DrawStringASCII
+	ADDIU		A0, *Data, .PrintfBuffer
+	.Done
+	POP			RA, S1, S2
+	LIO			V0, $UpdateMainMenu[.DrawInactiveMenu]
+	JR			V0
+	NOP
+%}
+}
+	
+% ================================================
+% UpdateEditStats
+% ------------------------------------------------
+% expects: S0 = DebugState
+% ------------------------------------------------
+%{
+#new:ASCII $strStatsTitle
+{
+"Stats:"
+}
+
+#new:ASCII $strMaxHP
+{
+"Max HP"
+}
+
+#new:ASCII $strMaxFP
+{
+"Max FP"
+}
+
+#new:ASCII $strMaxBP
+{
+"Max BP"
+}
+
+#new:ASCII $strLevel
+{
+"Level"
+}
+
+#new:ASCII $strSpirits
+{
+"Spirits"
+}
+	
+#new:Data $PlayerStatsData
+{
+00000000 00000000
+05050301 01000000
+05050001 00000000
+75`b 75`b  60`b 27`b   7`b 0`b  0`b 0`b
+}
+
+#define .StatsHP		0
+#define .StatsFP		1
+#define .StatsBP		2
+#define .StatsLevel		3
+#define .StatsSpirits	4
+
+#new:Function $UpdateEditStats
+{
+	PUSH		RA, S1, S2
+	#DEF		S0, *Data
+	LIO			S1, $PlayerStatsData
+	LBU			V1, .DebugStateChanged (*Data)
+	BEQ			V1, R0, .CheckCancel
+	SB			R0, .DebugStateChanged (*Data)
+	% initialize
+	LIO			T0, 8010F290
+	LBU			V1, 4 (T0)
+	SB			V1, .StatsHP (S1)
+	LBU			V1, 7 (T0)
+	SB			V1, .StatsFP (S1)
+	LBU			V1, 8 (T0)
+	SB			V1, .StatsBP (S1)
+	LBU			V1, 9 (T0)
+	SB			V1, .StatsLevel (S1)
+	LBU			V1, 28E (T0)
+	SB			V1, .StatsSpirits (S1)
+	.CheckCancel % check for exit (L)
+	LB			V0, .Press[.L] (*Data)
+	BEQ			V0, R0, .CheckSelect
+	NOP
+	POP			RA, S1, S2
+	ADDIU		V1, R0, .StateEditInventory
+	LIO			V0, $UpdateEditInventory[.DrawEntry]
+	JR			V0
+	SB			V1, .DebugMenuState (*Data)
+	.CheckSelect % check for selection (R)
+	LB			V0, .Release[.R] (*Data)
+	BEQ			V0, R0, .NoSelection
+	NOP
+	.Selected
+	% action
+	LIO			T0, 8010F290
+	LBU			V0, 3 (T0)
+	LBU			V1, 4 (T0)
+	SUBU		V0, V0, V1
+	LBU			V1, .StatsHP (S1)
+	DADDU		V0, V0, V1
+	SB			V0, 2 (T0)
+	SB			V0, 3 (T0)
+	SB			V1, 4 (T0)
+	LBU			V0, 6 (T0)
+	LBU			V1, 7 (T0)
+	SUBU		V0, V0, V1
+	LBU			V1, .StatsFP (S1)
+	DADDU		V0, V0, V1
+	SB			V0, 5 (T0)
+	SB			V0, 6 (T0)
+	SB			V1, 7 (T0)
+	LBU			V1, .StatsBP (S1)
+	SB			V1, 8 (T0)
+	LBU			V1, .StatsLevel (S1)
+	SB			V1, 9 (T0)
+	LBU			V1, .StatsSpirits (S1)
+	LBU			V0, 28E (T0)
+	BEQ			V1, V0, .Draw
+	SB			V1, 28E (T0)
+	SB			V1, 290 (T0)
+	SB			R0, 291 (T0)
+	B			.Draw
+	NOP
+	.NoSelection
+	% select stat
+	LBU			A0, .StatsMenuPos (*Data)
+	ADDIU		A1, R0, 0
+	JAL			$NavigateVerticalWrappedMenu1D_Reversed
+	ADDIU		A2, R0, 4
+	SB			V0, .StatsMenuPos (*Data)
+	% change stat
+	DADDU		S2, S1, V0	% save relative
+	LBU			A0, 0 (S2)	% value
+	LBU			A1, 8 (S2)	% step
+	LBU			A2, 10 (S2)	% min
+	LBU			A3, 18 (S2)	% max
+	CLEAR		V1
+	LB			AT, .Press[.D-left] (*Data)
+	BNEL		AT, R0, 4
+	SUBU		V1, V1, A1
+	LB			AT, .Press[.D-right] (*Data)
+	BNEL		AT, R0, 4
+	DADDU		V1, V1, A1
+	DADDU		A0, A0, V1
+	% clamp stat
+	BLTL		A0, A2, .StoreResult
+	COPY		A0, A3
+	BGTL		A0, A3, .StoreResult
+	COPY		A0, A2
+	% do value change
+	.StoreResult
+	SB			A0, 0 (S2)	% value
+	.Draw
+	ADDIU		A0, R0, .SubBoxPosX
+	ADDIU		A1, R0, .SubBoxPosY[.OffsetRow1]
+	ADDIU		A2, R0, 88`
+	ADDIU		A3, R0, .OffsetRow6[8`]
+%	LIO			T0, $CustomStyle
+	LIO			T0, 14
+	JAL			$DrawMenuBox
+	ADDIU		T1, R0, C0
+	LIO			A0, $strStatsTitle
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow1]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% print "max hp"
+	LIO			A0, $strMaxHP
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow2]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% format digit
+	LIO			A1, $fmtInteger
+	LBU			A2, .StatsHP (S1)
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	% draw the digit
+	ADDIU		A1, R0, .SubmenuPosX[55`]
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow2]
+	LBU			V0, .StatsMenuPos (*Data)
+	ADDIU		V1, R0, 0
+	BNE			V0, V1, 8
+	ADDIU 		A3, R0, .DefaultColor
+	LW			A3, .HighlightColor (*Data)
+	JAL			$DrawStringASCII
+	ADDIU		A0, *Data, .PrintfBuffer
+	% print "max fp"
+	LIO			A0, $strMaxFP
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow3]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% format digit
+	LIO			A1, $fmtInteger
+	LBU			A2, .StatsFP (S1)
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	% draw the digit
+	ADDIU		A1, R0, .SubmenuPosX[55`]
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow3]
+	LBU			V0, .StatsMenuPos (*Data)
+	ADDIU		V1, R0, 1
+	BNE			V0, V1, 8
+	ADDIU 		A3, R0, .DefaultColor
+	LW			A3, .HighlightColor (*Data)
+	JAL			$DrawStringASCII
+	ADDIU		A0, *Data, .PrintfBuffer
+	% print "max bp"
+	LIO			A0, $strMaxBP
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow4]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% format digit
+	LIO			A1, $fmtInteger
+	LBU			A2, .StatsBP (S1)
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	% draw the digit
+	ADDIU		A1, R0, .SubmenuPosX[55`]
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow4]
+	LBU			V0, .StatsMenuPos (*Data)
+	ADDIU		V1, R0, 2
+	BNE			V0, V1, 8
+	ADDIU 		A3, R0, .DefaultColor
+	LW			A3, .HighlightColor (*Data)
+	JAL			$DrawStringASCII
+	ADDIU		A0, *Data, .PrintfBuffer
+	% print "level"
+	LIO			A0, $strLevel
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow5]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% format digit
+	LIO			A1, $fmtInteger
+	LBU			A2, .StatsLevel (S1)
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	% draw the digit
+	ADDIU		A1, R0, .SubmenuPosX[55`]
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow5]
+	LBU			V0, .StatsMenuPos (*Data)
+	ADDIU		V1, R0, 3
+	BNE			V0, V1, 8
+	ADDIU 		A3, R0, .DefaultColor
+	LW			A3, .HighlightColor (*Data)
+	JAL			$DrawStringASCII
+	ADDIU		A0, *Data, .PrintfBuffer
+	% print "spirits"
+	LIO			A0, $strSpirits
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow6]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% format digit
+	LIO			A1, $fmtInteger
+	LBU			A2, .StatsSpirits (S1)
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	% draw the digit
+	ADDIU		A1, R0, .SubmenuPosX[55`]
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow6]
+	LBU			V0, .StatsMenuPos (*Data)
+	ADDIU		V1, R0, 4
+	BNE			V0, V1, 8
+	ADDIU 		A3, R0, .DefaultColor
+	LW			A3, .HighlightColor (*Data)
+	JAL			$DrawStringASCII
+	ADDIU		A0, *Data, .PrintfBuffer
+	.Done
+	POP			RA, S1, S2
+	LIO			V0, $UpdateMainMenu[.DrawInactiveMenu]
+	JR			V0
+	NOP
+%}
+}
+	
+% ================================================
+% UpdateEditCoins
+% ------------------------------------------------
+% expects: S0 = DebugState
+% ------------------------------------------------
+%{
+
+#new:ASCII $strCoinsTitle
+{
+"Coins:"
+}
+
+#new:Function $UpdateEditCoins
+{
+	PUSH		RA
+	#DEF		S0, *Data
+	LBU			V1, .DebugStateChanged (*Data)
+	BEQ			V1, R0, .CheckCancel
+	SB			R0, .DebugStateChanged (*Data)
+	% initialize
+	LIO			T0, 8010F290
+	LHU			A0, C (T0)
+	SH			A0, .CoinsValue (*Data)
+	.CheckCancel % check for exit (L)
+	LB			V0, .Press[.L] (*Data)
+	BEQ			V0, R0, .CheckSelect
+	NOP
+	POP			RA
+	ADDIU		V1, R0, .StateEditInventory
+	LIO			V0, $UpdateEditInventory[.DrawEntry]
+	JR			V0
+	SB			V1, .DebugMenuState (*Data)
+	.CheckSelect % check for selection (R)
+	LB			V0, .Release[.R] (*Data)
+	BEQ			V0, R0, .NoSelection
+	NOP
+	.Selected
+	LHU			A0, .CoinsValue (*Data)
+	LIO			T0, 8010F290
+	SH			A0, C (T0)
+	JAL			800E978C % open status menu (briefly)
+	NOP
+	B			.Draw
+	NOP
+	% action
+	.NoSelection
+	% edit value
+	LHU			A0, .CoinsValue (*Data)
+	JAL			$DoEditDecimal
+	ADDIU		A1, R0, 3
+	SH			V0, .CoinsValue (*Data)
+	.Draw
+	% draw bg
+	ADDIU		A0, R0, .SubBoxPosX
+	ADDIU		A1, R0, .SubBoxPosY[.OffsetRow1]
+	ADDIU		A2, R0, 50`
+	ADDIU		A3, R0, .OffsetRow2[8`]
+%	LIO			T0, $CustomStyle
+	LIO			T0, 14
+	JAL			$DrawMenuBox
+	ADDIU		T1, R0, C0
+	LIO			A0, $strCoinsTitle
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow1]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% draw value
+	ADDIU		A0, R0, 3
+	ADDIU 		A1, R0, .SubmenuPosX
+	JAL			$DrawEditDecimal
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow2]
+	.Done
+	#UNDEF		S0
+	POP			RA
+	LIO			V0, $UpdateMainMenu[.DrawInactiveMenu]
+	JR			V0
+	NOP
+%}
+}
+	
+% ================================================
+% UpdateEditStarPoints
+% ------------------------------------------------
+% expects: S0 = DebugState
+% ------------------------------------------------
+%{
+#new:ASCII $strStarPointsTitle
+{
+"Star Points:"
+}
+
+#new:Function $UpdateEditStarPoints
+{
+	PUSH		RA
+	#DEF		S0, *Data
+	LBU			V1, .DebugStateChanged (*Data)
+	BEQ			V1, R0, .CheckCancel
+	SB			R0, .DebugStateChanged (*Data)
+	% initialize
+	LIO			T0, 8010F290
+	LBU			A0, 10 (T0)
+	SB			A0, .StarPointsValue (*Data)
+	.CheckCancel % check for exit (L)
+	LB			V0, .Press[.L] (*Data)
+	BEQ			V0, R0, .CheckSelect
+	NOP
+	POP			RA
+	ADDIU		V1, R0, .StateEditInventory
+	LIO			V0, $UpdateEditInventory[.DrawEntry]
+	JR			V0
+	SB			V1, .DebugMenuState (*Data)
+	.CheckSelect % check for selection (R)
+	LB			V0, .Release[.R] (*Data)
+	BEQ			V0, R0, .NoSelection
+	NOP
+	.Selected
+	LBU			A0, .StarPointsValue (*Data)
+	LIO			T0, 8010F290
+	SB			A0, 10 (T0)
+	JAL			800E978C % open status menu (briefly)
+	NOP
+	B			.Draw
+	NOP
+	% action
+	.NoSelection
+	% edit value
+	LBU			A0, .StarPointsValue (*Data)
+	JAL			$DoEditDecimal
+	ADDIU		A1, R0, 2
+	% clamp max
+	SLTI		V1, V0, 100`
+	BEQL		V1, R0, 4
+	ADDIU		V0, R0, 99`
+	SB			V0, .StarPointsValue (*Data)
+	.Draw
+	% draw bg
+	ADDIU		A0, R0, .SubBoxPosX
+	ADDIU		A1, R0, .SubBoxPosY[.OffsetRow1]
+	ADDIU		A2, R0, 86`
+	ADDIU		A3, R0, .OffsetRow2[8`]
+%	LIO			T0, $CustomStyle
+	LIO			T0, 14
+	JAL			$DrawMenuBox
+	ADDIU		T1, R0, C0
+	LIO			A0, $strStarPointsTitle
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow1]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% draw value
+	ADDIU		A0, R0, 2
+	ADDIU 		A1, R0, .SubmenuPosX
+	JAL			$DrawEditDecimal
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow2]
+	.Done
+	#UNDEF		S0
+	POP			RA
+	LIO			V0, $UpdateMainMenu[.DrawInactiveMenu]
+	JR			V0
+	NOP
+%}
+}
+
+% ================================================
+% UpdateEditStarPieces
+% ------------------------------------------------
+% expects: S0 = DebugState
+% ------------------------------------------------
+%{
+#new:ASCII $strStarPiecesTitle
+{
+"Star Pieces:"
+}
+
+#new:Function $UpdateEditStarPieces
+{
+	PUSH		RA
+	#DEF		S0, *Data
+	LBU			V1, .DebugStateChanged (*Data)
+	BEQ			V1, R0, .CheckCancel
+	SB			R0, .DebugStateChanged (*Data)
+	% initialize
+	LIO			T0, 8010F290
+	LBU			A0, F (T0)
+	SB			A0, .StarPiecesValue (*Data)
+	.CheckCancel % check for exit (L)
+	LB			V0, .Press[.L] (*Data)
+	BEQ			V0, R0, .CheckSelect
+	NOP
+	POP			RA
+	ADDIU		V1, R0, .StateEditInventory
+	LIO			V0, $UpdateEditInventory[.DrawEntry]
+	JR			V0
+	SB			V1, .DebugMenuState (*Data)
+	.CheckSelect % check for selection (R)
+	LB			V0, .Release[.R] (*Data)
+	BEQ			V0, R0, .NoSelection
+	NOP
+	.Selected
+	LBU			A0, .StarPiecesValue (*Data)
+	LIO			T0, 8010F290
+	SB			A0, F (T0)
+	JAL			800E978C % open status menu (briefly)
+	NOP
+	B			.Draw
+	NOP
+	% action
+	.NoSelection
+	% edit value
+	LBU			A0, .StarPiecesValue (*Data)
+	JAL			$DoEditDecimal
+	ADDIU		A1, R0, 3
+	% clamp max
+	SLTI		V1, V0, 256`
+	BEQL		V1, R0, 4
+	ADDIU		V0, R0, 255`
+	SB			V0, .StarPiecesValue (*Data)
+	.Draw
+	% draw bg
+	ADDIU		A0, R0, .SubBoxPosX
+	ADDIU		A1, R0, .SubBoxPosY[.OffsetRow1]
+	ADDIU		A2, R0, 86`
+	ADDIU		A3, R0, .OffsetRow2[8`]
+%	LIO			T0, $CustomStyle
+	LIO			T0, 14
+	JAL			$DrawMenuBox
+	ADDIU		T1, R0, C0
+	LIO			A0, $strStarPiecesTitle
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow1]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% draw value
+	ADDIU		A0, R0, 3
+	ADDIU 		A1, R0, .SubmenuPosX
+	JAL			$DrawEditDecimal
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow2]
+	.Done
+	#UNDEF		S0
+	POP			RA
+	LIO			V0, $UpdateMainMenu[.DrawInactiveMenu]
+	JR			V0
+	NOP
+%}
+}
+
+% ================================================
+% UpdateEditRAM
+% ------------------------------------------------
+% expects: S0 = DebugState
+% ------------------------------------------------
+%{
+
+#new:ASCII $strMemoryTitle
+{
+"Address:"
+}
+
+#new:ASCII $strInvalidAddress
+{
+"Invalid range!"
+}
+
+#string $strInvalidData
+{
+[Size:C:C][Spacing:A]????????[END]
+}
+
+#new:ASCII $fmtMemoryRow
+{
+"%02X:"
+}
+	
+#new:Data $MemoryData
+{
+80100000 00000000 00020000 01000000
+}
+
+#define .MemoryAddress		0
+#define .MemoryValue		4
+#define .MemoryEditState	8 	% 0 = selecting address, 1 = choosing word, 2 = editing digits
+#define .MemoryListPos0		9	% digit in address selector
+#define .MemoryListPos1		A	% word position in 2D grid
+#define .MemoryListPos2		B	% digit position in data editor
+#define .MemoryValidAddress	C
+
+#new:Data $CustomStyle
+{
+8010BAF4 00000000 00000000 8010BB40
+00000000 00000000 00000000 00000000
+00000000 00000000 00000000 00000000
+600000C0 80808080
+}
+
+#new:Function $UpdateEditRAM
+{
+	PUSH		RA, S1, S2, S3, S4, S5, S6, S7, S8
+	#DEF		S0, *Data
+	LIO			S1, $MemoryData
+	LIO			S2, $EditWord
+	LBU			V1, .DebugStateChanged (*Data)
+	BEQ			V1, R0, .CheckCancel
+	SB			R0, .DebugStateChanged (*Data)
+	% no initialization needed
+	% check for exit (L)
+	.CheckCancel
+	LB			V0, .Press[.L] (*Data)
+	BEQ			V0, R0, .CheckSelect
+	NOP
+	LBU			V0, .MemoryEditState (S1)
+	BNE			V0, R0, .SubstateCancel
+	NOP
+	ADDIU		V1, R0, .StateMainMenu
+	SB			V1, .DebugMenuState (*Data)
+	% ensure we draw something on this frame
+	POP			RA, S1, S2, S3, S4, S5, S6, S7, S8
+	LIO			V0, $UpdateMainMenu[.DrawInactiveMenu]
+	JR			V0
+%	B			.Done
+	NOP
+	.SubstateCancel
+	ADDIU		V0, V0, -1
+	SB			V0, .MemoryEditState (S1)
+	B			.Draw
+	NOP
+	% check for selection (R)
+	.CheckSelect
+	LB			V0, .Release[.R] (*Data)
+	BEQ			V0, R0, .Navigation
+	NOP
+	.Selected
+	% invalid address
+	LBU			V0, .MemoryValidAddress (S1)
+	BEQ			V0, R0, .Draw
+	NOP
+	% valid address
+	LBU			V0, .MemoryEditState (S1)
+	ADDIU		V1, R0, 2
+	BEQ			V0, V1, .SetValue
+	ADDIU		V1, R0, 1
+	BEQL		V0, R0, .ChooseWord
+	SB			V1, .MemoryEditState (S1)
+	% state = 1, save working value	
+	LW			V1, .MemoryAddress (S1)
+	SRL			V1, V1, 7
+	SLL			V1, V1, 7
+	LBU			V0, .MemoryListPos1 (S1)
+	SLL			V0, V0, 2
+	DADDU		V1, V1, V0
+	LW			V0, 0 (V1)
+	SW			V0, .MemoryValue (S1)
+	ADDIU		V1, R0, 2
+	B			.Draw
+	SB			V1, .MemoryEditState (S1)
+	.SetValue
+	LW			V1, .MemoryAddress (S1)
+	SRL			V1, V1, 7
+	SLL			V1, V1, 7
+	LBU			V0, .MemoryListPos1 (S1)
+	SLL			V0, V0, 2
+	DADDU		V1, V1, V0
+	LW			V0, .MemoryValue (S1)
+	SW			V0, 0 (V1)
+	B			.Draw
+	NOP
+	.ChooseWord
+	LW			V1, .MemoryAddress (S1)
+	ANDI		V1, V1, 7F
+	SRL			V0, V1, 2
+	SB			V0, .MemoryListPos1 (S1)
+	ANDI		V0, V1, 3
+	SLL			V0, V0, 1
+	SB			V0, .MemoryListPos2 (S1)
+	B			.Draw
+	NOP
+	.Navigation
+	LBU			V0, .MemoryEditState (S1)
+	BEQ			V0, R0, .EditAddressNav
+	ADDIU		V1, R0, 1
+	BEQ			V0, V1, .ChooseWordNav
+	NOP
+	.EditDataNav
+	LBU			V0, .MemoryListPos2 (S1)
+	SB			V0, .EditWordDigitPos (S2)
+	JAL			$DoEditWord
+	LW			A0, .MemoryValue (S1)
+	SW			V0, .MemoryValue (S1)
+	LBU			V0, .EditWordDigitPos (S2)
+	SB			V0, .MemoryListPos2 (S1)
+	NOP
+	B			.Draw
+	NOP
+	.ChooseWordNav
+	LBU			A0, .MemoryListPos1 (S1)
+	ADDIU		A1, R0, 32`
+	JAL			$NavigateWrappedMenu2D_ColumnMajor
+	ADDIU		A2, R0, 4
+	SB			V0, .MemoryListPos1 (S1)
+	B			.Draw
+	NOP
+	.EditAddressNav
+	LBU			V0, .MemoryListPos0 (S1)
+	SB			V0, .EditWordDigitPos (S2)
+	JAL			$DoEditWord
+	LW			A0, .MemoryAddress (S1)
+	SW			V0, .MemoryAddress (S1)
+	LBU			V1, .EditWordDigitPos (S2)
+	SB			V1, .MemoryListPos0 (S1)
+	% check address range
+	LIO			V1, 80000000
+	SLTU		V1, V0, V1
+	BNEL		V1, R0, .ValidCheckDone
+	ANDI		V0, V0, FF
+	LIO			V1, 90000000 % C0001000 -- limit on emulator
+	SLTU		V1, V0, V1 
+	BEQL		V1, R0, .ValidCheckDone
+	ANDI		V0, V0, FF
+	.ValidCheckDone
+	SLTIU		V0, V0, 1000
+	ADDIU		V1, R0, 1
+	BEQL		V0, R0, 8
+	SB			V1, .MemoryValidAddress (S1)
+	SB			R0, .MemoryValidAddress (S1)
+	.Draw
+	% draw bg
+	ADDIU		A0, R0, .MemoryBoxPosX
+	ADDIU		A1, R0, .MemoryBoxPosY
+	ADDIU		A2, R0, .MemoryBoxWidth
+	ADDIU		A3, R0, .MemoryBoxHeight
+%	LIO			T0, $CustomStyle
+	LIO			T0, 14
+	JAL			$DrawMenuBox
+	ADDIU		T1, R0, C0
+	% 'address'
+	LIO			A0, $strMemoryTitle
+	ADDIU		A1, R0, .MemoryViewPosX[25`]
+	ADDIU		A2, R0, .MemoryViewPosY
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% get address
+	LW			V0, .MemoryAddress (S1)
+	JAL			$SplitWord
+	SW			V0, .EditWordValue (S2)
+	% draw address
+	LBU			V0, .MemoryEditState (S1)
+	BNEL		V0, R0, 8
+	ADDIU		V0, R0, -2
+	LBU			V0, .MemoryListPos0 (S1)
+	SB			V0, .EditWordDigitPos (S2)
+	ADDIU		A0, R0, 7
+	ADDIU		A1, R0, .MemoryViewPosX[80`]
+	JAL			$DrawEditWord
+	ADDIU		A2, R0, .MemoryViewPosY
+	% get address
+	LW			S3, .MemoryAddress (S1)
+	LIO			V0, FFFFFF80
+	AND			S3, S3, V0
+	% draw grid
+	LBU			V0, .MemoryValidAddress (S1)
+	BNE			V0, R0, .PrintData
+	NOP
+	LIO			A0, $strInvalidAddress
+	ADDIU		A1, R0, .MemoryViewPosX[175`]
+	ADDIU		A2, R0, .MemoryViewPosY
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	.PrintData
+	CLEAR		S4
+	ADDIU		S5, R0, .MemoryViewPosX[7`]
+	ADDIU		S6, R0, .MemoryViewPosY[20`]
+	LOOP		S7 = 0,8
+		ADDIU		S5, R0, .MemoryViewPosX
+		% print row
+		LIO			A1, $fmtMemoryRow
+		COPY		A2, S3
+		ANDI		A2, A2, FF
+		JAL			800654F0 % sprintf
+		ADDIU		A0, *Data, .PrintfBuffer
+		% call to drawstring
+		COPY		A1, S5
+		COPY		A2, S6
+		ADDIU 		A3, R0, .DefaultColor
+		JAL			$DrawStringASCII
+		ADDIU		A0, *Data, .PrintfBuffer
+		ADDIU		S5, S5, 23`
+		LOOP		S8 = 0,4
+			% draw invalid memory
+			LBU			V0, .MemoryValidAddress (S1)
+			BEQ			V0, R0, .DrawInvalid
+			NOP
+			% get ready for DrawBasic
+			LIO			A1, $fmtWord
+			LW			A2, 0 (S3)
+			JAL			800654F0 % sprintf
+			ADDIU		A0, *Data, .PrintfBuffer
+			% draw basic when (i != pos) or (state == 0)
+			LBU			V1, .MemoryListPos1 (S1)
+			BNEL		V1, S4, .DrawBasic
+			ADDIU 		A3, R0, .DefaultColor
+			LBU			V0, .MemoryEditState (S1)
+			BEQL		V0, R0, .DrawBasic
+			ADDIU 		A3, R0, .DefaultColor
+			% highlight word if (state == 1)
+			ADDIU		V1, R0, 1
+			BEQL		V0, V1, .DrawBasic
+			LW			A3, .HighlightColor (*Data)
+			% else highlight digits
+			LW			V0, .MemoryValue (S1)
+			JAL			$SplitWord
+			SW			V0, .EditWordValue (S2)
+			LBU			V0, .MemoryListPos2 (S1)
+			SB			V0, .EditWordDigitPos (S2)
+			ADDIU		A0, R0, 7
+			COPY		A1, S5
+			JAL			$DrawEditWord
+			COPY		A2, S6
+			B			.NextWord
+			NOP
+			.DrawBasic
+			% call to drawstring
+			COPY		A1, S5
+			COPY		A2, S6
+			JAL			$DrawMonospacedStringASCII
+			ADDIU		A0, *Data, .PrintfBuffer
+			B			.NextWord
+			NOP
+			.DrawInvalid
+			ADDIU		SP, SP, -10	% allocate for args
+			LIO			A0, $strInvalidData
+			COPY		A1, S5
+			COPY		A2, S6
+			ORI 		A3, R0, FF	% opacity
+			ADDIU 		V0, R0, .DefaultColor
+			SW 			V0, 10 (SP) 
+			ORI			V0, R0, 0  % special
+			SW 			V0, 14 (SP) 
+			JAL			801264EC % draw_string
+			NOP
+			ADDIU		SP, SP, 10 % deallocate args
+			.NextWord
+			ADDIU		S3, S3, 4	% next address
+			ADDIU		S4, S4, 1
+			ADDIU		S5, S5, 65`
+		ENDLOOP
+		ADDIU		S6, S6, 15`
+	ENDLOOP
+	.Done
+	#UNDEF		S0
+	JPOP		RA, S1, S2, S3, S4, S5, S6, S7, S8
+%}
+}
+
+% ================================================
+% UpdateViewCollision
+% ------------------------------------------------
+% expects: S0 = DebugState
+% ------------------------------------------------
+%{
+
+#define .NumCollisionOptions	6
+
+#new:ASCII $On
+{
+"On"
+}
+
+#new:ASCII $Off
+{
+"Off"
+}
+
+#new:ASCII $collisionMenu1
+{
+"Show Collision"
+}
+
+#new:ASCII $collisionMenu2
+{
+"Cull Back"
+}
+
+#new:ASCII $collisionMenu3
+{
+"Show Disabled"
+}
+
+#new:ASCII $collisionMenu4
+{
+"Hide Models"
+}
+
+#new:ASCII $collisionMenu5
+{
+"Highlight Floor"
+}
+
+#new:ASCII $collisionMenu6
+{
+"Highlight Wall"
+}
+
+#new:Data $CollisionMenuOptions
+{
+$collisionMenu1
+$collisionMenu2
+$collisionMenu3
+$collisionMenu4
+$collisionMenu5
+$collisionMenu6
+}
+
+#new:Data $CollisionData
+{
+00000100 00000000
+}
+
+#define .CollisionEnable	1
+#define .CollisionCullBack	2
+#define .CollisionShowAll	3
+#define .CollisionHideModel	4
+#define .CollisionHLFloor	5
+#define .CollisionHLWall	6
+
+#new:Function $UpdateViewCollision
+{
+	PUSH		RA, S1, S2, S3, S7, S8
+	#DEF		S0, *Data
+	#DEF		S1, *State
+	#DEF		S2, *Editing
+	#DEF		S3, *Selected
+	LIO			*State, $CollisionData
+	LBU			V1, .DebugStateChanged (*Data)
+	BEQ			V1, R0, .CheckInputs
+	SB			R0, .DebugStateChanged (*Data)
+	.CheckInputs
+	% check for exit (L)
+	LB			V0, .Press[.L] (*Data)
+	ADDIU		V1, R0, .StateMainMenu
+	BNEL		V0, R0, .Done
+	SB			V1, .DebugMenuState (*Data)
+	.NoSelection
+	% do option selection
+	LBU			A0, 0 (*State)
+	ADDIU		A1, R0, 0
+	JAL			$NavigateVerticalWrappedMenu1D_Reversed
+	ADDIU		A2, R0, 5
+	SB			V0, 0 (*State)
+	% do value change
+	ADDIU		V0, V0, 1
+	DADDU		*Editing, *State, V0
+	LBU			A0, 0 (*Editing)
+	ADDIU		A1, R0, 0
+	JAL			$NavigateHorizontalWrappedMenu1D
+	ADDIU		A2, R0, 1
+	SB			V0, 0 (*Editing)
+	% navigation done
+	.Draw
+	LBU			*Selected, 0 (*State)
+	% draw bg
+	ADDIU		A0, R0, .SubBoxPosX
+	ADDIU		A1, R0, .SubBoxPosY
+	ADDIU		A2, R0, 120`
+	ADDIU		A3, R0, .OffsetRow6[8`]
+%	LIO			T0, $CustomStyle
+	LIO			T0, 14
+	JAL			$DrawMenuBox
+	ADDIU		T1, R0, C0
+	% draw strings
+	ADDIU 		S7, R0, .SubmenuPosY
+	LOOP		S8 = 0, .NumCollisionOptions	
+		ADDIU		V0, S8, 1
+		DADDU		V0, V0, *State
+		LBU			V0, 0 (V0)
+		% choose string for on/off
+		BEQ			V0, R0, 14
+		NOP
+		LIO			A0, $On
+		B			C
+		NOP
+		LIO			A0, $Off
+		% choose color
+		BNE			*Selected, S8, 8
+		ADDIU 		A3, R0, .DefaultColor
+		LW			A3, .HighlightColor (*Data)	
+		ADDIU 		A1, R0, .SubmenuPosX
+		JAL			$DrawStringASCII
+		COPY 		A2, S7
+		% print string
+		SLL			V0, S8, 2
+		LTW			A0, V0 ($CollisionMenuOptions)
+		ADDIU 		A1, R0, .SubmenuPosX[30`]
+		COPY 		A2, S7
+		JAL			$DrawStringASCII
+		ADDIU 		A3, R0, .DefaultColor
+		ADDIU		S7, S7, .RowSpacing
+	ENDLOOP
+	.Done
+	#UNDEF		All
+	POP			RA, S1, S2, S3, S7, S8
+	LIO			V0, $UpdateMainMenu[.DrawInactiveMenu]
+	JR			V0
+	NOP
+%}
+}
+
+% ================================================
+% Collision Viewer
+% ------------------------------------------------
+%{
+
+/%
+	master display list: 80164230
+
+	8009A674: pointer to 80164000 + offset 230 gives MDL
+	8009A66C: pointer to next free space in MDL
+%/
+
+% obtained from the blue switch (DisplayList_0A000B70)
+#new:DisplayList $NoTextureSetup
+{
+    G_RDPPIPESYNC
+    G_SetOtherMode_H (G_MDSFT_CYCLETYPE, G_CYC_1CYCLE)
+    G_SetOtherMode_L (G_MDSFT_RENDERMODE, ...
+                      AA_EN, Z_CMP, IM_RD, CVG_DST_WRAP, CLR_ON_CVG, FORCE_BL, ZMODE_INTER, ...
+                      G_BL_CLR_IN, G_BL_A_IN, G_BL_CLR_MEM, G_BL_1MA, ...
+                      G_BL_CLR_IN, G_BL_A_IN, G_BL_CLR_MEM, G_BL_1MA)
+    G_SETCOMBINE     (G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, ...
+                      G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, ...
+                      G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, ...
+                      G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE)
+    G_TEXTURE        (G_TX_RENDERTILE, 0.001953, 0.001953, 0, false)
+%    G_GEOMETRYMODE   (Clear, G_LIGHTING)
+%    G_GEOMETRYMODE   (Set, G_CULL_BACK, G_SHADING_SMOOTH)
+	G_NOOP
+}
+
+@Subscribe:RenderGeometry
+{
+	PUSH	RA, S0
+	LIO		S0, $CollisionData
+	LBU		V0, .CollisionEnable (S0)
+	BEQ		V0, R0, .Done
+	NOP
+	JAL		$BuildColliderDL
+	NOP
+	LIO		A0, 8009A66C
+	LW		V0, 0 (A0)
+	%
+	LIO		A1, $NoTextureSetup
+	.NextTextureOpcode
+	LW		A2, 0 (A1)
+	BEQ		A2, R0, .DoneTextureSetup
+	NOP
+	SW		A2, 0 (V0)
+	LW		A2, 4 (A1)
+	SW		A2, 4 (V0)
+	ADDIU	V0, V0, 8
+	B		.NextTextureOpcode
+	ADDIU	A1, A1, 8
+	.DoneTextureSetup
+	% G_GEOMETRYMODE ( Clear ...)
+	LIO		A1, D9FDFFFF
+	SW		A1, 0 (V0)
+	SW		R0, 4 (V0)
+	% G_GEOMETRYMODE ( Set ...)
+	LIO		A1, D9FFFFFF
+	SW		A1, 8 (V0)
+	LUI		A2, 0020
+	LIO		V1, $CollisionData
+	LBU		V1, .CollisionCullBack (V1)
+	BNEL	V1, R0, 4
+	ORI		A2, A2, 0400
+	SW		A2, C (V0)
+	ADDIU	V0, V0, 10
+	% G_DL ...
+	LIO		A1, DE000000
+	LIO		A2, $DisplayList
+	SW		A1, 0 (V0)
+	SW		A2, 4 (V0)
+	ADDIU	V0, V0, 8
+	%
+	LIO		A1, E7000000
+	SW		A1, 0 (V0)
+	SW		R0, 4 (V0)
+	ADDIU	V0, V0, 8
+	SW		V0, 0 (A0)
+	.Done
+	JPOP	RA, S0
+}
+
+@Hook 9124	% 8002DD24
+{
+	LIO		V0, $CollisionData
+	LBU		V0, .CollisionHideModel (V0)
+	BNEL	V0, R0, .Done
+	NOP
+	JAL		80116B90
+	NOP
+	.Done
+	J 		8002DD2C
+	NOP
+}
+
+#new:Function $BuildColliderDL
+{
+	PUSH	RA, S0, S1, S2, S3, S4, S5, S6, S7, S8
+	#DEF	S0, *DisplayList
+	#DEF	S1, *NumColliders
+	#DEF	S2, *CollidersPos
+	#DEF	S3, *Collider
+	#DEF	S4, *NumTriangles
+	#DEF	S5, *TrianglesPos
+	#DEF	S6, *Triangle
+	#DEF	S7, *State
+	%
+	LIO		*DisplayList, $DisplayList
+	LIO		*State, $CollisionData
+	SAW		R0, $VertexBufferCount
+	%
+	LIA		V0, 800B42E0	% collision_data
+	LW		*Collider, 4 (V0)
+	LH		*NumColliders, C (V0)
+	BLEZ	*NumColliders, .DoneColliders
+	NOP 
+	LOOP	*CollidersPos = 0, *NumColliders
+		% check whether we should draw disabled colliders
+		LBU		V1, .CollisionShowAll (*State)
+		BNE		V1, R0, .CheckFloor
+		NOP
+		% check if collider is enabled
+		LUI		V0, 0001 % 00010000 = ignore player collision
+		LW		V1, 0 (*Collider)
+		AND		V0, V1, V0
+		BNE		V0, R0, .NextCollider
+		NOP
+		% draw it
+		.CheckFloor
+		CLEAR	S8
+		LIO		A0, 8015A550
+		LHU		V0, 2 (A0)
+		BNE		V0, *CollidersPos, .CheckWalls
+		NOP
+		LBU		V1, .CollisionHLFloor (*State)
+		BEQ		V1, R0, .CheckWalls
+		NOP
+		ADDIU	S8, R0, 1
+		B		.DrawTriangles
+		NOP
+		.CheckWalls
+		LHU		V0, 12 (A0)
+		BNE		V0, *CollidersPos, .DrawTriangles
+		NOP
+		LBU		V1, .CollisionHLWall (*State)
+		BEQ		V1, R0, .DrawTriangles
+		NOP
+		ADDIU	S8, R0, 1
+		.DrawTriangles
+		LHU		*NumTriangles, A (*Collider)
+		LW		*Triangle, C (*Collider)
+		LOOP	*TrianglesPos = 0, *NumTriangles
+			COPY	A0, *Triangle
+			COPY	A1, *DisplayList
+			ADDIU	A2, R0, 0
+			JAL		$BuildTriangleSimple
+			COPY	A3, S8
+			COPY	*DisplayList, V0
+			%
+			LBU		V1, .CollisionCullBack (*State)
+			BEQ		V1, R0, .NextTriangle
+			NOP
+			LHU		A0, 3C (*Triangle)
+			BNE		A0, R0, .NextTriangle
+			NOP
+			COPY	A0, *Triangle
+			COPY	A1, *DisplayList
+			ADDIU	A2, R0, 1
+			JAL		$BuildTriangleSimple
+			COPY	A3, S8
+			COPY	*DisplayList, V0
+			%
+			.NextTriangle
+			ADDIU	*Triangle, *Triangle, 40
+		ENDLOOP
+		.NextCollider
+		ADDIU	*Collider, *Collider, 1C
+	ENDLOOP
+	.DoneColliders
+	#UNDEF	S1, S2, S3, S4, S5, S6, S7
+	/%
+	LAW		S1, 800A0B90
+	LIO		S2, $NpcMatrices
+	LOOP	S3 = 0, 64`
+		LW		S4, 0 (S1)
+		BEQ		S4, R0, .NextNPC
+		NOP
+		COPY	A0, S4
+		COPY	A1, *DisplayList
+		JAL		$BuildNPC
+		COPY	A2, S2
+		COPY	*DisplayList, V0
+		.NextNPC
+		ADDIU	S1, S1, 4
+		ADDIU	S2, S2, 40
+	ENDLOOP
+	%/
+	.DoneAll
+	LUI		V0, DF00
+	SW		V0, 0 (*DisplayList)
+	SW		R0, 4 (*DisplayList)
+	ADDIU	*DisplayList, *DisplayList, 8
+	%
+	#UNDEF	All
+	JPOP	RA, S0, S1, S2, S3, S4, S5, S6, S7, S8
+}
+
+% A0 = state
+% A1 = index
+% V0 = out boolean
+#new:Function $ShouldHighlight
+{
+	LIO		V0, 8015A550
+	LHU		V1, 2 (V0)
+	BNE		V1, A1, .CheckWalls
+	NOP
+	LBU		V1, .CollisionHLFloor (A0)
+	BEQ		V1, R0, .CheckWalls
+	NOP
+	B		.Done
+	ADDIU	V0, R0, 1
+	.CheckWalls
+	LHU		V1, 12 (V0)
+	BNEL	V1, A1, .Done
+	COPY	V0, R0
+	LBU		V1, .CollisionHLWall (A0)
+	BEQ		V1, R0, .Done
+	COPY	V0, R0
+	ADDIU	V0, R0, 1
+	.Done
+	JR		RA
+	NOP
+}
+
+% A0 = Triangle
+% A1 = DisplayList
+% A2 = flip vertex normal?
+% A3 = highlight
+#new:Function $BuildTriangleSimple
+{
+	PUSH	RA, S0, S1, S2
+	COPY	S0, A0
+	COPY	S1, A1
+	% get buffer pos
+	LAW		V1, $VertexBufferCount
+	ADDIU	V0, V1, 3
+	SAW		V0, $VertexBufferCount
+	LIO		V0, $VertexBuffer
+	SLL		V1, V1, 4
+	DADDU	S2, V0, V1
+	% add display list for this triangle
+	LIO		V0, 01003006
+	SW		V0, 0 (S1)
+	SW		S2, 4 (S1)
+	LUI		V0, 0500
+	BEQL	A2, R0, 8
+	ADDIU	V0, V0, 0204
+	ADDIU	V0, V0, 0402
+	SW		V0, 8 (S1)
+	SW		R0, C (S1)
+	ADDIU	S1, S1, 10
+	% convert normal to color
+	LIF		F0, 255.0
+	LWC1	F2, 30 (S0)
+	MUL.S	F2, F2, F0
+	ABS.S	F2, F2
+	CVT.W.S	F2, F2
+	MFC1	T0, F2
+	LWC1	F2, 34 (S0)
+	MUL.S	F2, F2, F0
+	ABS.S	F2, F2
+	CVT.W.S	F2, F2
+	MFC1	T1, F2
+	LWC1	F2, 38 (S0)
+	MUL.S	F2, F2, F0
+	ABS.S	F2, F2
+	CVT.W.S	F2, F2
+	MFC1	T2, F2
+	BEQ		A3, R0, .BuildColor
+	NOP
+	ADDIU	T1, T1, 196`
+	ADDIU	T2, T3, 196`
+	ADDIU	T3, T2, 196`
+	ANDI	T1, T1, FF
+	ANDI	T2, T2, FF
+	ANDI	T3, T3, FF
+	% build color
+	.BuildColor
+	SLL		A2, T0, 8
+	OR		A2, A2, T1
+	SLL		A2, A2, 8
+	OR		A2, A2, T2
+	SLL		A2, A2, 8
+	ORI		A2, A2, 80
+	% now build vertices in buffer
+	LW		A0, 0 (S0)
+	JAL		$AddVertexSimple
+	ADDIU	A1, S2, 0
+	LW		A0, 4 (S0)
+	JAL		$AddVertexSimple
+	ADDIU	A1, S2, 10
+	LW		A0, 8 (S0)
+	JAL		$AddVertexSimple
+	ADDIU	A1, S2, 20
+	% increment buffer positon
+	COPY	V0, S1	% return new display list pos
+	JPOP	RA, S0, S1, S2
+}
+	
+#new:Function $AddVertexSimple
+{
+	% x
+	LWC1	F0, 0 (A0)
+	CVT.W.S	F0, F0
+	MFC1	V0, F0
+	SH		V0, 0 (A1)
+	% y
+	LWC1	F0, 4 (A0)
+	CVT.W.S	F0, F0
+	MFC1	V0, F0
+	SH		V0, 2 (A1)
+	% z
+	LWC1	F0, 8 (A0)
+	CVT.W.S	F0, F0
+	MFC1	V0, F0
+	SH		V0, 4 (A1)
+	% tex coords
+	SW		R0, 8 (A1)
+	% color
+	SW		A2, C (A1)
+	JR		RA
+	NOP
+}
+
+% A0 = NPC
+% A1 = DisplayList
+% A2 = Matrix
+#new:Function $BuildNPC
+{
+	PUSH	RA, S0, S1, S2, S3
+	ADDIU	SP, SP, -40		% reserve 64` bytes for matrix
+	#DEF	S0, *NPC
+	#DEF	S1, *DL
+	#DEF	S2, *MtxF
+	#DEF	S3, *MtxS
+	COPY	*NPC, A0
+	COPY	*DL, A1
+	COPY	*MtxS, A2
+	COPY	*MtxF, SP
+	/%
+	LIF		F0, 100.0f
+	LH		V0, A6 (*NPC)	% radius
+	MTC1	V0, F2
+	CVT.S.W	F2, F2
+	DIV.S	F2, F2, F0
+	LH		V0, A8 (*NPC)	% height
+	MTC1	V0, F4
+	CVT.S.W	F4, F4
+	DIV.S	F4, F4, F0
+	%/
+	LIF		F2, 1.0f
+	LIF		F4, 1.0f
+	COPY	A0, *MtxF
+	MFC1	A1, F2
+	MFC1	A2, F4
+	JAL		800677C0		% guScaleF
+	MFC1	A3, F2
+	% translation
+	LW		V0, 38 (*NPC)
+	SW		V0, 30 (*MtxF)
+	LW		V0, 3C (*NPC)
+	SW		V0, 34 (*MtxF)
+	LW		V0, 40 (*NPC)
+	SW		V0, 38 (*MtxF)
+	COPY	A0, *MtxF
+	JAL		80067500		% guMtxF2L
+	COPY	A1, *MtxS
+	% draw
+	/%
+	LIO		V0, DE000000
+	SW		V0, 0 (*DL)
+	LIO		V0, $CylinderDL
+	SW		V0, 4 (*DL)
+	ADDIU	V0, *DL, 8
+	%/
+	% push mtx
+	LIO		V0, DA380000
+	SW		V0, 0 (*DL)
+	SW		*MtxS, 4 (*DL)
+	% branch
+	LIO		V0, DE000000
+	SW		V0, 8 (*DL)
+	LIO		V0, $CylinderDL
+	SW		V0, C (*DL)
+	% pop mtx
+	LIO		V0, D8380002
+	SW		V0, 10 (*DL)
+	LIO		V0, 00000040
+	SW		V0, 14 (*DL)
+	% rdp sync
+	LIO		V0, E7000000
+	SW		V0, 18 (*DL)
+	SW		R0, 1C (*DL)
+	% done
+	ADDIU	V0, *DL, 20
+	#UNDEF	All
+	ADDIU	SP, SP, 40
+	JPOP	RA, S0, S1, S2, S3
+}
+
+% 4000 for 1024` vertices + 800 bonus for 128` overfill 
+%#reserve 4800 $VertexBuffer
+#reserve 10000 $VertexBuffer
+
+#new:Data $VertexBufferCount
+{
+00000000
+}
+
+@Data $VertexBuffer	% demo model (cube)
+{
+FFE70000 FFE70000 00000000 0000FF80
+FFE70000 00190000 04000000 0000FF80 
+FFE70032 FFE70000 00000400 FF000080 
+FFE70032 00190000 04000400 FF000080 
+00190000 00190000 08000000 0000FF80 
+00190032 00190000 08000400 FF000080 
+00190000 FFE70000 0C000000 0000FF80 
+00190032 FFE70000 0C000400 FF000080 
+FFE70000 FFE70000 10000000 0000FF80 
+FFE70032 FFE70000 10000400 FF000080 
+FFE70032 FFE70000 0000F800 FF000080 
+FFE70032 00190000 0000FC00 FF000080 
+00190032 FFE70000 0400F800 FF000080 
+00190032 00190000 0400FC00 FF000080 
+FFE70000 FFE70000 0800F800 0000FF80 
+00190000 FFE70000 0C00F800 0000FF80 
+FFE70000 00190000 0800FC00 0000FF80 
+00190000 00190000 0C00FC00 0000FF80
+}
+
+% 20 for boilerplate + 2000 for potentially ~2048` triangles?
+%#reserve 2020 $DisplayList
+#reserve 8000 $DisplayList
+
+@Data $DisplayList	% demo display list
+{
+E7000000 00000000 	% RDPPIPESYNC
+D9FDFFFF 00000000	% disable G_LIGHTING
+D9FFFFFF 00200000	% enable  G_SHADING_SMOOTH, (cull nothing) -- 00200400 would also cull back
+01012024 $VertexBuffer  
+06000204 00040206 
+06020806 0006080A 
+06080C0A 000A0C0E 
+060C100E 000E1012 
+06141618 0018161A 
+061C1E20 00201E22 
+DF000000 00000000
+}
+
+% room for 64` NPCs x 64` bytes each
+#reserve 1000 $NpcMatrices
+
+#new:Data $CylinderVertices	% h = 100, r = 100, 12 sides
+{
+00000000 FF9C0000 00000000 FFFFFFFF 00000064 FF9C0000 00000800 FFFFFFFF 
+00320000 FFA90000 01540000 FFFFFFFF 00320064 FFA90000 01540800 FFFFFFFF 
+00570000 FFCE0000 02A80000 FFFFFFFF 00570064 FFCE0000 02A80800 FFFFFFFF 
+00640000 00000000 04000000 FFFFFFFF 00640064 00000000 04000800 FFFFFFFF 
+00570000 00320000 05540000 FFFFFFFF 00570064 00320000 05540800 FFFFFFFF 
+00320000 00570000 06A80000 FFFFFFFF 00320064 00570000 06A80800 FFFFFFFF 
+00000000 00640000 08000000 FFFFFFFF 00000064 00640000 08000800 FFFFFFFF 
+FFCE0000 00570000 09540000 FFFFFFFF FFCE0064 00570000 09540800 FFFFFFFF 
+FFA90000 00320000 0AA80000 FFFFFFFF FFA90064 00320000 0AA80800 FFFFFFFF 
+FF9C0000 00000000 0C000000 FFFFFFFF FF9C0064 00000000 0C000800 FFFFFFFF 
+FFA90000 FFCE0000 0D540000 FFFFFFFF FFA90064 FFCE0000 0D540800 FFFFFFFF 
+FFCE0000 FFA90000 0EA80000 FFFFFFFF FFCE0064 FFA90000 0EA80800 FFFFFFFF 
+00000000 FF9C0000 10000000 FFFFFFFF 00000064 FF9C0000 10000800 FFFFFFFF
+}
+
+#new:Data $CylinderDL
+{
+E7000000 00000000 
+%D9FDFFFF 00000000 D9FFFFFF 00200400 
+0101A034 80210020 
+06000204 00040206 06040608 0008060A 06080A0C 000C0A0E 060C0E10 00100E12 
+06101214 00141216 06141618 0018161A 06181A1C 001C1A1E 061C1E20 00201E22 
+06202224 00242226 06242628 0028262A 06282A2C 002C2A2E 062C2E30 00302E32 
+DF000000 00000000
+}
+
+%}
+
+##[IF:LogVars]
+%{
+
+#new:Data $VariableLogBonusTime
+{
+	0
+}
+
+#new:Data $VariableLogPos
+{
+	0
+}
+
+#new:Data $VariableLog
+{
+	0` 0` 0` 0`
+	0` 0` 0` 0`
+	0` 0` 0` 0`
+	0` 0` 0` 0`
+	
+	0` 0` 0` 0`
+	0` 0` 0` 0`
+	0` 0` 0` 0`
+	0` 0` 0` 0`
+	
+	0` 0` 0` 0`
+	0` 0` 0` 0`
+	0` 0` 0` 0`
+	0` 0` 0` 0`
+	
+	0` 0` 0` 0`
+}
+
+#define .VarLog:Length	13`
+#define .VarLog:BaseDisplayTime		120` % 4s
+#define .VarLog:MaxBonusTime		240` % 8s
+#define .VarLog:BonusDisplayTime	5`
+
+#define .VarLog:Type	0
+#define .VarLog:Index	4
+#define .VarLog:Value	8
+#define .VarLog:Time	C
+#define .VarLog:Size	10
+
+#define .VarType:GameByte 0
+#define .VarType:GameFlag 1
+#define .VarType:ModByte  2
+#define .VarType:ModFlag  3
+
+#export:Function $Debug_LogSetGameByte
+{
+	J		$Debug_LogSetVar
+	ADDIU	A2, R0, .VarType:GameByte
+}
+
+#export:Function $Debug_LogSetGlobalFlag
+{
+	J		$Debug_LogSetVar
+	ADDIU	A2, R0, .VarType:GameFlag
+}
+
+#export:Function $Debug_LogSetModByte
+{
+	J		$Debug_LogSetVar
+	ADDIU	A2, R0, .VarType:ModByte
+}
+
+#export:Function $Debug_LogSetModFlag
+{
+	J		$Debug_LogSetVar
+	ADDIU	A2, R0, .VarType:ModFlag
+}
+
+% A0 = index
+% A1 = value
+% A2 = type
+#new:Function $Debug_LogSetVar
+{
+	% next ring buf pos
+	LAW		V0, $VariableLogPos
+	ADDIU	V1, V0, 1
+	SLTI	AT, V1, .VarLog:Length
+	BEQL	AT, R0, 4
+	CLEAR	V1
+	SAW		V1, $VariableLogPos
+	% V0 now has buffer index
+	SLL		V0, V0, 4
+	LI		V1, $VariableLog
+	ADDU	V0, V0, V1
+	% V0 now has buffer pos
+	SW		A2, .VarLog:Type (V0)
+	SW		A0, .VarLog:Index (V0)
+	SW		A1, .VarLog:Value (V0)
+
+	LA		A0, $VariableLogBonusTime
+	LW		A1, 0 (A0)
+	ADDIU	A1, A1, .VarLog:BonusDisplayTime
+	SLTI	V1, A1, .VarLog:MaxBonusTime
+	BEQL	V1, R0, 4
+	LI		A1, .VarLog:MaxBonusTime
+	SW		A1, 0 (A0)
+	ADDIU	V1, A1, .VarLog:BaseDisplayTime
+	JR		RA
+	SW		V1, .VarLog:Time (V0)
+}
+
+/%
+	loop logic (len > 0):
+	
+	i = start
+	while {
+		if i == 0
+			i = len
+		i--
+		check entry
+		if i == start
+			break
+	}
+%/
+
+#define	.PrintVarLogPosX	24`
+#define .PrintVarLogPosY	200`
+
+#new:ASCII $fmtGameByte
+{
+	"GameByte[%03X]"
+}
+
+#new:ASCII $fmtModByte
+{
+	"ModByte[%03X]"
+}
+
+#new:ASCII $fmtGameFlag
+{
+	"GameFlag[%03X]"
+}
+
+#new:ASCII $fmtModFlag
+{
+	"ModFlag[%03X]"
+}
+
+#new:Function $UpdateVarConsole
+{
+	PUSH	RA, S1, S2, S3
+	#DEF 	S0, *Data
+	LA		V0, $VariableLogBonusTime
+	LW		V1, 0 (V0)
+	BEQ		V1, R0, .BonusTimeDone
+	NOP
+	ADDIU	V1, V1, -1
+	SW		V1, 0 (V0)
+	.BonusTimeDone
+	
+	LAW		S2, $VariableLogPos
+	COPY	S1, S2
+	LI		S3, .PrintVarLogPosY
+	
+	.Next
+	BEQL	S1, R0, 4
+	LI		S1, .VarLog:Length
+	SUBI	S1, S1, 1
+	
+	LI		V1, $VariableLog
+	SLL		V0, S1, 4
+	ADDU	V0, V0, V1
+	LW		V1, .VarLog:Time (V0)
+	BEQ		V1, R0, .EntryDone
+	NOP
+	% update timer
+	ADDIU	V1, V1, -1
+	SW		V1, .VarLog:Time (V0)
+	
+	% skip drawing if menu/details are open
+	% otherwise, can trigger a crash with memory editor
+	LBU		V1, .DebugMenuState (*Data)
+	BNE		V1, R0, .EntryDone
+	NOP
+	LBU		V1, .ShowDetails (*Data)
+	BNE		V1, R0, .EntryDone
+	NOP
+	
+	% prepare for drawing
+	COPY	A0, V0
+	COPY	A1, S3
+	SUBI	S3, S3, 15`
+	
+	% draw
+	LW		V1, .VarLog:Type (V0)
+	BEQI	V1, .VarType:GameByte .PrintGameByte
+	NOP
+	BEQI	V1, .VarType:ModByte .PrintModByte
+	NOP
+	BEQI	V1, .VarType:GameFlag .PrintGameFlag
+	NOP
+	BEQI	V1, .VarType:ModFlag .PrintModFlag
+	NOP
+	B		.EntryDone
+	NOP
+	.PrintGameByte
+	LI		A2, $fmtGameByte
+	LI		A3, ##[VALUE:GameByteNames]
+	JAL		$DrawVarEntry
+	RESERVED
+	B		.EntryDone
+	NOP
+	.PrintModByte
+	LI		A2, $fmtModByte
+	LI		A3, ##[VALUE:ModByteNames]
+	JAL		$DrawVarEntry
+	RESERVED
+	B		.EntryDone
+	NOP
+	.PrintGameFlag
+	LI		A2, $fmtGameFlag
+	LI		A3, ##[VALUE:GameFlagNames]
+	JAL		$DrawVarEntry
+	RESERVED
+	B		.EntryDone
+	NOP
+	.PrintModFlag
+	LI		A2, $fmtModFlag
+	LI		A3, ##[VALUE:ModFlagNames]
+	JAL		$DrawVarEntry
+	RESERVED
+	B		.EntryDone
+	NOP
+	
+	.EntryDone
+	BEQ		S1, S2, .Done
+	NOP
+	B		.Next
+	NOP
+
+	.Done
+	#UNDEF 	S0
+	JPOP	RA, S1, S2, S3
+}
+
+% A0 entry
+% A1 posY
+% A2 type string format
+% A3 type string table
+#new:Function $DrawVarEntry
+{
+	PUSH	RA, S1, S2, S3, S4, S5
+	#DEF 	S0, *Data
+	#DEF 	S1, *Entry
+	#DEF 	S2, *PosY
+	#DEF 	S3, *Format
+	#DEF 	S4, *Table
+	#DEF 	S5, *Alpha
+	
+	COPY	*Entry, A0
+	COPY	*PosY, A1
+	COPY	*Format, A2
+	COPY	*Table, A3
+	
+	% get alpha
+	LW		V0, .VarLog:Time (*Entry)
+	SLTI	V1, V0, 16`
+	BEQ		V1, R0, 8
+	LI		*Alpha, 255`
+	SLL		*Alpha, V0, 4
+	
+	% print new value
+	ADDIU	A0, *Data, .PrintfBuffer
+	LIO		A1, $fmtByte
+	LW		A2, .VarLog:Value (*Entry)
+	JAL		800654F0 % sprintf
+	ANDI	A2, A2, FF
+	
+	% get color
+	LW		V0, .VarLog:Type (*Entry)
+	ANDI	V0, V0, 1
+	BEQ		V0, R0, .HaveColor
+	LI 		A3, 1 % cyan
+	LW		V1, .VarLog:Value (*Entry)
+	BEQ		V1, R0, .HaveColor
+	LI 		A3, 7 % red
+	LI 		A3, 3 % green
+	.HaveColor
+	ADDIU	A0, *Data, .PrintfBuffer
+	LI 		A1, .PrintVarLogPosX
+	COPY 	A2, *PosY
+	LI		T0, .DefaultStyle
+	JAL		$DrawSpecialStringASCII
+	COPY	T1, *Alpha
+	
+	% now print name
+	
+	LW		A0, .VarLog:Index (*Entry)
+	.NextName
+	LH		V0, 0 (*Table)
+	BEQI	V0, -1, .NameMissing
+	NOP
+	BEQ		V0, A0, .FoundName
+	LBU		V1, 2 (*Table)
+	B		.NextName
+	ADDU	*Table, *Table, V1
+	
+	.FoundName
+	% get style based on whether its unused or not
+	LBU		V1, 3 (*Table)
+	BEQ		V1, R0, 8
+	LI		T0, .DefaultStyle
+	LI		T0, .RainbowStyle
+	
+	ADDIU	A0, *Table, 4
+	LI 		A1, .PrintVarLogPosX[20`]
+	COPY 	A2, *PosY
+	LI 		A3, .DefaultColor
+	JAL		$DrawSpecialStringASCII
+	COPY	T1, *Alpha
+	B		.Done
+	NOP
+	
+	.NameMissing
+	COPY	A1, *Format
+	LW		A2, .VarLog:Index (*Entry)
+	ANDI	A2, A2, FFFF
+	JAL		800654F0 % sprintf
+	ADDIU	A0, *Data, .PrintfBuffer
+	
+	ADDIU	A0, *Data, .PrintfBuffer
+	LI 		A1, .PrintVarLogPosX[20`]
+	COPY 	A2, *PosY
+	LI 		A3, .DefaultColor
+	LI		T0, .RainbowStyle
+	JAL		$DrawSpecialStringASCII
+	COPY	T1, *Alpha
+	
+	.Done
+	#UNDEF 	All
+	JPOP	RA, S1, S2, S3, S4, S5
+}
+
+%}
+##[ENDIF] %LogVars

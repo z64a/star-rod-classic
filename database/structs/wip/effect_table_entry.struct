@@ -1,0 +1,13 @@
+% effect_table_entry
+type: ram
+size: 18
+fields:
+{
+	  0 : entryPoint         : code
+	  4 : dmaStart           : int
+	  8 : dmaEnd             : int
+	  C : dmaDest            : ptr
+	 10 : instanceDmaStart   : int
+	 14 : instanceDmaEnd     : int
+}
+

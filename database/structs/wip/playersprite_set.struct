@@ -1,0 +1,10 @@
+% playersprite_set
+type: ram
+size: C
+fields:
+{
+	  0 : numCacheEntries    : int
+	  4 : maxRasterSize      : int
+	  8 : initiallyLoaded    : int        % flags saying which rasters to load during init, with each bit corresponding to the Nth raster (with LSB = 0)
+}
+

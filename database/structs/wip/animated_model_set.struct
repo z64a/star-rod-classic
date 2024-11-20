@@ -1,0 +1,14 @@
+% animated_model_set
+type: ram
+size: 70
+fields:
+{
+	  0 : animatorIndex      : int
+	  4 : pos                : float[3`]
+	 10 : rot                : float[3`]
+	 1C : scale              : float[3`]
+	 28 : mtx                : matrix4f
+	 68 : currentAnimData    : uint
+%	 6C : UNK 4
+}
+

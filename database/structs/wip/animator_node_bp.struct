@@ -1,0 +1,11 @@
+% animator_node_bp
+type: ram
+size: 20
+fields:
+{
+	  0 : displayList        : ptr
+	  4 : field_0x4          : float[3`]
+	 10 : rotation           : float[3`]
+%	 1C : UNK 4
+}
+

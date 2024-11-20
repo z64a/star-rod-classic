@@ -1,0 +1,47 @@
+% decoration_table
+% exact size -- see 80265A90
+type: ram
+size: 8E8
+fields:
+{
+%	  0 : UNK 6C0
+	6C0 : field_0x6c0        : ubyte
+	6C1 : field_0x6c1        : ubyte
+	6C2 : field_0x6c2        : ubyte
+%	6C3 : UNK 7D
+	740 : field_0x740        : short[8`]
+	750 : field_0x750        : ubyte
+	751 : field_0x751        : ubyte
+	752 : field_0x752        : ubyte
+%	753 : UNK 11
+	764 : field_0x764        : ubyte
+%	765 : UNK 3
+	768 : field_0x768        : ubyte
+%	769 : UNK 6F
+	7D8 : field_0x7d8        : ubyte
+	7D9 : field_0x7d9        : ubyte
+	7DA : field_0x7da        : ubyte
+	7DB : field_0x7db        : ubyte
+	7DC : scale?             : short[16`]
+	7FC : posX               : short[16`]
+	81C : posY               : short[16`]
+	83C : posZ               : short[16`]
+	85C : rotationPivotOffsetX : byte[16`]
+	86C : rotationPivotOffsetY : byte[16`]
+	87C : rotX               : byte[16`]
+	88C : rotY               : byte[16`]
+	89C : rotZ               : byte[16`]
+	8AC : effectType?        : ubyte      % 0 =  blur, 14 = none?
+%	8AD : UNK 3
+	8B0 : field_0x8b0        : int[2`]
+	8B8 : decorationType     : byte[2`]
+	8BA : field_0x8ba        : ubyte
+%	8BB : UNK 1
+	8BC : field_0x8bc        : ubyte
+%	8BD : UNK 9
+	8C6 : field_0x8c6        : short[4`]
+%	8CE : UNK 8
+	8D6 : field_0x8d6        : short[4`]
+%	8DE : UNK A
+}
+

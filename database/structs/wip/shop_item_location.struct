@@ -1,0 +1,9 @@
+% shop_item_location
+type: ram
+size: 4
+fields:
+{
+	  0 : posModelID         : short
+	  2 : triggerColliderID  : short
+}
+

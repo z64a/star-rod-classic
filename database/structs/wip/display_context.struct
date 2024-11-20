@@ -1,0 +1,12 @@
+% display_context
+type: ram
+size: 19630
+fields:
+{
+	  0 : lookAt             : LookAt[2`] % guLookAtReflectF is odd, seems to expect lookAt[2] in second arg?
+	 30 : camPerspMatrix     : matrix4s[8`] % at least 4, if not 8 then following 0x100 bytes is unk
+	230 : mainGfx            : int[16640`]
+	10630 : backgroundGfx      : int[1024`] % used by func 800269ec
+	11630 : matrixStack        : matrix4s[512`]
+}
+

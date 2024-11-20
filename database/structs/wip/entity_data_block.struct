@@ -1,0 +1,20 @@
+% entity_data_block
+type: ram
+size: 20
+fields:
+{
+%	  0 : UNK 3
+	  3 : field_0x3          : ubyte
+	  4 : coinsLeft          : short
+	  6 : timeLeft           : short
+%	  8 : UNK 2
+	  A : globalFlagIndex    : short
+%	  C : UNK 2
+	  E : unkCounter         : short
+	 10 : itemEntityIndex    : short
+	 12 : inactiveBlockEntityIndex : short
+	 14 : baseHeight         : float
+	 18 : hitInterpPhase     : float
+%	 1C : UNK 4
+}
+

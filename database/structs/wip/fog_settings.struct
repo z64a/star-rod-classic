@@ -1,0 +1,14 @@
+% fog_settings
+type: ram
+size: 1C
+fields:
+{
+	  0 : enabled            : int
+	  4 : R                  : int
+	  8 : G                  : int
+	  C : B                  : int
+	 10 : A                  : int
+	 14 : start              : int
+	 18 : end                : int
+}
+

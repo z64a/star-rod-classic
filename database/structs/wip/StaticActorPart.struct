@@ -1,0 +1,18 @@
+% StaticActorPart
+type: ram
+size: 24
+fields:
+{
+	  0 : flags              : int
+	  4 : index              : ubyte
+	  5 : posOffset          : byte[3`]
+	  8 : targetOffset       : byte[2`]
+	  A : opacity            : short
+	  C : idleAnimations     : uint*
+	 10 : defenseTable       : uint*
+	 14 : eventFlags         : int
+	 18 : immuneFlags        : int
+	 1C : field_0x1c         : byte[2`]
+%	 1E : UNK 6
+}
+

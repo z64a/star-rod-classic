@@ -1,0 +1,1718 @@
+
+{version=1.0}
+{scope=cn:common}
+
+sig : draw_window_contents : void : A0 ptr userData, A1 int baseX, A2 int baseY, A3 int width, SP[10] int height, SP[14] int opacity, SP[18] int darkening
+
+asm : 80025C00, 001000 : {CHANGED} entry_point				: void : void
+asm : 80025E44, 001244 : gfx_task_main : void : void
+asm : 800263EC, 0017EC : {CHANGED} gfxPreNMI_Callback			: void : void
+asm : 80026410, 001810 : step_game_loop				: void : void
+asm : 800266BC, 001ABC : gfx_task_background : void : void
+asm : 800267D8, 001BD8 : gfx_draw_frame				: void : void
+asm : 80026AAC, 001EAC : load_engine_data			: void : void
+asm : 80026D58, 002158 : set_time_freeze_mode : void : int "0-4 inclusive"
+asm : 80026E60, 002260 : get_time_freeze_mode : int "0-4 inclusive" : void
+asm : 80026E70, 002270 : gfx_init_state "set initial values for combines, geometry mode, texture, and other mode" : void : void
+asm : 80027AE0, 002EE0 : gfx_draw_background : void : void
+asm : 80028544, 003944 : update_input				: void : void
+asm : 80028BB0, 003FB0 : poll_rumble				: void : void
+asm : 80028BD8, 003FD8 : start_rumble				: void : int freq, int duration
+asm : 80028C5C, 00405C : update_max_rumble_duration : void : void
+asm : 80028CB0, 0040B0 : reset_max_rumble_duration  : void : void
+asm : 80028CC0, 0040C0 : length2D					: F0 float length : F12 float x, F14 float y
+asm : 80028D00, 004100 : _heap_create				: heap_node* : int addr, int size
+asm : 80028D3C, 00413C : _heap_malloc				: ptr data : heap_node* head, int size
+asm : 80028E34, 004234 : _heap_malloc_tail			: ptr data : heap_node* head, int size
+asm : 80028EEC, 0042EC : _heap_free					: bool failed : heap_node* head, ptr data
+asm : 80028F94, 004394 : _heap_realloc				: ptr data : heap_node* head, ptr data, int newSize
+asm : 800290A4, 0044A4 : cosine						: float cosAngle : int angle "degrees"
+asm : 80029180, 004580 : sign						: int sign : int num
+asm : 80029194, 004594 : int_to_string				: char* string : int value, char* buf, int base
+asm : 800292D0, 0046D0 : mem_clear					: void : ptr data, int numBytes
+asm : 800292F0, 0046F0 : transform_point			: void : matrix4f* mtx, float inx, float iny, float inz, float ins, float* outx, float* outy, float* outz, float* outs
+asm : 800293F0, 0047F0 : copy_matrix				: void : matrix4f* src, matrix4f* dest
+asm : 8002940C, 00480C : dma_copy					: int size : int start, int end, ptr dest
+asm : 800294A4, 0048A4 : dma_write : int size : int start, int end, ptr dest
+asm : 80029530, 004930 : dma_write_block : int size : int start, int end, ptr dest
+asm : 800295D0, 0049D0 : advance_rng "muliply rng value by waterman constant (5D588B65). rng value initialized at boot to count regsiter (BRX:80026050)." : int result : void
+asm : 80029604, 004A04 : rand_float : F0 float result "from 0.0 to 1.0" : void
+asm : 800296CC, 004ACC : rand_int					: int result : int max
+asm : 8002974C, 004B4C : signF						: F0 float sign : F12 float num
+asm : 80029794, 004B94 : round						: V0 int rounded : F12 float num
+asm : 800297F4, 004BF4 : clamp_angle				: F0 float clamped : F12 float angle
+asm : 800298F8, 004CF8 : get_clamped_angle_diff		: F0 float diff : F12 float a, F14 float b
+asm : 80029950, 004D50 : atan2 "uses LUT at 80074414" : F0 float angle "deg" : F12 float startX, F14 float startZ, A2 float endX, A3 float endZ
+asm : 80029AF0, 004EF0 : get_player_normal_yaw		: F0 float yaw : void
+asm : 80029B20, 004F20 : get_player_normal_pitch	: F0 float pitch : void
+asm : 80029BA4, 004FA4 : dist2D						: float dist : float Ax, float Ay, float Bx, float By,
+asm : 80029BFC, 004FFC : dist3D						: F0 float dist : F12 float Ax, F14 float Ay, A2 float Az, A3 float Bx, SP[10] float By, SP[14] float Bz
+asm : 80029C6C, 00506C : add_vec2D_polar			: void : A0 float* x, A1 float* y, A2 float r, A3 float theta
+asm : 80029D04, 005104 : _wrap_trig_lookup_value	: int : float theta
+asm : 80029D84, 005184 : sin_cos_rad				: void : F12 float theta "radians", A1 float* outSinTheta, A2 float* outCosTheta
+asm : 80029E3C, 00523C : sin_rad					: F0 float sinAngle : F12 float angle "radians"
+asm : 80029EA0, 0052A0 : cos_rad					: F0 float cosAngle : F12 float angle "radians"
+asm : 80029F04, 005304 : sin_cos_deg				: void : F12 float theta "degrees", A1 float* outSinTheta, A2 float* outCosTheta
+asm : 80029FBC, 0053BC : sin_deg					: F0 float sinAngle : F12 float angle "degrees"
+asm : 8002A020, 005420 : cos_deg					: F0 float cosAngle : F12 float angle "degrees"
+asm : 8002A084, 005484 : update_lerp				: F0 float alpha "0.0 - 1.0" : #easing, float start, float end, int elapsed "frames", int duration "frames"
+asm : 8002A5D4, 0059D4 : appendGfx_startup_prim_rect : void : int r, int g, int b, int a, int ulX, int ulY, int lrX, int lrY
+asm : 8002A794, 005B94 : startup_draw_prim_rect_COPY : void : int ulX, int ulY, int lrX, int lrY, int r, int g, int b, int a
+asm : 8002A82C, 005C2C : startup_draw_prim_rect : void : int ulX, int ulY, int lrX, int lrY, int r, int g, int b, int a
+asm : 8002A8D0, 005CD0 : general_heap_create		: heap_node* head : void
+asm : 8002A8F8, 005CF8 : general_heap_malloc		: ptr data : int size
+asm : 8002A920, 005D20 : general_heap_malloc_tail	: ptr data : int size
+asm : 8002A948, 005D48 : general_heap_free			: bool failed : ptr data
+asm : 8002A970, 005D70 : battle_heap_create			: heap_node* head : void
+asm : 8002A9B4, 005DB4 : heap_malloc "uses battle heap in battle, general heap otherwise" : ptr data : int size
+asm : 8002A9FC, 005DFC : heap_free "uses battle heap in battle, general heap otherwise" : bool failed : ptr data
+asm : 8002AA44, 005E44 : collision_heap_create		: heap_node* head : void
+asm : 8002AA80, 005E80 : collision_heap_malloc		: ptr data : int size
+asm : 8002AAC4, 005EC4 : collision_heap_free		: bool failed : ptr data
+asm : 8002AB10, 005F10 : get_spirits_rescued "uses StoryProgress" : int numRescued : void
+asm : 8002AC10, 006010 : fio_calc_header_checksum "checks currently loaded file" : int checksum : void
+asm : 8002AC40, 006040 : fio_validate_header_checksums "checks currently loaded file" : int checksum : void
+asm : 8002ADA0, 0061A0 : fio_calc_file_checksum		: int checksum : savedata* fileData
+asm : 8002ADC8, 0061C8 : fio_validate_file_checksum	: bool valid : savedata* fileData
+asm : 8002AE24, 006224 : fio_fetch_saved_file_info "finds a valid save data index that matches the current game file" : bool valid : void
+asm : 8002AFA0, 0063A0 : fio_load_game				: bool success : int saveSlot
+asm : 8002B044, 006444 : fio_save_game				: bool success : int saveSlot
+asm : 8002B0FC, 0064FC : fio_erase_game				: void : int saveSlot
+asm : 8002B160, 006560 : fio_deserialize_state		: void : void
+asm : 8002B300, 006700 : fio_serialize_state		: void : void
+asm : 8002B51C, 00691C : fio_init_flash				: OSPiHandle* : void
+asm : 8002B538, 006938 : fio_read_flash				: bool success : int pageNum, ptr readBuffer, int numBytes
+asm : 8002B618, 006A18 : fio_write_flash			: bool success : int pageNum, ptr writeBuffer, int numBytes
+asm : 8002B6EC, 006AEC : fio_erase_flash			: void : int pageNum
+asm : 8002B710, 006B10 : initialize_curtains : void : void
+asm : 8002B748, 006B48 : update_curtains "does nothing" : void : void
+asm : 8002B750, 006B50 : render_curtains : void : void
+asm : 8002BBAC, 006FAC : set_curtain_scale_goal : void : float scale
+asm : 8002BBBC, 006FBC : set_curtain_scale : void : float scale
+asm : 8002BBD4, 006FD4 : set_curtain_draw_callback : void : code fpOnDrawCurtains
+asm : 8002BBE4, 006FE4 : set_curtain_fade_goal : void : float amount
+asm : 8002BBF4, 006FF4 : set_curtain_fade : void : float amount
+asm : 8002BC10, 007010 : crash_delay_msec "spinlock using osGetTime" : void : int duration "milliseconds"
+asm : 8002BED8, 0072D8 : crash_printf_string		: void : int posX, int posY, char* fmt, ptr value
+asm : 8002BF88, 007388 : crash_print_fpr			: void : int x, int y, int regNum, ptr value
+asm : 8002C080, 007480 : crash_show_handler			: void : crash* crash
+asm : 8002C4EC, 0078EC : crash_monitor_thread		: void : void
+asm : 8002C580, 007980 : crash_create_monitor		: void : void
+asm : 8002C710, 007B10 : {CHANGED} nuGfxTaskMgr				: ??? :	???
+asm : 8002C94C, 007D4C : nuGfxTaskStart				: void : gfx*, int size, int microcode, int flag
+asm : 8002CAB0, 007EB0 : update_cameras				: ??? :	???
+asm : 8002CDEC, 0081EC : render_frame				: ??? :	???
+asm : 8002D5A4, 0089A4 : create_cameras_a			: void : void
+asm : 8002D6E8, 008AE8 : create_cameras_b			: void : void
+asm : 8002D81C, 008C1C : initialize_next_camera "initializes first camera with flags == 0, called 4 times to set them all up" : camera* : cam_init_data*
+asm : 8002D9C4, 008DC4 : set_cam_viewport			: void : #camID, int posX, int posY, int width, int height
+asm : 8002DB98, 008F98 : get_cam_viewport			: void : #camID, int* posX, int* posY, int* width, int* height
+asm : 8002DBE8, 008FE8 : get_screen_coords			: void : #camID, float x, float y, float z, int* outx, int* outy, int* outz
+asm : 8002DFC0, 0093C0 : update_camera_mode_4		: void : camera* cam
+asm : 8002E3A8, 0097A8 : update_camera_mode_2		: void : camera* cam
+asm : 8002E940, 009D40 : update_camera_mode_1		: void : camera* cam
+asm : 8002EF00, 00A300 : update_camera_mode_0		: void : camera* cam
+asm : 8002F040, 00A440 : update_camera_mode_6		: void : camera* cam
+asm : 8002F390, 00A790 : update_camera_mode_unused	: void : camera* cam
+asm : 8002F6B0, 00AAB0 : update_camera_mode_5		: void : camera* cam
+asm : 8002FB08, 00AF08 : test_ray_zone_aabb 		: camera_control_settings* settings "0 if no hit" : float x, float y, float z
+asm : 8002FBAC, 00AFAC : update_camera_from_controller "contains all the math for positioning the camera goal target, position, and orientation depending on the camera controller" : void : camera* cam, {out} cam_pos_settings* initialSettings, {out} camera_control_settings** prevController, cam_pos_settings* targetSettings, camera_control_settings** currentController, float posX, float posY, float posZ, float targetX, float targetY, float targetZ, bool changingMap, float* moveAlpha, bool changingZone
+asm : 80030B44, 00BF44 : update_camera_zone_interp	: void : camera* cam
+asm : 800318C0, 00CCC0 : test_ray_zone : V0 camera_control_settings* settings : F12 float x, F14 float y, A2 float z, A3 {out} zone** hitZone
+asm : 80032A44, 00DE44 : create_camera_leadplayer_matrix : void : camera* cam
+asm : 80032BA0, 00DFA0 : set_game_mode				: void : #gameMode
+asm : 80032BD8, 00DFD8 : get_game_mode				: int mode : void
+asm : 80032BF0, 00DFF0 : state_init_startup : void : void
+asm : 80032C18, 00E018 : state_step_startup : void : void
+asm : 80032E38, 00E238 : state_drawUI_startup : void : void
+asm : 80032E80, 00E280 : intro_logos_set_fade_alpha : void : byte alpha
+asm : 80032E90, 00E290 : intro_logos_set_fade_color : void : byte color "used for R G B"
+asm : 80032EA8, 00E2A8 : intro_logos_fade_in : void : int amount "decrements alpha by amount"
+asm : 80032EE0, 00E2E0 : intro_logos_fade_out : bool done : int amount "increments alpha by amount"
+asm : 80032F24, 00E324 : intro_logos_update_fade : void : void
+asm : 80032F80, 00E380 : state_init_battle : void : void
+asm : 80032F94, 00E394 : {CHANGED} state_step_battle : void : void
+asm : 800331FC, 00E5FC : state_drawUI_battle "show battle ui during battle, screen transition in world" : void : void
+asm : 80033230, 00E630 : state_init_end_battle : void : void
+asm : 80033268, 00E668 : state_step_end_battle : void : void
+asm : 8003350C, 00E90C : state_drawUI_end_battle : void : void
+asm : 80033520, 00E920 : state_init_logos : void : void
+asm : 80033754, 00EB54 : state_step_logos : void : void
+asm : 80033A38, 00EE38 : state_drawUI_logos : void : void
+asm : 80033A54, 00EE54 : appendGfx_intro_logos : void : void
+asm : 80033FF0, 00F3F0 : state_init_pause : void : void
+asm : 8003402C, 00F42C : state_step_pause : void : void
+asm : 800342A4, 00F6A4 : state_drawUI_pause : void : void
+asm : 800342AC, 00F6AC : state_init_unpause : void : void
+asm : 800342EC, 00F6EC : state_step_unpause : void : void
+asm : 800346A0, 00FAA0 : state_drawUI_unpause : void : void
+asm : 800346B0, 00FAB0 : state_init_language_select : void : void
+asm : 80034708, 00FB08 : state_init_file_select : void : void
+asm : 80034878, 00FC78 : state_step_language_select : void : void
+asm : 80034B9C, 00FF9C : state_step_file_select : void : void
+asm : 80034C74, 010074 : state_drawUI_language_select : void : void
+asm : 80034C7C, 01007C : state_drawUI_file_select : void : void
+asm : 80034C84, 010084 : state_init_exit_language_select : void : void
+asm : 80034D10, 010110 : state_init_exit_file_select : void : void
+asm : 80034DB4, 0101B4 : state_step_exit_language_select : void : void
+asm : 800351F0, 0105F0 : state_step_exit_file_select : void : void
+asm : 800353C8, 0107C8 : state_drawUI_exit_language_select : void : void
+asm : 800353D0, 0107D0 : state_drawUI_exit_file_select : void : void
+asm : 800353E0, 0107E0 : state_init_world : void : void
+asm : 80035404, 010804 : state_step_world : void : void
+asm : 80035450, 010850 : state_drawUI_world : void : void
+asm : 8003547C, 01087C : state_world_draw_aux_ui : void : void
+asm : 800354B0, 0108B0 : state_init_enter_demo : void : void
+asm : 800354D4, 0108D4 : state_init_enter_world : void : void
+asm : 80035504, 010904 : init_enter_world_shared : void : void
+asm : 8003559C, 01099C : state_step_enter_world : void : void
+asm : 800357AC, 010BAC : state_drawUI_enter_world : void : void
+asm : 800357E0, 010BE0 : state_init_change_map : void : void
+asm : 8003582C, 010C2C : state_step_change_map : void : void
+asm : 80035AAC, 010EAC : state_drawUI_change_map : void : void
+asm : 80035D00, 011100 : state_init_intro : void : void
+asm : 80035F04, 011304 : state_step_intro : void : void
+asm : 80036490, 011890 : state_drawUI_intro : void : void
+asm : 800364A0, 0118A0 : state_init_title_screen : void : void
+asm : 80036764, 011B64 : state_step_title_screen : void : void
+asm : 80036C54, 012054 : state_drawUI_title_screen : void : void
+asm : 80036CE8, 0120E8 : appendGfx_title_screen : void : void
+asm : 80037010, 012410 : draw_title_screen_NOP : void : void
+asm : 80037018, 012418 : title_screen_draw_images : void : float logoAmount, float copyrightAmount
+asm : 80037044, 012444 : title_screen_draw_logo : void : float amount
+asm : 80037278, 012678 : title_screen_draw_press_start : void : void
+asm : 800374C4, 0128C4 : title_screen_draw_copyright : void : float amount
+asm : 80037730, 012B30 : state_init_demo 		: void : void
+asm : 800377A4, 012BA4 : state_step_demo 		: void : void
+asm : 80037B0C, 012F0C : state_drawUI_demo 		: void : void
+asm : 80037B20, 012F20 : STUB_npc_callback : void : void
+asm : 80037B28, 012F28 : mtx_ident_mirror_y		: void : matrix4f* mtx
+asm : 80037B6C, 012F6C : clear_npcs	: void : void
+asm : 80037BDC, 012FDC : init_npc_list			: void : void
+asm : 80037C48, 013048 : _create_npc : int listIndex : npc_blueprint* bp, uint* animList, bool skipLoadingAnims "only set when loading partner npcs"
+asm : 80037EF4, 0132F4 : create_basic_npc : int listIndex : npc_blueprint* bp
+asm : 80037F14, 013314 : create_standard_npc : int listIndex : npc_blueprint* bp, uint* animList
+asm : 80037F30, 013330 : create_partner_npc : int listIndex : npc_blueprint* bp
+asm : 80037F50, 013350 : free_npc_by_index : void : int listIndex
+asm : 8003807C, 01347C : free_npc				: void : npc*
+asm : 8003818C, 01358C : get_npc_by_index		: npc* : int listIndex
+asm : 800381AC, 0135AC : npc_do_world_collision "does traces along yaw, yaw +/- 45, and yaw +/- 135" : void : npc*
+asm : 800386BC, 013ABC : npc_do_other_npc_collision "does collision with all other npcs" : void : npc*
+asm : 80038988, 013D88 : npc_do_player_collision : bool collided : npc*
+asm : 80038D38, 014138 : npc_do_gravity : void : npc*
+asm : 80038FE0, 0143E0 : update_npcs : void : void
+asm : 80039454, 014854 : npc_get_render_yaw : float yaw : npc*
+asm : 80039680, 014A80 : appendGfx_npc	: void : npc*
+asm : 80039EA0, 0152A0 : render_npcs			: void : void
+asm : 8003A104, 015504 : npc_move_heading		: void : npc*, float speed, float yaw
+asm : 8003A19C, 01559C : get_npc_unsafe "spinlocks forever if npc not found" : npc* : #npcID
+asm : 8003A1F8, 0155F8 : get_npc_safe "returns null if npc not found" : npc* : #npcID
+asm : 8003A250, 015650 : enable_npc_shadow		: void : npc*
+asm : 8003A2AC, 0156AC : disable_npc_shadow		: void : npc*
+asm : 8003A30C, 01570C : set_npc_sprite 		: void : npc*, animID, ptr extraAnimsList
+asm : 8003A3D4, 0157D4 : enable_npc_blur		: void : npc*
+asm : 8003A45C, 01585C : disable_npc_blur		: void : npc*
+asm : 8003A4A8, 0158A8 : update_npc_blur		: void : npc*
+asm : 8003A4E8, 0158E8 : appendGfx_npc_blur		: void : npc*
+asm : 8003A834, 015C34 : npc_enable_collisions : void : void
+asm : 8003A848, 015C48 : npc_disable_collisions : void : void
+asm : 8003A860, 015C60 : npc_reload_all : void : void
+asm : 8003A9F0, 015DF0 : set_npc_yaw			: void : npc*, float angle
+asm : 8003AA80, 015E80 : npc_set_palswap_mode_A : void : npc*, int paletteSwapMode "0-4 inclusive, begins with palette A"
+asm : 8003AAA8, 015EA8 : npc_set_palswap_mode_B : void : npc*, int paletteSwapMode "0-4 inclusive, begins with palette B"
+asm : 8003AAFC, 015EFC : npc_set_palswap_1 : void : npc*, short palIndexA, short palIndexB, short timeHoldA, short timeAB
+asm : 8003AB14, 015F14 : npc_set_palswap_2 : void : npc*, short timeHoldB, short timeBA, short palIndexC, short palIndexD
+asm : 8003AB2C, 015F2C : npc_draw_with_palswap : void : npc*, int renderYaw, matrix4f*
+asm : 8003ABB0, 015FB0 : npc_draw_palswap_mode_0 : void : npc*, int renderYaw, matrix4f*
+asm : 8003AC64, 016064 : npc_draw_palswap_mode_1 : void : npc*, int renderYaw, matrix4f*
+asm : 8003B01C, 01641C : npc_blend_palette_colors : int color : int colorA, int colorB, int lerpAlpha
+asm : 8003B110, 016510 : npc_draw_palswap_mode_2 : void : npc*, int renderYaw, int, matrix4f*
+asm : 8003B588, 016988 : npc_draw_palswap_mode_4 : void : npc*, int renderYaw, matrix4f*
+asm : 8003BA88, 016E88 : npc_set_decoration : void : npc*, int index, #npcDecoration
+asm : 8003BAD8, 016ED8 : npc_remove_decoration : void : npc*, int index
+asm : 8003BAF4, 016EF4 : npc_update_decorations : void : npc*
+asm : 8003BBEC, 016FEC : npc__remove_decoration : void : npc*, int index
+asm : 8003BCCC, 0170CC : npc_reset_current_decoration : void : npc*, int index
+asm : 8003BD08, 017108 : npc_update_decoration_none : void : npc*, int index
+asm : 8003BD10, 017110 : npc_remove_decoration_none : void : void
+asm : 8003BD18, 017118 : npc_update_decoration_bowser_aura : void : npc*, int index
+asm : 8003BE3C, 01723C : npc_remove_decoration_bowser_aura : void : npc*, int index
+asm : 8003BE58, 017258 : npc_update_decoration_sweat : void : npc*, int index
+asm : 8003BF5C, 01735C : npc_remove_decoration_sweat : void : npc*, int index
+asm : 8003BF64, 017364 : npc_update_decoration_seeing_stars : void : npc*, int index
+asm : 8003C034, 017434 : npc_remove_decoration_seeing_stars : void : npc*, int index
+asm : 8003C058, 017458 : npc_update_decoration_glow_in_front : void : npc*, int index
+asm : 8003C1D0, 0175D0 : npc_remove_decoration_glow_in_front : void : npc*, int index
+asm : 8003C1F4, 0175F4 : npc_update_decoration_glow_behind : void : npc*, int index
+asm : 8003C33C, 01773C : npc_remove_decoration_glow_behind : void : npc*, int index
+asm : 8003C360, 017760 : npc_update_decoration_charged : void : npc*, int index
+asm : 8003C650, 017A50 : npc_remove_decoration_charged : void : npc*, int index
+asm : 8003C658, 017A58 : npc__reset_current_decoration : void : npc*, int index
+asm : 8003C664, 017A64 : npc_find_closest "find closest within radius" : npc* : float x, float y, float z, float radius
+asm : 8003C774, 017B74 : npc_find_closest_simple "find closest within radius" : npc* : float x, float y, float z, float radius
+asm : 8003C884, 017C84 : npc_find_standing_on_entity : int npcID "-1 if none" : int entityIndex
+asm : 8003C9A8, 017DA8 : npc_get_collider_below "test depth = 3 units" : int colliderID "-1 if none" : npc* npc
+asm : 8003D990, 018D90 : COPY_set_defeated	"exact copy of func_8003EE40, hardly used" : void : int mapID, int encounterID
+asm : 8003D9E8, 018DE8 : init_encounter_status	: void : void
+asm : 8003DAB0, 018EB0 : clear_encounter_status	: void : void
+asm : 8003DBD4, 018FD4 : update_encounters "manages encounter-battle lifecycle" : void : void
+asm : 8003DC60, 019060 : draw_encounter_ui : void : void
+asm : 8003DCEC, 0190EC : draw_first_strike_ui : void : void
+asm : 8003DD28, 019128 : make_npcs 				: void : bool "determines whether enemies respawn after re-entering map: 0 = respawn, 1 = remember previous state", int mapID, $NpcGroupList
+asm : 8003DDE0, 0191E0 : kill_encounter	"kill all enemies for an enemy's encounter"	: void : enemy* enemy
+asm : 8003DE5C, 01925C : kill_enemy	"free and kill all scripts" : void : enemy* enemy
+asm : 8003DFFC, 0193FC : bind_enemy_ai 			: void : enemy*, $Script aiScript
+asm : 8003E064, 019464 : bind_enemy_aux			: void : enemy*, $Script auxScript
+asm : 8003E0CC, 0194CC : bind_enemy_interact	: void : enemy*, $Script interactScript
+asm : 8003E134, 019534 : bind_npc_ai			: void : #npcID, $Script aiScript
+asm : 8003E200, 019600 : bind_npc_aux			: void : #npcID, $Script auxScript
+asm : 8003E2CC, 0196CC : bind_npc_interact		: void : #npcID, $Script interactScript
+asm : 8003E398, 019798 : get_enemy 				: enemy* : #npcID
+asm : 8003E418, 019818 : get_enemy_safe 		: enemy* : #npcID
+asm : 8003E4A0, 0198A0 : get_defeated			: bool : int mapID, int encounterID
+asm : 8003E4F0, 0198F0 : set_defeated			: void : int mapID, int encounterID
+api : 8003E548, 019948 : ShowMerleeCoinMessage : void : void
+api : 8003E57C, 01997C : ShowMerleeRanOutMessage : void : void
+api : 8003E5B0, 0199B0 : FadeBackgroundToBlack : void : void
+api : 8003E648, 019A48 : UnfadeBackgroundFromBlack : void : void
+api : 8003E6C8, 019AC8 : FadeInMerlee "npc -10`" : void : void
+api : 8003E734, 019B34 : FadeOutMerlee "npc -10`" : void : void
+api : 8003E774, 019B74 : MerleeUpdateFX : void : void
+api : 8003EA34, 019E34 : MerleeStopFX : void : void
+api : 8003EA48, 019E48 : GetCamLookAtObjVector	: Var[0] int x, Var[1] int y, Var[2] int z : void
+api : 8003EAA4, 019EA4 : HasMerleeCasts			: Var[0] bool result : void
+api : 8003EAC4, 019EC4 : PlayMerleeGatherFX "effect 6B" : void : var posX, var posY, var posZ
+api : 8003EB7C, 019F7C : PlayMerleeOrbFX "effect 52" : void : var posX, var posY, var posZ
+api : 8003EC30, 01A030 : OnDefeatEnemy			: void : void
+api : 8003ED98, 01A198 : OnFleeBattleDrops		: void : void
+asm : 8003EE7C, 01A27C : update_encounters_neutral "default/neutral state during world gameplay, checks for player-enemy collisions and initiates battles when they occur" : void : void
+asm : 80040A0C, 01BE0C : draw_encounters_neutral "stub" : void : void
+asm : 80040A14, 01BE14 : update_encounters_pre_battle "handles the transition state into battle, with screen fade out and star silhouette" : void : void
+asm : 80041014, 01C414 : draw_encounters_pre_battle : void : void
+asm : 8004130C, 01C70C : show_first_strike_message	: void : void
+asm : 800415C0, 01C9C0 : update_encounters_post_battle "run every frame during battle and afterward; handles the transition state out of battle, with screen fade in, resuming enemy ai scripts, etc" : void : void
+asm : 800426FC, 01DAFC : draw_encounters_post_battle : void : void
+asm : 8004274C, 01DB4C : update_encounters_conversation : void : void
+asm : 80042884, 01DC84 : draw_encounters_conversation "stub" : void : void
+asm : 8004288C, 01DC8C : check_conversation_trigger "checks for player proximity and facing angles to NPCs, returns true if a conversation is possible and the player has pressed A" : bool "started conversation" : void
+asm : 80042D60, 01E160 : create_encounters "formerly create_npcs" : void : void
+asm : 800437F0, 01EBF0 : init_encounters_ui "stub" : void : void
+asm : 800437F8, 01EBF8 : is_starting_conversation "unk trigger: not enemy/boss, jump, hammer, spin, or partner. maybe once used for items or POW blocks?" : void : void
+api : 80043830, 01EC30 : SetEncounterStatusFlags : void : int flags, bool mode "1 = set | 0 = clear"
+api : 800438A0, 01ECA0 : IsStartingConversation : void : {out} var result {outType=bool}
+api : 80043914, 01ED14 : LoadDemoBattle		: void : int demoBattleIndex "0-4"
+api : 80043948, 01ED48 : MakeNpcs         		: void : bool "determines whether enemies respawn after re-entering map: 0 = respawn, 1 = remember previous state", $NpcGroupList
+api : 800439F0, 01EDF0 : RemoveNpc        	: void : #npcID
+api : 80043B28, 01EF28 : RemoveEncounter "removes all enemies in the same encounter as given npc" : void : #npcID
+api : 80043C2C, 01F02C : GetBattleOutcome : void : {out} var outcome {outType=#outcome} "0 = player won, 1 = player lost, 2 = player ran, 3 = enemy ran"
+api : 80043CB0, 01F0B0 : GetOwnerEncounterTrigger : void : {out} var {outType=#encounterTrigger}
+api : 80043CDC, 01F0DC : DoNpcDefeat		: void : none
+asm : 80043D64, 01F164 : start_battle	: void : script_instance* script, #songID
+api : 80043EF0, 01F2F0 : StartBattle		: void : none
+api : 80043F10, 01F310 : StartBattleWith	: void : #songID
+api : 80043F4C, 01F34C : StartBossBattle	: void : #songID
+api : 800440E8, 01F4E8 : SetBattleMusic		: void : #songID
+api : 80044128, 01F528 : BindNpcAI			: void : #npcID, $Script {name=NpcAI}
+api : 8004425C, 01F65C : BindNpcIdle		: void : #npcID, $Script {name=Idle}
+api : 800442DC, 01F6DC : RestartNpcAI       : void : #npcID
+api : 800443A0, 01F7A0 : EnableNpcAI        : void : #npcID, bool
+api : 80044454, 01F854 : SetNpcAux          : void : #npcID, $Script
+api : 80044568, 01F968 : BindNpcAux         : void : #npcID, $Script {name=Aux}
+api : 800445E8, 01F9E8 : RestartNpcAux		: void : #npcID
+api : 800446A0, 01FAA0 : EnableNpcAux		: void : #npcID, bool
+api : 80044754, 01FB54 : BindNpcInteract	: void : #npcID, $Script {name=Interact}
+api : 800447F0, 01FBF0 : BindNpcHit			: void : #npcID, $Script {name=Hit}
+api : 8004488C, 01FC8C : BindNpcDefeat		: void : #npcID, $Script {name=Defeat}
+api : 8004490C, 01FD0C : SetSelfVar			: void : int, int
+api : 80044970, 01FD70 : GetSelfVar			: void : int, {out} var
+api : 800449D0, 01FDD0 : SetNpcVar			: void : #npcID, int, int
+api : 80044A6C, 01FE6C : GetNpcVar			: void : #npcID, int index, {out} var value
+api : 80044B0C, 01FF0C : SetSelfRotation		: void : int rx, int ry, int rz
+api : 80044BBC, 01FFBC : SetSelfEnemyFlags "directly sets flags of parent NPC" : void : int flags
+api : 80044BD4, 01FFD4 : SetSelfEnemyFlagBits	: void : int flags, int mode "1 = set | 0 = clear"
+api : 80044CC4, 0200C4 : GetSelfNpcID		: void : {out} var ID
+api : 80044CF0, 0200F0 : ClearDefeatedEnemies		: void : void
+api : 80044D38, 020138 : SetEnemyFlagBits	: void : #npcID, int flags, int mode "1 = set | 0 = clear"
+api : 80044DE4, 0201E4 : GetSelfAnimationFromTable	: void : int index, {out} var animation
+api : 80044EBC, 0202BC : GetEncounterTriggerHitTier : void : {out} var "'hit tier' from EncounterStatus struct: 0 = normal | 1 = super | 2 = ultra"
+api : 80045108, 020508 : SetTattleString : void : #npcID, {print} stringID
+asm : 80045218, 020618 : update_merlee_messages : void : void
+asm : 800452D8, 0206D8 : draw_merlee_messages : void : void
+asm : 80045338, 020738 : get_current_merlee_message "fifo" : merlee_message_info* : void
+asm : 80045374, 020774 : dispose_merlee_message : merlee_message_info* : void
+asm : 800453B0, 0207B0 : show_merlee_message : void : int messageIndex, int duration "default = 60`"
+asm : 8004542C, 02082C : update_merlee_message : void : merlee_message_info*
+asm : 800454FC, 0208FC : draw_merlee_message_string : void : merlee_message_info*, int posX, int posY
+asm : 80045580, 020980 : draw_merlee_message : void : merlee_message_info*
+asm : 80045654, 020A54 : is_merlee_message_done : bool : void
+asm : 80045C90, 021090 : draw_all_status_icons : void : void
+asm : 80046CB8, 0220B8 : create_status_icon_set : int index : void
+asm : 80046DA4, 0221A4 : remove_all_status_icons : void : int index
+asm : 80046E3C, 02223C : set_status_icons_properties : void : int index, float x, float y, float z, float iconRadius, float iconOffsetY, float messageRadius, float messageOffset
+asm : 80046F48, 022348 : remove_status_1 : void : int index
+asm : 80046FA8, 0223A8 : enable_status_1 "flag 4" : void : int index
+asm : 80047050, 022450 : remove_status_2 : void : int index
+asm : 800470B0, 0224B0 : enable_status_2 "flag 8" : void : int index
+asm : 80047158, 022558 : remove_status_3 : void : int index
+asm : 800471B8, 0225B8 : enable_status_3 "flag 10" : void : int index
+asm : 80047234, 022634 : remove_status_4 : void : int index
+asm : 80047294, 022694 : enable_status_4 "flag 20" : void : int index
+asm : 800472C4, 0226C4 : create_status_icon_boost_jump : void : int index
+asm : 80047354, 022754 : remove_status_icon_boost_jump : void : int index
+asm : 800473B0, 0227B0 : enable_status_icon_boost_jump "flag 40" : void : int index
+asm : 800473E0, 0227E0 : create_status_icon_boost_hammer : void : int index
+asm : 80047470, 022870 : remove_status_icon_boost_hammer : void : int index
+asm : 800474CC, 0228CC : enable_status_icon_boost_hammer "flag 80" : void : int index
+asm : 800474FC, 0228FC : create_status_icon_boost_partner : void : int index
+asm : 8004758C, 02298C : remove_status_icon_boost_partner : void : int index
+asm : 800475D8, 0229D8 : enable_status_icon_boost_partner "flag 100" : void : int index
+asm : 80047608, 022A08 : create_status_icon_surprise : void : int index
+asm : 80047698, 022A98 : remove_status_icon_surprise : void : int index
+asm : 800476E4, 022AE4 : enable_status_icon_surprise "flag 200" : void : int index
+asm : 80047714, 022B14 : create_status_icon_peril : void : int index
+asm : 800477A4, 022BA4 : remove_status_icon_peril : void : int index
+asm : 800477F0, 022BF0 : enable_status_icon_peril "flag 400" : void : int index
+asm : 80047820, 022C20 : create_status_icon_danger : void : int index
+asm : 800478B0, 022CB0 : remove_status_icon_danger : void : int index
+asm : 800478FC, 022CFC : enable_status_icon_danger "flag 800" : void : int index
+asm : 80047930, 022D30 : spawn_drops : void : enemy*
+asm : 80048400, 023800 : get_coin_drop_amount : int : enemy*
+asm : 80048684, 023A84 : is_point_within_region : bool : int shape "0 = circle, 1 = box", float pointX, float pointY, float centerX, float centerY, float sizeX "radius for circle", float sizeZ "unused for circle"
+asm : 80048B70, 023F70 : ai_enemy_play_sound : void : npc*, int soundID, int sourceFlags
+api : 80049B2C, 024F2C : DoBasicAI			: void : $AISettings
+asm : 8004A1B0, 0255B0 : {CHANGED} create_audio_system "called during boot via func_802B2000, sets up the audio thread and loads/unpacks the audio data" : void : void
+asm : 8004A8DC, 025CDC : nuAuDmaNew				: code : NUDMAState** state
+asm : 8004A920, 025D20 : nuAuCleanDMABuffers	: void : void
+asm : 8004AAA4, 025EA4 : alLink					: ??? : ???
+asm : 8004AAC4, 025EC4 : alUnlink				: ??? : ???
+asm : 8004ACEC, 0260EC : snd_load_sfx_groups_from_SEF : void : snd_manager* manager
+asm : 8004AD58, 026158 : snd_clear_sfx_queue : void : snd_manager* manager
+asm : 8004AD98, 026198 : snd_enqueue_sfx_event : void : snd_manager* sndManager, int soundID, int volume, short pitchShift, byte pan
+asm : 8004BA18, 026E18 : snd_set_modifiers : void : snd_manager* manager, snd_sfx_entry* sfxEntry
+asm : 8004BA94, 026E94 : snd_set_player_modifiers : void : snd_sound_player* player, snd_sfx_entry* sfxEntry
+asm : 8004BF04, 027304 : snd_get_scaled_volume : int : snd_manager* manager, snd_sound_player* player
+asm : 8004C454, 027854 : snd_set_voice_volume : void : snd_voice*, snd_manager*, snd_sound_player*
+asm : 8004C530, 027930 : snd_SEFCmd_00_SetVolume "consumes: byte volume" : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004C564, 027964 : snd_SEFCmd_01_SetPan "consumes: byte pan" : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004C584, 027984 : snd_SEFCmd_02_SetInstrument "consumes: byte bank, byte instrument"	: void : snd_manager* mngr, snd_sound_player* player
+asm : 8004C5CC, 0279CC : snd_SEFCmd_03_SetReverb "consumes: byte" : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004C5FC, 0279FC : snd_SEFCmd_04 "consumes: byte" : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004C6CC, 027ACC : snd_SEFCmd_05 "consumes: byte" : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004C6F8, 027AF8 : snd_SEFCmd_06 "consumes: byte" : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004C710, 027B10 : snd_SEFCmd_07 "consumes: -1 byte. ???" : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004C73C, 027B3C : snd_SEFCmd_08 "consumes: short time, byte targetVal" : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004C7D4, 027BD4 : snd_SEFCmd_09_StartLoop "consumes: byte iterCount" : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004C7F0, 027BF0 : snd_SEFCmd_0A_EndLoop "consumes nothing" : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004C81C, 027C1C : snd_SEFCmd_0B "consumes: -1 byte. ???" : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004C840, 027C40 : snd_SEFCmd_0C : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004C874, 027C74 : snd_SEFCmd_0D : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004C8FC, 027CFC : snd_SEFCmd_0E : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004C970, 027D70 : snd_SEFCmd_0F : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004C9A4, 027DA4 : snd_SEFCmd_10_Jump "consumes: short offset from SEF start" : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004C9D0, 027DD0 : snd_SEFCmd_11_Restart "consumes nothing" : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004C9DC, 027DDC : snd_SEFCmd_12_NOP : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004C9E4, 027DE4 : snd_SEFCmd_13 "consumes: byte" : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004C9FC, 027DFC : snd_SEFCmd_14 "consumes: byte" : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004CA14, 027E14 : snd_SEFCmd_15 "consumes: byte" : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004CA2C, 027E2C : snd_SEFCmd_16 : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004CA60, 027E60 : snd_SEFCmd_17 : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004CAB8, 027EB8 : snd_SEFCmd_18 : void : snd_manager* mngr, snd_sound_player* player
+asm : 8004CE54, 028254 : snd_get_player_with_song_name : bgm_player* : int songString "char[4] e.g. 33313920 == '319 '"
+asm : 8004CEA0, 0282A0 : snd_dispatch_bgm_player_event : int result : bgm_player_event*
+asm : 8004D1A0, 0285A0 : snd_is_song_playing : int eIsSongPlaying : int songName
+asm : 8004DA64, 028E64 : snd_update_bgm_fade : void : bgm_player*
+asm : 8004DC98, 029098 : snd_initialize_bgm_player : void : bgm_player*
+asm : 8004F27C, 02A67C : snd_BGMCmd_E0_MasterTempo : void : bgm_player* player, bgm_player_track*
+asm : 8004F2C8, 02A6C8 : snd_bpm_to_tempo : int : bgm_player* player, int tempo
+asm : 8004F374, 02A774 : snd_BGMCmd_E1_MasterVolume : void : bgm_player* player, bgm_player_track*
+asm : 8004F3A4, 02A7A4 : snd_BGMCmd_E2_MasterTranspose : void : bgm_player* player, bgm_player_track*
+asm : 8004F3C4, 02A7C4 : snd_BGMCmd_E3 : void : bgm_player* player, bgm_player_track*
+asm : 8004F3F8, 02A7F8 : snd_BGMCmd_E6_MasterEffect : void : bgm_player* player, bgm_player_track*
+asm : 8004F454, 02A854 : snd_BGMCmd_E4_MasterTempoFade : void : bgm_player* player, bgm_player_track*
+asm : 8004F4D0, 02A8D0 : snd_BGMCmd_E5_MasterVolumeFade : void : bgm_player* player, bgm_player_track*
+asm : 8004F52C, 02A92C : snd_BGMCmd_E8_TrackOverridePatch : void : bgm_player* player, bgm_player_track*
+asm : 8004F570, 02A970 : snd_BGMCmd_E9_SubTrackVolume : void : bgm_player* player, bgm_player_track*
+asm : 8004F590, 02A990 : snd_BGMCmd_F6_TrackVolumeFade : void : bgm_player* player, bgm_player_track*
+asm : 8004F5FC, 02A9FC : snd_BGMCmd_EA_SubTrackPan : void : bgm_player* player, bgm_player_track*
+asm : 8004F618, 02AA18 : snd_BGMCmd_EB_SubTrackReverb : void : bgm_player* player, bgm_player_track*
+asm : 8004F630, 02AA30 : snd_BGMCmd_EC_SegTrackVolume : void : bgm_player* player, bgm_player_track*
+asm : 8004F648, 02AA48 : snd_BGMCmd_ED_SubTrackCoarseTune : void : bgm_player* player, bgm_player_track*
+asm : 8004F668, 02AA68 : snd_BGMCmd_EE_SubTrackFineTune : void : bgm_player* player, bgm_player_track*
+asm : 8004F674, 02AA74 : snd_BGMCmd_EF_SegTrackTune : void : bgm_player* player, bgm_player_track*
+asm : 8004F688, 02AA88 : snd_BGMCmd_F0_TrackTremolo : void : bgm_player* player, bgm_player_track*
+asm : 8004F6A4, 02AAA4 : snd_BGMCmd_F1_TrackTremoloSpeed : void : bgm_player* player, bgm_player_track*
+asm : 8004F6B0, 02AAB0 : snd_BGMCmd_F2_TrackTremoloTime : void : bgm_player* player, bgm_player_track*
+asm : 8004F6BC, 02AABC : snd_BGMCmd_F3_TrackTremoloStop : void : bgm_player* player, bgm_player_track*
+asm : 8004F6C4, 02AAC4 : snd_BGMCmd_F4 : void : bgm_player* player, bgm_player_track*
+asm : 8004F6E0, 02AAE0 : snd_BGMCmd_F5_TrackVoice : void : bgm_player* player, bgm_player_track*
+asm : 8004F7E8, 02ABE8 : snd_BGMCmd_F7_SubTrackReverbType : void : bgm_player* player, bgm_player_track*
+asm : 8004F81C, 02AC1C : snd_BGMCmd_FD : void : bgm_player* player, bgm_player_track*
+asm : 8004F844, 02AC44 : snd_BGMCmd_FE : void : bgm_player* player, bgm_player_track*
+asm : 8004F868, 02AC68 : snd_BGMCmd_FC_Jump : void : bgm_player* player, bgm_player_track*
+asm : 8004F9B0, 02ADB0 : snd_BGMCmd_FF : void : bgm_player* player, bgm_player_track*
+asm : 8004FC20, 02B020 : snd_BGMCmd_NOP : void : bgm_player* player, bgm_player_track*
+asm : 8005251C, 02D91C : snd_load_audio_data : void : int frequency
+asm : 800529B4, 02DDB4 : snd_reset_instrument "set an instrument to 'default sound' values" : void : snd_bk_instrument* instrument
+asm : 80052A90, 02DE90 : snd_update_sequence_players "nop this function to sustain most recent note indefinately" : void : void
+asm : 80052FB8, 02E3B8 : snd_tune_param_to_timescale : float : int
+asm : 80053034, 02E434 : snd_initialize_bgm_fade : void : snd_fade*, int time, int startValue, int endValue
+asm : 800530D8, 02E4D8 : snd_clear_bgm_fade : void : snd_fade* fade
+asm : 80053318, 02E718 : snd_get_sequence_player_and_track : void : int playerIndex, ptr outCurrentTrackData, bgm_player** outSongPlayer
+asm : 80053374, 02E774 : snd_get_sequence_player : void : int playerIndex, bgm_player** outSongPlayer
+asm : 800533B8, 02E7B8 : snd_load_song_files "loads BGM + BK files for a given song to a music player" : int filename "4-character string at BGM[8]" : int songID, ptr bgmDataBuffer "where track data will be loaded", bgm_player* player
+asm : 8005397C, 02ED7C : snd_load_INIT : void : snd_globals* sndData, int offset, int* head "of heap"
+asm : 80053B3C, 02EF3C : snd_fetch_SBN_file : int "result: 0 = ok, 101` = file index out of bounds, 102` = wrong file format" : int fileIndex, int format, snd_sbn_file_entry* out
+asm : 80053BB8, 02EFB8 : snd_load_PER : void : snd_globals* sndData, int offsetPER
+asm : 80053C74, 02F074 : snd_load_PRG : void : snd_globals* sndData, int offsetPRG
+asm : 80053D1C, 02F11C : snd_load_BGM "load a BGM and its associated BK files" : int "result: 0 = ok, 102` = wrong file format" : int fileIndex
+asm : 80053E04, 02F204 : snd_get_BK_instruments : snd_bk_instruments* : int bankGroup, int bankIndex
+asm : 80053E88, 02F288 : snd_load_BK_to_bank : int : int bkFileOffset, snd_bank* bank, int bankIndex, int
+asm : 800540B8, 02F4B8 : snd_swizzle_BK_instruments "converts file-relative offsets to overall ROM offsets in loaded instrument data" : void : int bkFileOffset, snd_bank* bank, snd_bk_instruments* instruments, int instrumentCount, int "value for unk_25 of each instrument"
+asm : 8005430C, 02F70C : snd_load_BK : int "always zero" : int offsetBK, int bankIndex
+asm : 800544C0, 02F8C0 : snd_read_rom	: void : int offset, ptr buffer, int size
+asm : 80054550, 02F950 : snd_memset : void : byte* buf, int size, byte writeVal
+asm : 80054608, 02FA08 : snd_bcopy : void : byte* src, byte* dest, int size
+asm : 80054634, 02FA34 : snd_copy_words "copies 4-byte aligned length from one location to another, provided they both are 4-byte aligned" : void : byte* src, byte* dest, int size
+asm : 80054680, 02FA80 : snd_load_BK_headers	: void : snd_globals* sndData
+asm : 800548A0, 02FCA0 : snd_start_sound : void : int soundID, int volume, int pan
+asm : 80054900, 02FD00 : snd_start_sound_with_shift : void : int soundID, int volume, int pan, int pitchShift
+asm : 80054990, 02FD90 : snd_adjust_sound : void : int soundID, int volume, int pan
+asm : 800549F0, 02FDF0 : snd_adjust_sound_with_shift : void : int soundID, int volume, int pan, int pitchShift
+asm : 80054A80, 02FE80 : snd_stop_sound : void : int soundID
+asm : 80054AC8, 02FEC8 : snd_start_sound_raw : void : int soundID, int volume, int pitchShift, int pan
+asm : 80054F94, 030394 : snd_load_song : int filename "4-character string at BGM[8]" : int songID, int playerIndex
+asm : 80054FDC, 0303DC : snd_start_song "uses variation 0" : void : int songName "char[4]"
+asm : 80055030, 030430 : snd_start_song_variation : void : int songName "char[4]", int variation
+asm : 800550D8, 0304D8 : snd_set_song_variation_fade : void : int songName, int variation, int fadeInTime, int startVolume, int endVolume
+asm : 8005512C, 03052C : snd_set_song_fade : void : int songName, int fadeInTime, int volumeA, int volumeB
+asm : 8005517C, 03057C : snd_set_song_variation_fade_time : void : int songName, int fadeTime, int variation
+asm : 80055C80, 031080 : alAudioFrame			: ??? : ???
+asm : 800575E0, 0329E0 : alHeapInit : void : ALHeap* hp, ptr base, int len
+asm : 80057650, 032A50 : alHeapAlloc			: ??? : ???
+asm : 80057698, 032A98 : alCopy : void : ptr src, ptr dest, int len
+asm : 80059340, 034740 : stub_effect_delegate : void : effect_instance*
+asm : 80059348, 034748 : set_effect_pos_offset : void : effect_instance*, float x, float y, float z
+asm : 8005935C, 03475C : clear_effect_data : void : void
+asm : 80059410, 034810 : update_effects : void : void
+asm : 800595B4, 0349B4 : render_effects_world			: void : void
+asm : 80059654, 034A54 : render_effects_UI : void : void
+asm : 80059B10, 034F10 : remove_effect			: void : effect_instance*
+asm : 80059BA0, 034FA0 : remove_all_effects		: void : void
+asm : 80059C24, 035024 : load_effect			: void : int index
+asm : 80059D80, 035180 : load_map_script_lib	: void : void
+asm : 80059DB4, 0351B4 : {CHANGED} load_map_by_IDs		: void : int areaID, int mapID, int loadType "0 = from another map | 1 = from main menu"
+asm : 8005A288, 035688 : get_current_map_config	: map_config* : void
+asm : 8005A298, 035698 : get_current_map_header	: map_data_header* : void
+asm : 8005A2A8, 0356A8 : get_map_IDs_by_name	: bool foundMap : char* mapName, int* areaID, int* mapID
+asm : 8005A398, 035798 : load_asset_by_name		: ptr data "possibly compressed" : char* name, int* decompressedSize
+asm : 8005A480, 035880 : get_asset_offset		: int romStartOffset : char* name, int* decompressedSize
+asm : 8005A550, 035950 : allocate_hit_tables	: void : void
+asm : 8005A644, 035A44 : initialize_collision	: void : void
+asm : 8005A670, 035A70 : load_hit_asset "loads hit asset from name at 800D91E0" : void : void
+asm : 8005A708, 035B08 : load_collision			: void : void
+asm : 8005A850, 035C50 : load_stage_collision	: void : char* assetName
+asm : 8005A8EC, 035CEC : load_hit_data			: void : int mode "0 = collison, 1 = zone", ptr filedata
+asm : 8005AE30, 036230 : parent_collider_to_model	: void : int colliderID, int modelIndex
+asm : 8005B050, 036450 : _add_hit_vert_to_buffer	: void : float** buf, float* vert, int* bufSize
+asm : 8005B0A4, 0364A4 : _get_hit_vert_index_from_buffer : int bufferIndex : float** buf, float* vert, int* bufSize
+asm : 8005B0D4, 0364D4 : update_collider_transform	: void : int colliderID
+asm : 8005B458, 036858 : get_collider_type_by_id : int : int colliderID
+asm : 8005B488, 036888 : get_flat_collider_normal "returns the normal of the first triangle for a collider. this will give the normal of the collider if it forms a flat surface" : void : int colliderID, {out} float* nx, {out} float* ny, {out} float* nz
+asm : 8005B4C0, 0368C0 : get_collider_center		: void : int colliderID, float* cx, float* cy, float* cz
+asm : 8005B534, 036934 : test_ray_triangle_general "use arbitrary ray from cast data" : bool hit : collider_triangle* tri
+asm : 8005BB4C, 036F4C : test_down_ray_triangle "use ray pointing down from cast origin" : bool hit : collider_triangle* tri
+asm : 8005BE54, 037254 : test_up_ray_triangle "use ray pointing up from cast origin" : bool hit : collider_triangle* tri
+asm : 8005C380, 037780 : test_ray_colliders : int colliderID "valid if hit, -1 otherwise. only tests colliders which ignore_flags &= 0" : int ignore_flags, float ray_start_x, float ray_start_y, float ray_start_z, float ray_dir_x, float ray_dir_y, float ray_dir_z, float* out_hit_x, float* out_hit_y, float* out_hit_z, float* out_hit_depth, float* out_hit_nx, float* out_hit_ny, float* out_hit_nz
+asm : 8005C7D4, 037BD4 : test_ray_zones : V0 int zoneID "valid if hit, -1 otherwise. always casts down" : F12 float ray_start_x, F14 float ray_start_y, A2 float ray_start_z, A3 float ray_dir_x, SP[10] float ray_dir_y, SP[14] float ray_dir_z, SP[18] float* out_hit_x, SP[1C] float* out_hit_y, SP[20] float* out_hit_z, SP[24] float* out_hit_depth, SP[28] float* out_hit_nx, SP[2C] float* out_hit_ny, SP[30] float* out_hit_nz
+asm : 8005C98C, 037D8C : test_up_ray_collider : bool hit "?" : int ignore_flags, int colliderID, float ray_origin_x, float ray_origin_y, float ray_origin_z, float ray_length, float ray_yaw "deg"
+asm : 8005CAF8, 037EF8 : test_ray_entities : V0 int entityID : F12 float ray_origin_x, F14 float ray_origin_y, A2 float ray_origin_z, A3 float ray_dir_x, SP[10] float ray_dir_y, SP[14] float ray_dir_z, SP[18] float* out_hit_x, SP[1C] float* out_hit_y, SP[20] float* out_hit_z, SP[24] float* out_hit_depth, SP[28] float* out_hit_nx, SP[2C] float* out_hit_ny, SP[30] float* out_hit_nz
+asm : 8005D4C0, 0388C0 : get_npc_pos : void : #npcID "-1 for player", float* outX, float* outY, float* outZ, bool* unknown
+asm : 8005DF60, 039360 : nuBoot				: void : void
+asm : 8005DFBC, 0393BC : boot_idle "nusys idle thread, creates main thread, intiailized to boot_main and enters infinite idle loop" : void : void
+asm : 8005E290, 039690 : nuScExecuteAudio		: void : void
+asm : 8005E56C, 03996C : nuScRemoveClient		: void : NUScClient* client
+asm : 8005E5E8, 0399E8 : nuScResetClientMesgType	: void : NUScClient* client, NUScMsg msgType
+asm : 8005E628, 039A28 : nuScGetGfxMQ			: OSMesgQueue* : void
+asm : 8005E634, 039A34 : nuScGetAudioMQ			: OSMesgQueue* : void
+asm : 8005E640, 039A40 : nuScSetFrameBufferNum	: void : int frameBufferNum
+asm : 8005E64C, 039A4C : nuScGetFrameRate		: int : void
+asm : 8005E658, 039A58 : nuScEventHandler		: ??? : ???
+asm : 8005E7D0, 039BD0 : nuScWaitTaskReady		: ??? : ???
+asm : 8005E900, 039D00 : nuGfxFuncSet			: ??? : ???
+asm : 8005E940, 039D40 : nuGfxPreNMIFuncSet		: ??? : ???
+asm : 8005E980, 039D80 : nuGfxTaskAllEndWait	: ??? : ???
+asm : 8005E9A0, 039DA0 : nuGfxSetCfb			: ??? : ???
+asm : 8005EAB0, 039EB0 : nuGfxDisplayOff		: ??? : ???
+asm : 8005EAE0, 039EE0 : nuGfxDisplayOn			: ??? : ???
+asm : 8005EB00, 039F00 : nuPiInit				: ??? : ???
+asm : 8005EB40, 039F40 : nuPiReadRom			: void : int srcOffset, ptr* destAddr, int size
+asm : 8005EC10, 03A010 : nuGfxInit				: ??? : ???
+asm : 8005ECC0, 03A0C0 : nuContInit				: ??? : ???
+asm : 8005ED00, 03A100 : nuContDataGet			: ??? : ???
+asm : 8005ED60, 03A160 : nuContPakMgrInit		: ??? : ???
+asm : 8005ED84, 03A184 : nuContPakMgrRemove		: ??? : ???
+asm : 8005EDA8, 03A1A8 : contPakOpen			: ??? : ???
+asm : 8005EDF8, 03A1F8 : contPakFree			: ??? : ???
+asm : 8005EE20, 03A220 : contPakFileReadWrite	: ??? : ???
+asm : 8005EE60, 03A260 : contPakFileOpen		: ??? : ???
+asm : 8005EF14, 03A314 : contPakFileDelete		: ??? : ???
+asm : 8005EF54, 03A354 : contPakFileState		: ??? : ???
+asm : 8005EF80, 03A380 : contPakFileNum			: ??? : ???
+asm : 8005EFAC, 03A3AC : contPakRepairId		: ??? : ???
+asm : 8005EFD0, 03A3D0 : osMotorStop			: ??? : ???
+asm : 8005F1C0, 03A5C0 : contRmbControl			: ??? : ???
+asm : 8005F33C, 03A73C : nuContRmbMgrInit		: ??? : ???
+asm : 8005F39C, 03A79C : nuContRmbMgrRemove		: ??? : ???
+asm : 8005F3C0, 03A7C0 : contRmbCheckMesg		: ??? : ???
+asm : 8005F408, 03A808 : contRmbStartMesg		: ??? : ???
+asm : 8005F540, 03A940 : nuContRmbStart			: ??? : ???
+asm : 8005F5A0, 03A9A0 : nuContRmbCheck			: ??? : ???
+asm : 8005F640, 03AA40 : nuContRmbModeSet		: ??? : ???
+asm : 8005F750, 03AB50 : nuContRmbForceStop		: ??? : ???
+asm : 8005F770, 03AB70 : nuContRmbForceStopEnd	: ??? : ???
+asm : 8005F790, 03AB90 : nuPiReadRomOverlay		: void : NUPiOverlaySegment* segment
+asm : 8005F8A0, 03ACA0 : nuGfxThreadStart		: void : void
+asm : 8005F8F8, 03ACF8 : nuGfxThread			: ??? : ???
+asm : 8005FA00, 03AE00 : nuGfxSwapCfb			: void : ptr framebuffer
+asm : 8005FA20, 03AE20 : nuGfxRetraceWait		: ??? : ???
+asm : 8005FDC0, 03B1C0 : nuSiCallBackAdd		: ??? : ???
+asm : 8005FE60, 03B260 : nuSiCallBackRemove		: ??? : ???
+asm : 8005FEE0, 03B2E0 : nuContMgrInit			: ??? : ???
+asm : 8005FFB8, 03B3B8 : nuContMgrRemove		: ??? : ???
+asm : 8005FFDC, 03B3DC : nuContDataClose		: ??? : ???
+asm : 80060004, 03B404 : nuContDataOpen			: ??? : ???
+asm : 8006002C, 03B42C : contRetrace			: ??? : ???
+asm : 80060108, 03B508 : contReadData			: ??? : ???
+asm : 80060184, 03B584 : contReadNW				: ??? : ???
+asm : 80060240, 03B640 : contQuery				: ??? : ???
+asm : 80060290, 03B690 : nuContDataLock			: ??? : ???
+asm : 800602C0, 03B6C0 : nuContDataUnLock		: ??? : ???
+asm : 800602F0, 03B6F0 : nuContQueryRead		: ??? : ???
+asm : 800DA8E0, 074570 : npc_raycast_down "check for collision below a given point" "MAY BE FOR PLAYER-ONLY, SETS VALUES IN GAME_STATUS" : uint hitObjectID "either (colliderID) or (entityID | 4000)" : uint ignoreFlags, {out} float* x, {out} float* y, {out} float* z, {out} float* length
+asm : 800DAB58, 0747E8 : npc_raycast_down_ahead "check ahead radius/2.5 units at angles yaw, yaw+120 and yaw-120" "sets HitTest_Collider/FloorForward/FloorSide and HitTest_PosY_A/B/C" : bool hit : uint ignoreFlags, {out} float* x, {out} float* y, {out} float* z, {out} float* length
+asm : 800DAF5C, 074BEC : npc_raycast_down_sides  "check 10 units along yaw = 0 and 180" : bool hit : uint ignoreFlags, {out} float* x, {out} float* y, {out} float* z, {out} float* length
+asm : 800DB250, 074EE0 : npc_raycast_up "check for collision above a given point; sets HitTest_Collider" : uint hitObjectID "either (colliderID) or (entityID | 4000)" : uint ignoreFlags, {out} float* x, {out} float* y, {out} float* z, {out} float* length
+asm : 800DB42C, 0750BC : npc_raycast_up_corner "used with npc_raycast_up_corners; always checks 10 units for entities" : uint hitObjectID "either (colliderID) or (entityID | 4000)" : uint ignoreFlags, {out} float* x, {out} float* y, {out} float* z, {out} float* length "for colliders only"
+asm : 800DB608, 075298 : npc_raycast_up_corners "upward test for 4 corners of circle (NW/NE/SW/SE) given by point and radius" : uint hitObjectID "either (colliderID) or (entityID | 4000)" : uint ignoreFlags, {out} float* x, {out} float* y, {out} float* z, {out} float* length, float yaw, float radius
+asm : 800DB82C, 0754BC : npc_raycast_general "check for collision along a given unit vector in any direction" : uint hitObjectID "either (colliderID) or (entityID | 4000)" : uint ignoreFlags, float ray_start_x, float ray_start_y, float ray_start_z, float ray_dir_x, float ray_dir_y, float ray_dir_z, float* out_hit_x, float* out_hit_y, float* out_hit_z, float* out_depth, float* out_hit_nx, float* out_hit_ny, float* out_hit_nz
+asm : 800DB994, 075624 : npc_get_slip_vector "equals half the perpendicular component of the move vector" : void : {out} float* outX, {out} float* outZ, float moveX, float moveZ, float normX, float normZ
+asm : 800DB9F8, 075688 : npc_test_move_with_slipping "sets HitTest_Collider" : uint hitObjectID "either (colliderID) or (entityID | 4000)" : uint ignoreFlags, {out} float* x, {out} float* y, {out} float* z, float length, float yaw, float radius
+asm : 800DBCDC, 07596C : npc_test_move_without_slipping "sets HitTest_Collider" : uint hitObjectID "either (colliderID) or (entityID | 4000)" : uint ignoreFlags, {out} float* x, {out} float* y, {out} float* z, float length, float yaw, float radius
+asm : 800DBEC4, 075B54 : npc_test_move_taller_with_slipping "tests lateral motion (with slipping) at (y + 10.01) and (y+height-1)" "(indirectly) sets HitTest_Collider" : bool hit : uint ignoreFlags, {out} float* x, {out} float* y, {out} float* z, float length, float yaw, float height, float radius
+asm : 800DC024, 075CB4 : npc_test_move_simple_with_slipping "tests lateral motion (y + 10.01)" "(indirectly) sets HitTest_Collider" : bool hit : uint ignoreFlags, {out} float* x, {out} float* y, {out} float* z, float length, float yaw, float height, float radius
+asm : 800DC0CC, 075D5C : npc_test_move_simple_without_slipping "tests lateral motion (y + 10.01)" "(indirectly) sets HitTest_Collider" : bool hit : uint ignoreFlags, {out} float* x, {out} float* y, {out} float* z, float length, float yaw, float height, float radius
+asm : 800DC174, 075E04 : npc_test_move_complex_with_slipping "check lateral movement at different heights; has slipping" "(indirectly) sets HitTest_Collider" : int whichHit "0 = none, 1-4 from bottom to top: (y + 10), (y + 15), (y + 20), or (y + height - 1)" : uint ignoreFlags, {out} float* x, {out} float* y, {out} float* z, float length, float yaw, float height, float radius
+asm : 800DC3B0, 076040 : player_raycast_below "downward test for 4 corners of circle (NW/NE/SW/SE) and center; possible bugged, wrong trig formulae used?" : uint hitObjectID "either (colliderID) or (entityID | 4000)" : float yaw, float diameter, {out} float* x, {out} float* y, {out} float* z, {out} float* length, {out} float* hit_rx, {out} float* hit_rz, {out} float* hitDirX, {out} float* hitDirZ
+asm : 800DC84C, 0764DC : player_raycast_below_cam_relative "downward test for 4 corners of circle (NW/NE/SW/SE) and center; possible bugged, wrong trig formulae used?" : uint hitObjectID "either (colliderID) or (entityID | 4000)" : player_status* player, {out} float* x, {out} float* y, {out} float* z, {out} float* length, {out} float* hit_rx, {out} float* hit_rz, {out} float* hitDirX, {out} float* hitDirZ
+asm : 800DC92C, 0765BC : player_raycast_down "test a point directly below the player" : uint hitObjectID "either (colliderID) or (entityID | 4000)" : {out} float* x, {out} float* y, {out} float* z, {out} float* length
+asm : 800DCBC4, 076854 : player_raycast_up_corners "upward test for 4 corners of circle (NW/NE/SW/SE) given by point and radius" : uint hitObjectID "either (colliderID) or (entityID | 4000)" : player_status* player, {out} float* x, {out} float* y, {out} float* z, {out} float* length, float yaw
+asm : 800DCDE8, 076A78 : player_raycast_up_corner "used with player_raycast_up_corners; always checks 10 units for entities" : uint hitObjectID "either (colliderID) or (entityID | 4000)" : {out} float* x, {out} float* y, {out} float* z, {out} float* length "for colliders only"
+asm : 800DCFE4, 076C74 : player_test_lateral_overlap "do a collision trace and clip movement along the trace direction using normal of hit object" : uint hitObjectID "either (colliderID) or (entityID | 4000)" : int type, player_status*, float* posX, float* posY, float* posZ, float length, float yaw
+asm : 800DD23C, 076ECC : player_raycast_general : uint hitObjectID "either (colliderID) or (entityID | 4000)" : int type, float ray_start_x, float ray_start_y, float ray_start_z, float ray_dir_x, float ray_dir_y, float ray_dir_z, float* out_hit_x, float* out_hit_y, float* out_hit_z, float* out_hit_depth, float* out_hit_nx, float* out_hit_ny, float* out_hit_nz
+asm : 800DD53C, 0771CC : player_test_move_without_slipping "tests at (y+0.1) and (y+height*0.286)": uint hitObjectID "either (colliderID) or (entityID | 4000)" : player_status* player, float* posX, float* posY, float* posZ, float length, float yaw, float* lowHit "test for posY + 0.1 was true"
+asm : 800DD7DC, 07746C : player_get_slip_vector : void : {out} float* outX, {out} float* outZ, float moveX, float moveZ, float normX, float normZ
+asm : 800DD840, 0774D0 : player_test_move_with_slipping "tests at (y+10.01) and (y+height*0.75)": uint hitObjectID "either (colliderID) or (entityID | 4000)" : player_status* player, {out} float* posX, {out} float* posY, {out} float* posZ, float length, float yaw "in world coords"
+asm : 800DDB20, 0777B0 : update_player : void : void
+asm : 800DDDE0, 077A70 : check_input_use_partner	: void : void
+asm : 800DDE8C, 077B1C : phys_update_standard : void : void
+asm : 800DDFC8, 077C58 : phys_update_lava_reset : void : void
+asm : 800DE030, 077CC0 : clear_player_status : void : void
+asm : 800DE054, 077CE4 : player_reset_data : void : void
+asm : 800DE128, 077DB8 : get_overriding_player_anim : animID "of -1 if no change allowed" : int animID
+asm : 800DE2DC, 077F6C : suggest_player_anim_clearUnkFlag : void : int animID
+asm : 800DE330, 077FC0 : force_player_anim : void : int animID
+asm : 800DE358, 077FE8 : suggest_player_anim_setUnkFlag : void : int animID
+asm : 800DE3AC, 07803C : update_player_blink "i.e., sprite flashing (not eyes)" : void : void
+asm : 800DE468, 0780F8 : get_xz_dist_to_player : float dist : float posX, float posZ
+asm : 800DE490, 078120 : enable_player_shadow		: void : void
+asm : 800DE4C4, 078154 : disable_player_shadow		: void : void
+asm : 800DE4F4, 078184 : disable_player_static_collisions "disable lateral collisions with the world while the player is standing still" : int disableCount : void
+asm : 800DE520, 0781B0 : enable_player_static_collisions "enable lateral collisions with the world while the player is standing still": int disableCount : void
+asm : 800DE558, 0781E8 : disable_player_input		: int disableCount : void
+asm : 800DE584, 078214 : enable_player_input		: int disableCount : void
+asm : 800DE640, 0782D0 : player_render_interact_prompts : void : void
+asm : 800DE674, 078304 : check_for_ispy : void : void
+asm : 800DE778, 078408 : check_for_pulse_stone : void : void
+asm : 800DE918, 0785A8 : has_valid_conversation_npc : bool : void
+asm : 800DE960, 0785F0 : check_for_conversation_prompt "should the prompt appear?" : void : void
+asm : 800DEBF8, 078888 : check_for_interactables : void : void
+asm : 800DEF18, 078BA8 : update_partner_timers : void : void
+asm : 800DF3CC, 07905C : get_player_back_anim "replaces certain hard-coded animations with others facing away from the camera" : int animID : int animID
+asm : 800DF518, 0791A8 : render_player				: void : void
+asm : 800DF548, 0791D8 : render_player_model		: void : void
+asm : 800DF6D4, 079364 : appendGfx_player		: void : void
+asm : 800DFAE4, 079774 : appendGfx_player_spin	: void : void
+asm : 800DFFA4, 079C34 : update_player_shadow "update shadow and floorBelow collider" : void : void
+asm : 800E0370, 07A000 : update_player_input : void : void
+asm : 800E043C, 07A0CC : reset_player_status : void : void
+asm : 800E06C4, 07A354 : get_packed_buttons : int* outButtons "upper 16 bits for pressed, lower 16 bits for current" : void
+asm : 800E06E4, 07A374 : player_input_to_move_vector "uses input from PlayerStatus" : void : float* angle, float* magnitude "0 to 70"
+asm : 800E07DC, 07A46C : game_input_to_move_vector "uses input from GameStatus" : void : float* angle, float* magnitude "0 to 70"
+asm : 800E0A90, 07A720 : record_jump_apex : void : void
+asm : 800E0AA4, 07A734 : can_trigger_loading_zone : bool : void
+asm : 800E0B58, 07A7E8 : move_player				: void : int duration "frames", float yaw, float speed
+asm : 800E0BC0, 07A850 : collision_main_above : int hitID : void
+asm : 800E10F8, 07AD88 : phys_update_jump : void : void
+asm : 800E1340, 07AFD0 : phys_init_integrator_for_current_state : void : void
+asm : 800E144C, 07B0DC : gravity_use_fall_parms : void : void
+asm : 800E14E0, 07B170 : phys_update_falling : void : void
+asm : 800E1658, 07B2E8 : phys_player_land : void : void
+asm : 800E1828, 07B4B8 : integrate_gravity : float velocity : void
+asm : 800E18F4, 07B584 : player_check_collision_below : void : float length, {out} int* hitColliderID
+asm : 800E1A1C, 07B6AC : collision_main_lateral : void : void
+asm : 800E26E8, 07C378 : collision_check_player_intersecting_world : int hitID : int type, int heightOffset
+asm : 800E28E8, 07C578 : collision_check_player_overlaps "actually just updates gPlayerStatus.field_0x64" : void : void
+asm : 800E29C0, 07C650 : phys_should_player_be_sliding : bool : void
+asm : 800E2AA8, 07C738 : phys_is_on_sloped_ground : bool : void
+asm : 800E2B24, 07C7B4 : phys_main_collision_below : void : void
+asm : 800E2F98, 07CC28 : collision_lava_reset_check_additional_overlaps : void : void
+asm : 800E33AC, 07D03C : check_input_midair_jump	: void : void
+asm : 800E3468, 07D0F8 : get_current_partner_id : #partnerID : void
+asm : 800E3478, 07D108 : try_player_footstep_sounds : void : int interval "how many frames between sounds"
+asm : 800E3530, 07D1C0 : phys_update_interact_collider : void : void
+asm : 800E3554, 07D1E4 : phys_check_interactable_collision : int hitID : void
+asm : 800E36D8, 07D368 : phys_can_player_interact : bool : void
+asm : 800E384C, 07D4DC : player_get_camera_facing_angle : float : void
+asm : 800E38C0, 07D550 : phys_save_ground_pos : void : void
+asm : 800E3910, 07D5A0 : phys_adjust_cam_on_landing : int result "0-2" : void
+asm : 800E3CD0, 07D960 : phys_clear_spin_history : void : void
+asm : 800E3D18, 07D9A8 : phys_get_spin_history : float angle : int lagTime "frames", {out} int* x, {out} int* y, {out} int* z
+asm : 800E3D80, 07DA10 : phys_reset_spin_history : void : void
+asm : 800E3E0C, 07DA9C : phys_update_action_state : void : void
+asm : 800E4058, 07DCE8 : phys_peach_update : void : void
+asm : 800E4184, 07DE14 : set_action_state			: void : #actionState actionState
+asm : 800E4348, 07DFD8 : update_locomotion_state	: void : void
+asm : 800E43B0, 07E040 : start_falling				: void : void
+asm : 800E4414, 07E0A4 : start_bounce_a				: void : void
+asm : 800E446C, 07E0FC : start_bounce_b				: void : void
+asm : 800E44C0, 07E150 : check_input_hammer			: bool : void
+asm : 800E4540, 07E1D0 : check_input_jump			: bool : void
+asm : 800E4648, 07E2D8 : check_input_spin			: void : void
+asm : 800E474C, 07E3DC : peach_set_disguise_anim : void : animID
+asm : 800E4808, 07E498 : peach_check_for_parasol_input : void : void
+asm : 800E48E0, 07E570 : peach_sync_disguise_npc : void : void
+asm : 800E495C, 07E5EC : peach_make_disguise_npc : npc* : int peachDisguise "from game_status"
+asm : 800E4AA4, 07E734 : peach_disguise_check_overlaps : void : void
+asm : 800E4DBC, 07EA4C : can_pause : bool : #buttons current, #buttons pressed
+asm : 800E4F58, 07EBE8 : setup_partner_popup : int count : popup_menu*
+asm : 800E5024, 07ECB4 : setup_item_popup : int count : popup_menu*
+asm : 800E50C4, 07ED54 : check_input_open_menus : void : void
+asm : 800E566C, 07F2FC : check_input_status_menu	: void : void
+asm : 800E5780, 07F410 : clear_player_data			: void : void
+asm : 800E5944, 07F5D4 : get_player_data			: player_data* : void
+asm : 800E5954, 07F5E4 : add_item					: int addedPosition "-1 if no room" : int itemID
+asm : 800E59CC, 07F65C : get_item_count				: int numItems : void
+asm : 800E5A00, 07F690 : get_item_empty_count		: int numEmpty : void
+asm : 800E5A24, 07F6B4 : find_item "works for both keys and consumables" : int slotNum "-1 if not found" : int itemID
+asm : 800E5AAC, 07F73C : sort_items					: void : void
+asm : 800E5B1C, 07F7AC : add_badge					: int addedPosition "-1 if no room" : int itemID
+asm : 800E5BA4, 07F834 : store_item					: int addedPosition "-1 if no room" : int itemID
+asm : 800E5BF4, 07F884 : get_stored_count			: int numItems : void
+asm : 800E5C28, 07F8B8 : get_stored_empty_count		: int numEmpty : void
+asm : 800E5C4C, 07F8DC : enforce_hpfp_limits		: void : void
+asm : 800E5D14, 07F9A4 : initialize_status_menu		: void : void
+asm : 800E6084, 07FD14 : status_menu_draw_number	: void : int iconID, int posX, int posY, int value, int numDigits
+asm : 800E6214, 07FEA4 : status_menu_draw_stat		: void : int iconID, int posX, int posY, int min, int max
+asm : 800E6494, 080124 : update_status_menu			: void : void
+asm : 800E76B8, 081348 : coin_counter_draw_content	: @draw_window_contents
+asm : 800E77BC, 08144C : update_coin_counter		: void : void
+asm : 800E78F8, 081588 : show_coin_counter			: void : void
+asm : 800E7A78, 081708 : hide_coin_counter			: void : void
+api : 800E7AD8, 081768 : ShowCoinCounter "shows coin counter in lower left hand corner" : void : bool "1 = show | 0 = hide"
+asm : 800E7B1C, 0817AC : draw_status_ui "draw status menu and coin counter" : void : void
+asm : 800E7B40, 0817D0 : open_status_menu_long "opens for 210 frames" : void : void
+asm : 800E7B6C, 0817FC : open_status_menu_short "opens for 105 frames" : void : void
+asm : 800E7B98, 081828 : close_status_menu : void : void
+asm : 800E7CF0, 081980 : is_status_menu_visible					: bool : void
+asm : 800E7D00, 081990 : status_menu_start_blinking_hp			: void : void
+asm : 800E7D44, 0819D4 : status_menu_stop_blinking_hp			: void : void
+asm : 800E7D6C, 0819FC : status_menu_start_blinking_fp			: void : void
+asm : 800E7DB0, 081A40 : status_menu_stop_blinking_fp			: void : void
+asm : 800E7DD4, 081A64 : status_menu_start_blinking_coins		: void : void
+asm : 800E7E18, 081AA8 : status_menu_stop_blinking_coins		: void : void
+asm : 800E7E40, 081AD0 : status_menu_start_blinking_sp			: void : void
+asm : 800E7E74, 081B04 : status_menu_stop_blinking_sp			: void : void
+asm : 800E7E98, 081B28 : status_menu_start_blinking_sp_bars		: void :  int numBarsToBlink
+asm : 800E7EC4, 081B54 : status_menu_start_blinking_starpoints	: void : void
+asm : 800E7EEC, 081B7C : status_menu_stop_blinking_starpoints	: void : void
+asm : 800E7F10, 081BA0 : decrement_status_menu_disabled		: void : void
+asm : 800E7F34, 081BC4 : increment_status_menu_disabled		: void : void
+asm : 800E7F4C, 081BDC : sync_status_menu "set displayed values to real values" : void : void
+asm : 800E7F90, 081C20 : reset_status_menu			: void : void
+asm : 800E8128, 081DB8 : is_ability_active			: int activeCount : #abilityID
+asm : 800E8498, 082128 : is_partner_ability_active "STUB -- unused in vanilla game" : int activeCount : #abilityID
+asm : 800E84A0, 082130 : add_coins					: int newCoinTotal : int amount
+asm : 800E8508, 082198 : add_star_points			: int newValue : int amount
+asm : 800E8550, 0821E0 : add_star_pieces			: int newValue : int amount
+asm : 800E8594, 082224 : increment_max_SP			: void : void
+asm : 800E85B8, 082248 : set_max_SP					: void : int value
+asm : 800E85D4, 082264 : add_SP						: void : int amount
+asm : 800E8644, 0822D4 : recover_fp					: int newValue : int amount "-1 heals to full, -2 heals to full and increments maxFP by one"
+asm : 800E86AC, 08233C : recover_hp					: int newValue : int amount "-1 heals to full, -2 heals to full and increments maxHP by one"
+asm : 800E8714, 0823A4 : subtract_hp				: void : int amount "use negative values to set HP = 1"
+asm : 800E8740, 0823D0 : has_full_hp				: bool : void
+asm : 800E875C, 0823EC : has_full_fp				: bool : void
+asm : 800E8778, 082408 : add_fortress_keys			: int newValue : int amount
+asm : 800E8798, 082428 : subtract_fortress_keys		: int newValue : int amount
+asm : 800E87C4, 082454 : get_fortress_key_count		: int value : void
+asm : 800E87E0, 082470 : use_consumable				: script_instance* itemUseScript : int itemIndex "which item to use from consumables inventory, stores itemID in Var[A] of returned script"
+asm : 800E885C, 0824EC : remove_consumable "remove item at 8010CD20" : void : void
+asm : 800E88F4, 082584 : partner_is_idle : bool : void
+asm : 800E8984, 082614 : partner_is_flying : void : bool flying
+asm : 800E89B0, 082640 : partner_create_npc : void : void
+asm : 800E8A88, 082718 : partner_free_npc : void : void
+asm : 800E8AAC, 08273C : partner_manager_update : void : void
+asm : 800E9548, 0831D8 : switch_to_partner : void : #partnerID
+asm : 800E95E0, 083270 : partner_init_after_battle : void : #partnerID
+asm : 800E96F4, 083384 : partner_use_ability		: bool success : void
+asm : 800E97C0, 083450 : partner_player_can_pause : bool canPause : void
+asm : 800E980C, 08349C : partner_can_use_ability : bool canUseAbility : void
+asm : 800E9854, 0834E4 : partner_reset_data "called during map load" : void : void
+asm : 800E9960, 0835F0 : partner_initialize_data "called on boot" : void : void
+asm : 800E99C4, 083654 : partner_test_enemy_collision "is the partner current colliding with a given enemy? triggers first strike when true" : bool isColliding : enemy* testEnemy
+asm : 800E9A18, 0836A8 : partner_get_ride_script : bytecode* : void
+asm : 800E9A38, 0836C8 : partner_handle_before_battle : void : void
+asm : 800E9AA4, 083734 : partner_handle_after_battle : void : void
+asm : 800E9BAC, 08383C : partner_kill_ability_script "kill current ability script, if one is running" : void : void
+asm : 800E9BF8, 083888 : partner_suspend_ability_script "suspend current ability script, if one is running" : void : void
+asm : 800E9C40, 0838D0 : partner_resume_ability_script "resumes current ability script, if one is running" : void : void
+asm : 800E9C88, 083918 : partner_walking_enable : void : npc* partner, int
+asm : 800E9E1C, 083AAC : partner_walking_update_player_tracking	: void : npc* partner
+asm : 800E9F20, 083BB0 : partner_walking_update_motion : void : npc* partner, int initialCall
+asm : 800EA054, 083CE4 : partner_walking_follow_player : void : npc* partner, int initialCall
+asm : 800EB6F0, 085380 : partner_flying_enable : void : npc* partner, int
+asm : 800EB898, 085528 : partner_flying_update_player_tracking	: void : npc* partner
+asm : 800EB9B0, 085640 : partner_flying_update_motion : void : npc* partner, int initialCall
+asm : 800EBDD8, 085A68 : partner_flying_follow_player : void : npc* partner, int initialCall
+asm : 800ECD74, 086A04 : partner_init_put_away : void : npc* partner
+asm : 800ECD98, 086A28 : partner_put_away : void : npc* partner, int initialCall
+asm : 800ED0A4, 086D34 : partner_init_get_out : void : npc* partner
+asm : 800ED0C8, 086D58 : partner_get_out : void : npc* partner
+asm : 800ED708, 087398 : enable_partner_ai : void : void
+asm : 800ED774, 087404 : partner_set_tether_distance : void : float distanceFromPlayer
+asm : 800ED784, 087414 : partner_reset_tether_distance "default = 40.0" : void : void
+asm : 800ED7A0, 087430 : partner_set_goal_pos : void : int posX, int posZ
+asm : 800ED83C, 0874CC : partner_clear_player_tracking : void : npc* partner
+asm : 800ED9E0, 087670 : partner_enable_input	: int disableCount : void
+asm : 800EDA08, 087698 : partner_disable_input	: int disableCount : void
+asm : 800EDA20, 0876B0 : partner_do_player_collision : void : npc* partner
+asm : 800EDC0C, 08789C : partner_move_to_goal : void : npc* partnerNpc, bool flying
+asm : 800EF790, 089420 : hide_popup_menu : void : void
+asm : 800EF918, 0895A8 : destroy_popup_menu : void : void
+asm : 800EFDF0, 089A80 : popup_menu_update : int state : void
+asm : 800F1A60, 08B6F0 : popup_menu_draw_menu_contents  : @draw_window_contents
+asm : 800F2A28, 08C6B8 : popup_menu_draw_title_contents : @draw_window_contents
+asm : 800F3220, 08CEB0 : create_popup_menu : void : popup_menu* popup
+asm : 800F36C0, 08D350 : draw_box : bool failed : int flags, int windowStyle "present index or window_style_custom pointer", int posX, int posY, int posZ, int width, int height, int opacity, int darkening "from 00 (no darkening) to FF (black)", float scaleX, float scaleY, float rotX, float rotY, float rotZ, code fpDrawContents, int drawContentsArg0, matrix4f* rotScaleMtx, int translateX, int translateY, {out} matrix4f* outMtx
+asm : 8010DAB0, 0A4990 : update_entities			: void : void
+asm : 8010DE78, 0A4D58 : update_shadows				: void : void
+asm : 8010DFA0, 0A4E80 : set_entity_commandlist : void : entity*, int* entityScript
+asm : 8010DFB8, 0A4E98 : step_entity_commandlist : void : entity*
+asm : 8010E148, 0A5028 : exec_entity_commandlist : void : entity*
+asm : 8010E248, 0A5128 : entity_model_set_shadow_color : void : int alpha
+asm : 8010E294, 0A5174 : render_entities : void : void
+asm : 8010E4AC, 0A538C : render_shadows : void : void
+asm : 8010E60C, 0A54EC : update_entity_transform_matrix		: void : entity*
+asm : 8010E754, 0A5634 : update_shadow_transform_matrix : void : shadow*
+asm : 8010E884, 0A5764 : update_entity_inverse_rotation_matrix : void : entity*
+asm : 8010E9C8, 0A58A8 : get_entity_by_index		: entity* : int index
+asm : 8010E9E4, 0A58C4 : get_shadow_by_index		: shadow* : int index
+asm : 8010EA00, 0A58E0 : get_entity_list			: entity** : void
+asm : 8010EA2C, 0A590C : get_shadow_list			: shadow** : void
+asm : 8010EA58, 0A5938 : entity_start_script "call this to notify that a new instance of the bound entity script should be started" : bool "false if script is null" : void
+asm : 8010EA84, 0A5964 : get_entity_type	: #entityType : int entityIndex
+asm : 8010EAB0, 0A5990 : delete_entity	: void : int entityIndex
+asm : 8010EB70, 0A5A50 : delete_entity_and_unload_data	: void : int entityIndex
+asm : 8010EC3C, 0A5B1C : _delete_shadow : void : int shadowIndex
+asm : 8010EC98, 0A5B78 : entity_get_collision_flags "checks entity against objects the player is touching, hammering, etc." : int flags : entity*
+asm : 8010EDBC, 0A5C9C : entity_interacts_with_current_partner : bool : int entityIndex
+asm : 8010EE8C, 0A5D6C : test_player_entity_aabb	: bool intersects : entity*
+asm : 8010EF90, 0A5E70 : is_player_action_state		: bool : #actionState
+asm : 8010EFAC, 0A5E8C : entity_set_render_script : void : entity*, $EntityModelScript
+asm : 8010EFF4, 0A5ED4 : load_area_specific_entity_data		: void : void
+asm : 8010F098, 0A5F78 : clear_entity_data : void : int "usually zero?"
+asm : 8010F494, 0A6374 : entity_anim_make_vertex_pointers : void : $EntityBP, ptr baseAddr, vertex* baseVertices
+asm : 8010F684, 0A6564 : load_simple_entity_data : void : entity*, $EntityBP
+asm : 8010F7E8, 0A66C8 : load_split_entity_data : void : entity*, $EntityBP
+asm : 8010FBBC, 0A6A9C : entity_free_static_data : void : $EntityBP
+asm : 8010FCA4, 0A6B84 : create_entity				: int entityIndex : $EntityBP data, int x, int y, int z, int flags
+asm : 8010FFB8, 0A6E98 : create_shadow_from_data	: int shadowIndex : static_shadow_data* data, float x, float y, float z
+api : 80110118, 0A6FF8 : MakeEntity       			: Var[0] int entityIndex : varargs
+api : 8011027C, 0A715C : SetEntityCullMode : void : int cullMode
+api : 8011030C, 0A71EC : UseDynamicShadow "last-created entity: should shadow position be recomputed every frame?" : void : bool
+api : 80110390, 0A7270 : AssignScript				: void : $Script
+api : 801103D8, 0A72B8 : AssignAreaFlag				: void : int index
+api : 8011044C, 0A732C : AssignBlockFlag			: void : int flagVar
+api : 80110498, 0A7378 : AssignFlag					: void : int flagVar
+api : 801104F4, 0A73D4 : AssignPanelFlag			: void : int flagVar
+api : 80110550, 0A7430 : AssignCrateFlag			: void : int flagVar
+asm : 801105AC, 0A748C : create_entity_shadow		: int shadowIndex : entity*, float x, float y, float z
+asm : 80110640, 0A7520 : create_shadow_type			: int shadowIndex : int type "0-5 inclusive", float x, float y, float z
+asm : 80110708, 0A75E8 : delete_shadow : void : int shadowIndex
+asm : 80110724, 0A7604 : update_entity_shadow_position : void : entity*
+asm : 801109C8, 0A78A8 : entity_raycast_down : bool hit : {out} float* x, {out} float* y, {out} float* z, {out} float* hitYaw, {out} float* hitPitch, {out} float* hitLength
+asm : 80110C3C, 0A7B1C : set_standard_shadow_scale "used for mario and battle actors" : void : shadow*, float height
+asm : 80110CE0, 0A7BC0 : set_npc_shadow_scale : void : shadow*, float height, float npcRadius "collision size"
+asm : 80110DB4, 0A7C94 : set_peach_shadow_scale : void : shadow*, float height
+asm : 80110F00, 0A7DE0 : is_block_on_ground : bool : entity*
+asm : 80110F70, 0A7E50 : state_delegate_NOP : void : void
+asm : 80110F78, 0A7E58 : clear_game_modes : void : void
+asm : 80110F9C, 0A7E7C : set_next_game_mode "unused?" : game_mode* : game_mode_bp* mode
+asm : 80111088, 0A7F68 : set_game_mode_slot : game_mode* : int slot "0 or 1", game_mode_bp* mode
+asm : 80111164, 0A8044 : game_mode_set_fpDrawAuxUI : void : int slot, code fpDrawUI
+asm : 80111258, 0A8138 : step_current_game_mode		: void : void
+asm : 801112CC, 0A81AC : state_do_unk "state delegate 0xC, unused?" : void : void
+asm : 80111338, 0A8218 : state_render_backUI		: void : void
+asm : 801113A4, 0A8284 : state_render_frontUI		: void : void
+asm : 80111470, 0A8350 : appendGfx_model : void : model*
+asm : 8011314C, 0AA02C : load_tile_header			: void : char* textureName, int romOffset, int size
+asm : 80113EEC, 0AADCC : get_model_property			: int* : model_node* mdl, #modelProperty property
+asm : 80113F24, 0AAE04 : _load_model_textures "recursive part for load_model_textures" : void : model_node* mdl, int romOffset, int size
+asm : 80114004, 0AAEE4 : load_model_textures 		: void : model_node* model, int romOffset, int size
+asm : 80114088, 0AAF68 : mdl_get_child_count : int numChildren : model_node* mdl
+asm : 80114124, 0AB004 : clear_model_data			: void : void
+asm : 801143C8, 0AB2A8 : init_model_data			: void : void
+asm : 8011450C, 0AB3EC : calculate_model_sizes		: void : void
+asm : 801145EC, 0AB4CC : mdl_create_model : void : model_bp*
+asm : 80114F70, 0ABE50 : render_models				: void : void
+asm : 80116074, 0ACF54 : appendGfx_model_group : void : model*
+asm : 80116254, 0AD134 : render_transform_group_node : void : model_node*
+asm : 801163EC, 0AD2CC : render_transform_group : void : mdl_transform_group*
+asm : 80119110, 0AFFF0 : get_model_from_list_index	: model* : int listIndex
+asm : 80119128, 0B0008 : load_data_for_models "loads textures and prepares transformations" : void : model_node* mdl "typically root", int romOffset, int size
+asm : 801191A8, 0B0088 : load_model_transforms		: void : model_node* mdl, model_node* parent, matrix4f* mdlTxMtx, int treeDepth
+asm : 801193F0, 0B02D0 : get_model_list_index_from_tree_index	: int listIndex : int treeIndex
+asm : 80119470, 0B0350 : get_transform_group_index : int groupIndex "0-3 or -1 if none" : modelID
+asm : 801194CC, 0B03AC : get_model_center_and_size  : void : modelID, float* outCenterX, float* outCenterY, float* outCenterZ, float* outSizeX,float* outSizeY, float* outSizeZ
+asm : 801195A0, 0B0480 : get_transform_group : mdl_transform_group* : int groupIndex
+asm : 8011975C, 0B063C : make_transform_group : void : modelID
+asm : 801199B0, 0B0890 : enable_transform_group : void : modelID
+asm : 80119A40, 0B0920 : disable_transform_group : void : modelID
+asm : 80119AD0, 0B09B0 : clone_model "fully copies srcModel, changing only modelID" : void : int srcModelID, int newModelID
+asm : 80119F30, 0B0E10 : enable_world_fog : void : void
+asm : 80119F44, 0B0E24 : disable_world_fog : void : void
+asm : 80119F54, 0B0E34 : set_world_fog_dist : void : int start, int end
+asm : 80119F68, 0B0E48 : set_world_fog_color "each channel 0-255" : void : int R, int G, int B, int A
+asm : 80119F84, 0B0E64 : is_world_fog_enabled : bool : void
+asm : 80119F94, 0B0E74 : get_world_fog_distance : void : int* out_start, int* out_end
+asm : 80119FB8, 0B0E98 : get_world_fog_color "each channel 0-255" : void : int* R, int* B, int* G, int* A
+asm : 80119FF4, 0B0ED4 : set_tex_panner		: void : model* model, int pannerID
+asm : 80119FFC, 0B0EDC : set_main_pan_u		: void : int pannerID, int amount
+asm : 8011A014, 0B0EF4 : set_main_pan_v		: void : int pannerID, int amount
+asm : 8011A02C, 0B0F0C : set_aux_pan_u		: void : int pannerID, int amount
+asm : 8011A044, 0B0F24 : set_aux_pan_v		: void : int pannerID, int amount
+asm : 8011A05C, 0B0F3C : set_mdl_custom_gfx_set : void : model*, int customGfxIndex "-1 for no change", int fogType "-1 for no change"
+asm : 8011A094, 0B0F74 : set_custom_gfx : void : int customGfxIndex, gfx* preRender, gfx* postRender
+asm : 8011A0B0, 0B0F90 : set_custom_gfx_builders : void : int customGfxIndex, code, code
+asm : 8011A0CC, 0B0FAC : build_custom_gfx : void : void
+asm : 8011A1F4, 0B10D4 : is_identity_fixed_mtx : bool "true if mtx is NULL or equal to identity" : matrix4s* mtx
+asm : 8011A23C, 0B111C : set_background_color_blend : void : int R, int G, int B, int alpha "0-255 lerp amount"
+asm : 8011A260, 0B1140 : get_background_color_blend : void : int* out_R, int* out_G, int* out_B, int* out_alpha "0-255 lerp amount"
+asm : 8011A294, 0B1174 : set_model_fog_color_parameters : void : int primR, int primG, int primB, int primA, int fogR, int fogG, int fogB, int fogStart, int fogEnd
+asm : 8011A2F4, 0B11D4 : get_model_fog_color_parameters : void : {out} int* primR, {out} int* primG, {out} int* primB, {out} int* primA, {out} int* fogR, {out} int* fogG, {out} int* fogB, {out} int* fogStart, {out} int* fogEnd
+asm : 8011A378, 0B1258 : set_model_env_color_parameters : void : int primR, int primG, int primB, int envR, int envG, int envB
+asm : 8011A3B4, 0B1294 : get_model_env_color_parameters : void : {out} int* primR, {out} int* primG, {out} int* primB, {out} int* envR, {out} int* envG, {out} int* envB
+asm : 8011A408, 0B12E8 : mdl_get_vertex_count : void : gfx*, {out} int* numVertices, {out} vertex* minVertex, {out} int* gfxCmdCount, vertex* baseAddr
+asm : 8011A4BC, 0B139C : mdl_local_gfx_update_vtx_pointers : void : byte* src, int count, byte* dest
+asm : 8011A510, 0B13F0 : mdl_local_gfx_copy_vertices : void : byte* src, int count, byte* dest
+asm : 8011A544, 0B1424 : mdl_make_local_vertex_copy : void : int copyIndex, int modelID, bool clear
+asm : 8011A690, 0B1570 : mdl_get_copied_vertices : void : int copyIndex, {out} vertex** firstVertex, {out} vertex** copiedVertices, {out} int* numCopied
+asm : 8011A6CC, 0B15AC : mdl_get_copied_gfx "side effect: causes struct's selector to increment" : gfx* : int copyIndex
+asm : 8011A70C, 0B15EC : mdl_project_tex_coords : void : modelID, gfx* destGfx, matrix4f* destMtx, vertex* destVertices
+asm : 8011BB0C, 0B29EC : mdl_draw_hidden_panel_surface : void : gfx** displayListPos, int modelID
+asm : 8011BBC4, 0B2AA4 : mdl_get_next_texture_address : ptr "0x40 aligned, NULL if out of space" : int size
+asm : 8011BC0C, 0B2AEC : mdl_set_all_fog_mode : void : int fogMode
+asm : 8011BC70, 0B2B50 : clear_render_tasks : void : void
+asm : 8011BCB0, 0B2B90 : clear_render_tasks_alt "unused?" : void : void
+asm : 8011BCF0, 0B2BD0 : queue_render_task "might use blueprint pattern: render_task_BP -> render_task" : render_task* : render_task* task
+asm : 8011BD98, 0B2C78 : execute_render_tasks : void : void
+asm : 8011C260, 0B3140 : animator_copy_vertices_to_buffer : vertex* : model_animator* animator, animator_node* node, vertex* buffer, int vertexCount, int overhead, int startIndex
+asm : 8011C3B0, 0B3290 : animator_make_mirrorZ : void : matrix4f*
+asm : 8011C3F4, 0B32D4 : animator_make_mirrorY : void : matrix4f*
+asm : 8011C438, 0B3318 : animator_make_mirrorX : void : matrix4f*
+asm : 8011C47C, 0B335C : animator_make_identity : void : matrix4f*
+asm : 8011C4BC, 0B339C : get_animator_child_with_id : animator_node* : animator_node* root, int id
+asm : 8011C530, 0B3410 : get_animator_child_for_model : animator_node* : animator_node* root, modelID
+asm : 8011C5A4, 0B3484 : free_animator_nodes : void : animator_node* root
+asm : 8011C604, 0B34E4 : clear_animator_list : void : void
+asm : 8011C6F0, 0B35D0 : reset_animator_list : void : void
+asm : 8011C778, 0B3658 : delete_model_animator_node : void : animator_node*
+asm : 8011C7E0, 0B36C0 : delete_model_animator_nodes : void : model_animator*
+asm : 8011C818, 0B36F8 : delete_model_animator : void : model_animator*
+asm : 8011C898, 0B3778 : create_model_animator : int index : $ModelAnimation
+asm : 8011C9C0, 0B38A0 : create_mesh_animator  : int index : $ModelAnimation
+asm : 8011CAF8, 0B39D8 : add_anim_node : animator_node* newNode : model_animator*, int parentNodeID, animator_node_bp*
+asm : 8011CC9C, 0B3B7C : update_model_animator : void : int index
+asm : 8011CFD0, 0B3EB0 : step_model_animator : bool keepGoing : model_animator*
+asm : 8011D438, 0B4318 : animator_update_model_transforms : void : model_animator*, matrix4s* rootTransform
+asm : 8011D4F8, 0B43D8 : animator_node_update_model_transform : void : model_animator*, matrix4f* flipMtx, animator_node* node, matrix4s* rootTransform
+asm : 8011D6E4, 0B45C4 : render_animated_model : void : int animatorID, matrix4s* rootTransform
+asm : 8011D7C8, 0B46A8 : render_animated_model_with_vertices : void : int animatorID, matrix4s* rootTransform, int vertexSegment, ptr vertexArray
+asm : 8011D8B4, 0B4794 : appendGfx_animator : void : model_animator*
+asm : 8011DE34, 0B4D14 : appendGfx_animator_node : void : model_animator*, animator_node*, matrix4f* mtx
+asm : 8011E354, 0B5234 : get_animator_node_for_tree_index : animator_node* : model_animator*, int treeIndex
+asm : 8011E378, 0B5258 : get_animator_node_with_id : animator_node* : model_animator*, int nodeID
+asm : 8011E394, 0B5274 : set_animator_tree_to_node_map : void : model_animator*, int* nodeIDs, int count
+asm : 8011E3C0, 0B52A0 : get_animator_by_index : model_animator* : int index
+asm : 8011E3E0, 0B52C0 : set_animator_render_callback : void : int index, code fpRenderCallback, ptr callbackArg
+asm : 8011E408, 0B52E8 : enable_anim_model_fog : void : void
+asm : 8011E41C, 0B52FC : disable_anim_model_fog : void : void
+asm : 8011E42C, 0B530C : set_anim_model_fog_dist : void : int start, int end
+asm : 8011E444, 0B5324 : set_anim_model_fog_color "each channel 0-255" : void : int R, int G, int B, int A
+asm : 8011E46C, 0B534C : is_anim_model_fog_enabled : bool : void
+asm : 8011E47C, 0B535C : get_anim_model_fog_distance : void : int* out_start, int* out_end
+asm : 8011E498, 0B5378 : get_anim_model_fog_color "each channel 0-255" : void : int* R, int* G, int* B, int* A
+asm : 8011E4CC, 0B53AC : set_animator_flags		: void : int index, int bits
+asm : 8011E4F8, 0B53D8 : clear_animator_flags	: void : int index, int bits
+asm : 8011E528, 0B5408 : play_model_animation	: void : int index, $ModelAnimation
+asm : 8011E578, 0B5458 : play_model_animation_starting_from	: void : int index, $ModelAnimation, int framesToSkip
+asm : 8011E614, 0B54F4 : load_model_animator_node "recursive part of next function" : void : static_animator_node* node, model_animator* animator, int parentNodeID, {out} int* treeIndexToNodeIDs
+asm : 8011E78C, 0B566C : load_model_animator_tree : void : int index, static_animator_node** tree
+asm : 8011E800, 0B56E0 : load_mesh_animator_node "recursive part of next function" : void : static_animator_node* node, model_animator* animator, int parentNodeID, {out} int* treeIndexToNodeIDs
+asm : 8011E854, 0B5734 : load_mesh_animator_tree : void : int index, static_animator_node** tree
+asm : 8011E910, 0B57F0 : reload_mesh_animator_node "recursive part of next function" : void : static_animator_node* node, model_animator* animator, int parentNodeID, {out} int* treeIndexToNodeIDs
+asm : 8011EA58, 0B5938 : reload_mesh_animator_tree : void : model_animator* animator
+asm : 8011EAD8, 0B59B8 : step_mesh_animator : void : model_animator* animator
+asm : 8011EF90, 0B5E70 : clear_entity_models : void : void
+asm : 8011F038, 0B5F18 : init_entity_models : void : void
+asm : 8011F0C0, 0B5FA0 : load_entity_model : int entityModelID : ptr entityModelData
+asm : 8011F1C4, 0B60A4 : ALT_load_entity_model "same as func_80120ce0, but sets entity flag 400 as well. only used by entity models allocated in scripts" : int entityModelIndex : int* renderCmdList
+asm : 8011F2E4, 0B61C4 : exec_entity_model_commandlist : void : int entityModelIndex
+asm : 8011F398, 0B6278 : step_entity_model_commandlist : bool hasMore : entity_model*
+asm : 8011F520, 0B6400 : make_entity_model_mtx_flipZ : void : matrix4f* mtx
+asm : 8011F564, 0B6444 : appendGfx_entity_model : void : entity_model*
+asm : 801200C8, 0B6FA8 : draw_entity_model_A "used for shadows" : void : int entityModelIndex, matrix4s* transformMtx
+asm : 80120298, 0B7178 : draw_entity_model_B "used for actual entities" : void : int entityModelIndex, matrix4s* transformMtx, int segment "80154374 set to this", int* vertexArray
+asm : 80120468, 0B7348 : draw_entity_model_C "unused?" : void : int entityModelIndex, matrix4s* transformMtx
+asm : 80120568, 0B7448 : draw_entity_model_D "unused?" : void : int entityModelIndex, matrix4s* transformMtx
+asm : 80120668, 0B7548 : draw_entity_model_E "used for virtual entities" : void : int entityModelIndex, matrix4s* transformMtx
+asm : 8012115C, 0B803C : set_entity_model_render_command_list : void : int entityModelIndex, int* cmdList
+asm : 801211BC, 0B809C : get_entity_model : entity_model* : int listIndex
+asm : 801211DC, 0B80BC : free_entity_model_by_index : void : entity_model*
+asm : 80121274, 0B8154 : free_entity_model_by_ref : void : entity_model*
+asm : 801212C8, 0B81A8 : set_entity_model_flags : void : int entityModelIndex, int flagBits
+asm : 80121304, 0B81E4 : clear_entity_model_flags : void : int entityModelIndex, int flagBits
+asm : 80121344, 0B8224 : bind_entity_model_setupGfx : void : int entityModelIndex, int callbackArg0, code fpSetupGfxCallback
+asm : 801213CC, 0B82AC : enable_entity_fog : void : void
+asm : 801213E0, 0B82C0 : disable_entity_fog : void : void
+asm : 801213F0, 0B82D0 : set_entity_fog_dist : void : int min, int max
+asm : 80121408, 0B82E8 : set_entity_fog_color "each channel 0-255" : void : int R, int G, int B, int A
+asm : 80121430, 0B8310 : is_entity_fog_enabled : bool : void
+asm : 80121440, 0B8320 : get_entity_fog_distance : void : int* out_start, int* out_end
+asm : 8012145C, 0B833C : get_entity_fog_color "each channel 0-255" : void : int* R, int* B, int* G, int* A
+asm : 80121490, 0B8370 : stub_generic_entity_delegate : void : generic_entity*
+asm : 80121498, 0B8378 : clear_generic_entity_list : void : void
+asm : 801214F4, 0B83D4 : init_generic_entity_list : void : void
+asm : 80121538, 0B8418 : create_generic_entity_world : int index : code* updateFunc, code* drawFunc
+asm : 8012161C, 0B84FC : create_generic_entity_frontUI : int index : code* updateFunc, code* drawFunc
+asm : 80121700, 0B85E0 : create_generic_entity_backUI : int index : code* updateFunc, code* drawFunc
+asm : 801217E4, 0B86C4 : update_generic_entities : void : void
+asm : 80121850, 0B8730 : render_generic_entities_world : void : void
+asm : 801218C0, 0B87A0 : render_generic_entities_frontUI : void : void
+asm : 80121930, 0B8810 : render_generic_entities_backUI : void : void
+asm : 801219A0, 0B8880 : free_generic_entity : void : int index
+asm : 80121A1C, 0B88FC : get_generic_entity : generic_entity* : void
+asm : 80121A40, 0B8920 : clear_character_set : void : void
+asm : 80121A54, 0B8934 : clear_printers : void : void
+asm : 80121AE8, 0B89C8 : {CHANGED} load_font_data : void : int start, int size, int dest
+asm : 80121B10, 0B89F0 : load_font	 : void : int font "0 = standard, 1/2 = credits"
+asm : 80121BB4, 0B8A94 : update_messages : void : void
+asm : 80121C74, 0B8B54 : _update_message : void : msg_print_state* printer
+asm : 801225E0, 0B94C0 : render_messages : void : void
+asm : 80122810, 0B96F0 : msg_play_speech_sound : void : msg_print_state* printer, int character
+asm : 8012294C, 0B982C : {CHANGED} msg_copy_to_print_buffer : void : msg_print_state* printer, int bufSize, int flags
+asm : 80123A10, 0BA8F0 : initialize_printer		: void : msg_print_state*
+asm : 80123B70, 0BAA50 : dma_load_string			: void : int stringID, ptr dest
+asm : 80123BF8, 0BAAD8 : load_message_to_buffer "load into standard message buffers at 80154430" : ptr buffer : int stringID
+asm : 80123C6C, 0BAB4C : msg_get_printer_for_string : msg_print_state* : stringID, bool* donePrintingWriteback
+asm : 80123C88, 0BAB68 : _get_printer_for_string : msg_print_state* : stringID, bool* donePrintingWriteback
+asm : 80123DD4, 0BACB4 : msg_printer_load_string : int "always 1?" : stringID, msg_print_state*
+asm : 80123E24, 0BAD04 : msg_printer_set_origin_pos : void : msg_print_state* printer, int X, int Y
+asm : 80123E74, 0BAD54 : cancel_message : void : msg_print_state*
+asm : 80123E98, 0BAD78 : set_message_images	: void : ptr images
+asm : 80123EA8, 0BAD88 : set_message_string	: void : int string, int index
+asm : 80123F54, 0BAE34 : set_message_value	: void : int value, int index
+asm : 80123FDC, 0BAEBC : close_message : void : msg_print_state*
+asm : 80123FF0, 0BAED0 : {CHANGED} msg_get_print_char_width "operates on print buffer characters" : int width : int char, int charSet, int variation, float stringScale, int overrideCharWidth, int flags
+asm : 80124184, 0BB064 : msg_get_draw_char_width "operates on draw buffer characters" : int width : int char, int charSet, int variation, float stringScale, int overrideCharWidth, int flags
+asm : 801242F8, 0BB1D8 : {CHANGED} get_string_properties	: void : stringID, int* outHeight, int* outWidth, int*, int*, int*, int*, int charset
+asm : 80124824, 0BB704 : get_string_width		: int width : int stringID, int charset "0 = standard"
+asm : 80124860, 0BB740 : get_string_lines : int numLines : int stringID
+asm : 8012489C, 0BB77C : draw_string			: void : int stringID "or address", int posX, int posY, int opacity, int palette, int style "0 = default"
+asm : 80124B40, 0BBA20 : msg_update_rewind_arrow : void : int printerIndex
+asm : 8012525C, 0BC13C : msg_draw_rewind_arrow : void : int printerIndex
+asm : 80125328, 0BC208 : msg_draw_choice_pointer : void : msg_print_state* printer
+asm : 80125870, 0BC750 : draw_digit				: void : ptr image, int unk "0 or 1", int posX, int posY
+asm : 80125A4C, 0BC92C : draw_number			: void : int value, int posX, int posY, bool, int palette, int opacity, int style "0 = default"
+asm : 80125F20, 0BCE00 : drawbox_message_delegate "appendGfx_message wrapper for draw_box draw delegate calling convention" : void : msg_print_state* printer
+asm : 80125F54, 0BCE34 : draw_message_window : void : msg_print_state* printer
+asm : 80126140, 0BD020 : {CHANGED} appendGfx_message : void : msg_print_state* printer, int posX "relative to base window pos", int posY "relative to base window pos", int additionalOffsetX, int additionalOffsetY, int flag "1 = use alpha | 2 = use menu font | 4 = set scissor to (0,0)-(1276,956)", int alpha
+asm : 8012A718, 0C15F8 : msg_reset_gfx_state "use after drawing frames" : void : void
+asm : 8012A75C, 0C163C : {CHANGED} msg_draw_char : void : msg_print_state* printer, msg_draw_state*, int charIndex, int palette, int posX "upper left corner", int posY "upper left corner"
+asm : 8012B130, 0C2010 : msg_draw_prim_rect : void : int colR, int colG, int colB, int colA, int posX, int posY,int sizeX, int sizeY
+asm : 8012B190, 0C2070 : appendGfx_msg_prim_rect : void : int colR, int colG, int colB, int colA, int ulX, int ulY,int lrX, int lrY
+asm : 8012B390, 0C2270 : msg_draw_speech_bubble : void : msg_print_state*, int posX, int posY, int straightWidth, int curveWidth, int height, float scaleX, float scaleY, int opacity
+asm : 8012BB64, 0C2A44 : msg_draw_speech_arrow : void : msg_print_state* printer
+asm : 8012C2E0, 0C31C0 : msg_draw_frame : void : int posX, int posY, int sizeX, int sizeY, int style "5 or 6", int palette, int fading, int bgAlpha "for scrolling BG used with style 6", int frameAlpha
+asm : 8012D068, 0C3F48 : msg_get_glyph : void : int font, int variation, int charIndex, int palette, msg_font_glyph_data* out
+asm : 8012D130, 0C4010 : draw_ci_image_with_clipping : bool success : ptr raster, int width, int height, int fmt, int bitDepth, ptr palette, int posX, int posY, int clipULx, int clipULy, int clipLRx, int clipLRy, int opacity
+asm : 8012D424, 0C4304 : draw_image_with_clipping : bool success : ptr raster, int width, int height, int fmt, int bitDepth, int posX, int posY, int clipULx, int clipULy, int clipLRx, int clipLRy
+asm : 8012DC90, 0C4B70 : draw_tiled_image "each tile has size 64x32 texels, which should fill tmem?" : bool success : ptr raster, int imgSizeX, int imgSizeY, int fmt, int depth, int startX, int startY, int endX, int endY, int screenTileSizeX, int screenTileSizeY, float scaleX, float scaleY
+asm : 8012E5A0, 0C5480 : integer_log : int result "returns greatest power of base <= value" : int value, int base
+asm : 8012E608, 0C54E8 : draw_adjustable_tiled_image "not exactly sure how this one works" : bool success : ptr raster, int tileSizeW "NOT total raster size", int tileSizeH, int fmt, int depth, int startX "screen coords", int startY, int endX, int endY, int tileSizeX "screen coord size of each tile", int tileSizeY, float tileScaleX "ratio between texels and screen pixels", float tileScaleY
+asm : 8012F180, 0C6060 : sparkle_script_init : void : item_entity* coinItem, ptr sparkleScript
+asm : 8012F194, 0C6074 : sparkle_script_step : bool keepGoing : item_entity* coinItem
+asm : 8012F25C, 0C613C : sparkle_script_update : void : item_entity* coinItem
+asm : 8012F29C, 0C617C : draw_coin_sparkles : void : item_entity* item
+asm : 8012F6E8, 0C65C8 : get_item_entity : item_entity* : int itemEntityIndex
+asm : 8012F700, 0C65E0 : item_entity_disable_shadow : void : item_entity*
+asm : 8012F73C, 0C661C : item_entity_enable_shadow : void : item_entity*
+asm : 8012F780, 0C6660 : clear_item_entity_data		: void : void
+asm : 8012F85C, 0C673C : init_item_entity_list	: void : void
+asm : 8012F8B8, 0C6798 : item_entity_load "loads textures as needed" : void : item_entity*
+asm : 8012FB84, 0C6A64 : make_item_entity		: int itemEntityIndex : int itemID, float x, float y, float z, #itemSpawnMode, int pickupDelay "frames before available for pickup", int "facing angle sign? usually -1", var pickupVar
+asm : 80130224, 0C7104 : make_item_entity_nodelay	: int itemEntityIndex : int itemID, float x, float y, float z, #itemSpawnMode, var pickupVar
+asm : 80130258, 0C7138 : make_item_entity_delayed	: int itemEntityIndex : int itemID, float x, float y, float z, #itemSpawnMode, int pickupDelay "frames before available for pickup", var pickupVar
+asm : 80130290, 0C7170 : init_got_item				: int itemEntityIndex : int iconID, int, int messageFlags "0 = item, 10 = \"1 coin\", 20 = \"3 star pieces\", ..."
+asm : 80130564, 0C7444 : item_entity_update : void : item_entity*
+asm : 8013067C, 0C755C : update_item_entities : void : void
+asm : 80130934, 0C7814 : appendGfx_item_entity : void : item_entity* item
+asm : 80131410, 0C82F0 : draw_item_entities				: void : void
+asm : 801315E4, 0C84C4 : render_item_entities : void : void
+asm : 801320C0, 0C8FA0 : remove_item_entity_by_reference	: void : item_entity* item
+asm : 8013218C, 0C906C : remove_item_entity_by_index		: void : int itemEntityIndex
+asm : 8013229C, 0C917C : test_item_player_collision : bool colliding : item_entity* item
+asm : 80132758, 0C9638 : test_item_entity_position : int result "1 = is within radius of point, 0 = is not, -1 = can't pickup item at this time" : float x, float y, float z, float radius
+asm : 801328D8, 0C97B8 : set_item_entity_flags		: void : int itemEntityIndex, int flags
+asm : 80132918, 0C97F8 : clear_item_entity_flags	: void : int itemEntityIndex, int flags
+asm : 80132978, 0C9858 : is_picking_up_item "true when 'you got X' popup is displayed" : bool : void
+asm : 8013299C, 0C987C : set_item_entity_position	: void : int itemEntityIndex, float x, float y, float z
+asm : 801329E0, 0C98C0 : update_item_entity_collectable	"coins, star points, etc" : void : item_entity* item
+asm : 80133DE8, 0CACC8 : update_item_entity_static "items sitting in the world" : void : item_entity* item
+asm : 80133E6C, 0CAD4C : update_item_entity_temp "temporary items" : void : item_entity* item
+asm : 80135210, 0CC0F0 : render_screen_overlay : void : int, float zoomAmount, screen_overlay*
+asm : 80136518, 0CD3F8 : set_screen_overlay_params_front : void : int type, float amount "255 = fully zoomed in"
+asm : 80136534, 0CD414 : set_screen_overlay_params_back  : void : int type, float amount "255 = fully zoomed in"
+asm : 80136550, 0CD430 : get_screen_overlay_params  : void : int index "0 = upper, 1 = lower", {out} int* type, {out} float* amount "255 = fully zoomed in"
+asm : 801365A0, 0CD480 : set_screen_overlay_color : void : int index "0 = upper, 1 = lower", byte R, byte G, byte B
+asm : 801365DC, 0CD4BC : set_screen_overlay_center : void : int index "0 = upper, 1 = lower", int posIndex "0 or 1, purpose unclear", int screenPosX, int screenPosY
+asm : 80136650, 0CD530 : set_screen_overlay_center_worldpos : void : int index "0 = upper, 1 = lower", int posIndex "0 or 1, purpose unclear", int posX, int posY, int posZ
+asm : 80136864, 0CD744 : set_screen_overlay_alpha : void : int index "0 = upper, 1 = lower", float opacity "255 = solid"
+asm : 80136898, 0CD778 : clear_screen_overlays : void : void
+asm : 80136930, 0CD810 : render_screen_overlay_frontUI : void : void
+asm : 801369B0, 0CD890 : render_screen_overlay_backUI : void : void
+asm : 80136A30, 0CD910 : set_map_transition_effect : void : int transitionType
+asm : 80136A3C, 0CD91C : update_exit_map_screen_overlay : bool done : int* progress
+asm : 80136D64, 0CDC44 : update_enter_map_screen_overlay : bool done : int* progress
+asm : 8013DAE0, 0D49C0 : load_hud_element						: void : hud_element*, int* pos
+asm : 8013DE94, 0D4D74 : draw_rect_hud_element					: void : hud_element*, int texSizeX, int texSizeY, int drawSizeX,int drawSizeY, int offsetX, int offsetY, bool clamp "1 = clamp, 0 = repeat", bool dropShadow
+asm : 8013F890, 0D6770 : clear_hud_element_cache : void : void
+asm : 8013FA90, 0D6970 : init_hud_element_list			: void : void
+asm : 8013FC34, 0D6B14 : create_hud_element				: int index : hud_script*
+asm : 8013FDA0, 0D6C80 : update_hud_elements			: void : void
+asm : 8013FE94, 0D6D74 : hud_element_update				: void : hud_element* icon
+asm : 801409A0, 0D7880 : render_hud_elements_backUI		: void : void
+asm : 80140EAC, 0D7D8C : render_hud_elements_frontUI	: void : void
+asm : 8014138C, 0D826C : render_hud_element				: void : hud_element* icon
+asm : 80141E44, 0D8D24 : render_hud_elements_world		: void : void
+asm : 80142A28, 0D9908 : draw_hud_element				: void : int index, int clipMode
+asm : 80142F38, 0D9E18 : draw_hud_element_clipped "use viewport/window clipping" : void : int iconIndex
+asm : 80142F54, 0D9E34 : draw_hud_element_2				: void : int index
+asm : 80142F8C, 0D9E6C : set_hud_element_script			: void : int index, ptr iconScript
+asm : 80143040, 0D9F20 : get_hud_element_script			: ptr : int index
+asm : 80143064, 0D9F44 : get_hud_element				: hud_element* : int index
+asm : 80143084, 0D9F64 : free_hud_element				: void : int index
+asm : 80143114, 0D9FF4 : set_hud_element_render_pos		: void : int index, int posX, int posY
+asm : 8014313C, 0DA01C : get_hud_element_render_pos		: void : int index, int* posX, int* posY
+asm : 8014316C, 0DA04C : set_hud_element_render_depth	: void : int index, int posZ
+asm : 80143190, 0DA070 : set_hud_element_flags			: void : int index, int flagbits
+asm : 801431BC, 0DA09C : clear_hud_element_flags		: void : int index, int flagbits
+asm : 801431EC, 0DA0CC : ALT_clear_hud_element_cache	: void : void
+asm : 801433B0, 0DA290 : set_hud_element_scale			: void : int index, float scale
+asm : 80143584, 0DA464 : set_hud_element_size			: void : int index, #iconSize
+asm : 80143640, 0DA520 : set_hud_element_alpha			: void : int index, int opacity "0 (inivislbe) - 255 (opaque)"
+asm : 8014368C, 0DA56C : set_hud_element_tint			: void : int index, int R, int G, int B
+asm : 801436B8, 0DA598 : create_hud_element_transform_A		: void : int index
+asm : 80143768, 0DA648 : create_hud_element_transform_B		: void : int index
+asm : 80143800, 0DA6E0 : create_hud_element_transform_C		: void : int index
+asm : 80143898, 0DA778 : free_hud_element_transform			: void : int index
+asm : 80143914, 0DA7F4 : set_hud_element_transform_pos		: void : int index, float x, float y, float z
+asm : 80143964, 0DA844 : set_hud_element_transform_scale	: void : int index, float sx, float sy, float sz
+asm : 801439B4, 0DA894 : set_hud_element_transform_rotation	: void : int index, float rx, float ry, float rz
+asm : 80143A04, 0DA8E4 : set_hud_element_transform_rotation_pivot	: void : int index, int dx, int dy
+asm : 80143A44, 0DA924 : copy_world_hud_element_ref_to_battle : void : int worldIndex, int battleIndex
+asm : 80143A78, 0DA958 : set_hud_element_nonworld_cache : void : ptr base, int size
+asm : 80143AB0, 0DA990 : clear_saved_variables		: void : void
+asm : 80143B20, 0DAA00 : clear_area_flags			: void : void
+asm : 80143B70, 0DAA50 : clear_global_flag			: bool oldValue : int index "also accepts var reference"
+asm : 80143BE0, 0DAAC0 : set_global_flag			: bool oldValue : int index "also accepts var reference"
+asm : 80143C4C, 0DAB2C : get_global_flag			: bool value : int index "also accepts var reference"
+asm : 80143CB0, 0DAB90 : set_global_byte			: int oldValue : int index, int value
+asm : 80143CC8, 0DABA8 : get_global_byte			: int value : int index
+asm : 80143CDC, 0DABBC : clear_area_flag			: bool oldValue : int index
+asm : 80143D30, 0DAC10 : set_area_flag				: bool oldValue : int index
+asm : 80143D80, 0DAC60 : get_area_flag				: bool value : int index
+asm : 80143DC8, 0DACA8 : set_area_byte				: int oldValue : int index, int value
+asm : 80143DE0, 0DACC0 : get_area_byte				: int value : int index
+asm : 80143E00, 0DACE0 : default_trigger_delegate : void : int*
+asm : 80143E10, 0DACF0 : clear_trigger_data		: void : void
+asm : 80143EB8, 0DAD98 : init_trigger_list		: void : void
+asm : 80143EFC, 0DADDC : create_trigger			: void : int*
+asm : 80143FF0, 0DAED0 : update_triggers		: void : void
+asm : 80144384, 0DB264 : delete_trigger			: void : trigger*
+asm : 801443FC, 0DB2DC : is_trigger_bound		: bool : trigger* trigger, bytecode* script
+asm : 80144460, 0DB340 : get_trigger_by_id		: trigger* : int triggerID
+asm : 80144478, 0DB358 : should_collider_allow_interact : bool "only true if colliderID is bound to an interact trigger (press A) and player can use it" : int colliderID
+asm : 80144500, 0DB3E0 : load_map_bg			: void : char* assetName
+asm : 80144588, 0DB468 : reset_background_settings : void : void
+asm : 801445B8, 0DB498 : read_background_size	: void : ptr backgroundAsset
+asm : 80144600, 0DB4E0 : set_background_size	: void : int startX, int startY, int sizeX, int sizeY
+asm : 80144628, 0DB508 : blend_background_channel : int blended : int A "0-31", int B, int alpha
+asm : 80144650, 0DB530 : appendGfx_background_texture : void : void
+asm : 8014599C, 0DC87C : enable_background_wave : void : void
+asm : 801459AC, 0DC88C : disable_background_wave : void : void
+asm : 801459C0, 0DC8A0 : reset_ambient_sounds : void : void
+asm : 801459F4, 0DC8D4 : update_ambient_sounds : void : void
+asm : 80145AF8, 0DC9D8 : play_ambient_sounds		: int scriptStatus : int soundID, int "flags?"
+asm : 80145B80, 0DCA60 : clear_windows : void : void
+asm : 80145BA4, 0DCA84 : update_windows : void : void
+asm : 80145C04, 0DCAE4 : basic_window_update : void : int windowIndex, int* flags, float* posX, float* posY, float* posZ, float* scaleX, float* scaleY, float* rotX, float* rotY, float* rotZ, int* tintColor, int* alpha
+asm : 80145D04, 0DCBE4 : basic_hidden_window_update : void : int windowIndex, int* flags, float* posX, float* posY, float* posZ, float* scaleX, float* scaleY, float* rotX, float* rotY, float* rotZ, int* tintColor, int* alpha
+asm : 80145DE0, 0DCCC0 : main_menu_window_update : void : int windowIndex, int* flags, float* posX, float* posY, float* posZ, float* scaleX, float* scaleY, float* rotX, float* rotY, float* rotZ, int* tintColor, int* alpha
+asm : 80145E28, 0DCD08 : render_windows : void : int* windowIDs, int parentID, int parentFlags, int basePosX, int basePosY, int opacity, int darkening, matrix4f* mtx
+asm : 80146254, 0DD134 : render_window_root : void : void
+asm : 80146458, 0DD338 : set_window_properties : void : int windowIndex, short posX, short posY, short width, short height, byte "window->unk_02", code fpDrawContents, int "sets window->unk_18", byte "parentID"
+asm : 80146500, 0DD3E0 : update_window_hierarchy : void : int windowIndex, int parent
+asm : 801465D8, 0DD4B8 : replace_window_update "set pending update function for a given window, ignoring the current delegate value (if any)" : void : int windowID, int ??? "sets window->unk_02", code fpUpdateWindow
+asm : 8014660C, 0DD4EC : set_window_update "set pending update function for a given window only if it differs from current one" : void : int windowID, code fpUpdateWindow
+asm : 80146654, 0DD534 : set_windows_visible : void : int windowSet "enum ID ranges: 0 = [0,3F] | 1 = [8,9] | 2 = [16,2B] | 3 = [2C,3F]"
+asm : 801466C0, 0DD5A0 : setup_pause_menu_tab : void : pause_tab_window_bp* bpArray, int arraySize
+asm : 801467D0, 0DD6B0 : clear_sprite_shading_data : void : void
+asm : 80146880, 0DD760 : init_sprite_shading_data : void : void
+asm : 801468E4, 0DD7C4 : sprite_shading_set_light_source : void : int lightIndex, int flags, float x, float y, float z, int R, int G, int B, float falloff, int unk_14
+asm : 80146954, 0DD834 : render_shaded_sprite : void : matrix4f* mtx, int tileULS, int tileULT, int tileSizeS, int tileSizeT, int alpha, int someOtherModeLBits
+asm : 80147148, 0DE028 : appendGfx_shaded_sprite : void : matrix4f* mtx, int tileULS, int tileULT, int tileSizeS, int tileSizeT, int alpha, float shadowDirX, float shadowDirY,float shadowDirZ, int shadowCol_R, int shadowCol_G, int shadowCol_B, int highlight_R, int highlight_G, int highlight_B, int ambientPower, int someOtherModeLBits
+asm : 801479E0, 0DE8C0 : sfx_compute_spatialized_sound_params_2 : void : float posX, float posY, float posZ, short* volume, short* pan, uint sourceFlags
+asm : 80147D90, 0DEC70 : sfx_reset_door_sounds : void : void
+asm : 80147DA8, 0DEC88 : sfx_clear_sounds : void : void
+asm : 80147E00, 0DECE0 : sfx_clear_env_sounds : void : bool clear
+asm : 80147EC4, 0DEDA4 : sfx_update_looping_sound_params : void : void
+asm : 80147FC8, 0DEEA8 : sfx_stop_env_sounds : void : void
+asm : 80148054, 0DEF34 : sfx_get_env_sound_instance : snd_env_sound* : int soundID
+asm : 80148098, 0DEF78 : sfx_play_sound_looping : void : int soundID, int volume, int pan, int pitchShift
+asm : 80148104, 0DEFE4 : sfx_register_looping_sound_at_position : void : int soundID, uint sourceFlags, float posX, float posY, float posZ
+asm : 8014817C, 0DF05C : sfx_adjust_env_sound_pos : void : int loopingSoundID, int sourceFlags, float posX, float posY, float posZ
+asm : 80148248, 0DF128 : sfx_play_sound_with_params : void : int soundID, byte volume, byte pan, short pitchShift
+asm : 80148374, 0DF254 : sfx_adjust_env_sound_params : void : int loopingSoundID, byte volume, byte pan, short pitchShift
+asm : 801483FC, 0DF2DC : sfx_stop_sound				: void : int soundID
+asm : 80148444, 0DF324 : sfx_play_sound				: void : int soundID
+asm : 80148468, 0DF348 : sfx_play_sound_at_player	: void : int soundID, int sourceFlags
+asm : 80148498, 0DF378 : sfx_play_sound_at_npc		: void : int soundID, int sourceFlags, #npcID
+asm : 801484EC, 0DF3CC : sfx_play_sound_at_position : void : int soundID, int sourceFlags, float posX, float posY, float posZ
+asm : 80148594, 0DF474 : sfx_get_spatialized_sound_params : void : float posX, float posY, float posZ, short* volume, short* pan, uint sourceFlags
+asm : 801486E8, 0DF5C8 : sfx_compute_spatialized_sound_params_0 : void : float posX, float posY, float posZ, short* volume, short* pan
+asm : 80148944, 0DF824 : sfx_compute_spatialized_sound_params_1 : void : float posX, float posY, float posZ, short* volume, short* pan
+asm : 80148BC0, 0DFAA0 : bgm_get_map_default_variation "based on map, only applies for songIDs listed in the int[6] at 8014f720: 3, 4, B, 42, 4E, and 82 " : int variation : int songID
+asm : 80148C28, 0DFB08 : bgm_reset_sequence_players : void : void
+asm : 80148CBC, 0DFB9C : bgm_reset_volume : void : void
+asm : 80148CD8, 0DFBB8 : bgm_update_music_settings : void : void
+asm : 80148F70, 0DFE50 : _bgm_set_song : void : int musicPlayer, #songID, int variation, int unk, int volume
+asm : 801490A8, 0DFF88 : bgm_set_song : void : int musicPlayer, #songID, int variation, int fadeTime, int volume
+asm : 80149398, 0E0278 : bgm_init_music_players : void : void
+asm : 801493EC, 0E02CC : bgm_quiet_max_volume "sets maxVolume = 4" : void : void
+asm : 80149400, 0E02E0 : bgm_reset_max_volume "sets maxVolume = 8" : void : void
+asm : 80149414, 0E02F4 : bgm_set_target_volume : void : short targetVolume "8 is default"
+asm : 80149424, 0E0304 : bgm_update_volume : void : void
+asm : 80149534, 0E0414 : bgm_pop_song : void : void
+asm : 80149588, 0E0468 : bgm_push_song "change song, but save previous (no stack involved, only saves most recent)" : void : int songID, int variation
+asm : 801495FC, 0E04DC : bgm_pop_battle_song : void : void
+asm : 80149688, 0E0568 : bgm_push_battle_song : void : void
+asm : 8014971C, 0E05FC : bgm_set_battle_song : void : int songID, int variation
+asm : 802C3000, 0E6920 : sort_scripts 			: void : void
+asm : 802C3148, 0E6A68 : find_script_labels		: void : script_instance* script
+asm : 802C31DC, 0E6AFC : clear_script_list		: void : void
+asm : 802C32EC, 0E6C0C : init_script_list		: void : void
+asm : 802C3390, 0E6CB0 : suspend_frozen_scripts "according to current time freeze mode" : void : void
+asm : 802C33E0, 0E6D00 : start_script			: script_instance* script : bytecode* script, int priority, int flags
+asm : 802C35D0, 0E6EF0 : start_script_in_group	: script_instance* script : bytecode* script, int priority, int flags, int group
+asm : 802C37C8, 0E70E8 : start_child_script		: script_instance* script : script_instance* parent, bytecode* script, int flags
+asm : 802C3D04, 0E7624 : restart_script			: script_instance* script : script_instance* script
+asm : 802C3D74, 0E7694 : update_scripts			: void : void
+asm : 802C3F3C, 0E785C : kill_script			: void : script_instance* script
+asm : 802C40AC, 0E79CC : kill_script_by_ID		: void : int ID
+asm : 802C4114, 0E7A34 : kill_all_scripts		: void : void
+asm : 802C4164, 0E7A84 : does_script_exist		: bool : int ID
+asm : 802C41A4, 0E7AC4 : does_script_exist_by_ref "unused" : bool : script_instance* script
+asm : 802C41D8, 0E7AF8 : set_script_priority	: void : script_instance* script, int priority
+asm : 802C41E0, 0E7B00 : set_script_timescale	: void : script_instance* script, float timescale
+asm : 802C4200, 0E7B20 : set_global_timespace	: void : float timescale
+asm : 802C420C, 0E7B2C : get_global_timespace	: float timescale : void
+asm : 802C4218, 0E7B38 : set_script_group		: void : script_instance* script, int groupFlags
+asm : 802C42D8, 0E7BF8 : suspend_group_script "recursive for child/parents in matching group" : void : script_instance* script, int groupFlags
+asm : 802C437C, 0E7C9C : resume_group_script "recursive for child/parents in matching group" : void : script_instance* script, int groupFlags
+asm : 802C4420, 0E7D40 : suspend_all_script "recursive for child/parents of script" : void : int scriptIndex
+asm : 802C448C, 0E7DAC : resume_all_script "recursive for child/parents of script" : void : int scriptIndex
+asm : 802C44F8, 0E7E18 : suspend_group_script_index "recursive for child/parents in matching group" : void : int scriptIndex, int groupFlags
+asm : 802C4570, 0E7E90 : resume_group_script_index "recursive for child/parents in matching group" : void : int scriptIndex, int groupFlags
+asm : 802C45E8, 0E7F08 : suspend_all_group "affects all scripts in group" : void : int groupFlags
+asm : 802C4648, 0E7F68 : resume_all_group "affects all scripts in group" : void : int groupFlags
+asm : 802C46A8, 0E7FC8 : suspend_group_others "suspend all other scripts matching group" : void : script_instance* script, int groupFlags
+asm : 802C471C, 0E803C : resume_group_others "suspend all other scripts matching group" : void : script_instance* script, int groupFlags
+asm : 802C4790, 0E80B0 : get_script_by_index	: script_instance* script : int scriptIndex "index into script list"
+asm : 802C47A8, 0E80C8 : get_script_by_id		: script_instance* script : int scriptID "unique ID"
+asm : 802C47E8, 0E8108 : set_script_flags		: void : script_instance* script, int flags
+asm : 802C4880, 0E81A0 : clear_script_flags		: void : script_instance* script, int flags
+asm : 802C4920, 0E8240 : fixed_var_to_float			: float : var fixed
+asm : 802C496C, 0E828C : float_to_fixed_var			: var fixed : float
+asm : 802C4998, 0E82B8 : si_handle_return				: int : script_instance* script
+asm : 802C49B8, 0E82D8 : si_handle_label				: int : script_instance* script
+asm : 802C49C0, 0E82E0 : si_handle_goto					: int : script_instance* script
+asm : 802C4A00, 0E8320 : si_handle_loop					: int : script_instance* script
+asm : 802C4A48, 0E8368 : si_handle_end_loop				: int : script_instance* script
+asm : 802C4B0C, 0E842C : si_handle_break_loop			: int : script_instance* script
+asm : 802C4B5C, 0E847C : si_handle_wait					: int : script_instance* script
+asm : 802C4BB8, 0E84D8 : si_handle_wait_seconds "just 30.0f * i + 0.5f" : int : script_instance* script
+asm : 802C4C40, 0E8560 : si_handle_if_equal				: int : script_instance* script
+asm : 802C4CA0, 0E85C0 : si_handle_if_not_equal			: int : script_instance* script
+asm : 802C4D00, 0E8620 : si_handle_if_less				: int : script_instance* script
+asm : 802C4D64, 0E8684 : si_handle_if_greater			: int : script_instance* script
+asm : 802C4DC8, 0E86E8 : si_handle_if_less_equal		: int : script_instance* script
+asm : 802C4E2C, 0E874C : si_handle_if_greater_equal		: int : script_instance* script
+asm : 802C4E90, 0E87B0 : si_handle_if_AND				: int : script_instance* script
+asm : 802C4EE8, 0E8808 : si_handle_if_not_AND			: int : script_instance* script
+asm : 802C4F40, 0E8860 : si_handle_else					: int : script_instance* script
+asm : 802C4F6C, 0E888C : si_handle_end_if				: int : script_instance* script
+asm : 802C4F74, 0E8894 : si_handle_switch				: int : script_instance* script
+asm : 802C4FE4, 0E8904 : si_handle_switch_const			: int : script_instance* script
+asm : 802C5030, 0E8950 : si_handle_case_equal			: int : script_instance* script
+asm : 802C50BC, 0E89DC : si_handle_case_not_equal		: int : script_instance* script
+asm : 802C5148, 0E8A68 : si_handle_case_less			: int : script_instance* script
+asm : 802C51D8, 0E8AF8 : si_handle_case_less_equal		: int : script_instance* script
+asm : 802C5268, 0E8B88 : si_handle_case_greater			: int : script_instance* script
+asm : 802C52F8, 0E8C18 : si_handle_case_greater_equal	: int : script_instance* script
+asm : 802C5388, 0E8CA8 : si_handle_case_range			: int : script_instance* script
+asm : 802C5444, 0E8D64 : si_handle_case_default			: int : script_instance* script
+asm : 802C549C, 0E8DBC : si_handle_case_AND				: int : script_instance* script
+asm : 802C5518, 0E8E38 : si_handle_case_equal_OR		: int : script_instance* script
+asm : 802C55B8, 0E8ED8 : si_handle_case_equal_AND		: int : script_instance* script
+asm : 802C565C, 0E8F7C : si_handle_end_case_group		: int : script_instance* script
+asm : 802C56D4, 0E8FF4 : si_handle_break_case			: int : script_instance* script
+asm : 802C5718, 0E9038 : si_handle_end_switch			: int : script_instance* script
+asm : 802C5744, 0E9064 : si_handle_set_var				: int : script_instance* script
+asm : 802C5790, 0E90B0 : si_handle_set_const			: int : script_instance* script
+asm : 802C57B8, 0E90D8 : si_handle_set_float			: int : script_instance* script
+asm : 802C5804, 0E9124 : si_handle_add					: int : script_instance* script
+asm : 802C5868, 0E9188 : si_handle_subtract				: int : script_instance* script
+asm : 802C58CC, 0E91EC : si_handle_multiply				: int : script_instance* script
+asm : 802C5934, 0E9254 : si_handle_divide				: int : script_instance* script
+asm : 802C59BC, 0E92DC : si_handle_mod					: int : script_instance* script
+asm : 802C5A84, 0E93A4 : si_handle_addF					: int : script_instance* script
+asm : 802C5AEC, 0E940C : si_handle_subtractF			: int : script_instance* script
+asm : 802C5B54, 0E9474 : si_handle_multiplyF			: int : script_instance* script
+asm : 802C5BC0, 0E94E0 : si_handle_divideF				: int : script_instance* script
+asm : 802C5C28, 0E9548 : si_handle_set_int_buffer_ptr	: int : script_instance* script
+asm : 802C5C5C, 0E957C : si_handle_set_float_buffer_ptr	: int : script_instance* script
+asm : 802C5C90, 0E95B0 : si_handle_get_1_word			: int : script_instance* script
+asm : 802C5CC4, 0E95E4 : si_handle_get_2_word			: int : script_instance* script
+asm : 802C5D2C, 0E964C : si_handle_get_3_word			: int : script_instance* script
+asm : 802C5DB4, 0E96D4 : si_handle_get_4_word			: int : script_instance* script
+asm : 802C5E5C, 0E977C : si_handle_get_Nth_word			: int : script_instance* script
+asm : 802C5EB4, 0E97D4 : si_handle_get_1_float			: int : script_instance* script
+asm : 802C5F0C, 0E982C : si_handle_get_2_float			: int : script_instance* script
+asm : 802C5F9C, 0E98BC : si_handle_get_3_float			: int : script_instance* script
+asm : 802C605C, 0E997C : si_handle_get_4_float			: int : script_instance* script
+asm : 802C614C, 0E9A6C : si_handle_get_Nth_float		: int : script_instance* script
+asm : 802C61AC, 0E9ACC : si_handle_set_array			: int : script_instance* script
+asm : 802C61E0, 0E9B00 : si_handle_set_flag_array		: int : script_instance* script
+asm : 802C6214, 0E9B34 : si_handle_allocate_array		: int : script_instance* script
+asm : 802C6270, 0E9B90 : si_handle_AND					: int : script_instance* script
+asm : 802C62D4, 0E9BF4 : si_handle_AND_const			: int : script_instance* script
+asm : 802C632C, 0E9C4C : si_handle_OR					: int : script_instance* script
+asm : 802C6390, 0E9CB0 : si_handle_OR_const				: int : script_instance* script
+asm : 802C63E8, 0E9D08 : si_handle_call					: int : script_instance* script
+asm : 802C646C, 0E9D8C : si_handle_exec1				: int : script_instance* script
+asm : 802C6524, 0E9E44 : si_handle_exec2				: int : script_instance* script
+asm : 802C65FC, 0E9F1C : si_handle_exec_wait			: int : script_instance* script
+asm : 802C6640, 0E9F60 : si_handle_jump					: int : script_instance* script
+asm : 802C667C, 0E9F9C : _bound_script_trigger_handler	: bool : trigger*
+asm : 802C6714, 0EA034 : si_handle_bind					: int : script_instance* script
+api : 802C6824, 0EA144 : DeleteTrigger					: void : int triggerIndex
+asm : 802C6850, 0EA170 : si_handle_unbind				: int : script_instance* script
+asm : 802C6870, 0EA190 : si_handle_kill					: int : script_instance* script
+asm : 802C689C, 0EA1BC : si_handle_set_priority			: int : script_instance* script
+asm : 802C68D8, 0EA1F8 : si_handle_set_timescale		: int : script_instance* script
+asm : 802C6914, 0EA234 : si_handle_set_group			: int : script_instance* script
+asm : 802C6950, 0EA270 : si_handle_suspend_all			: int : script_instance* script
+asm : 802C697C, 0EA29C : si_handle_resume_all			: int : script_instance* script
+asm : 802C69A8, 0EA2C8 : si_handle_suspend_others		: int : script_instance* script
+asm : 802C69E4, 0EA304 : si_handle_resume_others		: int : script_instance* script
+asm : 802C6A20, 0EA340 : si_handle_suspend				: int : script_instance* script
+asm : 802C6A4C, 0EA36C : si_handle_resume				: int : script_instance* script
+asm : 802C6A78, 0EA398 : si_handle_does_script_exist	: int : script_instance* script
+asm : 802C6B54, 0EA474 : si_handle_bind_lock			: int : script_instance* script
+asm : 802C6C78, 0EA598 : si_handle_thread				: int : script_instance* script
+asm : 802C6D4C, 0EA66C : si_handle_end_thread			: int : script_instance* script
+asm : 802C6D6C, 0EA68C : si_handle_child_thread			: int : script_instance* script
+asm : 802C6DF4, 0EA714 : si_handle_end_child_thread		: int : script_instance* script
+asm : 802C6E1C, 0EA73C : si_handle_print_debug_var		: int : script_instance* script
+asm : 802C7404, 0EAD24 : si_execute_next_command		: int : script_instance* script
+asm : 802C7ABC, 0EB3DC : get_variable					: int value : script_instance* script, var source
+asm : 802C7DA8, 0EB6C8 : get_variable_index				: int index : script_instance* script, var source
+asm : 802C7F20, 0EB840 : get_variable_index_alt			: int index : script_instance* script, var
+asm : 802C8098, 0EB9B8 : set_variable					: int newValue : script_instance* script, var dest, int value "fixed values will be converted, others will not be"
+asm : 802C842C, 0EBD4C : get_float_variable 			: float value : script_instance* script, var source
+asm : 802C8640, 0EBF60 : set_float_variable 			: float newValue : script_instance* script, var dest, float value
+asm : 802C8890, 0EC1B0 : si_find_label					: int : script_instance* script
+asm : 802C88FC, 0EC21C : si_skip_if						: int : script_instance* script
+asm : 802C8978, 0EC298 : si_skip_else					: int : script_instance* script
+asm : 802C8A60, 0EC380 : si_goto_next_case				: int : script_instance* script
+asm : 802C8AE4, 0EC404 : si_goto_end_loop				: int : script_instance* script
+api : 802C8C64, 0EC584 : RotateModel      : void : modelID, float angle, float rX, float rY, float rZ
+api : 802C8D88, 0EC6A8 : ScaleModel       : void : modelID, float sX, float sY, float sZ
+api : 802C8E8C, 0EC7AC : GetModelIndex    : void : modelID, {out} var index
+api : 802C8EE4, 0EC804 : InvalidateModelTransform : void : modelID "disable cat on next transform, does NOT set transform to identity or disable it"
+api : 802C8F28, 0EC848 : CloneModel       : void : modelID, int newModelID
+api : 802C8F80, 0EC8A0 : GetModelCenter   : Var[0] int posX, Var[1] int posX, Var[2] int posX : modelID
+api : 802C9000, 0EC920 : SetTexPanner "sets a model's pannerID and sets the texture pan flag" : void : modelID, int panID
+api : 802C907C, 0EC99C : SetCustomGfxEnabled   : void : modelID, bool
+api : 802C90FC, 0ECA1C : SetModelCustomGfx : void : modelID, int customGfxIndex "-1 for no change", int fogType "-1 for no change"
+api : 802C91A4, 0ECAC4 : SetModelTexVariant : void : modelID, int
+api : 802C9208, 0ECB28 : EnableTexPanning : void : modelID, bool "0 = disabled, 1 = enabled"
+api : 802C9288, 0ECBA8 : EnableModel      : void : modelID, bool "0 = disabled, 1 = enabled"
+api : 802C9308, 0ECC28 : SetGroupEnabled  : void : modelID, int mode "0 = disabled, 1 = enabled, 2 = all others disabled, 3 = all others enabled"
+api : 802C9364, 0ECC84 : SetTexPanOffset  : void : int panID, int tile "0 = main | 1 = aux", int offsetU, int offsetV
+api : 802C9428, 0ECD48 : SetCustomGfx : void : int index, $DisplayList, $DisplayList
+api : 802C94A0, 0ECDC0 : SetCustomGfxBuilders : void : int index, $Function, $Function
+api : 802C9518, 0ECE38 : SetModelFlags	: void : modelID, int bits, bool "1 set | 0 clear"
+asm : 802C95A0, 0ECEC0 : apply_transform_to_children "find all children and call function on them" : void : code apiTransformFunc, script_instance* script
+api : 802C971C, 0ED03C : MakeTransformGroup : void : modelID
+api : 802C9748, 0ED068 : SetTransformGroupEnabled : void : modelID, bool
+api : 802C97B4, 0ED0D4 : TranslateGroup   : void : modelID, float dX, float dY, float dZ
+api : 802C98D8, 0ED1F8 : RotateGroup      : void : modelID, float angle, float rX, float rY, float rZ
+api : 802C9A1C, 0ED33C : ScaleGroup       : void : modelID, float sX, float sY, float sZ
+api : 802C9B40, 0ED460 : GetTransformGroup : void : modelID, {out} var groupID "-1 if none"
+api : 802C9B98, 0ED4B8 : EnableGroup      : void : modelID, bool enable
+api : 802C9C70, 0ED590 : MakeLocalVertexCopy : void : int copyIndex, modelID, bool "0 = clear, 1 = get"
+asm : 802C9CE8, 0ED608 : modify_collider_family_flags "set flags for collider + siblings + children" : void : colliderID, int flags, int mode "0 = set bits, 1 = clear bits, 2 = replace, 3 = replace lowest 16 bits"
+api : 802C9DCC, 0ED6EC : ModifyColliderFlags	: void : int mode "0 = set bits, 1 = clear bits, 2 = replace, 3 = replace lowest 16 bits", colliderID, int flags
+api : 802C9ED8, 0ED7F8 : ResetFromLava : void : $LavaResetList
+asm : 802C9FD4, 0ED8F4 : get_lava_reset_pos : void : {out} float* x, {out} float* y, {out} float* z
+api : 802CA0AC, 0ED9CC : GetColliderCenter		: Var[0] int posX, Var[1] int posY, Var[2] int posZ : colliderID
+api : 802CA114, 0EDA34 : ParentColliderToModel "associates a model with a collider and applies the model's transformation" : void :  colliderID, modelID
+api : 802CA188, 0EDAA8 : UpdateColliderTransform "applies transformation from parent model" : void : colliderID
+asm : 802CA1B8, 0EDAD8 : set_zone_enabled "operates recursively" : void : int zoneID, bool enabled
+api : 802CA254, 0EDB74 : SetZoneEnabled "operates recursively" : void : zoneID, bool enabled
+asm : 802CA304, 0EDC24 : goto_map				: void : script_instance* script, int mode
+api : 802CA400, 0EDD20 : GotoMap				: void : $ASCII mapName {print}, int entryID
+api : 802CA420, 0EDD40 : GotoMapSpecial			: void : $ASCII mapName {print}, int entryID, int transitionType "fade to white/black, star wipe, mario head cutout, curtain close, etc"
+api : 802CA440, 0EDD60 : GotoMapByID			: void : int areaID, int mapID, int	entryID
+api : 802CA460, 0EDD80 : GetEntryID				: void : {out} var outValue	{outType=entryID}
+api : 802CA490, 0EDDB0 : GetMapID				: void : int outValue
+api : 802CA4C0, 0EDDE0 : GetLoadType			: void : {out} var outType {outType=int} "0 = loaded from another map | 1 = loaded from main menu"
+api : 802CA4F4, 0EDE14 : SetRenderMode			: void : modelID model, int mode
+api : 802CA558, 0EDE78 : PlaySoundAtModel		: void : modelID, #soundID, ??? "always zero?"
+api : 802CA614, 0EDF34 : PlaySoundAtCollider	: void : colliderID, #soundID, ??? "always zero?"
+api : 802CA6C0, 0EDFE0 : SetCamEnabled    : void : #camID, bool enabled
+api : 802CA774, 0EE094 : SetCamFlag80     : void : #camID, bool enabled
+api : 802CA828, 0EE148 : SetCamPerspective : void : #camID, int type "almost always = 3, NOT the same camera type from zones", int vfov, int nearClip, int farClip
+api : 802CAB18, 0EE438 : SetCamViewport   : void : #camID, int startX, int startY, int width, int height
+api : 802CAD98, 0EE6B8 : SetCamBGColor    : void : #camID, int R "0-255", int G "0-255", int B "0-255"
+api : 802CAF2C, 0EE84C : SetCamTarget "set the target position" : void : #camID, float posX, float posY, float posZ
+api : 802CB2A8, 0EEBC8 : ShakeCam		: void : #camID, int mode "0 = constant up&down | 1 = angular | 2 = decaying up&down", int duration, int magnitude
+asm : 802CB56C, 0EEE8C : exec_ShakeCam1 : void : #camID, int mode "0 = constant up&down | 1 = angular | 2 = decaying up&down", int duration
+asm : 802CB5C8, 0EEEE8 : exec_ShakeCamX : void : #camID, int mode "0 = constant up&down | 1 = angular | 2 = decaying up&down", int duration, int magnitude
+api : 802CB680, 0EEFA0 : SetCamLeadPlayer : void : #camID, bool enabled
+api : 802CB79C, 0EF0BC : PanToTarget "pans the camera with a cosine easing function at the ends" : void : #camID, float easingPhase, int targetType "1 = target | 0 = player"
+api : 802CB860, 0EF180 : UseSettingsFrom "use control settings from the zone below a given sampling point" : void : #camID, float posX, float posY, float posZ
+api : 802CB9F8, 0EF318 : LoadSettings : void : #camID, $CamSettings
+api : 802CBAB4, 0EF3D4 : SetCamType : void : #camID, int controlType, bool
+api : 802CBB48, 0EF468 : SetCamPitch : void : #camID, float boomPitch, float viewPitch
+api : 802CBBE4, 0EF504 : SetCamDistance : void : #camID, float boomLength
+api : 802CBC58, 0EF578 : SetCamPosA : void : #camID, float x, float y
+api : 802CBCF4, 0EF614 : SetCamPosB : void : #camID, float x, float y
+api : 802CBD90, 0EF6B0 : SetCamPosC : void : #camID, float x, float y
+api : 802CBE2C, 0EF74C : SetPanTarget : void : #camID, float x, float y, float z
+api : 802CBEF0, 0EF810 : SetCamSpeed : void : #camID, float speed
+api : 802CBF64, 0EF884 : GetCamType : void : #camID, {out} var type, {out} var "unkBool"
+api : 802CBFF4, 0EF914 : GetCamPitch : void : #camID, {out} fvar boomPitch, {out} fvar viewPitch
+api : 802CC084, 0EF9A4 : GetCamDistance   : void : #camID, {out} fvar boomLength
+api : 802CC0F4, 0EFA14 : GetCamPosA       : void : #camID, {out} fvar x, {out} fvar z
+api : 802CC184, 0EFAA4 : GetCamPosB       : void : #camID, {out} fvar x, {out} fvar z
+api : 802CC214, 0EFB34 : GetCamPosC       : void : #camID, {out} fvar x, {out} fvar z
+api : 802CC2A4, 0EFBC4 : GetCamPosition   : void : #camID, {out} fvar x, {out} fvar y, {out} fvar z
+api : 802CC354, 0EFC74 : WaitForCam "checks if the camera has completed its assigned motion yet" : void : #camID, float endInterpValue "almost always .FLOAT[1.0]"
+api : 802CC3EC, 0EFD0C : SetCamProperties : void : #camID, float moveSpeed, float x, float y, float z, float boomLength, float boomPitch, float viewPitch
+api : 802CC660, 0EFF80 : AdjustCam "targets the player and adjusts camera settings" : void : #camID, float moveSpeed, float offsetX, float boomLength, float boomPitch, float viewPitch
+api : 802CC8C8, 0F01E8 : ResetCam "copies settings from the player's zone and pans to the player at a given speed" : void : #camID, float moveSpeed
+asm : 802CCAC0, 0F03E0 : update_animated_models : void : void
+asm : 802CCB18, 0F0438 : render_animated_models : void : void
+api : 802CCCB0, 0F05D0 : InitAnimatedModels : void : void
+api : 802CCCEC, 0F060C : LoadAnimatedModel : void : int animModelIndex, $AnimatedModelTree
+api : 802CCDAC, 0F06CC : LoadAnimatedMesh : void : int animModelIndex, $AnimatedModelTree
+api : 802CCE6C, 0F078C : PlayModelAnimation "plays model animation, forcing restart if same as current one" : void : int animModelIndex, $ModelAnimation
+api : 802CCEDC, 0F07FC : PlayModelAnimationStartingFrom "plays model animation from a given time, forcing restart if same as current one" : void : int animModelIndex, $ModelAnimation, int startTime
+api : 802CCF6C, 0F088C : ChangeModelAnimation "plays model animation only if it differs from current one" : void : int, $ModelAnimation
+api : 802CCFE4, 0F0904 : SetAnimatedModelRootPosition : void : int animModelIndex, float x, float y, float z
+api : 802CD090, 0F09B0 : GetAnimatedModelRootPosition : void : int animModelIndex, {out} fvar posX, {out} fvar posY, {out} fvar posZ
+api : 802CD12C, 0F0A4C : AddAnimatedModelRootPosition : void : int animModelIndex, float Dx, float Dy, float Dz
+api : 802CD1F0, 0F0B10 : SetAnimatedModelRootRotation : void : int animModelIndex, float Rx, float Ry, float Rz
+api : 802CD29C, 0F0BBC : SetAnimatedModelRootScale : void : int animModelIndex, float Sx, float Sy, float Sz
+api : 802CD348, 0F0C68 : SetAnimatedModelRenderMode : void : int animModelIndex, #renderMode
+api : 802CD3C0, 0F0CE0 : DeleteAnimatedModel : void : int animModelIndex
+api : 802CD418, 0F0D38 : SetAnimatorFlags : void : int animModelIndex, {raw} int bits, int mode "0 = clear | 1 = set"
+asm : 802CD4B4, 0F0DD4 : reset_model_animators : void : void
+asm : 802CD57C, 0F0E9C : init_model_animators : void : void
+api : 802CD5C0, 0F0EE0 : GetAnimatedNodePosition	"world position (node translation with node transform applied)" : void : int animatorIndex, int nodeIndex, {out} int posX, {out} int posY, {out} int posZ
+api : 802CD6E0, 0F1000 : GetAnimatedNodeRotation	: void : int animatorIndex, int nodeIndex, {out} int rotX, {out} int rotY, {out} int rotZ
+api : 802CD7D8, 0F10F8 : GetAnimatedPositionByTreeIndex	"world position (node translation with node transform applied)" : void : int animatorIndex, int treeIndex, {out} int posX, {out} int posY, {out} int posZ
+api : 802CD8F8, 0F1218 : GetAnimatedRotationByTreeIndex	: void : int animatorIndex, int treeIndex, {out} int rotX, {out} int rotY, {out} int rotZ
+api : 802CD9F0, 0F1310 : SetAnimatedNodeFlags	: void : int animatorIndex, int nodeID, {raw} int bits, int mode "0 = clear | 1 = set"
+asm : 802CDAC0, 0F13E0 : resolve_npc : npc* : script_instance* script, int ownerID
+asm : 802CDB0C, 0F142C : set_npc_animation	: void : npc*, animID
+api : 802CDBA4, 0F14C4 : CreateNpc  "used in battle scripts" : void : #npcID, int unknown "unused?"
+api : 802CDC1C, 0F153C : DeleteNpc 			: void : #npcID
+api : 802CDC58, 0F1578 : GetNpcPointer 		: void : #npcID, {out} var npc
+api : 802CDCB0, 0F15D0 : SetNpcPos        	: void : #npcID, int x, int y, int z
+api : 802CDDB0, 0F16D0 : SetNpcRotation "center of rotation is at base of sprite" : void : #npcID, float rX, float rY, float rZ
+api : 802CDED4, 0F17F4 : SetNpcScale		: void : #npcID, float sX, float sY, float sZ
+api : 802CDF8C, 0F18AC : SetNpcCollisionSize : void : #npcID, int height, int radius
+api : 802CE01C, 0F193C : SetNpcSpeed		: void : #npcID, float speed
+api : 802CE088, 0F19A8 : SetNpcJumpscale  	: void : #npcID, float jumpScale
+api : 802CE0F4, 0F1A14 : SetNpcAnimation 	: void : #npcID, int animation
+api : 802CE160, 0F1A80 : GetNpcAnimation	: void : #npcID, {out} var animation
+api : 802CE1C0, 0F1AE0 : SetNpcAnimationSpeed : void : #npcID, float animationSpeed "1.0 = default"
+api : 802CE22C, 0F1B4C : NpcMoveTo			: void : #npcID, int goalX, int goalZ, int time "frames; 0 = use NpcSpeed"
+asm : 802CE434, 0F1D54 : _npc_jump_to		: int scriptStatus : script_instance*, int initialCall, int snapYaw
+api : 802CE6C4, 0F1FE4 : NpcJump0 "snaps yaw to move direction" : void : #npcID, int goalX, int goalY, int goalZ, int duration
+api : 802CE6E0, 0F2000 : NpcJump1 "does not change yaw" : void : #npcID, int goalX, int goalY, int goalZ, int duration
+api : 802CE6FC, 0F201C : NpcFlyTo			: Var[3] float posX, Var[4] float posY, Var[5] float posZ, Var[6] int duration : #npcID, int goalX, int goalY, int goalZ, int duration, int arcHeight "offset height over fly length by a sinusoidal arc, use 0 for none, can be negative", #easing "same as for lerps"
+api : 802CEA10, 0F2330 : GetNpcYaw			: void : #npcID, {out} var yaw
+api : 802CEA84, 0F23A4 : SetNpcYaw			: void : #npcID, int angle
+api : 802CEB04, 0F2424 : InterpNpcYaw "turns gradually over some number of frames. however, turn animation will often be abrupt." : void : #npcID, int goalAngle, int time "frames"
+api : 802CECC8, 0F25E8 : NpcFacePlayer      : void : #npcID, int duration "0 = instant"
+api : 802CEE80, 0F27A0 : NpcFaceNpc			: void : #npcID, #npcID "cannot be player", int duration "0 = instant"
+api : 802CF060, 0F2980 : SetNpcFlagBits		: void : #npcID, int flags, bool mode "1 = set | 0 = clear"
+api : 802CF0F4, 0F2A14 : GetNpcPos			: void : #npcID, {out} var posX, {out} var posY, {out} var posZ
+api : 802CF208, 0F2B28 : SetNpcSprite : void :  #npcID, animID
+api : 802CF268, 0F2B88 : EnableNpcShadow      : void : #npcID, bool enabled
+api : 802CF2EC, 0F2C0C : EnableNpcBlur        : void : #npcID, bool enabled
+api : 802CF370, 0F2C90 : ClearPartnerMoveHistory : void : #npcID
+api : 802CF438, 0F2D58 : GetPartnerPos	: void : {out} var posX, {out} var posY, {out} var posZ
+api : 802CF4E8, 0F2E08 : DisablePartnerAI : void : int
+api : 802CF52C, 0F2E4C : EnablePartnerAI  : void : void
+api : 802CF5B8, 0F2ED8 : BringPartnerOut	: void : #partnerID
+api : 802CF988, 0F32A8 : PutPartnerAway		: void : void
+api : 802CFC74, 0F3594 : GetCurrentPartnerID : void : {out} var partnerID {outType=#partnerID}
+api : 802CFCA0, 0F35C0 : PartnerCanUseAbility : void :  {out} var canUse {outType=bool}
+api : 802CFCE8, 0F3608 : PartnerIsFlying : void : {out} var isFlying {outType=bool}
+api : 802CFE80, 0F37A0 : SetNpcPaletteSwapMode : void : #npcID, int paletteSwapMode "0-4 inclusive"
+api : 802CFEEC, 0F380C : SetNpcPaletteSwapLower : void : #npcID, int palIndexA, int palIndexB, int timeHoldA, int timeAB
+api : 802CFFC0, 0F38E0 : SetNpcPaletteSwapping : void : #npcID, int palIndexA, int palIndexB, int timeHoldA, int timeAB, int timeHoldB, int timeBA, int palIndexC, int palIndexD
+api : 802D0118, 0F3A38 : SetNpcDecoration	: void : #npcID, int index "0 or 1", #npcDecoration
+api : 802D01AC, 0F3ACC : PlaySoundAtNpc		: void : #npcID, #soundID, ???
+api : 802D02B0, 0F3BD0 : SpeakToPlayer : Var[D] animID savedAnim1, Var[E] animID savedAnim2, Var[F] int yaw : #npcID, animID talkAnim, animID idleAnim, int messageFlags, {print} stringID : #npcID, animID talkAnim, animID idleAnim, int messageFlags, int screenPosOffsetX, int screenPosOffsetY, {print} stringID
+api : 802D02CC, 0F3BEC : EndSpeech		: Var[D] animID savedAnim1, Var[E] animID savedAnim2, Var[F] int yaw : #npcID, animID talkAnim, animID idleAnim, int messageFlags : #npcID, animID talkAnim, animID idleAnim, int messageFlags, int screenPosOffsetX, int screenPosOffsetY
+api : 802D02E8, 0F3C08 : ContinueSpeech	: Var[D] animID savedAnim1, Var[E] animID savedAnim2, Var[F] int yaw : #npcID, animID talkAnim, animID idleAnim, int flags, {print} stringID : #npcID, animID talkAnim, animID idleAnim, int messageFlags, int screenPosOffsetX, int screenPosOffsetY, {print} stringID
+api : 802D0304, 0F3C24 : SpeakToNpc		: Var[D] animID savedAnim1, Var[E] animID savedAnim2, Var[F] int yaw : #npcID, animID talkAnim, animID idleAnim, int flags, #npcID, {print} stringID : #npcID, animID talkAnim, animID idleAnim, int flags, #npcID, int screenPosOffsetX, int screenPosOffsetY, {print} stringID
+asm : 802D0320, 0F3C40 : _show_message "reads args from script context" : void : script_instance*, bool initialCall, int mode "from SayMessageX api functions"
+api : 802D0894, 0F41B4 : ShowMessageAtScreenPos "used by signs and NPCs that cannot be seen, speech bubble doesn't connect to anything" : Var[0] int ??? : {print} stringID, int screenPosX, int screenPosY
+api : 802D095C, 0F427C : ShowMessageAtWorldPos : void : {print} stringID, int posX, int posY, int posZ
+api : 802D0A98, 0F43B8 : CloseMessage "force the current message box to close" : Var[0] int ??? : void
+api : 802D0AFC, 0F441C : SwitchMessage "change the string used for the current message box" : Var[0] int ??? : {print} stringID
+api : 802D0B6C, 0F448C : ShowChoice "display a choice message and wait for selection" : Var[0] int selectedIndex : {print} stringID options
+api : 802D0BF8, 0F4518 : CloseChoice			: void : void
+api : 802D0C20, 0F4540 : CancelMessage "close current message box? uses different flag than CloseMessage" : void : void
+api : 802D0C48, 0F4568 : CancelMessageAndBlock "close current message box? uses different flag than CloseMessage" : void : void
+api : 802D0C70, 0F4590 : SetMessageImages		: void : int messageImageList
+api : 802D0CEC, 0F460C : SetMessageString		: void : stringID "or pointer to string", int messageVarIndex "0-3"
+api : 802D0D44, 0F4664 : SetMessageValue		: void : int value, int messageVarIndex "0-3"
+api : 802D0DA0, 0F46C0 : HidePlayerShadow		: void : bool hideShadow "1 = hide | 0 = reveal"
+api : 802D0DE4, 0F4704 : DisablePlayerPhysics "disables gravity, animation state machine changes, camera controller updates, but NOT partner AI" : void : bool disable "1 = disable | 0 = enable"
+api : 802D0E28, 0F4748 : DisablePlayerInput  	: void : bool disable "1 = disable | 0 = enable"
+api : 802D0EF0, 0F4810 : SetPlayerPos        	: void : int X, int Y, int Z
+api : 802D0FB0, 0F48D0 : SetPlayerCollisionSize : void : int height, int radius
+api : 802D1024, 0F4944 : SetPlayerSpeed      	: void : float speed
+api : 802D1054, 0F4974 : SetPlayerJumpscale		: void : float jumpScale
+api : 802D1084, 0F49A4 : SetPlayerAnimation  	: void : #playerAnim
+api : 802D10D8, 0F49F8 : SetPlayerActionState	: void : #actionState
+api : 802D1104, 0F4A24 : SetPlayerAnimationSpeed : void : float animationSpeed "1.0 = default"
+api : 802D1134, 0F4A54 : PlayerMoveTo			: void : int goalX, int goalZ, int time "frames -- use 0 to compute via move speed + distance"
+asm : 802D14E0, 0F4E00 : player_jump			: bool : script_instance* script, int initialCall, int mode
+api : 802D18E8, 0F5208 : PlayerJump				: void : int goalX, int goalY, int goalZ, int arcHeight
+api : 802D1904, 0F5224 : PlayerJump1			: void : int goalX, int goalY, int goalZ, int arcHeight
+api : 802D1920, 0F5240 : PlayerJump2			: void : int goalX, int goalY, int goalZ, int arcHeight
+api : 802D193C, 0F525C : InterpPlayerYaw		: void : int targetAngle, int time "frames"
+api : 802D1B04, 0F5424 : PlayerFaceNpc "set player yaw to face npc" : void : #npcID facingTarget, int "1 allows looking back and forth between targets, 0 = fixed?"
+api : 802D1D28, 0F5648 : GetPlayerTargetYaw		: void : {out} var yaw
+api : 802D1D60, 0F5680 : SetPlayerFlagBits		: void : int bits, bool mode "1 = set | 0 = clear"
+api : 802D1DD0, 0F56F0 : GetPlayerActionState	: void : {out} var state {outType=#actionState}
+api : 802D1DFC, 0F571C : GetPlayerPos			: void : {out} var posX, {out} var posY, {out} var posZ
+api : 802D1E94, 0F57B4 : GetPlayerAnimation		: void : {out} var animation {outType=#playerAnim}
+api : 802D1EC0, 0F57E0 : FullyRestoreHPandFP	: void : void
+api : 802D1EE0, 0F5800 : FullyRestoreSP			: void : void
+api : 802D1EFC, 0F581C : EnablePartner			: void : int partner "note: partnerID - 1"
+api : 802D1F38, 0F5858 : DisablePartner			: void : #partnerID
+api : 802D1F70, 0F5890 : UseEntryHeading : Var[1] float goalPosX, Var[2] float goalPosY, Var[3] float goalPosZ, Var[5] float offsetStep "tangent from room entry offset" : int moveDist, int time "num frames"
+api : 802D216C, 0F5A8C : UseExitHeading : Var[1] float goalPosX, Var[2] float goalPosY, Var[3] float goalPosZ : int moveDist, entryID "exit angle = opposite of entry angle"
+api : 802D244C, 0F5D6C : WaitForPlayerTouchingFloor : void : void
+api : 802D249C, 0F5DBC : IsPlayerOnValidFloor : void : {out} var value {outType=bool}
+api : 802D24F4, 0F5E14 : WaitForPlayerMoveToComplete : void : void
+api : 802D2508, 0F5E28 : WaitForPlayerInputEnabled : void : void
+api : 802D2AA8, 0F63C8 : DisablePulseStone "controls flag that make pulse stone appear on sbk maps" : void : bool disabled
+api : 802D2B0C, 0F642C : GetCurrentPartner : void : {out} var value
+api : 802D2B88, 0F64A8 : Disable8bitMario : void : bool disabled "0 = pixel mario | 1 = paper mario"
+api : 802D2CD8, 0F65F8 : PlaySoundAtPlayer : void : #soundID, int "always zero?"
+asm : 802D2D30, 0F6650 : virtual_entity_appendGfx_quad : void : int r, int g, int b, int alpha, int ulX, int ulY, int lrX, int lrY
+asm : 802D2ED4, 0F67F4 : virtual_entity_render_quad : void : int r, int g, int b, int a, int posX, int posY, int sizeX, int sizeY
+asm : 802D2F34, 0F6854 : virtual_entity_move_polar : void : virtual_entity*, float dist, float yaw "degrees"
+asm : 802D2FCC, 0F68EC : virtual_entity_list_update : void : void
+asm : 802D3028, 0F6948 : virtual_entity_list_render_world : void : void
+asm : 802D31E0, 0F6B00 : virtual_entity_list_render_UI : void : void
+api : 802D3398, 0F6CB8 : InitVirtualEntityList : void : void
+api : 802D33D4, 0F6CF4 : CreateVirtualEntityAt : void : int index, $EntityModelScript
+api : 802D3474, 0F6D94 : CreateVirtualEntity : void : {out} var index, $EntityModelScript
+api : 802D354C, 0F6E6C : CreateVirtualEntity_ALT : void : {out} var index, $EntityModelScript
+api : 802D3624, 0F6F44 : DeleteVirtualEntity : void : int index
+api : 802D3674, 0F6F94 : SetVirtualEntityRenderCommands : void : int index, $EntityModelScript
+api : 802D36E0, 0F7000 : SetVirtualEntityPosition : void : int index, float posX, float posY, float posZ
+api : 802D378C, 0F70AC : GetVirtualEntityPosition : void : int index, {out} var posX, {out} var posY, {out} var posZ
+api : 802D3840, 0F7160 : SetVirtualEntityRotation : void : int index, float rotX, float rotY, float rotZ
+api : 802D38EC, 0F720C : SetVirtualEntityScale : void : int index, float sx, float sy, float sz
+api : 802D3998, 0F72B8 : SetVirtualEntityMoveSpeed : void : void : int index, float speed
+api : 802D39FC, 0F731C : SetVirtualEntityJumpGravity : void : void : int index, float gravity
+api : 802D3A60, 0F7380 : VirtualEntityMoveTo : void : void : int index, int goalX, int goalY, int goalZ, int time "0 = compute from move speed"
+api : 802D3C58, 0F7578 : VirtualEntityJumpTo : void : void : int index, int goalX, int goalY, int goalZ, int time "0 = compute from jump gravity arc"
+api : 802D3EB8, 0F77D8 : VirtualEntityLandJump "Keep moving along jump angle and velocity, completing when y = 0." : void : void : int index
+api : 802D3F74, 0F7894 : SetVirtualEntityFlags : void : int index, {raw} int bits
+api : 802D3FC8, 0F78E8 : SetVirtualEntityFlagBits : void : int index, {raw} int bits, int mode "0 = clear, 1 = set"
+api : 802D4050, 0F7970 : SetVirtualEntityRenderMode : void : * "int index, int type -- selects render mode, ... additional args depend on type, but are never used?"
+asm : 802D4164, 0F7A84 : virtual_entity_get_by_index : virtual_entity* : int index
+asm : 802D417C, 0F7A9C : virtual_entity_create_at_index : virtual_entity* : int index, $EntityModelScript
+asm : 802D420C, 0F7B2C : virtual_entity_create : int index : $EntityModelScript
+asm : 802D42AC, 0F7BCC : ALT_virtual_entity_create : virtual_entity* : $EntityModelScript
+asm : 802D4364, 0F7C84 : virtual_entity_set_pos : void : int index, int posX, int posY, int posZ
+asm : 802D43AC, 0F7CCC : virtual_entity_set_scale : void : int index, int sx, int sy, int sz
+asm : 802D43D0, 0F7CF0 : virtual_entity_set_rotation : void : int index, int rotX, int rotY, int rotZ
+asm : 802D43F4, 0F7D14 : virtual_entity_delete_by_index : void : int index
+asm : 802D4434, 0F7D54 : virtual_entity_delete_by_ref : void : int index
+asm : 802D4488, 0F7DA8 : clear_virtual_entity_list : void : void
+asm : 802D4560, 0F7E80 : init_virtual_entity_list : void : void
+api : 802D45B0, 0F7ED0 : MakeLerp "uses Vars B-F" : void : int start, int end, int duration "frames", #easing
+api : 802D462C, 0F7F4C : UpdateLerp "uses Vars B-F" : Var[0] int currentValue, Var[1] bool done : void
+api : 802D46B0, 0F7FD0 : RandInt : void : int max, {out} var value
+api : 802D4708, 0F8028 : GetAngleBetweenNPCs : void :#npcID, #npcID, {out} var angle
+api : 802D47B4, 0F80D4 : GetAngleToNPC : void : #npcID, {out} var angle "from player toward NPC"
+api : 802D4830, 0F8150 : GetAngleToPlayer : void : #npcID, {out} var angle "from NPC toward player"
+api : 802D48AC, 0F81CC : AwaitPlayerApproach "pauses the script until the player comes within a certain radius from point X,Z" : void : int X, int Z, int radius
+api : 802D4964, 0F8284 : IsPlayerWithin "checks whether the player is within a certain radius of point X,Z" : void : int X, int Z, int radius, {out} var bIsWithin
+api : 802D4A5C, 0F837C : AwaitPlayerLeave "pauses the script until the player moves beyond a certain radius from point X,Z" : void : int X, int Z, int radius
+api : 802D4B14, 0F8434 : AddVectorPolar "offsets a point X,Z by a vector given by length and angle" : void : {out} fvar X, {out} fvar Z, float radius, float angle
+asm : 802D4DAC, 0F86CC : load_path_data : void : int num, float* normalizedLengths, float** staticVectors, float** outVectors
+asm : 802D5270, 0F8B90 : get_path_position : void : float alpha, script_instance* script, float* outPos, int numVectors, float* normalizedLengths, float** staticVectors, float** vectors
+api : 802D5430, 0F8D50 : LoadPath : Var[F] int pathObjectHandler "expected by GetNextPathPos" : int time, {len=#2} $VectorList, int numVectors, #easing
+api : 802D5524, 0F8E44 : GetNextPathPos : Var[0] int done, Var[1] float posX, Var[2] float posY, Var[3] float posZ, Var[F] int pathObjectHanlder "created by LoadPath, must be maintained between calls" : none
+api : 802D5770, 0F9090 : GetDist2D : void : {out} fvar dist, float X1, float Y1, float X2, float Y2
+api : 802D5830, 0F9150 : SetTimeFreezeMode : void : int timeFreezeMode
+api : 802D585C, 0F917C : ModifyGlobalOverrideFlags "modify flags at 8009A650" : void : int mode, int bits
+api : 802D58E0, 0F9200 : SetValueByRef "sets the variable stored at src to the value at dest" : void : {out} var dest, var src
+api : 802D593C, 0F925C : GetValueByRef "gets the value held by the variable in src and copies it to dest" : void : var src, {out} var dest
+api : 802D5998, 0F92B8 : EnableStatusMenu "multiple calls stack and must be undone individually" : void : bool enabled	"1 = enable | 0 = disable"
+api : 802D59DC, 0F92FC : ShowStatusMenu	: void : bool "1 = force it to show | 0 = force it to hide"
+api : 802D5A28, 0F9348 : SetGameMode : void : int gameMode
+api : 802D5A58, 0F9378 : ClampAngleInt : void : int "clamps to range 0-360"
+api : 802D5AB4, 0F93D4 : ClampAngleFloat : void : float "clamps to range 0-360"
+api : 802D5CE0, 0F9600 : FadeOutMusic     	: void : int musicPlayer, int fadeTime "max 10000"
+api : 802D5D4C, 0F966C : SetMusicTrack 		: void : int musicPlayer, #songID, int variation, int volume
+api : 802D5DF4, 0F9714 : FadeInMusic      	: void : int musicPlayer, #songID, int variation, int fadeTime, ???, ???
+api : 802D5FD8, 0F98F8 : PopSong : void : void
+api : 802D5FF8, 0F9918 : PushSong : void : int songID, int variation
+api : 802D6050, 0F9970 : PopBattleSong {unused} {hidden} : void : void
+api : 802D6070, 0F9990 : PushBattleSong {unused} {hidden} : void : void
+api : 802D6090, 0F99B0 : SetBattleSong {unused} {hidden} : void : int songID, int variation
+api : 802D60E8, 0F9A08 : ClearAmbientSounds	: void : int fadeTime "typical value is 250"
+api : 802D611C, 0F9A3C : PlayAmbientSounds	: void : #ambientSFX
+api : 802D6150, 0F9A70 : PlaySound        	: void : int soundID
+api : 802D617C, 0F9A9C : PlaySoundWithVolume : void : int soundID, int volume
+api : 802D61DC, 0F9AFC : PlaySoundAt      	: void : int soundID, ???, int X, int Y, int Z
+api : 802D62B8, 0F9BD8 : StopSound			: void : int soundID
+api : 802D6314, 0F9C34 : UseDoorSounds    	: void : #doorSFX
+api : 802D6340, 0F9C60 : UseAdvancedDoorSounds    	: void : #doorSFX
+api : 802D636C, 0F9C8C : PlaySoundAtF		: void : int soundID, ???, float X, float Y, float Z
+api : 802D6420, 0F9D40 : ShowKeyChoicePopup : Var[0] int choiceStatus, Var[1] int selectedKeyItemSlot : void
+api : 802D663C, 0F9F5C : ShowConsumableChoicePopup : Var[0] int choiceStatus, Var[1] int selectedKeyItemSlot : void
+api : 802D6858, 0FA178 : RemoveKeyItemAt "removes key item at index" : void : int keyItemSlot
+api : 802D688C, 0FA1AC : RemoveItemAt     	: void : int itemSlot
+api : 802D68C8, 0FA1E8 : AddKeyItem       	: void : #itemID
+api : 802D6954, 0FA274 : CloseChoicePopup : void : void
+api : 802D699C, 0FA2BC : HasKeyItem       	: void : #itemID, {out} var bHasItem "boolean"
+api : 802D6A14, 0FA334 : FindKeyItem      	: void : #itemID, {out} var keyItemSlot "FFFF if not found"
+api : 802D6A98, 0FA3B8 : AddItem          	: void : #itemID, {out} var itemSlot "FFFF if none were available"
+api : 802D6AF0, 0FA410 : ClearVariable "pointless" : void : {out} var "will be set to zero"
+api : 802D6B18, 0FA438 : FindItem         	: void : #itemID, {out} var itemSlot "FFFF if not found"
+api : 802D6B9C, 0FA4BC : RemoveItem       	: void : #itemID, {out} var itemSlot "FFFF if none were removed"
+api : 802D6C4C, 0FA56C : CountFortessKeys	: void : {out} var num
+api : 802D6C94, 0FA5B4 : RemoveFortressKeys	: void : int num
+api : 802D6CC0, 0FA5E0 : MakeItemEntity : Var[0] int itemEntityIndex : #itemID, int spawnX, int spawnY, int spawnZ, #itemSpawnMode, var pickupFlag "GameFlag, 0 is valid for none"
+api : 802D6DC0, 0FA6E0 : DropItemEntity : Var[0] int itemEntityIndex : #itemID, int spawnX, int spawnY, int spawnZ, #itemSpawnMode, var pickupFlag "GameFlag, 0 is valid for none"
+api : 802D6EC0, 0FA7E0 : DropItemEntityB : Var[0] int itemEntityIndex : #itemID, int spawnX, int spawnY, int spawnZ, #itemSpawnMode, var pickupFlag "GameFlag, 0 is valid for none"
+api : 802D6FCC, 0FA8EC : RemoveItemEntity : void : int itemEntityIndex
+api : 802D6FF8, 0FA918 : AddBadge         : void : #itemID, {out} var addedBadgeSlot
+api : 802D7050, 0FA970 : RemoveBadge "unequips and removes badge from inventory" : void : #itemID
+api : 802D70D0, 0FA9F0 : SetItemPos     : void : int itemEntityIndex, int X, int Y, int Z
+api : 802D7194, 0FAAB4 : SetItemFlags 	: void : int itemEntityIndex, int flags, int mode
+api : 802D721C, 0FAB3C : SetItemAlpha 	: void : int itemEntityIndex, int alpha
+api : 802D7278, 0FAB98 : AddCoin		: Var[0] int numCoins : int deltaCoins "can be negative"
+api : 802D72B4, 0FABD4 : AddStarPoints	: Var[0] int numStarPoints : int deltaStarPoints "can be negative"
+api : 802D72F0, 0FAC10 : AddStarPieces  : Var[0] int numStarPieces : int deltaStarPieces "can be negative"
+api : 802D732C, 0FAC4C : GetItemPower   : void : #itemID, int bonusHP, int bonusFP
+api : 802D73A4, 0FACC4 : ShowGotItem    : void : #itemID, bool, int messageBoxFlags "0 = item, 10 = \"1 coin\", 20 = \"3 star pieces\", ..."
+api : 802D78A0, 0FB1C0 : ShowEmote        : void : #npcID, #emote, int, ???, ???, ???, ???, ???, ???
+api : 802D7AE4, 0FB404 : RemoveEffect     : void : effect_instance*
+api : 802D8028, 0FB948 : ShowSleepBubble  : void : #npcID, int ???, float ???, int ??? "X?", float ??? "Y?", float ??? "Z?", float ??? "scale?", float pitch "0 = up, >0 = left", {out} var effectPtr {outType=effect_instance*}
+api : 802D829C, 0FBBBC : PlayEffect "huge switch table for playing special effects" : Var[F] effect_instance* effect : varargs
+api : 802D9700, 0FD020 : SetSpriteShading     : void :  int preset "sets the shading effect on character sprites -- but not items -- in dark areas"
+api : 802D9A3C, 0FD35C : EnableSpriteShading  : void :  bool "0 = no shading | 1 = shading"
+api : 802D9A90, 0FD3B0 : GetDemoState		: void : {out} var state "0 ordinary gameplay | 1 manually issuing commands in demo | 2 demo map transition?"
+api : 802D9AC0, 0FD3E0 : DemoPressButton	: void : #buttons
+api : 802D9AF8, 0FD418 : DemoReleaseButton	: void : #buttons
+api : 802D9B34, 0FD454 : DemoSetButtons		: void : #buttons
+api : 802D9B64, 0FD484 : DemoJoystickRadial	: void : int radius "0-255", int angle "degrees cw, 0 is straight up"
+api : 802D9C10, 0FD530 : DemoJoystickXY		: void : int leftRight "signed byte", int upDown "signed byte"
+asm : 802DBD40, 0FDDA0 : spr_init_quad_cache : void : void
+asm : 802DBD8C, 0FDDEC : spr_get_cached_quad : vertex[4]* : int* quadIndex
+asm : 802DBDBC, 0FDE1C : spr_make_quad_for_size : void : vertex[4]* quad, int width, int height
+asm : 802DBE78, 0FDED8 : spr_get_quad_for_size : vertex[4]* : int* quadIndex "pass in last-known size, also functions as an out var", int width, int height
+asm : 802DBFC0, 0FE020 : spr_clear_quad_cache : void : void
+asm : 802DC008, 0FE068 : spr_appendGfx_component_flat : void : ptr vertices, ptr raster, ptr palette ,int width, int height, int "unused?", matrix4f* mtx, int alpha
+asm : 802DC8F4, 0FE954 : spr_appendGfx_component	: void : spr_raster_cache_entry* raster, float dX, float dY, float dZ, float rotX, float rotY, float rotZ, float scaleX, float scaleY, float scaleZ, int opacity, ptr palette, matrix4f* mtx
+asm : 802DCD00, 0FED60 : spr_transform_point		: void : int rotX, int rotY, int rotZ, float inX, float inY, float inZ, float* outX, float* outY, float* outZ
+asm : 802DCEDC, 0FEF3C : spr_draw_component 		: void : int flags, sprite_component* comp, short* compOffset, spr_raster_cache_entry** rasterList, ptr paletteList, float zscale, matrix4f* mtx
+asm : 802DD0DC, 0FF13C : spr_sign_extend_12bit		: int : int value
+asm : 802DD0FC, 0FF15C : spr_sign_extend_16bit		: int : int value
+asm : 802DD11C, 0FF17C : spr_component_update_commands	: void : sprite_component* comp, static_sprite_component* compData
+asm : 802DD634, 0FF694 : spr_component_update_finish : void : sprite_component* comp, sprite_component** compList, spr_raster_cache_entry* rasterCacheEntry, int overridePalette
+asm : 802DD6DC, 0FF73C : spr_component_update : int "value from arg0" : int, sprite_component** compList, static_sprite_animation* animation, spr_raster_cache_entry* rasterCache, int palette
+asm : 802DD7B0, 0FF810 : spr_init_component_anim_state	: void : sprite_component* comp, static_sprite_component* anim
+asm : 802DD820, 0FF880 : spr_init_anim_state			: void : sprite_component** compList, short** cmdList
+asm : 802DD88C, 0FF8EC : spr_set_anim_timescale			: void : float timescale
+asm : 802DD89C, 0FF8FC : spr_load_player_sprite : void : int spriteIndex
+asm : 802DD8F8, 0FF958 : spr_init_sprites : void : int playerSpriteSet "???"
+asm : 802DDA60, 0FFAC0 : spr_render_init : void : void
+asm : 802DDA8C, 0FFAEC : spr_update_player_sprite	: void : int unkFlags, int animID, float timescale
+asm : 802DDC40, 0FFCA0 : spr_draw_player_sprite		: bool success : int unkFlags, int yaw, int, short** paletteList, matrix4f* mtx
+asm : 802DE044, 1000A4 : spr_get_player_raster_info : void : spr_raster_info* outInfo, int playerSpriteID, int rasterIndex
+asm : 802DE0C0, 100120 : spr_get_player_palettes : short** paletteList : int spriteIndex
+asm : 802DE0EC, 10014C : spr_load_npc_sprite : int instanceID : int animID "set MSB for tail allocation (ie, 80XXYYZZ)", ptr extraAnimsList
+asm : 802DE2AC, 10030C : spr_update_sprite			: void : int spriteInstanceID, int animID, float timescale
+asm : 802DE3D8, 100438 : spr_draw_npc_sprite		: bool success : int spriteInstanceID, int yaw, int, short** paletteList, matrix4f* mtx
+asm : 802DE5E8, 100648 : spr_free_sprite : int instanceID "(0 if deleted)" : int spriteInstanceID
+asm : 802DE9D8, 100A38 : spr_get_npc_raster_info : void : spr_raster_info* outInfo, int npcSpriteID, int rasterIndex
+asm : 802DEA40, 100AA0 : spr_get_npc_palettes : ptr paletteList : int npcSpriteID
+asm : 802DEA6C, 100ACC : spr_get_npc_color_variations : int numVariations : int npcSpriteID
+asm : 802DEAA0, 100B00 : spr_swizzle_anim_offsets		: void : int unused "always 0", int memOffset "always 0", sprite_anim_data* data "expected to be followed by the data"
+asm : 802DEB0C, 100B6C : spr_load_sprite : ptr spriteData : int spriteIndex, bool bPlayerSprite, bool bTailAlloc
+asm : 802DED60, 100DC0 : spr_init_player_raster_cache : void : int cacheSize, int maxRasterSize
+asm : 802DEEA0, 100F00 : spr_get_player_raster : ptr raster : int rasterIndex "for the selected sprite", int spriteIndex "as in spriteID"
+asm : 802DEFB4, 101014 : spr_update_player_raster_cache : void : void
+asm : 802DF00C, 10106C : spr_load_npc_extra_anims : void : ptr spriteData, ptr extraAnimsList
+asm : 802DF2D8, 101338 : spr_allocate_components "The component data returned is a list of component pointers, followed by an array of components, all allocated on the heap." : ptr componentData : int numComponents

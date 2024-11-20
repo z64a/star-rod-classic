@@ -1,0 +1,11 @@
+% NUDMAState
+type: ram
+size: C
+fields:
+{
+	  0 : initialized        : ubyte
+%	  1 : UNK 3
+	  4 : firstUsed          : NUDMABuffer*
+	  8 : firstFree          : NUDMABuffer*
+}
+

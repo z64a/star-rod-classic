@@ -1,0 +1,13 @@
+
+% Function_80033E70
+@Function F298 % 80033E98
+{
+	NOP
+	LI		A0, 700
+	SH		A0, AC (V0)
+	/%
+	SB			R0, AC (V0)
+	LW			V0, 0 (S2)
+	SB			R0, AD (V0)
+	%/
+}

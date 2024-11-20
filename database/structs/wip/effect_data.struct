@@ -1,0 +1,15 @@
+% effect_data
+type: ram
+size: 20
+fields:
+{
+	  0 : flags              : int
+	  4 : effectIndex        : int        % the effect ID value (0x00-0x86)
+	  8 : instanceCounter    : int
+	  C : unk_0C             : int        % some kind of state, set to 3 in 80059D50 as flag 2 is set
+	 10 : fpUpdate           : code
+	 14 : fpRenderWorld      : code       % used with func_80059EF4 (params: effectInstance*)
+	 18 : fpRenderUI         : code       % used with func_80059F94 (params: effectInstance*)
+	 1C : additionalData     : ptr        % on the heap
+}
+

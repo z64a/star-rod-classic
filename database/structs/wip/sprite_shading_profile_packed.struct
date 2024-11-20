@@ -1,0 +1,13 @@
+% sprite_shading_profile_packed
+type: ram
+size: 100
+fields:
+{
+	  0 : numLights          : ubyte
+%	  1 : UNK 1
+	  2 : ambientColor       : byte[3`]
+	  5 : ambientWeight?     : ubyte      % signed...?
+	  6 : field_0x6          : sprite_shading_light_source_packed[15`]
+%	 F6 : UNK A
+}
+

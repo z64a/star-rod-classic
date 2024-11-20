@@ -1,0 +1,10 @@
+% static_sprite_component
+type: ram
+size: C
+fields:
+{
+	  0 : cmdList            : short**
+	  4 : cmdListSize        : short
+	  6 : compOffset         : short[3`]
+}
+

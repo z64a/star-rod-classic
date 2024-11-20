@@ -1,0 +1,24 @@
+% entity_data_chest
+type: ram
+size: 38
+fields:
+{
+	  0 : globalFlag         : short
+	  2 : field_0x2          : short
+	  4 : state              : ubyte
+	  5 : field_0x5          : ubyte
+	  6 : timer              : ubyte
+	  7 : field_0x7          : ubyte
+	  8 : lidAngle           : float
+	  C : openInterpPhase    : float
+	 10 : itemID             : int
+	 14 : itemEntityIndex    : int
+	 18 : itemEntityPos      : float[3`]
+	 24 : field_0x24         : float
+	 28 : field_0x28         : float
+	 2C : field_0x2c         : float
+	 30 : field_0x30         : ubyte
+%	 31 : UNK 3
+	 34 : field_0x34         : ptr        % related an effect? set in by E00360B8
+}
+

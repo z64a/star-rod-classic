@@ -1,0 +1,10 @@
+% ItemMenuIcons
+type: ram
+size: 48
+fields:
+{
+%	  0 : UNK 40
+	 40 : scrollUpIconID     : int        % Z button
+	 44 : scrollDownIconID   : int        % R button
+}
+

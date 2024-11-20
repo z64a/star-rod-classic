@@ -1,0 +1,16 @@
+MoveType	% namespace
+moveType	% library name
+false	% reversed
+
+0 = None
+1 = Hammer
+2 = Jump
+3 = Unknown_3
+4 = Items
+5 = Tactics
+6 = Unknown_6
+7 = Attack		% power plus, all or nothing, ...
+8 = Defense		% defend plus, damage dodge, ...
+9 = Unknown_9
+A = StarPower
+B = PartnerAbility

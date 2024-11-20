@@ -1,0 +1,11 @@
+% spritedata_header
+type: ram
+size: 10
+fields:
+{
+	  0 : playerRastersOffset : int
+	  4 : playerYay0TableOffset : int
+	  8 : npcYay0TableOffset : int
+	  C : unk_0C             : int
+}
+

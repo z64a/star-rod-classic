@@ -1,0 +1,210 @@
+
+options {
+	MULTI=true;
+//	KEEP_LINE_COLUMN = false;
+	STATIC=false;
+
+//	DEBUG_PARSER=true;
+//	DEBUG_TOKEN_MANAGER=true;
+
+	VISITOR=true;
+//	VISITOR_DATA_TYPE="BaseVisitorData";
+//	VISITOR_RETURN_TYPE="BaseVisitorData";
+}
+
+PARSER_BEGIN(InlineParser)
+
+package romdata.shared.struct.script.inline.generated;
+
+public class InlineParser
+{
+	/** Main entry point. 
+	public static void compile(String line)
+	{
+		System.out.println("Reading from standard input...");
+		Example2 t = new Example2(System.in);
+		try {
+			ASTStart n = t.Start();
+			n.dump("");
+			System.out.println("Thank you.");
+		} catch (Exception e) {
+			System.out.println("Oops.");
+			System.out.println(e.getMessage());
+			e.printStackTrace();
+		}
+	}
+	*/
+}
+
+PARSER_END(InlineParser)
+
+SKIP :
+{
+  " "
+| "\t"
+| "\r"
+| "\n"
+}
+
+TOKEN : /* LITERALS */
+{
+	< INTEGER_LITERAL:
+	  <DECIMAL_LITERAL>
+	| <HEX_LITERAL>
+	>
+|	< #DECIMAL_LITERAL: (["0"-"9"])+ ["`","'"] >
+|	< #HEX_LITERAL: (["0"-"9","a"-"f","A"-"F"])+ >
+|	<FLOAT_LITERAL: (["0"-"9"])+ "." (["0"-"9"])* (<EXPONENT>)? >
+|	< #EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+>
+}
+
+TOKEN : /* IDENTIFIERS */
+{
+	< CONSTANT: "." <IDENTIFIER> >
+|	< VARIABLE: "*" <IDENTIFIER> ( "[" <INTEGER_LITERAL> "]" )? >
+|	< POINTER: "$" <IDENTIFIER> >
+|	< #IDENTIFIER: <LETTER> (<LETTER>|<DIGIT>|<SPECIAL>)* >
+|	< #LETTER: ["_","a"-"z","A"-"Z"] >
+|	< #DIGIT: ["0"-"9"] >
+|	< #SPECIAL: [":","?"] >
+}
+
+TOKEN [IGNORE_CASE]: /* FUNCTIONS */
+{
+	<INT: "int">
+|	<FLOAT: "float">
+|	<MOD: "mod">
+|	<SQUARE: "square">
+}
+
+ASTLine Line() : {}
+{
+	Expression() <EOF>
+	{ return jjtThis; }
+}
+
+void Expression() #void : {}
+{
+	ORExpression()
+}
+
+void ORExpression() #ChainedExpression(>1) : {}
+{
+	ANDExpression()( "|" ANDExpression() { jjtThis.addOperator("|"); } )*
+}
+
+void ANDExpression() #ChainedExpression(>1) : {}
+{
+	AdditiveExpression()( "&" AdditiveExpression() { jjtThis.addOperator("&"); } )*
+}
+
+void AdditiveExpression() #ChainedExpression(>1) :
+{ Token op = null; }
+{
+	MultiplicativeExpression()( ( op="+" | op="-" ) MultiplicativeExpression() { if(op != null) jjtThis.addOperator(op.image); } )*
+}
+
+void MultiplicativeExpression() #ChainedExpression(>1) :
+{ Token op = null; }
+{
+	UnaryExpression()( ( op="*" | op="/" ) UnaryExpression() { if(op != null) jjtThis.addOperator(op.image); } )*
+}
+
+void UnaryExpression() #void : {}
+{
+	Negation()
+|	BuiltInExpression()
+}
+
+/* casting/built-in functions */
+void BuiltInExpression() #void : {}
+{
+	Call()
+|	PrimaryExpression()
+}
+
+void Negation() #UnaryOperation : {}
+{
+	"-" BuiltInExpression()
+	{ jjtThis.setOperator("-"); }
+}
+
+void Call() #void : {}
+{
+	"@"
+	(	IntCast()
+	|	FloatCast()
+	|	SquareCall()
+	|	ModCall()
+	)
+}
+
+void IntCast() #UnaryOperation : {}
+{
+	<INT> "(" Expression() ")"
+	{ jjtThis.setOperator("int"); }
+}
+
+void FloatCast() #UnaryOperation : {}
+{
+	<FLOAT> "(" Expression() ")"
+	{ jjtThis.setOperator("float"); }
+}
+
+void SquareCall() #UnaryOperation : {}
+{
+	<SQUARE> "(" Expression() ")"
+	{ jjtThis.setOperator("square"); }
+}
+
+void ModCall() #BinaryOperation : {}
+{
+	<MOD> "(" Expression() "," Expression() ")"
+	{ jjtThis.setOperator("%"); }
+}
+
+void PrimaryExpression() #void : {}
+{
+	"(" Expression() ")" | Variable() | OffsetValue() | Integer() | Float()
+}
+
+void OffsetValue() #BinaryOperation(>1) : {}
+{
+	( Constant() | Pointer() ) [ "[" Expression() "]" ]
+	{ jjtThis.setOperator("+"); }
+}
+
+void Variable() :
+{ Token t; }
+{
+	t=<VARIABLE>
+	{ jjtThis.setName(t.image); }
+}
+
+void Constant() :
+{ Token t; }
+{
+	t=<CONSTANT>
+	{ jjtThis.setName(t.image); }
+}
+
+void Pointer() :
+{ Token t; }
+{
+	t=<POINTER>
+	{ jjtThis.setName(t.image); }
+}
+
+void Integer() :
+{ Token t; }
+{
+	t=<INTEGER_LITERAL>
+	{ jjtThis.setValue(t.image); }
+}
+
+void Float() :
+{ Token t; }
+{
+	t=<FLOAT_LITERAL>
+	{ jjtThis.setValue(t.image); }
+}

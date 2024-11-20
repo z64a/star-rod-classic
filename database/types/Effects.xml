@@ -1,0 +1,734 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Effects>
+
+	<Effect id="00" name="BigDustPuff" args="posX; posY; posZ; duration" desc=
+		"Burst of large transparent smoke."/>
+
+	<Effect id="01" name="BigSmokePuff" args="posX; posY; posZ" desc=
+		"Large cluster of small smoke puffs, grey and opaque."/>
+
+	<!-- 02 = crashes -->
+
+	<!-- 03 = crashes -->
+
+	<!-- 04 = crashes -->
+
+	<!-- 05 = crashes -->
+
+	<Effect id="06" args="subtype; posX; posY; posZ" desc=
+		"Grey transparent dust particles from a stationary emitter. Used for landing.">
+		<Subtype id="00" name="Dust:Stationary:SmallBurst"/>
+		<Subtype id="01" name="Dust:Stationary:MediumBurst"/>
+		<Subtype id="02" name="Dust:Stationary:LingeringRing"/>
+		<Subtype id="03" name="Dust:Stationary:FloatingRings"/>
+		<Subtype id="04" name="Dust:Stationary:LargeWave"/>
+	</Effect>
+
+	<Effect id="07" args="subtype; posX; posY; posZ; velocity X; velocity Z" desc=
+		"Grey transparent dust particles from an emitter that moves over time. Used with walking.">
+		<Subtype id="00" name="Dust:Drifting:Small"/>
+		<Subtype id="01" name="Dust:Drifting:Large"/>
+		<Subtype id="02" name="Dust:Drifting:Ring"/>
+	</Effect>
+
+	<Effect id="08" args="subtype; posX; posY; posZ" desc=
+		"Ring of flowers thrown into the air when Mario jumps from flower patches of Flower Fields.">
+		<Subtype id="00" name="Flower:Jump"/>
+	</Effect>
+
+	<Effect id="09" args="subtype; posX; posY; posZ" desc=
+		"Random-colored flowers created by walking around in flower patches of Flower Fields.">
+		<Subtype id="00" name="Flower:Trail:Wait" desc="Vanishes when the player moves."/>
+		<Subtype id="01" name="Flower:Trail:Auto" desc="Will vanish after a fixed time."/>
+	</Effect>
+
+	<Effect id="0A" name="Cloud:Puff" args="posX; posY; posZ" desc=
+		"Used by HuffNPuff and on Cloudy Climb maps."/>
+
+	<Effect id="0B" args="subtype; posX; posY; posZ" desc=
+		"Yellow cloud sprites created by walking around in Cloudy Climb.">
+		<Subtype id="00" name="Cloud:Trail:Wait" desc="Vanishes when the player moves."/>
+		<Subtype id="01" name="Cloud:Trail:Auto" desc="Will vanish after a fixed time."/>
+	</Effect>
+
+	<!-- 0C = footprint -->
+
+	<Effect id="0D" name="FloatingFlower" args="posX; posY; posZ; duration" desc=
+		"Used by HuffNPuff and on Cloudy Climb maps."/>
+
+	<Effect id="0E" name="Snowflake" args="posX; posY; posZ; duration" desc=
+		"A single snowflake falls."/>
+
+	<Effect id="0F" args="subtype; start posX; posY; posZ; targetX; targetY; targetZ; speed">
+		<Subtype id="00" name="ShootingStar:Background"/>
+		<Subtype id="01" name="ShootingStar:Foreground"/>
+		<Subtype id="02" name="ShootingStar:Normal"/>
+		<Subtype id="03" name="ShootingStar:RandomColor"/>
+	</Effect>
+
+	<Effect id="10" args="subtype; npcID; dX; dY; dZ; radius; pitch (0 = up, >0 = left); duration" desc=
+		"Emote effects used by func_802D78A0 (ShowEmote)">
+		<Subtype id="00" name="EmoteIcon:Exclaim"/>
+		<Subtype id="01" name="EmoteIcon:Shock"/>
+		<Subtype id="02" name="EmoteIcon:Question"/>
+		<Subtype id="03" name="EmoteIcon:Frustration"/>
+		<Subtype id="04" name="EmoteIcon:Waiting"/>
+	</Effect>
+
+	<Effect id="11" args="subtype; posX; posY; posZ; radius">
+		<Subtype id="00" name="Sparkles:Star"/>
+		<Subtype id="01" name="Sparkles:Random"/>
+		<Subtype id="02" name="Sparkles:TreeShake"/>
+	</Effect>
+
+	<Effect id="12" args="subtype; startX; startY; startZ; endX; endY; endZ; duration">
+		<Subtype id="00" name="ShapeSpell:Projectile"/>
+		<Subtype id="01" name="ShapeSpell:Explosion1"/>
+		<Subtype id="02" name="ShapeSpell:Explosion2"/>
+	</Effect>
+
+	<Effect id="13" args="subtype; posX; posY; posZ; inner radius; duration">
+		<Subtype id="00" name="GatherEnergyPink"/>
+	</Effect>
+
+	<Effect id="14" args="subtype; posX; posY; posZ; duration" desc=
+		"Four green leaves fall from an emitter, vanishing after a short time">
+		<Subtype id="00" name="DropLeaves:Random" desc="spawn randomly around point"/>
+		<Subtype id="01" name="DropLeaves:Point" desc="tossed up from point before falling"/>
+	</Effect>
+
+	<Effect id="15" args="subtype; posX; posY; posZ; duration">
+		<Subtype id="00" name="Dust:LightRain"/>
+		<Subtype id="01" name="Dust:HeavyRain"/>
+		<Subtype id="03" name="Dust:SphericalPuff"/>
+	</Effect>
+
+	<Effect id="16" args="subtype; posX; posY; posZ; height above ground to break" desc=
+		"Pieces of stone walls that fall and shatter in Koopa Bros Fortress">
+		<Subtype id="00" name="ShatteringStones"/>
+	</Effect>
+
+	<Effect id="17" args="subtype; posX; posY; posZ" desc=
+		"Creates a ring of smoke effects that move outward radially. Each subtype starts further out.">
+		<Subtype id="00" name="SmokeRing:Blast1"/>
+		<Subtype id="01" name="SmokeRing:Blast2"/>
+		<Subtype id="02" name="SmokeRing:Blast3"/>
+	</Effect>
+
+	<Effect id="18" args="subtype; posX; posY; posZ; directionX; directionY; directionZ; num stars" desc=
+		"Multi-colored stars that appear when damage is dealt/taken arranged in various patterns.">
+		<Subtype id="00" name="Stars:Fountain1" desc="rise, linger shortly, begin spinning, vanish"/>
+		<Subtype id="01" name="Stars:Fountain2" desc="similar to previous with faster spinning"/>
+		<Subtype id="02" name="Stars:Fountain3" desc="rapidly rise and begin to fall"/>
+		<Subtype id="03" name="Stars:Fan"/>
+		<Subtype id="04" name="Stars:Circle"/>
+	</Effect>
+
+	<Effect id="19" args="subtype" desc=
+		"Explosion similar to Bombette's blast. Each subtype is larger than the last.">
+		<Subtype id="00" name="Explosion1"/>
+		<Subtype id="01" name="Explosion2"/>
+		<Subtype id="02" name="Explosion3"/>
+	</Effect>
+
+	<Effect id="1A" args="subtype; posX; posY; posZ; duration" desc=
+		"Growing shine effect.">
+		<Subtype id="00" name="LensFlare:Rotating"/>
+		<Subtype id="01" name="LensFlare:Fixed"/>
+	</Effect>
+
+	<Effect id="1B" args="subtype; posX; posY; posZ; ???; ???" desc=
+		"White outline shown around new equipment when acquired.">
+		<Subtype id="00" name="GotItemOutline"/>
+	</Effect>
+
+	<Effect id="1C" args="subtype; posX; posY; posZ; duration" desc=
+		"A large white aura appears and pulses in size for some time.">
+		<Subtype id="00" name="SpikyWhiteAura"/>
+	</Effect>
+
+	<Effect id="1D" args="subtype; posX; posY; posZ; radius; num particles; ???; time" desc=
+		"A ring of smoke particle fly out from a point, float upward, and vanish.">
+		<Subtype id="00" name="SmokeImpact:Large"/>
+		<Subtype id="01" name="SmokeImpact:Small"/>
+		<Subtype id="02" name="SmokeImpact:Red"/>
+	</Effect>
+
+	<Effect id="1E" args="subtype; posX; posY; posZ; radius; pitch (0 = up, >0 = left); amount; ???" desc=
+		"The damage indicator shown during battles.">
+		<Subtype id="00" name="ShowDamageAmount"/>
+	</Effect>
+
+	<Effect id="1F" args="subtype; startX; startY; startZ; endX; endY; endZ; scale" desc=
+		"A purple spinning ring appears and vanishes as it floats toward dest.">
+		<Subtype id="00" name="PurpleRing"/>
+	</Effect>
+
+	<Effect id="20" args="subtype; posX; posY; posZ; scale; ???" desc=
+		"Basic fire particle effect.">
+		<Subtype id="00" name="Fire:Blue"/>
+		<Subtype id="01" name="Fire:LargeRed"/>
+		<Subtype id="02" name="Fire:TinyBlue"/>
+		<Subtype id="03" name="Fire:Pink"/>
+	</Effect>
+
+	<Effect id="21" args="subtype; posX; posY; posZ; ???; ???; num stars" desc=
+		"Stars fly out in a pseudo-random burst.">
+		<Subtype id="00" name="Stars:Burst"/>
+	</Effect>
+
+	<Effect id="22" args="subtype; posX; posY; posZ; emitter radius; emitter height; num particles; ???" desc=
+		"Small stars fly around in various patterns.">
+		<Subtype id="00" name="RedShimmer:Burst"/>
+		<!-- <Subtype id="01" name="?"/> -->
+		<Subtype id="02" name="RedShimmer:Spiral"/>
+		<Subtype id="03" name="RainbowShimmer"/>
+		<Subtype id="04" name="PinkShimmer:Spiral"/>
+		<Subtype id="05" name="GoldShimmer:Rising"/>
+		<!-- <Subtype id="06" name="?"/> -->
+	</Effect>
+
+	<Effect id="23" args="subtype; posX; posY; posZ; float height" desc=
+		"A single bubble is emitted from a point, rises to the surface, and creates ripples as it pops.">
+		<Subtype id="00" name="RisingBubble"/>
+	</Effect>
+
+	<Effect id="24" args="subtype; posX; posY; posZ; scale; duration" desc=
+		"Explosion effect that forms a ring.">
+		<Subtype id="00" name="RingBlast:Red"/>
+		<Subtype id="01" name="RingBlast:Yellow"/>
+	</Effect>
+
+	<Effect id="25" args="subtype; posX; posY; posZ" desc=
+		"A huge shockwave bursts out of the ground (very cool effect).">
+		<Subtype id="00" name="ShockWave:White"/>
+		<Subtype id="01" name="ShockWave:LargeWhite"/>
+		<Subtype id="02" name="ShockWave:Sand"/>
+		<Subtype id="03" name="ShockWave:Clouds"/>
+	</Effect>
+
+	<Effect id="26" args="subtype; posX; posY; posZ" desc=
+		"A random musical note is emitted. It moves straight in one direction.">
+		<Subtype id="00" name="MusicNote:Up"/>
+		<Subtype id="01" name="MusicNote:Left"/>
+		<Subtype id="02" name="MusicNote:Right"/>
+	</Effect>
+
+	<Effect id="27" args="subtype; posX; posY; posZ; scale; duration" desc=
+		"A burst of smoke radiates from a point.">
+		<Subtype id="00" name="SmokeBurst:Black"/>
+		<Subtype id="01" name="SmokeBurst:Red"/>
+		<Subtype id="02" name="SmokeBurst:White"/>
+	</Effect>
+
+	<Effect id="28" args="subtype; posX; posY; posZ; radius; pitch (0 = up, >0 = left); duration" desc=
+		"Sweat droplets fly off from a point.">
+		<Subtype id="00" name="Sweat:Small"/>
+		<Subtype id="01" name="Sweat:Large"/>
+	</Effect>
+
+	<Effect id="29" args="subtype; posX; posY; posZ; scale; pitch (0 = up, >0 = left)" desc=
+		"A sleep bubble appears and undulates.">
+		<Subtype id="00" name="SleepBubble"/>
+	</Effect>
+
+	<!-- 2A = crashes -->
+
+	<Effect id="2B" args="subtype; posX; posY; posZ" desc=
+		"Dead leaves blow in the wind, from right to left.">
+		<Subtype id="00" name="DeadLeaves:Gust1"/>
+		<Subtype id="01" name="DeadLeaves:Gust2"/>
+		<Subtype id="02" name="DeadLeaves:Gust3"/>
+	</Effect>
+
+	<Effect id="2C" args="subtype; posX; posY; posZ" desc=
+		"Four green leaves fall from around a point.">
+		<Subtype id="00" name="FallingLeaves:Wait" desc="Waits for player to move."/>
+		<Subtype id="01" name="FallingLeaves:Auto"/>
+	</Effect>
+
+	<Effect id="2D" args="subtype; posX; posY; posZ; num stars; duration" desc=
+		"Spinning stars move out radially from a point (evenly spaced).">
+		<Subtype id="00" name="Stars:SpreadOut"/>
+	</Effect>
+
+	<Effect id="2E" args="subtype; posX; posY; posZ; ???; duration">
+		<Subtype id="00" name="Steam:Burst"/>
+	</Effect>
+
+	<Effect id="2F" args="subtype; posX; posY; posZ; num stars; radius" desc=
+		"Spinning stars orbit around a point.">
+		<Subtype id="00" name="Stars:Orbiting"/>
+	</Effect>
+
+	<Effect id="30" args="subtype; posX; posY; posZ; scale; pitch (0 = up, >0 = left)" desc=
+		"Snowflakes that appear when jumping with Ice Power equipped.">
+		<Subtype id="00" name="BigSnowFlakes"/>
+	</Effect>
+
+	<Effect id="31" args="subtype; posX; posY; posZ" desc=
+		"Debuff effect used when inflicting sleep and dizzy.">
+		<Subtype id="00" name="Debuff:Blue"/>
+		<Subtype id="01" name="Debuff:Purple"/>
+	</Effect>
+
+	<Effect id="32" args="subtype; posX; posY; posZ" desc=
+		"Effect used by D-Down Pound.">
+		<Subtype id="00" name="GreenImpact:Large"/>
+		<Subtype id="01" name="GreenImpact:Small"/>
+	</Effect>
+
+	<Effect id="33" args="subtype; posX; posY; posZ; scale; duration" desc=
+		"Various effects that flow in and out on a cone.">
+		<Subtype id="00" name="RadialFlowOut:ThinLines"/>
+		<Subtype id="01" name="RadialFlowOut:ThickLines"/>
+		<Subtype id="02" name="RadialFlowIn:YellowLines"/>
+		<Subtype id="03" name="RadialFlowIn:WhiteWaves"/>
+		<Subtype id="04" name="RadialFlowIn:GreenEnergy"/>
+		<Subtype id="05" name="RadialFlowOut:YellowEnergy"/>
+		<Subtype id="06" name="RadialFlowOut:WhiteWaves"/>
+		<Subtype id="07" name="RadialFlowOut:RedEnergy"/>
+		<Subtype id="08" name="RadialFlowIn:ElectricalWaves"/>
+		<Subtype id="0A" name="RadialFlowIn:BlueSpikes"/>
+		<Subtype id="0B" name="RadialFlowOut:BlueSpikes"/>
+		<Subtype id="0C" name="RadialFlowIn:YellowLines"/>
+		<Subtype id="0D" name="RadialFlowIn:YellowEnergy"/>
+		<Subtype id="0E" name="RadialFlowIn:GoldenRays"/>
+	</Effect>
+
+	<Effect id="34" args="subtype; posX; posY; posZ; scale" desc=
+		"Elements used in the ending sequence as Mario and Peach fall to earth.">
+		<Subtype id="00" name="Ending:LakituCloudA"/>
+		<Subtype id="02" name="Ending:Bubble"/>
+		<Subtype id="03" name="Ending:LakituCloudB"/>
+	</Effect>
+
+	<Effect id="35" args="subtype; posX; posY; posZ" desc=
+		"Rays of light shine outward from a point. A/B versions seem to be identical.">
+		<Subtype id="00" name="LightRays:BlurryA"/>
+		<Subtype id="01" name="LightRays:BlurryB"/>
+		<Subtype id="02" name="LightRays:SharpA"/>
+		<Subtype id="03" name="LightRays:SharpB"/>
+	</Effect>
+
+	<Effect id="36" args="subtype; posX; posY; posZ" desc=
+		"PurpleScreen: Beams of electricity snake across the screen.
+		YellowMagic: Lightning bolt strikes and a 'magical' wave ripples outward.">
+		<Subtype id="00" name="Lightning:PurpleScreen1"/>
+		<Subtype id="01" name="Lightning:PurpleScreen2"/>
+		<Subtype id="02" name="Lightning:PurpleScreen3"/>
+		<Subtype id="03" name="Lightning:YellowMagic1"/>
+		<Subtype id="04" name="Lightning:YellowMagic2"/>
+		<Subtype id="05" name="Lightning:YellowMagic3"/>
+	</Effect>
+
+	<Effect id="37" args="subtype; startX; startY; startZ; endX; endY; endZ; num extra particles (N-1); delay between particle spawns; lifetime" desc=
+		"Bowser's fire breath. When the tiny variation is used, a function is called to scale up the particle size.">
+		<Subtype id="00" name="FireBreath:Large"/>
+		<Subtype id="01" name="FireBreath:Small"/>
+		<Subtype id="02" name="FireBreath:Tiny"/>
+	</Effect>
+
+	<Effect id="38" args="subtype; posX; posY; posZ; scale; duration" desc=
+		"Shiny particles explode from a point.">
+		<Subtype id="00" name="ShimmerBurst:White"/>
+		<Subtype id="01" name="ShimmerBurst:Pink"/>
+	</Effect>
+
+	<Effect id="39" args="subtype; posX; posY; posZ; shockwave scale; duration" desc=
+		"A yellow shockwave expands from a point. Shiny gold particles burst out as well.">
+		<Subtype id="00" name="EnergyShockwave"/>
+	</Effect>
+
+	<Effect id="3A" args="subtype; posX; posY; posZ; ???; ???; duration" desc=
+		"A shockwave of gold shiny particles expands out in a disc.">
+		<Subtype id="00" name="ShimmerWave"/>
+	</Effect>
+
+	<Effect id="3B" args="subtype; posX; posY; posZ; scale" desc=
+		"Glowing auras used by powered-up bosses (Bowser, The Master, etc)">
+		<Subtype id="00" name="Aura:StarSpirit"/>
+		<Subtype id="01" name="Aura:DarkRedFlames"/>
+		<Subtype id="02" name="Aura:BlueFlames"/>
+		<Subtype id="03" name="Aura:GoldenFlames"/>
+	</Effect>
+
+	<!-- 3C = unknown -->
+
+	<!-- 3D = no description -->
+
+	<Effect id="3E" args="subtype; posX; posY; posZ; scale; duration">
+		<Subtype id="00" name="Blast:Aftermath"/>
+		<Subtype id="01" name="Blast:Aftermath:Spinning"/>
+	</Effect>
+
+	<Effect id="3F" args="subtype; posX; posY; posZ" desc=
+		"A fire flower sprouts and shoots fireballs.">
+		<Subtype id="00" name="FireFlower"/>
+	</Effect>
+
+	<Effect id="40" args="subtype; posX; posY; posZ; amount (0-99)">
+		<Subtype id="00" name="Recover:HP"/>
+		<Subtype id="01" name="Recover:FP"/>
+		<Subtype id="02" name="Recover:LittleHeart"/>
+	</Effect>
+
+	<Effect id="41" args="subtype; posX; posY; posZ; num turns (0-11)">
+		<Subtype id="00" name="DisableX"/>
+		<Subtype id="01" name="DisableX:NoCount"/>
+	</Effect>
+
+	<!-- 42 = BombetteBreaking -->
+
+	<Effect id="43" args="subtype; posX; posY; posZ; scale; duration">
+		<Subtype id="00" name="Firework:White"/>
+		<Subtype id="01" name="Firework:Orange"/>
+		<Subtype id="02" name="Firework:Yellow"/>
+	</Effect>
+
+	<Effect id="44" args="subtype">
+		<Subtype id="00" name="Confetti:Burst1"/>
+		<Subtype id="03" name="Confetti:Rain"/>
+		<Subtype id="04" name="Confetti:Burst2"/>
+		<Subtype id="05" name="Confetti:Burst3"/>
+	</Effect>
+
+	<Effect id="45" args="subtype; density (100 is alot)">
+		<Subtype id="00" name="Snowfall"/>
+	</Effect>
+
+	<!-- 46 = crashes -->
+
+	<Effect id="47" args="subtype; posX; posY; posZ" desc=
+		"Magic particles spiral in toward a point.">
+		<Subtype id="00" name="GatherMagic:Pink"/>
+		<Subtype id="01" name="GatherMagic:Dark"/>
+	</Effect>
+
+	<Effect id="48" args="subtype; posX; posY; posZ; ???; duration">
+		<Subtype id="00" name="TextPopup:Nice"/>
+		<Subtype id="01" name="TextPopup:Good"/>
+		<Subtype id="02" name="TextPopup:Super"/>
+		<Subtype id="03" name="TextPopup:Lucky"/>
+		<Subtype id="04" name="TextPopup:Miss"/>
+		<Subtype id="05" name="TextSlideIn:Nice"/>
+		<Subtype id="06" name="TextSlideIn:Good"/>
+		<Subtype id="07" name="TextSlideIn:Super"/>
+		<Subtype id="08" name="TextSlideIn:Lucky"/>
+		<Subtype id="09" name="TextSlideIn:Miss"/>
+	</Effect>
+
+	<Effect id="49" args="subtype; posX; posY; posZ; scale">
+		<Subtype id="00" name="SmallGoldSparkle"/>
+	</Effect>
+
+	<Effect id="4A" args="subtype; posX; posY; posZ; size X/Y" desc=
+		"Creates a flashing golden box.">
+		<Subtype id="00" name="ShockVolume"/>
+		<Subtype id="01" name="ShockVolume:Nova"/>
+		<Subtype id="02" name="ShockNova:Green"/>
+		<Subtype id="03" name="ShockNova:Yellow"/>
+	</Effect>
+
+	<Effect id="4B" args="subtype; posX; posY; posZ; ???; duration" desc=
+		"A balloon appears and floats up at a constant rate.">
+		<Subtype id="00" name="Balloon:Red"/>
+		<Subtype id="01" name="Balloon:Blue"/>
+		<Subtype id="02" name="Balloon:Orange"/>
+	</Effect>
+
+	<Effect id="4C" args="" desc=
+		"A rock appears and floats upward.004C0000 = FloatingRock"/>
+
+	<Effect id="4D" args="subtype; posX; posY; posZ; dust scale; 0; chomp scale; ???; ???; duration" desc=
+		"Spell animation for one of Tutankoopa's attacks.">
+		<Subtype id="00" name="ChompDrop"/>
+	</Effect>
+
+	<Effect id="4E" args="subtype; posX; posY; posZ" desc=
+		"Creates the stage for Chuck Quizmo's quiz.">
+		<Subtype id="00" name="ChuckQuizmoStage"/>
+	</Effect>
+
+	<Effect id="4F" args="subtype; posX; posY; posZ; ???; ???" desc=
+		"A glowing pink orb with energy raditating out appears. Doesn't go away by itself.">
+		<Subtype id="00" name="RadiatingEnerygOrb"/>
+	</Effect>
+
+		<!-- 50 = QuizmoAnswer -->
+
+	<Effect id="51" args="subtype; posX; posY; posZ; ???; duration" desc=
+		"A small fiery particle.">
+		<Subtype id="00" name="MotionBlurFlame:Small"/>
+		<Subtype id="01" name="MotionBlurFlame:Normal"/>
+	</Effect>
+
+	<Effect id="52" args="subtype; posX; posY; posZ; scale; duration">
+		<Subtype id="00" name="GlowingOrb:Green"/>
+		<Subtype id="01" name="GlowingOrb:Red"/>
+		<Subtype id="02" name="GlowingOrb:White"/>
+		<Subtype id="03" name="EnergyWaveOut:Green"/>
+		<Subtype id="04" name="EnergyWaveOut:Grey"/>
+		<Subtype id="05" name="EnergyWaveOut:Red"/>
+		<Subtype id="06" name="EnergyWaveOut:White"/>
+		<Subtype id="07" name="EnergyWaveIn:Blue"/>
+	</Effect>
+
+	<Effect id="53" args="subtype; posX; posY; posZ">
+		<Subtype id="00" name="MerlinHouseStars"/>
+	</Effect>
+
+	<!-- 54 = Unused? QuizmoAudience -->
+
+	<Effect id="55" args="subtype; posX; posY; posZ">
+		<Subtype id="00" name="Butterflies"/>
+	</Effect>
+
+	<Effect id="56" args="subtype; posX; posY; posZ; scale; duration">
+		<Subtype id="00" name="StatChange:AttackPlus1"/>
+		<Subtype id="01" name="StatChange:AttackPlus2"/>
+		<Subtype id="02" name="StatChange:AttackPlus3"/>
+		<Subtype id="03" name="StatChange:AttackMinus1"/>
+		<Subtype id="04" name="StatChange:AttackMinus2"/>
+		<Subtype id="05" name="StatChange:AttackMinus3"/>
+		<Subtype id="06" name="StatChange:DefensePlus1"/>
+		<Subtype id="07" name="StatChange:DefensePlus2"/>
+		<Subtype id="08" name="StatChange:DefensePlus3"/>
+		<Subtype id="09" name="StatChange:AttackPlus0"/>
+	</Effect>
+
+	<Effect id="57" args="subtype; posX; posY; posZ; scale; duration" desc=
+		"Snaking currents of static electricity.">
+		<Subtype id="00" name="SnakingStatic"/>
+	</Effect>
+
+	<Effect id="58" args="subtype; startX; startY; startZ; endX; endY; endZ; scale; duration">
+		<Subtype id="00" name="ThunderBoltRing"/>
+	</Effect>
+
+	<Effect id="59" args="subtype; startX; startY; startZ; endX; endY; endZ; scale; duration" desc=
+		"Water effects from Sushi's squirt attack.">
+		<Subtype id="00" name="Squirt:Waterbeam"/>
+		<Subtype id="01" name="Squirt:Fountain"/>
+	</Effect>
+
+	<Effect id="5A" args="subtype; posX; posY; posZ" desc=
+		"Water effects from Sushi's water block attack.">
+		<Subtype id="00" name="WaterBlock:FadeInOut"/>
+		<Subtype id="01" name="WaterBlock:Burst"/>
+		<Subtype id="02" name="WaterBlock:Idle"/>
+	</Effect>
+
+	<Effect id="5B" args="subtype; posX; posY; posZ; scale">
+		<Subtype id="00" name="WaterFall"/>
+	</Effect>
+
+	<Effect id="5C" args="subtype; posX; posY; posZ; scale; duration">
+		<Subtype id="00" name="WaterFountain:Large"/>
+		<Subtype id="01" name="WaterFountain:Small"/>
+	</Effect>
+
+	<Effect id="5D" args="subtype; posX; posY; posZ; ???; duration">
+		<Subtype id="00" name="Underwater"/>
+	</Effect>
+
+	<Effect id="5E" args="subtype; startX; startY; startZ; endX; endY; endZ; scale; duration">
+		<Subtype id="00" name="Lightning"/>
+	</Effect>
+
+	<Effect id="5F" args="subtype; posX; posY; posZ; scale; duration">
+		<Subtype id="00" name="WaterSplash:Left"/>
+		<Subtype id="01" name="WaterSplash:Right"/>
+		<Subtype id="02" name="WaterSplash:Up"/>
+		<Subtype id="03" name="WaterSplash:Inflating"/>
+		<Subtype id="04" name="WaterSplash:Tiny"/>
+	</Effect>
+
+	<Effect id="60" args="subtype; posX; posY; posZ; scale; duration">
+		<Subtype id="00" name="SnowmanDoll"/>
+	</Effect>
+
+	<Effect id="61" args="subtype; posX; posY; posZ; scale; duration">
+		<Subtype id="00" name="FrightJar"/>
+	</Effect>
+
+	<Effect id="62" args="subtype; posX; posY; posZ; scale; duration">
+		<Subtype id="00" name="StopWatch"/>
+	</Effect>
+
+	<!-- 63 = unknown -->
+
+	<Effect id="64" args="subtype; posX; posY; posZ; ???; ???; ???; scale; ???" desc=
+		"Looks like the sprites from Lakilester's Spiny Surge.">
+		<Subtype id="00" name="ThrowSpiny:Red"/>
+		<Subtype id="01" name="ThrowSpiny:Yellow"/>
+	</Effect>
+
+	<!-- 65 = unknown -->
+
+	<Effect id="66" args="subtype; posX; posY; posZ; scale; duration" desc=
+		"Tubba's Heart attack that summons many small hearts to tackle Mario.">
+		<Subtype id="00" name="HeartAttack:Success"/>
+		<Subtype id="01" name="HeartAttack:Miss"/>
+	</Effect>
+
+	<Effect id="67" args="subtype; posX; posY; posZ; scale; duration">
+		<Subtype id="00" name="Whirlwind"/>
+	</Effect>
+
+	<Effect id="68" args="subtype; posX; posY; posZ; scale; duration">
+		<Subtype id="00" name="RedImpact:Huge"/>
+		<Subtype id="01" name="RedImpact:Normal"/>
+	</Effect>
+
+	<Effect id="69" args="subtype; posX; posY; posZ; scale; duration" desc=
+		"Little white piece of a cloud floating up lazily.">
+		<Subtype id="00" name="FloatingCloudPuff"/>
+	</Effect>
+
+	<!-- 6A = crashes -->
+
+	<Effect id="6B" args="subtype; posX; posY; posZ; scale; duration">
+		<Subtype id="00" name="EnergyIn:ShortStreaks"/>
+		<Subtype id="01" name="EnergyIn:Stars"/>
+		<Subtype id="02" name="EnergyIn:YellowPoints"/>
+		<Subtype id="03" name="EnergyOut:ShortStreaks"/>
+		<Subtype id="04" name="EnergyOut:Stars"/>
+		<Subtype id="05" name="EnergyOut:YellowPoints"/>
+		<Subtype id="06" name="EnergyIn:LongStreaks1"/>
+		<Subtype id="07" name="EnergyIn:LongStreaks2"/>
+		<Subtype id="08" name="EnergyOut:LongStreaks1"/>
+		<Subtype id="09" name="EnergyOut:RedPoints"/>
+		<Subtype id="0A" name="EnergyOut:LongStreaks2"/>
+		<Subtype id="0B" name="EnergyOut:LongStreaksSpin"/>
+		<Subtype id="0C" name="EnergyOut:YellowPointsSpin"/>
+	</Effect>
+
+	<Effect id="6C" args="subtype; posX; posY; posZ; scale; duration">
+		<Subtype id="00" name="TattleWindow"/>
+	</Effect>
+
+	<Effect id="6D" args="subtype; posX; posY; posZ; scale">
+		<Subtype id="00" name="ShinyFlare"/>
+	</Effect>
+
+	<Effect id="6E" args="subtype; posX; posY; posZ; angle; intensity; scale; duration">
+		<Subtype id="00" name="HuffPuffBreath"/>
+	</Effect>
+
+	<Effect id="6F" args="subtype; posX; posY; posZ; scale; duration">
+		<Subtype id="00" name="ColdBreath:PuffUp"/>
+		<Subtype id="01" name="ColdBreath:GustLeft"/>
+		<Subtype id="01" name="ColdBreath:PuffDown"/>
+	</Effect>
+
+	<Effect id="70" args="subtype; posX; posY; posZ; emitter sizeX; emitter sizeY; scale; num particles; duration; velocityX (?); velocityZ (?)">
+		<Subtype id="00" name="EmitterVolume:Embers"/>
+	</Effect>
+
+	<Effect id="71" args="subtype; posX; posY; posZ; angle; intensity; scale; duration">
+		<Subtype id="00" name="Hieroglyphics"/>
+	</Effect>
+
+	<Effect id="72" args="subtype; posX; posY; posZ; emitter size X; emitter sizeY; scale; num particles; duration; velocityX (?); velocityZ (?)" desc=
+		"A number of particles are created within a volume. They fall under the influence of gravity and vanish.">
+		<Subtype id="00" name="EmitterVolume:WhiteDots"/>
+		<Subtype id="01" name="EmitterVolume:Snowflakes"/>
+		<Subtype id="02" name="EmitterVolume:GoldShimmer1" desc="drifting, several types"/>
+		<Subtype id="03" name="EmitterVolume:GoldShimmer2" desc="stationary, one type"/>
+		<Subtype id="04" name="EmitterVolume:LargeStars"/>
+		<Subtype id="04" name="EmitterVolume:TinyStars"/>
+	</Effect>
+
+	<Effect id="73" args="subtype; posX; posY; posZ; scale; num bolts; duration" desc=
+		"Little thunder bolt icons appear in a ring around a point.">
+		<Subtype id="00" name="StaticStatus"/>
+		<Subtype id="01" name="StaticStatus:Looping"/>
+	</Effect>
+
+	<Effect id="74" args="subtype; startX; startY; startZ; endX; endY; endZ; speed; scale" desc=
+		"A yellow cloud drifts from one point to another, vanishing when it arrives.">
+		<Subtype id="00" name="MovingCloud"/>
+	</Effect>
+
+	<!-- 75 = unknown -->
+
+	<!-- 76 = crashes -->
+
+	<Effect id="77" args="subtype; horizontal position (0 = center); height; ???; horizontal speed; vertical speed; ???; explosion spread" desc=
+		"A rocket flies up in a parabolic arc. Motion blur is enabled for the skybox.">
+		<Subtype id="00" name="Firework:Rocket1"/>
+		<Subtype id="01" name="Firework:Rocket2"/>
+	</Effect>
+
+	<Effect id="78" args="subtype; posX; posY; posZ; beam scale; duration">
+		<Subtype id="00" name="StarBeam"/>
+		<Subtype id="01" name="PeachBeam"/>
+	</Effect>
+
+	<Effect id="79" args="subtype; title pos X; title pos Y; ???; ???; duration">
+		<Subtype id="00" name="ChapterChange:EndOfChapter"/>
+		<Subtype id="01" name="ChapterChange:Chapter1"/>
+		<Subtype id="02" name="ChapterChange:Chapter2"/>
+		<Subtype id="03" name="ChapterChange:Chapter3"/>
+		<Subtype id="04" name="ChapterChange:Chapter4"/>
+		<Subtype id="05" name="ChapterChange:Chapter5"/>
+		<Subtype id="06" name="ChapterChange:Chapter6"/>
+		<Subtype id="07" name="ChapterChange:Chapter7"/>
+		<Subtype id="08" name="ChapterChange:Chapter8"/>
+		<Subtype id="09" name="ChapterChange:Chapter0"/>
+	</Effect>
+
+	<Effect id="7A" args="subtype; posX; posY; posZ; scale; duration" desc=
+		"A shard of ice flies off in a random direction.">
+		<Subtype id="00" name="IceShard"/>
+	</Effect>
+
+	<Effect id="7B" args="subtype; posX; posY; posZ; scale; duration">
+		<Subtype id="00" name="SpiritCard:Appear"/>
+		<Subtype id="01" name="SpiritCard:Idle"/>
+	</Effect>
+
+	<!-- 7C = LilOink -->
+
+	<!-- 7D = something rotating -->
+
+	<Effect id="7E" args="subtype; posX; posY; posZ; scale; duration">
+		<Subtype id="00" name="BreakingJunk"/>
+	</Effect>
+
+	<!-- 7F = PartnerBuff -->
+
+	<Effect id="80" args="subtype; posX; posY; posZ; scale; duration" desc=
+		"Sprite for Chuck Quizmo's assistant.">
+		<Subtype id="00" name="VannaT"/>
+	</Effect>
+
+	<Effect id="81" args="subtype; posX; posY; posZ; scale; duration" desc=
+		"A pillar of ice that shatters after some time.">
+		<Subtype id="00" name="IcePillar"/>
+	</Effect>
+
+	<Effect id="82" args="subtype" desc=
+		"Adds intense sun rays to an upper corner of the screen.">
+		<Subtype id="00" name="SunRays:RightCorner"/>
+		<Subtype id="01" name="SunRays:LeftCorner"/>
+	</Effect>
+
+	<Effect id="83" args="subtype; posX; posY; posZ; scale; duration">
+		<Subtype id="00" name="StarSpirits:GlowingOrb"/>
+		<Subtype id="03" name="StarSpirits:SpellBroken"/>
+	</Effect>
+
+	<Effect id="84" args="subtype; posX; posY; posZ">
+		<Subtype id="00" name="PinkSparkles"/>
+	</Effect>
+
+	<Effect id="85" args="subtype; posX; posY; posZ; ???; duration">
+		<Subtype id="00" name="StarOutline"/>
+		<Subtype id="01" name="StarOutline:Spinning"/>
+	</Effect>
+
+	<!-- 86 = unknown -->
+
+</Effects>

@@ -1,0 +1,11 @@
+% NUDMABuffer
+type: ram
+size: 14
+fields:
+{
+	  0 : node               : ALLink
+	  8 : startAddr          : ptr
+	  C : frameCnt           : int
+	 10 : ptr                : ptr
+}
+

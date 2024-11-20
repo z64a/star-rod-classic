@@ -1,0 +1,10 @@
+% partner_battle_icons
+type: ram
+size: 28
+fields:
+{
+	  0 : mainMenuIcon_Enabled : ptr
+	  4 : mainMenuIcon_Disabled : ptr
+	  8 : moveIconScripts    : pointer[4`][2`]
+}
+

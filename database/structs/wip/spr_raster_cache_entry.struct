@@ -1,0 +1,12 @@
+% spr_raster_cache_entry
+type: ram
+size: 8
+fields:
+{
+	  0 : image              : ptr
+	  4 : width              : ubyte
+	  5 : height             : ubyte
+	  6 : palette            : ubyte
+	  7 : quadCacheIndex     : ubyte
+}
+

@@ -1,0 +1,39 @@
+% item_entity
+type: ram
+size: 5C
+fields:
+{
+	  0 : flags              : int
+	  4 : boundVar           : short      % see make_item_entity
+	  6 : pickupMessageFlags : short
+	  8 : position           : float[3`]
+	 14 : physicsData        : item_entity_physics_data*
+	 18 : itemID             : short      % into item table, also worldIconID
+	 1A : state              : ubyte
+	 1B : type               : ubyte
+	 1C : pickupDelay        : ubyte      % num frames before item can be picked up
+	 1D : field_0x1d         : ubyte
+	 1E : wsFaceAngle        : short      % < 0 means none
+	 20 : shadowIndex        : short
+%	 22 : UNK 2
+	 24 : readPos            : uint*
+	 28 : savedReadPos       : uint*
+	 2C : lookupRasterIndex  : ubyte      % for cache pointed to by 801512C8
+	 2D : lookupPaletteIndex : ubyte      % for cache pointed to by 801512D0
+	 2E : nextUpdate         : ubyte
+	 2F : field_0x2f         : ubyte
+	 30 : scale              : float
+	 34 : field_0x34         : short
+	 36 : field_0x36         : short
+	 38 : field_0x38         : short
+%	 3A : UNK 2
+	 3C : sparkleNextUpdate  : int
+	 40 : sparkleReadPos     : uint*      % coin state machine, initialized to 80104AC0
+	 44 : field_0x44         : int        % unk, used with opcode 1 arg 2 for sparkle script
+	 48 : sparkleSavedPos    : uint*
+	 4C : sparkleRaster      : ptr
+	 50 : sparklePalette     : int
+	 54 : sparkleWidth       : int        % possibly two shorts, first always being zero
+	 58 : sparkleHeight      : int        % possibly two shorts, first always being zero
+}
+

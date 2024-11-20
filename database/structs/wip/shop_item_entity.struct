@@ -1,0 +1,9 @@
+% shop_item_entity
+type: ram
+size: 10
+fields:
+{
+	  0 : index              : int
+	  4 : pos                : float[3`]
+}
+

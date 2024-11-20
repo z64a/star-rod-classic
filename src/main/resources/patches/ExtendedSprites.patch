@@ -1,0 +1,54 @@
+
+#reserve ##[VALUE:CountsSize] $Counts
+#reserve ##[VALUE:PointersSize] $Pointers
+
+@Function $spr_init_sprites
+{
+[EC]	LA		A0, $Counts			% 802DD9E4
+[F4]	LA		V1, $Pointers		% 802DD9EC
+}
+
+@Function $spr_load_npc_sprite
+{
+[88]	LA		V0, $Pointers		% 802DE174
+[A0]	LA		V1, $Counts			% 802DE18C
+[DC]	STB		V0, S4 ($Counts)	% 802DE1C8
+}
+
+@Function $spr_free_sprite
+{
+[54]	LA		V1, $Counts			% 802DE63C
+[AC]	LTBU	V1, S1 ($Counts)	% 802DE694
+[CC]	STW		R0, V0 ($Pointers)	% 802DE6B4
+}
+
+@Function $spr_get_npc_raster_info
+{
+[8]		LTW		A0, A1 ($Pointers)	% 802DE9E0
+}
+
+@Function $spr_get_npc_palettes
+{
+[4]		LTW		V0, A0 ($Pointers)	% 802DEA44
+}
+
+@Function $spr_get_npc_color_variations
+{
+[4]		LTW		V0, A0 ($Pointers)	% 802DEA70
+}
+
+% sprites now use pairs of offsets, so shift goes from 2 -> 3
+@Function $spr_load_sprite
+{
+[40]	SLL			A0, S5, 3	% 802DEB4C
+[4C]	SLL			A0, S5, 3	% 802DEB58
+}
+
+% packed player sprites are now written with a shift, so shift back at runtime
+@Hook $spr_get_player_raster[E0] % 802DEF80
+{
+	AND		A0, A2, A0
+	SLL		A0, A0, 4
+	J		802DEF88 % $spr_get_player_raster[]
+	SRL		A2, A2, 10
+}

@@ -1,0 +1,50 @@
+% ActorPart
+% exact size
+type: ram
+size: C4
+fields:
+{
+	  0 : flags              : int
+	  4 : targetFlags        : int        % initialized to 0
+%	  8 : UNK 4
+	  C : nextPart           : ActorPart*
+%	 10 : UNK 4
+	 14 : partOffset         : short[3`]
+	 1A : visualOffset       : short[3`]
+	 20 : partOffsetFloat?   : float[3`]
+	 2C : absolutePosition   : float[3`]
+	 38 : rotation           : float[3`]
+	 44 : rotationPivotOffset : short[3`]
+%	 4A : UNK 2
+	 4C : scale              : float[3`]
+	 58 : currentPos         : float[3`]
+	 64 : yaw                : float
+	 68 : unkOffset          : short[2`]
+	 6C : targetOffset       : short[2`]
+	 70 : unk                : short
+	 72 : size               : byte[2`]
+	 74 : verticalStretch    : ubyte
+	 75 : otherUnknownOffset : byte[2`]   % from static data
+%	 77 : UNK 1
+	 78 : defenseTable       : uint*
+	 7C : eventFlags         : int
+	 80 : elementalDamageImmunityFlags : int
+	 84 : field_0x84         : int
+	 88 : currentAnimation   : int
+	 8C : field_0x8c         : int
+	 90 : animationRate      : float
+	 94 : idleAnimations     : uint*
+	 98 : opacity            : short
+%	 9A : UNK 6
+	 A0 : shadowScale        : float
+	 A4 : soundID_stepA      : int
+	 A8 : soundID_stepB      : int
+	 AC : soundID_flyA       : int
+	 B0 : soundID_flyB       : int
+	 B4 : soundID_jump       : int
+	 B8 : soundID_hurt       : int
+	 BC : sfx_walk_increment : short
+	 BE : sfx_fly_increment  : short
+	 C0 : decorationTable    : decoration_table* % initialized to 0
+}
+

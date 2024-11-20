@@ -1,0 +1,14 @@
+% shop_owner
+type: ram
+size: 1C
+fields:
+{
+	  0 : ownerNpcID         : int
+	  4 : ownerIdleAnim      : int
+	  8 : ownerTalkAnim      : int
+	  C : buyCallback        : bytecode*  % called after buy dialog is closed
+%	 10 : UNK 4
+	 14 : talkCallback       : bytecode*  % called after conversation is closed
+	 18 : shopStringIDs      : int*
+}
+

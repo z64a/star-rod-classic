@@ -1,0 +1,12 @@
+% model_bp
+type: ram
+size: 10
+fields:
+{
+	  0 : flags              : short
+%	  2 : UNK 2
+	  4 : mdlNode            : model_node*
+	  8 : groupData          : model_group_data*
+	  C : mtx                : matrix4s*
+}
+

@@ -1,0 +1,15 @@
+% actor_type_sound_data
+type: ram
+size: 1C
+fields:
+{
+	  0 : stepA              : int
+	  4 : stepB              : int
+	  8 : flyA               : int
+	  C : flyB               : int
+	 10 : jump               : int
+	 14 : hurt               : int
+	 18 : stepInc            : short
+	 1A : flyInc             : short
+}
+

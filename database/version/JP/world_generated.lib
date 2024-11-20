@@ -1,0 +1,45 @@
+
+{version=1.0}
+{scope=jp:world}
+
+sig : draw_window_contents : void : A0 ptr userData, A1 int baseX, A2 int baseY, A3 int width, SP[10] int height, SP[14] int opacity, SP[18] int darkening
+
+asm : 80280000, 7E8810 : shop_owner_begin_speech : int scriptID : int shopMessageIndex
+asm : 80280088, 7E8898 : {CHANGED} shop_owner_buy_dialog : int scriptID : int shopMessageIndex, int itemName, int coinCost, int bpCost
+asm : 80280150, 7E8960 : shop_owner_continue_speech : int scriptID : int shopMessageIndex
+asm : 802801DC, 7E89EC : {CHANGED} shop_owner_continue_speech_with_quantity "sets message var 0 to the supplied argument and message var 1 to singular/plural" : int scriptID : int shopMessageIndex, int amount
+asm : 80280274, 7E8A84 : shop_owner_reset_speech "end a choice dialog and begin a new message" : int scriptID : int shopMessageIndex
+asm : 80280300, 7E8B10 : shop_owner_end_speech : int scriptID : void
+api : 802804C0, 7E8CD0 : ShowShopPurchaseDialog "when buying an item" : void : void
+asm : 802808F8, 7E9108 : shop_open_item_select_popup : void : int mode "0 = sell, 1 = check (put items), 2 = claim (get items)"
+asm : 80280A68, 7E9278 : shop_update_item_select_popup : void : {out} int* selectedIndex
+asm : 80280AE8, 7E92F8 : shop_close_item_select_popup : void : void
+asm : 80280B1C, 7E932C : shop_get_sell_price : int numCoins : int itemID
+api : 80280B74, 7E9384 : ShowShopOwnerDialog "when talking to the owner" : void : void
+asm : 802813D8, 7E9BE8 : shop_draw_item_name : void : int, int posX, int posY
+asm : 80281474, 7E9C84 : shop_draw_item_desc : void : int, int posX, int posY
+asm : 802814C8, 7E9CD8 : draw_shop_items		: void : void
+api : 80281804, 7EA014 : MakeShop				: void : $ShopItemPositions, $ShopInventory, $ShopPriceList, int
+api : 80281B7C, 7EA38C : MakeShopOwner			: void : $ShopOwnerNPC
+api : 80281C4C, 7EA45C : MakeDoorAdvanced		: void : int, $Script {name=OpenDoor}, $Script {name=MoveWalls}, $Script {name=DropDoor}, $Script {name=ToggleVis}, colliderID, colliderID, modelID, $NpcList
+api : 8028259C, 7EADAC : SetEntityHideMode1 : void : void
+api : 802825B0, 7EADC0 : SetEntityHideMode2 : void : void
+api : 802825C4, 7EADD4 : SetEntityHideMode0 : void : void
+api : 8028317C, 7EB98C : CheckActionState "Checks whether current action state equals test state." : void : {out} var result {outType=bool}, #actionState "uses get_float_variable for some reason"
+api : 80283280, 7EBA90 : CreatePushBlockGrid	: void : int blockSystemID, int sizeNx, int sizeNz, int centerX, int centerY, int centerZ, ptr cellData "numX * numZ bytes, use 0 for auto-allocation"
+api : 8028341C, 7EBC2C : SetPushBlock			: void : int blockSystemID, int gridX, int gridZ, int type "0 = no, 1 = block, 2 = obstruction"
+api : 80283560, 7EBD70 : GetPushBlock			: void : int blockSystemID, int gridX, int gridZ, int* outType "0 = no, 1 = block, 2 = obstruction"
+api : 80283658, 7EBE68 : GetGridIndexFromPos  	: void : int blockSystemID, int posX, int posY, int posZ, int* outGridX, int* outGridZ
+api : 8028374C, 7EBF5C : SetPushBlockFallEffect	: void : int blockSystemID, $Function
+api : 802837B0, 7EBFC0 : CheckRideScriptForEnterExit : Var[A] int hasRideScript, Var[B] int ptrRideScript, Var[D] int playerTargetYaw : void
+api : 8028381C, 7EC02C : TeleportPartnerToPlayer : void : void
+api : 802838A8, 7EC0B8 : SetPlayerPositionFromSaveData : void : void
+api : 802839F0, 7EC200 : EnterPlayerPostPipe "leftover from beta saving system" : void : void
+api : 80283B28, 7EC338 : ShortenPartnerTetherDistance : void : void
+api : 80283B50, 7EC360 : ResetPartnerTetherDistance : void : void
+api : 80283B70, 7EC380 : PlayerMoveToDoor : void : int numFrames
+api : 80283BD4, 7EC3E4 : GetEntryCoords : void : int index, {out} int posX, {out} int posY, {out} int posY, {out} int angle
+api : 80283CA0, 7EC4B0 : SetupSingleDoor : Var[2] int bufDoorModelsCCW, Var[3] int bufDoorModelsCW : void "VARS IN: Var[2] modelID doorModel, Var[3] #doorSwing swingDirection"
+api : 80283D0C, 7EC51C : SetupSplitSingleDoor : Var[2] int bufDoorModelsCCW, Var[3] int bufDoorModelsCW : void "VARS IN: Var[2] modelID doorModelA, Var[3] #doorSwing swingDirection, Var[4] modelID doorModelB"
+api : 80283D90, 7EC5A0 : SetupDoubleDoors : Var[2] int bufDoorModelsCCW, Var[3] int bufDoorModelsCW : void "VARS IN: Var[2] modelID leftDoorModel, Var[3] modelID rightDoorModel"
+api : 80283DCC, 7EC5DC : SetupSplitDoubleDoors : Var[2] int bufDoorModelsCCW, Var[3] int bufDoorModelsCW : void "VARS IN: Var[2] modelID leftDoorModelA, Var[3] modelID leftDoorModelB, Var[4] modelID rightDoorModelA, Var[5] modelID rightDoorModelB"

@@ -1,0 +1,17 @@
+
+% Chuck Quizmo
+add		80245FE8	IntTable
+newline	80245FE8	2
+name	80245FE8	QuizRequirements
+add		80245FA8	ByteTable
+name	80245FA8	QuizAnswers
+
+add 	80251578	SearchBushEvent
+name 	80251578	SearchBushEvent_Bush6A
+add 	80251568	SearchBushEvent
+name 	80251568	SearchBushEvent_Bush6B
+
+add 	802517FC	SearchBushEvent
+name 	802517FC	SearchBushEvent_Bush7A
+add 	802517EC	SearchBushEvent
+name 	802517EC	SearchBushEvent_Bush7B

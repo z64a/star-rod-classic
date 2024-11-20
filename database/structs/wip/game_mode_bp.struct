@@ -1,0 +1,12 @@
+% game_mode_bp
+type: ram
+size: 14
+fields:
+{
+%	  0 : UNK 4
+	  4 : fpInitState        : code
+	  8 : fpStepState        : code
+%	  C : UNK 4
+	 10 : fpDrawUI           : code
+}
+

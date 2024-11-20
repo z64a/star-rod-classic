@@ -1,0 +1,19 @@
+% ai_settings
+type: ram
+size: 30
+fields:
+{
+	  0 : moveSpeed          : float
+	  4 : moveTime           : float
+	  8 : waitTime           : float
+	  C : alertRadius        : float
+	 10 : field_0x10         : float
+	 14 : field_0x14         : float
+	 18 : chaseSpeed         : float
+	 1C : field_0x1c         : float
+	 20 : field_0x20         : float
+	 24 : chaseRadius        : float
+	 28 : field_0x28         : float
+	 2C : field_0x2c         : float
+}
+

@@ -1,0 +1,98 @@
+
+% functions, scripts, etc. only loaded in the world (walking around in maps)
+
+{version=1.0}
+{scope=us:world}
+
+% these are also listed in global scope, but world-specific structs require them to be re-listed here for the recursive dump to work properly
+asm : 8003E678, 019A78 : make_npcs 			: void : bool "determines whether enemies respawn after re-entering map: 0 = respawn, 1 = remember previous state", int mapID, $NpcGroupList
+api : 80044298, 01F698 : MakeNpcs			: void : bool "determines whether enemies respawn after re-entering map: 0 = respawn, 1 = remember previous state", $NpcGroupList
+api : 8004A47C, 02587C : DoBasicAI			: void : $AISettings
+api : 802C9ED8, 0EE888 : ResetFromLava		: void : $LavaResetList
+% <-- end of entries from global scope
+
+asm : 80280000, 7E0E80 : shop_owner_begin_speech : int scriptID : int shopMessageIndex
+asm : 80280088, 7E0F08 : shop_owner_buy_dialog : int scriptID : int shopMessageIndex, int itemName, int coinCost, int bpCost
+asm : 8028017C, 7E0FFC : shop_owner_continue_speech : int scriptID : int shopMessageIndex
+asm : 80280208, 7E1088 : shop_owner_continue_speech_with_quantity "sets message var 0 to the supplied argument and message var 1 to singular/plural" : int scriptID : int shopMessageIndex, int amount
+asm : 802802D0, 7E1150 : shop_owner_reset_speech "end a choice dialog and begin a new message" : int scriptID : int shopMessageIndex
+asm : 8028035C, 7E11DC : shop_owner_end_speech : int scriptID : void
+
+api : 8028051C, 7E139C : ShowShopPurchaseDialog "when buying an item" : void : void
+asm : 80280954, 7E17D4 : shop_open_item_select_popup : void : int mode "0 = sell, 1 = check (put items), 2 = claim (get items)"
+asm : 80280AC4, 7E1944 : shop_update_item_select_popup : void : {out} int* selectedIndex
+asm : 80280B44, 7E19C4 : shop_close_item_select_popup : void : void
+asm : 80280B78, 7E19F8 : shop_get_sell_price : int numCoins : int itemID
+api : 80280BD0, 7E1A50 : ShowShopOwnerDialog "when talking to the owner" : void : void
+asm : 80281434, 7E22B4 : shop_draw_item_name : void : int, int posX, int posY
+asm : 802814D0, 7E2350 : shop_draw_item_desc : void : int, int posX, int posY
+asm : 80281524, 7E23A4 : draw_shop_items		: void : void
+api : 80281860, 7E26E0 : MakeShop				: void : $ShopItemPositions, $ShopInventory, $ShopPriceList, int	% last arg is flags for inventory items, eg 00010000 to be initially hidden
+api : 80281BD8, 7E2A58 : MakeShopOwner			: void : $ShopOwnerNPC
+api : 80281CAC, 7E2B2C : MakeDoorAdvanced		: void : int, $Script {name=OpenDoor}, $Script {name=MoveWalls}, $Script {name=DropDoor}, $Script {name=ToggleVis}, colliderID, colliderID, modelID, $NpcList
+
+api : 802825FC, 7E347C : SetEntityHideMode1 : void : void
+api : 80282610, 7E3490 : SetEntityHideMode2 : void : void
+api : 80282624, 7E34A4 : SetEntityHideMode0 : void : void
+
+% 802831DC	:	int, int 	% *FLOAT  ??? involves action state -- might have something to do with PushBlocks
+api : 802831DC, 7E405C : CheckActionState "Checks whether current action state equals test state." : void : {out} var result {outType=bool}, #actionState "uses get_float_variable for some reason"
+api : 802832E0, 7E4160 : CreatePushBlockGrid	: void : int blockSystemID, dec sizeNx, dec sizeNz, dec centerX, dec centerY, dec centerZ, ptr cellData "numX * numZ bytes, use 0 for auto-allocation"
+api : 8028347C, 7E42FC : SetPushBlock			: void : int blockSystemID, dec gridX, dec gridZ, int type "0 = no, 1 = block, 2 = obstruction"
+api : 802835C0, 7E4440 : GetPushBlock			: void : int blockSystemID, dec gridX, dec gridZ, {out} var outType "0 = no, 1 = block, 2 = obstruction"
+api : 802836B8, 7E4538 : GetGridIndexFromPos  	: void : int blockSystemID, dec posX, dec posY, dec posZ, {out} var outGridX, {out} var outGridZ
+api : 802837AC, 7E462C : SetPushBlockFallEffect	: void : int blockSystemID, $Function
+% <-- end of file
+
+% start of file -->
+% ENTRY STUFF
+api : 80283810, 7E4690 : CheckRideScriptForEnterExit : Var[A] int hasRideScript, Var[B] int ptrRideScript, Var[D] int playerTargetYaw : void
+api : 8028387C, 7E46FC : TeleportPartnerToPlayer : void : void
+api : 80283908, 7E4788 : SetPlayerPositionFromSaveData : void : void
+api : 80283A50, 7E48D0 : EnterPlayerPostPipe "leftover from beta saving system" : void : void
+api : 80283B88, 7E4A08 : ShortenPartnerTetherDistance : void : void
+api : 80283BB0, 7E4A30 : ResetPartnerTetherDistance : void : void
+api : 80283BD0, 7E4A50 : PlayerMoveToDoor : void : dec numFrames
+api : 80283C34, 7E4AB4 : GetEntryCoords : void : int index, {out} int posX, {out} int posY, {out} int posY, {out} int angle
+api : 80283D00, 7E4B80 : SetupSingleDoor : Var[2] int bufDoorModelsCCW, Var[3] int bufDoorModelsCW : void ...
+	"VARS IN: Var[2] modelID doorModel, Var[3] #doorSwing swingDirection"
+api : 80283D6C, 7E4BEC : SetupSplitSingleDoor : Var[2] int bufDoorModelsCCW, Var[3] int bufDoorModelsCW : void ...
+	"VARS IN: Var[2] modelID doorModelA, Var[3] #doorSwing swingDirection, Var[4] modelID doorModelB"
+api : 80283DF0, 7E4C70 : SetupDoubleDoors : Var[2] int bufDoorModelsCCW, Var[3] int bufDoorModelsCW : void ...
+	"VARS IN: Var[2] modelID leftDoorModel, Var[3] modelID rightDoorModel"
+api : 80283E2C, 7E4CAC : SetupSplitDoubleDoors : Var[2] int bufDoorModelsCCW, Var[3] int bufDoorModelsCW : void ...
+	"VARS IN: Var[2] modelID leftDoorModelA, Var[3] modelID leftDoorModelB, Var[4] modelID rightDoorModelA, Var[5] modelID rightDoorModelB"
+% <-- end of file
+
+% start of file -->
+scr : 80283E80, 7E4D00 : ShopBeginSpeech: void : Var[0] int stringID, Var[1] int ptrShopOwner, Var[2] int talkAnim, Var[3] int idleAnim
+scr : 80283EB0, 7E4D30 : ShopContinueSpeech : void : Var[0] int stringID, Var[1] int ptrShopOwner, Var[2] int talkAnim, Var[3] int idleAnim
+scr : 80283EE0, 7E4D60 : ShopResetSpeech : void : Var[0] int stringID, Var[1] int ptrShopOwner, Var[2] int talkAnim, Var[3] int idleAnim
+scr : 80283F2C, 7E4DAC : ShopEndSpeech : void : Var[0] int ptrShopOwner, Var[1] int talkAnim, Var[2] int idleAnim
+
+scr : 80284034, 7E4EB4 : BadgeShopInteract : void : void
+scr : 80284054, 7E4ED4 : ItemShopInteract : void : void
+scr : 80284070, 7E4EF0 : AdvancedDoorVisiblityToggle : ??? : ???
+
+scr : 802847D4, 7E5654 : AdvancedDoorOpen : void : void
+scr : 80284F80, 7E5E00 : AdvancedDoorClose : void : void
+
+scr : 80285960, 7E67E0 : EnterWalk "Player walks toward an entrance" : void : Var[0] $Script callback "will be executed after the entry animation plays, use this to binds exits"
+scr : 80285A60, 7E68E0 : EnterWalkShort "Similar to EnterWalk, but with a shorter move distance (40 vs 64 units)" : void : Var[0] $Script callback "will be executed after the entry animation plays, use this to binds exits"
+scr : 80285B60, 7E69E0 : EnterWalkCustom "Similar to EnterWalk, but you can set the move distance and time" : void : Var[0] $Script callback "will be executed after the entry animation plays, use this to binds exits", Var[1] int moveDist, Var[4] int time "num frames"
+scr : 80285C50, 7E6AD0 : EnterPostPipe "leftover from beta saving system" : ??? : ???
+scr : 80285CB0, 7E6B30 : EnterSavePoint : ??? : ??? % Spawns the player at saved coordinates (used when GetLoadType == 1).
+scr : 80285CF4, 7E6B74 : ExitWalk "Player walks through an exit, using the heading set by UseExitHeading" : void : void
+scr : 80285DAC, 7E6C2C : ExitSingleDoor	: ??? : Var[0] entryID exit, Var[1] colliderID doorCollider, Var[2] modelID doorModel, Var[3] #doorSwing swingDirection
+scr : 80285DD4, 7E6C54 : EnterSingleDoor : ??? : Var[2] modelID doorModel, Var[3] #doorSwing swingDirection
+scr : 80285DFC, 7E6C7C : ExitSplitSingleDoor	: ??? : Var[0] entryID exit, Var[1] colliderID doorCollider, Var[2] modelID doorModelA, Var[3] #doorSwing swingDirection, Var[4] modelID doorModelB
+scr : 80285E24, 7E6CA4 : EnterSplitSingleDoor	: ??? : Var[0] entryID exit, Var[1] colliderID doorCollider "unused?", Var[2] modelID doorModelA, Var[3] #doorSwing swingDirection, Var[4] modelID doorModelB
+scr : 80285E4C, 7E6CCC : ExitDoubleDoor : ??? : Var[0] entryID exit, Var[1] colliderID doorCollider, Var[2] modelID leftDoorModel, Var[3] modelID rightDoorModel
+scr : 80285E74, 7E6CF4 : EnterDoubleDoor : ??? : Var[2] modelID leftDoorModel, Var[3] modelID rightDoorModel
+scr : 80285E9C, 7E6D1C : ExitSplitDoubleDoor : ??? : Var[0] entryID exit, Var[1] colliderID doorCollider, Var[2] modelID leftDoorModelA, Var[3] modelID leftDoorModelB, Var[4] modelID rightDoorModelA, Var[5] modelID rightDoorModelB
+scr : 80285EC4, 7E6D44 : EnterSplitDoubleDoor : ??? : Var[0] entryID exit, Var[1] colliderID doorCollider "unused?", Var[2] modelID leftDoorModelA, Var[3] modelID leftDoorModelB, Var[4] modelID rightDoorModelA, Var[5] modelID rightDoorModelB
+scr : 80285EEC, 7E6D6C : BaseExitDoor : ??? : ???
+scr : 802861B0, 7E7030 : BaseEnterDoor : ??? : ???
+% <-- end of file
+
+lbl : 80267FF0 : WorldEntityHeap

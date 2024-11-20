@@ -1,0 +1,14 @@
+% action_command_status
+type: ram
+size: 81
+fields:
+{
+%	  0 : UNK 4A
+	 4A : actionCommandID    : short      % 0x01 - 0x17 (inclusive)
+%	 4C : UNK 12
+	 5E : autoSucceed        : ubyte
+%	 5F : UNK 17
+	 76 : mashMeterCutoffs   : short[5`]  % upper bound for each interval
+	 80 : mashMeterIntervals : ubyte
+}
+

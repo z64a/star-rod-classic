@@ -1,0 +1,4 @@
+@ $Function_802A13E4
+{
+   [E8]  LA        S3, $Global_ItemHudScripts
+}

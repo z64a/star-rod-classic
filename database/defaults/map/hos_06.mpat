@@ -1,0 +1,10 @@
+
+@ $Function_80240AD0
+{
+[5C]	LA		S8, $Global_ItemHudScripts
+}
+
+@ $Function_8024228C
+{
+[94]	LA		S8, $Global_ItemHudScripts
+}

@@ -1,0 +1,7 @@
+BattleFlags2	% namespace
+battleFlags2	% library name
+false	% reversed
+
+% flags at 800DC074
+
+00001000 = NoTargetAvailable % used when building the move lists

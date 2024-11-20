@@ -1,0 +1,15 @@
+% sprite_unk_tile_desc
+% 80156950
+type: ram
+size: 10
+fields:
+{
+	  0 : field_0x0          : short
+	  2 : field_0x2          : short
+	  4 : field_0x4          : short
+%	  6 : UNK 2
+	  8 : field_0x8          : short
+	  A : field_0xa          : short
+%	  C : UNK 4
+}
+

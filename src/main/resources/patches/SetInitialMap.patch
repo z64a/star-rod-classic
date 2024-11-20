@@ -1,0 +1,18 @@
+
+% clear setting default entry
+@Function:MainMenu $filemenu_yesno_handle_input[644]
+{
+	NOP
+}
+
+% US: 80247824 == 168084
+@Hook:MainMenu $filemenu_yesno_handle_input[638]
+{
+	ADDIU		AT, R0, ##[VALUE:AreaID]
+	SH			AT, 86 (V1)
+	ADDIU		AT, R0, ##[VALUE:MapID]
+	SH			AT, 8C (V1)
+	ADDIU		AT, R0, ##[VALUE:EntryID]
+	J			8024782C
+	SH			AT, 8E (V1)
+}

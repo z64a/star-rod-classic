@@ -1,0 +1,8 @@
+% unknown_status_struct
+type: ram
+size: B0
+fields:
+{
+%	  0 : UNK B0
+}
+

@@ -1,0 +1,11 @@
+NpcDecoration	% namespace
+npcDecoration	% library name
+false			% reversed
+
+0 = None
+1 = BowserAura
+2 = Sweat
+3 = SeeingStars
+4 = WhiteGlowFront
+5 = WhiteGlowBehind
+6 = Charged

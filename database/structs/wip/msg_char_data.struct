@@ -1,0 +1,12 @@
+% msg_char_data
+type: ram
+size: C
+fields:
+{
+	  0 : beginRasters       : ptr        % start of raster image data
+	  4 : charWidthTable     : byte*
+	  8 : monospaceWidth     : ubyte      % also used for whitespace
+	  9 : baseHeightOffset   : ubyte
+	  A : _pad_0A            : byte[2`]
+}
+

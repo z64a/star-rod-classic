@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project basedir="." name="StarRod">
+    <property environment="env"/>
+	
+	<property name="src.dir"     	value="src"/>
+	<property name="lib.dir"        value="lib"/>
+	<property name="license.dir"  	value="licenses"/>
+	<property name="docs.dir"  	    value="docs/user"/>
+	<property name="build.dir"   	value="build-user"/>
+	<property name="bin.dir"  	    value="${build.dir}/bin"/>
+	<property name="jar.dir"        value="${build.dir}/jar"/>
+	<property name="dev.jar.file"   value="${jar.dir}/${ant.project.name}.jar"/>
+	<property name="usr.jar.file"   value="${jar.dir}/${ant.project.name} Patcher.jar"/>
+	<property name="usr.zip.file"   value="${build.dir}/${ant.project.name} Patcher.zip"/>
+	
+    <path id="libraries.path">
+        <pathelement location="lib/miglayout-4.0-swing.jar"/>
+        <pathelement location="lib/commons-io-2.2.jar"/>
+    </path>
+	
+	<target name="clean">
+		<delete dir="${bin.dir}"/>
+		<delete dir="${jar.dir}"/>
+	</target>
+	
+	<target name="compile" depends="clean">
+		<mkdir dir="${bin.dir}"/>
+		
+		<!-- copy resources -->
+		<copy todir="${bin.dir}/shared/">
+			<fileset dir="${src.dir}/shared/">
+				<exclude name="**/*.java"/>
+			</fileset>
+		</copy>
+		
+		<!-- compile user and shared classes only (v1.5) -->
+		<javac 
+			sourcepath="" srcdir="${src.dir}" destdir="${bin.dir}" 
+			debug="true"
+			debuglevel="lines,vars,source" 
+			source="1.5" target="1.5" 
+			includeantruntime="false" 
+			encoding="Cp1252">
+			<classpath refid="libraries.path"/>
+			<include name="/user/**"/>
+			<include name="/shared/**"/>
+		</javac>
+	</target>
+	
+	<!-- prepare libraries for fat jar -->
+	<target name="copy-dependencies">
+		<jar jarfile="${jar.dir}/dependencies.jar">
+			<zipgroupfileset dir="${lib.dir}">
+				<include name="miglayout-4.0-swing.jar"/>
+				<include name="commons-io-2.2.jar"/>
+			</zipgroupfileset>
+		</jar>
+	</target>
+	
+	<!-- jar user and shared directories -->
+	<target name="jar-user" depends="compile, copy-dependencies">
+		<manifestclasspath property="manifest.classpath" jarfile="${usr.jar.file}">
+			<classpath refid="libraries.path"/>
+		</manifestclasspath>
+		
+		<mkdir dir="${jar.dir}"/>
+		<mkdir dir="${bin.dir}/${lib.dir}"/>
+
+		<jar destfile="${usr.jar.file}">
+			<fileset dir="${bin.dir}">
+               <include name="/user/**"/>
+               <include name="/shared/**"/>
+			</fileset>
+			<manifest>
+				<attribute name="Main-Class" value="user.StarRodUser"/>
+				<attribute name="Class-Path" value="${manifest.classpath}"/>
+			</manifest>
+			<zipfileset src="${jar.dir}/dependencies.jar" excludes="META-INF/*.SF" />
+		</jar>
+	</target>
+	
+	<!-- package jar, user manual, and relevant license files into a zip archive -->
+	<target name="package-user" depends="jar-user">
+		<copy todir="${jar.dir}">
+			<fileset dir="${docs.dir}"/>
+		</copy>
+		<copy todir="${jar.dir}/licenses">
+			<fileset dir="${license.dir}">
+				<exclude name="/pngj/**"/>
+				<exclude name="/lwjgl/**"/>
+			</fileset>
+		</copy>
+		<zip destfile="${usr.zip.file}" basedir="${jar.dir}" excludes="dependencies.jar" />
+	</target>
+</project>

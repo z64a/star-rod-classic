@@ -1,0 +1,27 @@
+
+% repurpose unused opcode 16 to support unconditional jumps with jump address as the first arg
+
+#new:Function $LoadHudElem_Jump_Handler
+{
+	J		8013F38C
+	LW		S0, 0 (S0) % read ptr from arg and jump
+}
+
+@Data E7898 % 80151198
+{
+	$LoadHudElem_Jump_Handler
+}
+
+#new:Function $UpdateHudElem_Jump_Handler
+{
+	LW		V0, 0 (S0) % read ptr from arg0
+	SW		V0, 4 (S3) % set readPos
+	SW		V0, 8 (S3) % set startReadPos
+	J		80141720
+	SW		V0, C (S3) % set savedPos
+}
+
+@Data E7908 % 80151208
+{
+	$UpdateHudElem_Jump_Handler
+}

@@ -1,0 +1,38 @@
+
+/%
+    ##[VALUE:START] 80155C38
+    ##[VALUE:LAST]   80155C78 = START + 40
+%/
+
+#reserve 100 $StringVarBuffers
+
+@Function BC23C % 80125B3C  set_message_string
+{
+    [48]    LA      V1, $StringVarBuffers
+}
+
+@Function BC2E8 % 80125BE8  set_message_value
+{
+    [24]    LA      T0, $StringVarBuffers
+    [6C]    STB     V1, V0 ($StringVarBuffers)
+}
+
+@Function BC668 % 80125F68  get_string_properties
+{
+    [310]   LA      T1, $StringVarBuffers
+}
+
+@Function BAC70 % 80124570  msg_copy_to_print_buffer
+{
+    [D04]   LA      T0, $StringVarBuffers
+    [D60]   LA      T0, $StringVarBuffers
+    [DB8]   LA      T0, $StringVarBuffers
+    [E1C]   LA      T0, $StringVarBuffers
+    [E94]   LA      T0, $StringVarBuffers
+}
+
+@Function B9D74[3C] % 80123674  clear_printers
+{
+    LI      S0, 8 % count
+    LA      V0, $StringVarBuffers[E0]
+}

@@ -1,0 +1,12 @@
+% partner_data
+type: ram
+size: 8
+fields:
+{
+	  0 : enabled            : ubyte
+	  1 : level              : ubyte
+	  2 : field_0x2          : short
+	  4 : field_0x4          : short
+	  6 : field_0x6          : short
+}
+

@@ -1,0 +1,12 @@
+% sprite_shading_profile
+type: ram
+size: B0
+fields:
+{
+	  0 : flags              : short      % 1 = enable
+%	  2 : UNK 2
+	  4 : sources            : sprite_shading_light_source[7`]
+	 AC : ambientColor       : byte[3`]
+	 AF : ambientPower?      : ubyte
+}
+

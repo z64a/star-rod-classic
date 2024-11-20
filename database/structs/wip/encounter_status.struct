@@ -1,0 +1,54 @@
+% encounter_status
+% from 800B0F10
+type: ram
+size: BF6
+fields:
+{
+	  0 : flags              : int
+	  4 : eFirstStrike       : ubyte      % 0 = none, 1 = player, 2 = enemy
+	  5 : hitType            : ubyte      % 1 = none/enemy, 2 = jump, 3 = dizzy attack, 4 = hammer, 6 = partner (kooper/bombette)
+	  6 : hitTier            : ubyte      % 0 = normal, 1 = super, 2 = ultra
+	  7 : field_0x7          : ubyte
+	  8 : battleComplete?    : ubyte      % set = 1 when battle is won
+	  9 : battleOutcome      : ubyte      % 0 = won, 1 = lost
+	  A : battleTriggerCooldown : ubyte      % 15 after victory, 45 after fleeing
+	  B : merleeCoinBonus    : ubyte      % triple coins when != 0
+	  C : damageTaken        : ubyte      % valid after battle
+%	  D : UNK 1
+	  E : coinsEarned        : short      % valid after battle
+	 10 : field_0x10         : ubyte      % copied from enemy B5, something to do with npc state?
+	 11 : allowFleeing       : ubyte
+	 12 : field_0x12         : ubyte
+	 13 : dropWhackaBump     : ubyte
+	 14 : songID             : int
+	 18 : field_0x18         : int
+	 1C : numEncounters      : ubyte      % number of encounters for current map (in list)
+	 1D : currentAreaIndex   : ubyte      % area ID + 1
+	 1E : currentMapIndex    : ubyte      % map ID + 1
+	 1F : currentEntryIndex  : ubyte      % entryID + 1
+	 20 : mapID              : ubyte
+	 21 : resetMapEncounterFlags : ubyte
+%	 22 : UNK 6
+	 28 : enounterList       : encounter*[24`]
+	 88 : currentEncounter   : encounter*
+	 8C : currentEnemy       : enemy*
+	 90 : fadeOutAmount      : int        % 0-255, how much the screen is faded and the star silhouette zoomed in
+	 94 : field_0x94         : int
+	 98 : fadeOutAccel       : int
+	 9C : battleStartCountdown : int        % how long the black screen will hold before battle start, in frames
+	 A0 : dizzyAttackStatus  : ubyte      % only 4 will work here
+%	 A1 : UNK 1
+	 A2 : dizzyAttackDuration : short
+	 A4 : field_0xa4         : ubyte
+%	 A5 : UNK 1
+	 A6 : field_0xa6         : short
+	 A8 : field_0xa8         : ubyte
+%	 A9 : UNK 1
+	 AA : field_0xaa         : short
+	 AC : field_0xac         : ubyte
+%	 AD : UNK 1
+	 AE : field_0xae         : short
+	 B0 : defeatFlags        : int[60`][12`]
+	BF0 : recentMaps         : short[3`]  % indices (array may be of length 2, not 3)
+}
+

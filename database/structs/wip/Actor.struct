@@ -1,0 +1,144 @@
+% Actor
+% exact size
+type: ram
+size: 444
+fields:
+{
+	  0 : flags              : int
+	  4 : field_0x4          : int
+	  8 : staticActorData    : StaticActorData*
+	  C : moveCurrentPos     : float[3`]
+	 18 : moveGoalPos        : float[3`]
+	 24 : moveEndPos         : float[3`]  % where other actors should target this one at. saved before partner switching
+	 30 : jumpYawAngle?      : float
+	 34 : jumpYawStep?       : float      % = 180 / numFrames
+	 38 : field_0x38         : float
+	 3C : field_0x3c         : float
+	 40 : jumpVelX           : float
+	 44 : jumpVelZ           : float
+	 48 : jumpAccel          : float
+	 4C : moveSpeed          : float
+	 50 : jumpVelocity       : float
+	 54 : moveAngle          : float
+	 58 : moveDistance       : float      % 2D projection, used for jump
+	 5C : bounceDivisor      : float
+%	 60 : UNK 4
+	 64 : animJumpRise       : int
+	 68 : animJumpFall       : int
+	 6C : animJumpLand       : int
+	 70 : moveTime           : short
+	 72 : moveArcAmplitude   : short
+%	 74 : UNK 3
+	 77 : jumpPartIndex      : ubyte
+%	 78 : UNK 10
+	 88 : varTable           : int[16`]
+	 C8 : flyCurrentPos      : float[3`]
+	 D4 : flyGoalPos         : float[3`]
+	 E0 : flyTempPos         : float[3`]  % used for start in fly functions, end in flyrun functions
+%	 EC : UNK 18
+	104 : idleJumpAccel      : float
+	108 : flySpeed           : float
+	10C : flyJumpVelocity    : float
+	110 : flyAngleYaw        : float
+	114 : flyDistance        : float
+	118 : flyElapsed         : float
+%	11C : UNK 4
+	120 : flyTime            : short
+	122 : flyArcAmplitude    : short
+%	124 : UNK 10
+	134 : uniqueID           : ubyte      % unique for each actor in a battle
+	135 : footStepCounter    : ubyte
+	136 : actorType          : ubyte
+%	137 : UNK 1
+	138 : homePos            : float[3`]
+	144 : currentPos         : float[3`]
+	150 : displayOffset?     : short[3`]  % similar to field in ActorPart; not too sure about this one
+	156 : healthBarPosition  : short[3`]
+	15C : rotation           : float[3`]
+	168 : rotationPivotOffset : short[3`]
+%	16E : UNK 2
+	170 : scale              : float[3`]
+	17C : scaleModifier      : float[3`]  % multiplies normal scale factors componentwise
+	188 : scalingFactor      : float
+	18C : yaw?               : float
+	190 : size               : byte[2`]
+	192 : actorID            : short
+	194 : field_0x194        : byte[6`]
+	19A : field_0x19a        : ubyte
+%	19B : UNK 1
+	19C : soundID_stepA      : int
+	1A0 : soundID_stepB      : int
+	1A4 : soundID_flyA       : int
+	1A8 : soundID_flyB       : int
+	1AC : soundID_jump       : int
+	1B0 : soundID_hurt       : int
+	1B4 : sfx_walk_increment : short
+	1B6 : sfx_fly_increment  : short
+	1B8 : currentHP          : ubyte
+	1B9 : maxHP              : ubyte
+%	1BA : UNK 2
+	1BC : hpFraction         : ubyte      % used to render HP bar
+%	1BD : UNK 3
+	1C0 : idleCode           : bytecode*
+	1C4 : takeTurnCode       : bytecode*
+	1C8 : onHitCode          : bytecode*
+	1CC : onTurnChangeCode   : bytecode*
+	1D0 : idleScript         : script_context*
+	1D4 : takeTurnScript     : script_context*
+	1D8 : onHitScript        : script_context*
+	1DC : onTurnChangeScript : script_context*
+	1E0 : idleScriptID       : int
+	1E4 : takeTurnID         : int
+	1E8 : onHitID            : int
+	1EC : onTurnChangeID     : int
+	1F0 : lastEventType      : ubyte
+	1F1 : turnPriority       : ubyte
+	1F2 : enemyIndex         : ubyte      % actorID = this | 200
+	1F3 : numParts           : ubyte
+	1F4 : partsTable         : ActorPart*
+	1F8 : lastDamageTaken    : short
+	1FA : hpChangeCounter?   : short
+	1FC : damageCounter      : short
+%	1FE : UNK 2
+	200 : field_0x200        : int
+	204 : field_0x204        : byte[3`]
+	207 : extraCoinBonus     : ubyte
+	208 : field_0x208        : ubyte      % copied from encounter statu, only set for first actor.
+%	209 : UNK 3
+	20C : statusTable        : uint*
+	210 : debuff             : ubyte
+	211 : debuffDuration     : ubyte
+	212 : staticStatus       : ubyte      % 0B = yes
+	213 : staticDuration     : ubyte
+	214 : stoneStatus        : ubyte      % 0C = yes
+	215 : stoneDuration      : ubyte
+	216 : koStatus           : ubyte      % 0D = yes
+	217 : koDuration         : ubyte
+	218 : transStatus        : ubyte      % 0E = yes
+	219 : transDuration      : ubyte
+%	21A : UNK 2
+	21C : status             : ubyte
+	21D : field_0x21d        : ubyte
+	21E : field_0x21e        : short
+	220 : bGlowing           : ubyte
+	221 : attackBoost        : ubyte
+	222 : defenseBoost       : ubyte
+	223 : chillOutAmount     : ubyte      % attack reduction
+	224 : chillOutTurns      : ubyte
+%	225 : UNK 3
+	228 : vfxIcePillar       : effect_instance* % current effect for ice pillar while frozen
+	22C : targetData         : selectable_target[24`]
+	40C : targetListLength   : ubyte
+	40D : targetIndexList    : byte[24`]  % into targetData
+	425 : selectedTargetIndex : ubyte      % into target index list
+	426 : targetPartIndex    : ubyte
+%	427 : UNK 1
+	428 : targetActorID      : short
+%	42A : UNK 6
+	430 : shadowScale        : float      % = actor size / 24.0
+	434 : renderMode         : short      % initially 0xD, set to 0x22 if any part is transparent
+	436 : field_0x436        : short      % index into table of 0xB0 sized structs at 800479A0. related to debuff icon, maybe the turn counter?
+	438 : loopingSoundIDs    : int[2`]    % ??? see FUN_80253974
+%	440 : UNK 4
+}
+

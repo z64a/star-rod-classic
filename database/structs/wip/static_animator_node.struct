@@ -1,0 +1,18 @@
+% static_animator_node
+type: ram
+size: 2C
+fields:
+{
+	  0 : displayList        : uint*      % can sometimes point to a node???
+	  4 : rot                : short[3`]  % range = -180,180
+%	  A : UNK 2
+	  C : pos                : float[3`]
+	 18 : sibling            : static_animator_node*
+	 1C : child              : static_animator_node*
+	 20 : vertexStartOffset  : short
+%	 22 : UNK 2
+	 24 : vertexList         : f3dex2_vertex*
+	 28 : modelID            : short
+%	 2A : UNK 2
+}
+

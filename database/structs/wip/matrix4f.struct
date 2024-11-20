@@ -1,0 +1,24 @@
+% matrix4f
+% stored in COLUMN-MAJOR format, so the entries 0,1,2,3 refer to the first column of the matrix: m00, m10, m20, m30 in standard RC notation (first subscript = row, second = column)
+type: ram
+size: 40
+fields:
+{
+	  0 : xx                 : float
+	  4 : yx                 : float
+	  8 : zx                 : float
+	  C : wx                 : float
+	 10 : xy                 : float
+	 14 : yy                 : float
+	 18 : zy                 : float
+	 1C : wy                 : float
+	 20 : xz                 : float
+	 24 : yz                 : float
+	 28 : zz                 : float
+	 2C : wz                 : float
+	 30 : xw                 : float
+	 34 : yw                 : float
+	 38 : zw                 : float
+	 3C : ww                 : float
+}
+

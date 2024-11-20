@@ -1,0 +1,12 @@
+% spr_header
+type: ram
+size: 14
+fields:
+{
+	  0 : rasterList         : spr_raster_cache_entry*
+	  4 : paletteList        : short**
+	  8 : maxComponents      : int
+	  C : colorVariants      : int
+	 10 : animListStart      : static_sprite_animation* % this is a list termianted by -1
+}
+

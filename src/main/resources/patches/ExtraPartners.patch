@@ -1,0 +1,167 @@
+
+/%
+8024F630 = ##[VALUE:ANIMS]
+8024F6B0 = ##[VALUE:PARTNERID]
+8024F6D0 = ##[VALUE:BIOS]
+8024F6F0 = ##[VALUE:FIRSTMOVES]
+8024F718 = ##[VALUE:PORTRAITS]
+
+80270660 = ##[VALUE:SPRITES]
+80270680 = ##[VALUE:AVAILABLE]
+%/
+
+% popup menu
+@Data 6A2C0 % 8008EEC0
+{
+	00000000 00000001 00000002 00000003 00000004 00000005
+	00000009 00000006 00000007 00000008 0000000A 0000000B 
+	00000000 00000001 00000002 00000003 00000004 00000005
+	00000009 00000006 00000007 00000008 0000000A 0000000B
+}
+
+% 8024F630 to 8024F710
+@Fill 142970 142A50
+{
+	FFFFFFFF
+}
+
+% 8024F718 to 8024F73C
+@Fill 142A58 142A7C
+{
+	FFFFFFFF
+}
+
+% 0013E120 --> 8024ADE0
+% #new:Function $Function_pause_partners_load_portrait
+@Function 13E120
+{
+[28]  LTW          A2, V0 (##[VALUE:AVAILABLE])
+[34]  LA           S1, ##[VALUE:AVAILABLE]
+[44]  LTW          A0, V0 (##[VALUE:PORTRAITS])
+[CC]  LTW          A0, V0 (##[VALUE:PORTRAITS])
+}
+
+% 0013E238 --> 8024AEF8
+% #new:Function $Function_pause_partners_draw_contents
+@Function 13E238
+{
+[2D0]  LA           S3, ##[VALUE:SPRITES]
+[4E8]  LA           V0, ##[VALUE:AVAILABLE]
+}
+
+% 0013EEEC --> 8024BBAC
+% #new:Function $Function_pause_partners_draw_title
+@Function 13EEEC
+{
+ [30]  LTW          V0, V0 (##[VALUE:AVAILABLE])
+ [44]  LTW          V0, V0 (##[VALUE:PARTNERID])
+ [70]  LTW          V1, V1 (##[VALUE:AVAILABLE])
+ [84]  LTW          V1, V1 (##[VALUE:PARTNERID])
+}
+
+% 0013F078 --> 8024BD38
+% #new:Function $Function_pause_partners_draw_movelist
+@Function 13F078
+{
+ [44]  LTW          V1, V1 (##[VALUE:AVAILABLE])
+ [54]  LTW          V1, V1 (##[VALUE:PARTNERID])
+ [D4]  LA           T0, ##[VALUE:AVAILABLE]
+ [E8]  LA           T0, ##[VALUE:FIRSTMOVES]
+[114]  LA           T0, ##[VALUE:AVAILABLE]
+[128]  LA           T0, ##[VALUE:FIRSTMOVES]
+[16C]  LA           T0, ##[VALUE:AVAILABLE]
+[180]  LA           T0, ##[VALUE:FIRSTMOVES]
+}
+
+% 0013F420 --> 8024C0E0
+% #new:Function $Function_pause_partners_init
+@Function 13F420
+{
+ [34]  LA           A2, ##[VALUE:AVAILABLE]
+ [40]  LA           A0, ##[VALUE:PARTNERID]
+ [80]  SLTI         V0, S0, 10` % was 8
+ [C0]  LA           S2, ##[VALUE:SPRITES]
+ [C8]  LA           S1, ##[VALUE:ANIMS]
+ [E8]  SLTI         V0, S0, 10` % was 8
+[17C]  LA           A2, ##[VALUE:PARTNERID]
+[188]  LA           V1, ##[VALUE:AVAILABLE]
+}
+
+% 0013F678 --> 8024C338
+% #new:Function $Function_pause_partners_handle_input
+@Function 13F678
+{
+[154]  LTW          V1, V1 (##[VALUE:AVAILABLE])
+[164]  LTW          V1, V1 (##[VALUE:PARTNERID])
+[1F4]  LTW          V1, V1 (##[VALUE:AVAILABLE])
+[204]  LTW          V1, V1 (##[VALUE:PARTNERID])
+[3A8]  LTW          V0, V0 (##[VALUE:AVAILABLE])
+[3B8]  LTW          V0, V0 (##[VALUE:BIOS])
+       J            8024C788
+       RESERVED
+[3E4]  LTW          V0, V0 (##[VALUE:AVAILABLE])
+[3F4]  LTW          V1, V0 (##[VALUE:FIRSTMOVES])
+[414]  LTW          V0, V0 (##[VALUE:AVAILABLE])
+[424]  LTW          V1, V0 (##[VALUE:FIRSTMOVES])
+}
+
+% 0013FAE4 --> 8024C7A4
+% #new:Function $Function_pause_partners_update
+@Function 13FAE4
+{
+[134]  LA           S3, ##[VALUE:SPRITES]
+[13C]  LA           S2, ##[VALUE:ANIMS]
+[144]  LA           S0, ##[VALUE:AVAILABLE]
+}
+
+% 0013FCC4 --> 8024C984
+% #new:Function $Function_pause_partners_cleanup
+@Function 13FCC4
+{
+ [3C]  LA           S1, ##[VALUE:SPRITES]
+ [54]  SLTI         V0, S0, 10` % was 8
+}
+
+
+% add an entry for battle icons
+
+% 0041CF58 --> 802A81C8
+% #new:Function $Function_update_partner_menu
+@Function 41CF58
+{
+ [3F8]  LTW         V1, V0 ($ExtendedPartnerBattleIcons)
+ [424]  LA          A0, $ExtendedPartnerBattleIcons
+        BGTZ        V0, .o458
+        RESERVED
+
+        % all required to use label
+        LB          V1, 12 (S7)
+        SLL         V0, V1, 2
+        ADDU        V0, V0, V1
+        SLL         V0, V0, 3
+        ADDU        V0, V0, A0
+        LW          V1, 4 (V0)
+        LI          V0, 48
+        SW          R0, 4 (S3)
+        SW          V0, 4 (S5)
+        SW          V1, 4 (S2)
+        .o458 
+        LHU         V0, 70 (S4)
+
+ [834]  LA          S8, $ExtendedPartnerBattleIcons
+}
+
+#new:Data $ExtendedPartnerBattleIcons
+{
+    00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+	80107CF8 80107D20 80109338 801093D8 80109360 80109400 80109388 80109428 801093B0 80109450
+	80107D48 80107D70 80109338 801093D8 80109360 80109400 80109388 80109428 801093B0 80109450
+	80107D98 80107DC0 80109338 801093D8 80109360 80109400 80109388 80109428 801093B0 80109450
+    80107DE8 80107E10 80109338 801093D8 80109360 80109400 80109388 80109428 801093B0 80109450
+	80107CA8 80107CD0 80109338 801093D8 80109360 80109400 80109388 80109428 801093B0 80109450
+	80107E88 80107EB0 80109338 801093D8 80109360 80109400 80109388 80109428 801093B0 80109450
+	80107ED8 80107F00 80109338 801093D8 80109360 80109400 80109388 80109428 801093B0 80109450
+    80107F28 80107F50 80109338 801093D8 80109360 80109400 80109388 80109428 801093B0 80109450
+	80107E38 80107E60 80109338 801093D8 80109360 80109400 80109388 80109428 801093B0 80109450
+	80107FC8 80107FF0 80109338 801093D8 80109360 80109400 80109388 80109428 801093B0 80109450 % added line for partner 10`
+}

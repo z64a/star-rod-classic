@@ -1,0 +1,17 @@
+% merlee_message_info
+type: ram
+size: 1C
+fields:
+{
+	  0 : unk_00             : int
+	  4 : fpUpdate           : code       % called every frame during update_encounters
+	  8 : cb_08              : code
+	  C : fpRender           : code
+	 10 : visible            : short      % or 'active'
+	 12 : merleeStringIndex  : short      % 0 = get coins!, 1 = all done
+	 14 : timeLeft           : short      % starts at 60` by default
+	 16 : state              : ubyte
+	 17 : unk_17             : ubyte
+	 18 : field_0x18         : code       % pointer to 0x2C00 size struct! string printing struct of some kind?
+}
+

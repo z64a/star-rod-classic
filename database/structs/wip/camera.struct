@@ -1,0 +1,121 @@
+% camera
+type: ram
+size: 558
+fields:
+{
+	  0 : flags              : short
+	  2 : moveFlags          : short
+	  4 : mode               : short
+	  6 : field_0x6          : short
+	  8 : field_0x8          : short
+	  A : viewportW          : short
+	  C : viewportH          : short
+	  E : viewportStartX     : short
+	 10 : viewportStartY     : short
+	 12 : nearClip           : short
+	 14 : farClip            : short
+%	 16 : UNK 2
+	 18 : vfov               : float
+	 1C : field_0x1c         : short
+	 1E : field_0x1e         : short
+	 20 : field_0x20         : short
+	 22 : field_0x22         : short
+	 24 : field_0x24         : short[3`]
+	 2A : zoomPercent        : short
+	 2C : backgroundColor    : short[3`]
+	 32 : targetScreenCoords : short[3`]
+	 38 : perspNorm          : short
+%	 3A : UNK 2
+	 3C : lookAt_eye         : float[3`]
+	 48 : lookAt_obj         : float[3`]
+	 54 : field_0x54         : float[3`]  % another form of target pos?
+	 60 : targetPos          : float[3`]
+	 6C : currentYaw         : float
+	 70 : field_0x70         : float
+	 74 : currentBoomYaw?    : float
+	 78 : currentBoomLength  : float
+	 7C : currentYOffset?    : float
+%	 80 : UNK 4
+	 84 : trueRotation       : float[3`]
+	 90 : currentBlendedYawNegated : float
+	 94 : currentPitch       : float
+	 98 : field_0x98         : int
+	 9C : field_0x9c         : int
+	 A0 : field_0xa0         : short
+	 A2 : field_0xa2         : short
+	 A4 : field_0xa4         : short
+	 A6 : field_0xa6         : short
+	 A8 : field_0xa8         : short
+	 AA : field_0xaa         : short
+	 AC : field_0xac         : short
+	 AE : field_0xae         : short
+	 B0 : field_0xb0         : short
+	 B2 : field_0xb2         : short
+	 B4 : field_0xb4         : short
+	 B6 : field_0xb6         : short
+	 B8 : field_0xb8         : short
+	 BA : field_0xba         : short
+	 BC : field_0xbc         : short
+	 BE : field_0xbe         : short
+	 C0 : field_0xc0         : int
+	 C4 : field_0xc4         : float
+%	 C8 : UNK C
+	 D4 : perspectiveMatrix  : matrix4f
+	114 : viewMtxPlayer      : matrix4f   % centers on player
+	154 : viewMtxLeading     : matrix4f   % leads player slightly
+	194 : viewMtxShaking     : matrix4f   % used while ShakeCam is active
+%	1D4 : UNK 28
+	1FC : field_0x1fc        : int
+	200 : field_0x200        : int
+	204 : unkMatrix          : matrix4s*
+%	208 : UNK A
+	212 : field_0x212        : short
+%	214 : UNK 230
+	444 : prevZone           : zone*
+	448 : currentZone        : zone*
+%	44C : UNK 38
+	484 : sinInterpAlpha     : float
+	488 : linearInterp       : float
+	48C : linearInterpScale  : float      % 3.0?
+	490 : moveSpeed          : float
+	494 : field_0x494        : float
+	498 : field_0x498        : float
+	49C : field_0x49c        : float
+	4A0 : field_0x4a0        : float
+	4A4 : field_0x4a4        : float[3`]
+	4B0 : movePos            : float[3`]
+	4BC : field_0x4bc        : float
+	4C0 : field_0x4c0        : float
+	4C4 : field_0x4c4        : float
+	4C8 : field_0x4c8        : float
+	4CC : field_0x4cc        : float
+	4D0 : field_0x4d0        : float
+	4D4 : field_0x4d4        : short
+	4D6 : field_0x4d6        : short
+	4D8 : controllerType     : int
+	4DC : controllerBoomLen  : float
+	4E0 : controllerBoomPitch : float
+	4E4 : posA               : float[3`]
+	4F0 : posB               : float[3`]
+	4FC : controllerViewPitch : float
+	500 : field_0x500        : int
+	504 : boolTargetPlayer?  : short
+	506 : field_0x506        : short
+	508 : panPhase           : float
+	50C : leadAmount         : float
+	510 : field_0x510        : float
+	514 : field_0x514        : float
+	518 : field_0x518        : float
+	51C : field_0x51c        : int
+	520 : field_0x520        : float
+	524 : field_0x524        : float
+	528 : field_0x528        : float
+	52C : field_0x52c        : int
+	530 : field_0x530        : int
+	534 : aabbForZoneBelow   : collider_aabb*
+%	538 : UNK 18
+	550 : field_0x550        : float
+	554 : field_0x554        : short
+	556 : field_0x556        : short
+}
+

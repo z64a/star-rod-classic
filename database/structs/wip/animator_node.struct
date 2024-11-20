@@ -1,0 +1,19 @@
+% animator_node
+type: ram
+size: 100
+fields:
+{
+	  0 : displayList        : ptr
+	  4 : children           : animator_node*[32`]
+	 84 : basePos?           : float[3`]
+	 90 : pos                : float[3`]
+	 9C : rotation           : float[3`]
+	 A8 : scale              : float[3`]
+	 B4 : mtx                : matrix4f
+	 F4 : flags              : short
+	 F6 : uniqueIndex        : short
+	 F8 : vertexStartOffset  : short      % static node field 20
+%	 FA : UNK 2
+	 FC : modelID&ptrVertexList : int        % union
+}
+

@@ -1,0 +1,56 @@
+#new:Function $Function_StarBoxLaunch_ClearCamFlag
+{
+	LIA       V1, 800B1D80
+	LHU       V0, 2 (V1)
+	ANDI      V0, V0, FFFE
+	SH        V0, 2 (V1)
+	JR        RA
+	ADDIU     V0, R0, 2
+}
+
+#new:Function $Function_StarBoxLaunch_SetCamFlag
+{
+	LIA       V1, 800B1D80
+	LHU       V0, 2 (V1)
+	ORI       V0, V0, 1
+	SH        V0, 2 (V1)
+	JR        RA
+	ADDIU     V0, R0, 2
+}
+
+#new:Script $Script_StarBoxLaunch_UpdateCam
+{
+	Label  0
+		Call  GetPlayerPos  ( *Var[0] *Var[1] *Var[2] )
+		Call  SetCamTarget  ( .Cam:Default *Var[0] *Var[1] *Var[2] )
+		Wait  1`
+	Goto  0
+	Return
+	End
+}
+
+#new:Script $Script_StarBoxLaunch
+{
+	Call  DisablePlayerInput    ( .True )
+	Call  DisablePlayerPhysics  ( .True )
+	Call  SetPlayerActionState  ( .ActionState:Jump )
+	Call  GetPlayerPos  ( *Var[0] *Var[1] *Var[2] )
+	Loop  00000004
+		Add   *Var[1]  0000000A
+		Call  SetPlayerPos  ( *Var[0] *Var[1] *Var[2] )
+		Wait  1`
+	EndLoop
+	Call  $Function_StarBoxLaunch_ClearCamFlag ( )
+	Exec  $Script_StarBoxLaunch_UpdateCam *Var[A]
+	Call  SetPlayerJumpscale    ( *Fixed[0.7] )
+	Call  PlayerJump    ( *Var[7] *Var[8] *Var[9] 00000028 )
+	Kill  *Var[A]
+	Call  $Function_StarBoxLaunch_SetCamFlag ( )
+	Wait  3`
+	Call  SetPlayerActionState  ( .ActionState:Idle )
+	Call  $Function_StarBoxLaunch_SetCamFlag ( )
+	Call  DisablePlayerPhysics  ( .False )
+	Call  DisablePlayerInput    ( .False )
+	Return
+	End
+}

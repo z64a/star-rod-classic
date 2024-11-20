@@ -1,0 +1,16 @@
+% font_char_info
+type: ram
+size: C
+fields:
+{
+	  0 : texSizeX           : ubyte
+	  1 : texSizeY           : ubyte
+	  2 : field_0x2          : ubyte
+	  3 : newlineY           : ubyte
+	  4 : field_0x4          : ubyte
+	  5 : field_0x5          : ubyte
+	  6 : field_0x6          : ubyte
+	  7 : field_0x7          : ubyte
+	  8 : rasters            : ptr
+}
+

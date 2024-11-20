@@ -1,0 +1,23 @@
+#new:Script $Script_GiantChest_Music
+{
+	Call  802D5FF8  ( 00000042 00000001 )
+	Wait  130`
+	Call  802D5FD8 ( )
+	Return
+	End
+}
+
+#new:Function $Function_GiantChest_Support
+{
+	ADDIU     SP, SP, FFE8
+	SW        RA, 10 (SP)
+	JAL       ~Func:get_entity_by_index
+	LW        A0, 94 (A0) % 84 in vanilla
+	LW        A0, 40 (V0)
+	ADDIU     V1, R0, 1
+	SB        V1, 30 (A0)
+	LW        RA, 10 (SP)
+	ADDIU     V0, R0, 2
+	JR        RA
+	ADDIU     SP, SP, 18
+}

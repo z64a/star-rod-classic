@@ -1,0 +1,83 @@
+% NPC
+type: ram
+size: 340
+fields:
+{
+	  0 : flags              : uint
+	  4 : onUpdate           : ptr        % run before anything else for this npc in the npc update step
+	  8 : onRender           : ptr        % run after the display list for this npc is built
+	  C : yaw                : float
+	 10 : planarFlyDist      : float      % also used for speech, temp0?
+	 14 : jumpScale          : float      % also used for speech, temp1?
+	 18 : moveSpeed          : float
+	 1C : jumpVelocity       : float
+	 20 : blurData           : npc_blur_data* % related to movement somehow...
+	 24 : spriteInstanceID   : int
+	 28 : currentAnim        : uint
+	 2C : instanceUnk10      : int        % spriteInstance->unk_10
+	 30 : animationSpeed     : float
+	 34 : renderYaw          : float
+	 38 : pos                : float[3`]
+	 44 : rotation           : float[3`]
+	 50 : rotationVerticalPivotOffset : float
+	 54 : scale              : float[3`]
+	 60 : moveToPos          : float[3`]
+	 6C : colliderPos        : float[3`]  % used during collision with player
+	 78 : shadowIndex        : int
+	 7C : shadowScale        : float
+	 80 : collisionChannel   : int        % flags used with raycasting
+	 84 : currentFloor       : short      % colliderID
+	 86 : currentWall        : short      % colliderID
+	 88 : isFacingAway       : short
+	 8A : yawCamOffset       : short
+	 8C : turnAroundYawAdjustment : short
+	 8E : duration           : short      % formerly interp_counter
+	 90 : homePos?           : short[3`]
+	 96 : field_0x96         : short      % sprite deform cmd
+	 98 : field_0x98         : short      % sprite deform args
+	 9A : field_0x9a         : short      % sprite deform args
+	 9C : field_0x9c         : short      % sprite deform args
+	 9E : field_0x9e         : short      % sprite deform args
+	 A0 : field_0xa0         : short      % sprite deform flags
+	 A2 : field_0xa2         : short
+	 A4 : npcID              : ubyte
+%	 A5 : UNK 1
+	 A6 : collisionRadius    : short
+	 A8 : collisionHeight    : short
+	 AA : renderMode         : ubyte
+	 AB : field_0xab         : ubyte
+	 AC : alpha              : ubyte
+	 AD : field_0xad         : ubyte      % second alpha, multiplied with prev
+%	 AE : UNK 2
+	 B0 : extraAnimList      : uint**     % some sort of anim list?
+	 B4 : palSwapType        : ubyte      % some kind of rendering type related to palette swapping, 0-4 (inclusive)
+	 B5 : prevPalSwapType    : ubyte
+	 B6 : palettesDirty      : ubyte      % local palettes will reload if set
+	 B7 : palSwapState       : ubyte      % 0 = hold A, 1 = A -> B, 2 = hold B, 3 = B -> A
+%	 B8 : UNK 4
+	 BC : palSwapTimer       : short
+	 BE : palSwapLerpAlpha   : short
+%	 C0 : UNK 1
+	 C1 : paletteCount       : ubyte
+%	 C2 : UNK 2
+	 C4 : spritePaletteList  : ptr
+	 C8 : localPaletteData   : palette16[16`]
+	2C8 : localPalettes      : palette16*[16`]
+	308 : palSwapIndexA      : short
+	30A : palSwapIndexB      : short
+	30C : palSwapTimeHoldA   : short
+	30E : palSwapTimeAB      : short
+	310 : palSwapTimeHoldB   : short
+	312 : palSwapTimeBA      : short
+	314 : palSwapIndexC      : short
+	316 : palSwapIndexD      : short
+	318 : screenSpaceOffset2D? : float[2`]
+	320 : verticalStretch    : float
+	324 : decorationEffectInstance : effect_instance*[2`] % can have up to 2
+	32C : npcDecorationType  : byte[2`]
+	32E : changedDecoration  : ubyte
+%	32F : UNK 1
+	330 : decorationInitialized : byte[2`]
+%	332 : UNK E
+}
+

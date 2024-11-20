@@ -1,0 +1,104 @@
+
+{version=1.0}
+{scope=us:battle}
+
+dat : 80291F80 : HudScript_HPBar : hud_script
+dat : 80291FA8 : HudScript_HPDigit0 : hud_script
+dat : 80291FD0 : HudScript_HPDigit1 : hud_script
+dat : 80291FF8 : HudScript_HPDigit2 : hud_script
+dat : 80292020 : HudScript_HPDigit3 : hud_script
+dat : 80292048 : HudScript_HPDigit4 : hud_script
+dat : 80292070 : HudScript_HPDigit5 : hud_script
+dat : 80292098 : HudScript_HPDigit6 : hud_script
+dat : 802920C0 : HudScript_HPDigit7 : hud_script
+dat : 802920E8 : HudScript_HPDigit8 : hud_script
+dat : 80292110 : HudScript_HPDigit9 : hud_script
+
+dat : 80292138 : HudScript_YellowArrow : hud_script
+
+dat : 80292160 : HudScript_MenuFlee : hud_script
+dat : 80292188 : HudScript_MenuFleeDisabled : hud_script
+
+dat : 802921B0 : HudScript_MenuDefend : hud_script
+dat : 802921D8 : HudScript_MenuDefendDisabled : hud_script
+dat : 80292200 : HudScript_MenuStrategies : hud_script
+dat : 80292228 : HudScript_MenuStrategiesDisabled : hud_script
+dat : 80292250 : HudScript_MenuPouch : hud_script
+dat : 80292278 : HudScript_MenuPouchDisabled : hud_script
+dat : 802922A0 : HudScript_MenuDoNothing : hud_script
+dat : 802922C8 : HudScript_MenuDoNothingDisabled : hud_script
+
+dat : 802922F0 : HudScript_TimingBar1Chance : hud_script
+
+dat : 8029231C : HudScript_BButton : hud_script
+dat : 80292348 : HudScript_BButtonHeld : hud_script
+dat : 80292374 : HudScript_MashBButton1 : hud_script
+dat : 802923B0 : HudScript_PressBButton : hud_script
+dat : 802923FC : HudScript_MashBButton2 : hud_script
+dat : 80292438 : HudScript_CLeftButton : hud_script
+dat : 80292464 : HudScript_CLeftButtonHeld : hud_script
+dat : 80292490 : HudScript_MashCLeftButton : hud_script
+dat : 802924CC : HudScript_CRightButton : hud_script
+dat : 802924F8 : HudScript_CRightButtonHeld : hud_script
+dat : 80292524 : HudScript_MashCRightButton1 : hud_script
+dat : 80292560 : HudScript_MashCRightButton2 : hud_script
+dat : 8029259C : HudScript_CUpButton : hud_script
+dat : 802925C8 : HudScript_CUpButtonHeld : hud_script
+dat : 802925F4 : HudScript_MashCUpButton : hud_script
+dat : 80292630 : HudScript_CDownButton : hud_script
+dat : 8029265C : HudScript_CDownButtonHeld : hud_script
+dat : 80292688 : HudScript_MashCDownButton1 : hud_script
+dat : 802926C4 : HudScript_PressCDownButton : hud_script
+dat : 80292710 : HudScript_MashCDownButton2 : hud_script
+
+dat : 8029275C : HudScript_TimingWait : hud_script
+dat : 80292788 : HudScript_TimingReady : hud_script
+dat : 802927B4 : HudScript_TimingBlink : hud_script
+dat : 802927F0 : HudScript_TimingCharge4a : hud_script
+dat : 8029281C : HudScript_TimingCharge1 : hud_script
+dat : 80292848 : HudScript_TimingCharge4b : hud_script
+dat : 80292874 : HudScript_TimingCharge2 : hud_script
+dat : 802928A0 : HudScript_TimingCharge4c : hud_script
+dat : 802928CC : HudScript_TimingCharge3 : hud_script
+
+dat : 802928F8 : HudScript_RunningAway : hud_script
+
+dat : 80292974 : HudScript_100pct : hud_script
+dat : 80292A2C : HudScript_RightOn : hud_script
+
+dat : 80292AFC : HudScript_TimingBar3Chances : hud_script
+dat : 80292B28 : HudScript_TimingGaugeResult : hud_script
+dat : 80292B54 : HudScript_TimingOK : hud_script
+dat : 80292B80 : HudScript_TimingMiss : hud_script
+dat : 80292BAC : HudScript_FillGaugeResult : hud_script
+dat : 80292BD8 : HudScript_ProjectorReel : hud_script
+dat : 80292C00 : HudScript_ProjectorSpot : hud_script
+dat : 80292C28 : HudScript_ProjectorBeam : hud_script
+
+dat : 80292C50 : HudScript_SwapZ : hud_script
+dat : 80292C7C : HudScript_SwapArrowLeft : hud_script
+dat : 80292CB8 : HudScript_SwapArrowRight : hud_script
+
+%dat : 80292CF4 : HudScript_??? : hud_script		UNK_1C0560
+
+dat : 80292D1C : HudScript_AimMarkerA : hud_script
+dat : 80292DB4 : HudScript_AimMarkerB : hud_script
+dat : 80292E4C : HudScript_AimMarkerC : hud_script
+dat : 80292EE4 : HudScript_AimMarkerD : hud_script
+dat : 80292F7C : HudScript_AimMarkerE : hud_script
+dat : 80293014 : HudScript_AimMarkerF : hud_script
+dat : 802930AC : HudScript_AimMarkerG : hud_script
+dat : 80293144 : HudScript_AimMarkerH : hud_script
+dat : 802931DC : HudScript_AimShimmerA : hud_script
+dat : 80293274 : HudScript_AimShimmerB : hud_script
+dat : 8029330C : HudScript_AimShimmerC : hud_script
+dat : 802933A4 : HudScript_AimShimmerD : hud_script
+dat : 8029343C : HudScript_AimShimmerE : hud_script
+dat : 802934D4 : HudScript_AimShimmerF : hud_script
+dat : 8029356C : HudScript_AimShimmerG : hud_script
+dat : 80293604 : HudScript_AimShimmerH : hud_script
+dat : 8029369C : HudScript_AimReticle : hud_script
+dat : 802936D4 : HudScript_AimTarget : hud_script
+dat : 8029370C : HudScript_AimBlinkA : hud_script
+dat : 80293764 : HudScript_AimBlinkB : hud_script
+dat : 802937C4 : HudScript_AimBlinkC : hud_script

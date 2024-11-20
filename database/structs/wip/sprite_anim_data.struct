@@ -1,0 +1,11 @@
+% sprite_anim_data
+type: ram
+size: 10
+fields:
+{
+	  0 : rastersOffset      : uint**
+	  4 : palettesOffset     : uint**
+	  8 : maxComponents      : int
+	  C : colorVariations    : int
+}
+

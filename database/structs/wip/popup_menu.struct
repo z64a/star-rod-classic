@@ -1,0 +1,27 @@
+% popup_menu
+% correct size
+type: ram
+size: 330
+fields:
+{
+	  0 : ptrIcon            : pointer[32`]
+%	 80 : UNK 4
+	 84 : nameString         : int[32`]
+%	104 : UNK 4
+	108 : userIndex          : int[32`]   % used to map menu order to a user-ID for each item
+%	188 : UNK 4
+	18C : enabled            : int[32`]
+%	20C : UNK 4
+	210 : value              : int[32`]   % sale price, etc
+%	290 : UNK 4
+	294 : descString         : int[32`]
+%	314 : UNK 4
+	318 : popupType          : int        % C = keys
+	31C : field_0x31c        : int
+	320 : field_0x320        : int
+	324 : numEntries         : int
+	328 : initialPos         : int
+	32C : result             : short
+%	32E : UNK 2
+}
+

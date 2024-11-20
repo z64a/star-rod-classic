@@ -1,0 +1,10 @@
+% sprite
+type: ram
+size: 60
+fields:
+{
+%	  0 : UNK 28
+	 28 : field_0x28         : float[3`]
+%	 34 : UNK 2C
+}
+

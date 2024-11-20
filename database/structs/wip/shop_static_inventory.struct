@@ -1,0 +1,10 @@
+% shop_static_inventory
+type: ram
+size: C
+fields:
+{
+	  0 : itemID             : int
+	  4 : price              : int
+	  8 : descString         : int
+}
+

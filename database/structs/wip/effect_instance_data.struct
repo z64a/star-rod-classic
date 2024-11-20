@@ -1,0 +1,17 @@
+% effect_instance_data
+type: ram
+size: 80
+fields:
+{
+%	  0 : UNK 4
+	  4 : pos                : float[3`]
+	 10 : rotation           : float[3`]
+	 1C : scale              : float[3`]
+%	 28 : UNK 4
+	 2C : field_0x2c         : int
+	 30 : field_0x30         : float
+%	 34 : UNK 30
+	 64 : renderYaw          : float
+%	 68 : UNK 18
+}
+

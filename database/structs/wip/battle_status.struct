@@ -1,0 +1,166 @@
+% battle_status
+% from 800DC070
+type: ram
+size: 490
+fields:
+{
+	  0 : flags1             : int
+	  4 : flags2             : int
+	  8 : varTable           : int[16`]
+	 48 : currentPlayerSubmenu : ubyte
+	 49 : selectedMoveOption : ubyte      % move index (recall: options are sorted by cost)
+	 4A : currentPartnerSubmenu : ubyte
+	 4B : field_0x4b         : ubyte
+	 4C : field_0x4c         : ubyte
+	 4D : selectedJumpOption : ubyte      % option index
+	 4E : selectedHammerOption : ubyte      % option index
+	 4F : field_0x4f         : ubyte      % option index for removed player menu category
+	 50 : selectedItemOption : ubyte      % option index
+	 51 : selectedChangeOption : ubyte      % option index
+	 52 : selectedSpiritsOption : ubyte      % option index
+	 53 : selectedStratOption : ubyte      % option index
+%	 54 : UNK 8
+	 5C : field_0x5c         : ubyte
+	 5D : selectedAbilityOptionP : ubyte      % option index
+	 5E : field_0x5e         : ubyte
+	 5F : field_0x5f         : ubyte
+	 60 : selectedItemOptionP : ubyte      % presumably
+	 61 : selectedChangeOptionP : ubyte      % option index
+	 62 : selectedSpiritsOptionP : ubyte      % option index
+	 63 : selectedStratOptionP : ubyte      % option index
+%	 64 : UNK 8
+	 6C : field_0x6c         : short
+	 6E : field_0x6e         : short
+	 70 : menuDisableFlags   : short      % 1 = jump, 2 = hammer, 4 = items
+%	 72 : UNK 2
+	 74 : field_0x74         : int
+	 78 : totalStarPoints    : ubyte
+	 79 : pendingStarPoints  : ubyte      % how many to add
+	 7A : incrementStarPointDelay : ubyte      % related to star points, set to 0x28 when they are dropped
+	 7B : damageTaken        : ubyte
+	 7C : changePartnerAllowed : ubyte
+	 7D : numItems           : ubyte      % counted on start turn to know if "use item" is possible
+	 7E : foundValidJumpTargets : ubyte      % counted on start turn; 1 = yes, -1 = no
+	 7F : foundValidHammerTargets : ubyte      % counted on start turn; 1 = yes, -1 = no
+	 80 : canUsePartnerAbilities : ubyte
+	 81 : actionSuccessResult : ubyte
+	 82 : field_0x82         : ubyte
+	 83 : actionCommandMode  : ubyte      % 0 = not unlocked, 1 = unlocked, (2 | 3 | -1) = used during action command tutorial
+	 84 : actionResult       : ubyte      % result of action command games (hammer, mashing, etc)
+	 85 : field_0x85         : ubyte
+	 86 : field_0x86         : ubyte
+	 87 : blockResult        : ubyte      % 0 = fail, 1 = success, -1 = mashed
+	 88 : itemUsesLeft       : ubyte      % set to 2 for doublke dip, 3 for triple
+	 89 : hpDrainCount       : ubyte
+	 8A : nextMerleeSpellType : ubyte
+	 8B : hustleTurns        : ubyte      % numTurns from hustle drink, normally 0
+	 8C : field_0x8c         : ubyte
+	 8D : field_0x8d         : ubyte
+	 8E : initialEnemyCount  : ubyte      % used for SP award bonus
+	 8F : field_0x8f         : ubyte
+	 90 : field_0x90         : short
+	 92 : field_0x92         : ubyte
+	 93 : nextUniqueID       : ubyte
+	 94 : cancelEnemyTurnCounter : ubyte
+	 95 : field_0x95         : ubyte
+	 96 : hammerCharge       : ubyte
+	 97 : jumpCharge         : ubyte
+	 98 : field_0x98         : ubyte
+	 99 : dangerFlags?       : ubyte      % 1 = danger, 2 = peril
+	 9A : outtaSightActive   : ubyte
+	 9B : turboChargeTurnsLeft : ubyte
+	 9C : turboChargeAmount  : ubyte      % unused?
+	 9D : waterBlockTurnsLeft : ubyte
+	 9E : waterBlockAmount   : ubyte      % unused?
+%	 9F : UNK 1
+	 A0 : field_0xa0         : int
+	 A4 : cloudNineTurnsLeft : ubyte
+	 A5 : cloudNineDodgeChance : ubyte      % = 50%
+%	 A6 : UNK 2
+	 A8 : cloudNineEffect    : int
+	 AC : merleeAttackBoost  : ubyte
+	 AD : merleeDefenseBoost : ubyte
+	 AE : hammerLossTurns    : ubyte
+	 AF : jumpLossTurns      : ubyte
+	 B0 : itemLossTurns      : ubyte
+%	 B1 : UNK 3
+	 B4 : preUpdateCallback  : code
+	 B8 : field_0xb8         : int
+	 BC : controlScript      : script_context* % control handed over to this when changing partners, maybe general?
+	 C0 : controlScriptID    : int
+	 C4 : camMovementScript  : script_context*
+	 C8 : camMovementScriptID : int
+%	 CC : UNK C
+	 D8 : playerActor        : Actor*
+	 DC : partnerActor       : Actor*
+	 E0 : enemyActors        : Actor*[24`]
+	140 : enemyIDs           : short[24`]
+	170 : nextEnemyIndex     : ubyte      % (during enemy turn) who should go next
+	171 : numEnemyActors     : ubyte
+	172 : activeEnemyActorID : short      % (during enemy turn) enemy currently using their move
+%	174 : UNK 4
+	178 : moveCategory       : ubyte
+%	179 : UNK 1
+	17A : selectedItemID     : short
+	17C : selectedMoveID     : short
+	17E : currentAttackDamage : short
+	180 : lastAttackDamage   : short
+%	182 : UNK 2
+	184 : currentTargetListFlags : int        % set when creating a target list, also obtain from the flags field of moves
+	188 : currentAttackElement : int
+	18C : currentAttackEventSuppression : int
+	190 : currentAttackStatus : int
+	194 : statusChance       : ubyte
+	195 : statusDuration     : ubyte
+%	196 : UNK 1
+	197 : targetHomeIndex?   : ubyte      % some sort of home index used for target list construction
+	198 : powerBounceCounter : ubyte
+	199 : wasStatusInflicted : ubyte      % during last attack
+	19A : field_0x19a        : ubyte
+%	19B : UNK 5
+	1A0 : currentTargetID    : short      % selected?
+	1A2 : currentTargetPart  : ubyte      % selected?
+%	1A3 : UNK 1
+	1A4 : currentTargetID2   : short
+	1A6 : currentTargetPart2 : ubyte
+	1A7 : battlePhase        : ubyte
+	1A8 : attackerActorID    : short
+%	1AA : UNK 4
+	1AE : submenuOptionIcon  : short[24`] % icon IDs
+	1DE : submenuOptionMove  : byte[24`]  % move IDs
+	1F6 : submenuOptionEnabled : byte[24`]
+	20E : submenuOptionCount : ubyte
+%	20F : UNK 1
+	210 : currentButtonsDown : int
+	214 : currentButtonsPressed : int
+	218 : currentButtonsHeld : int
+	21C : stickX             : float
+	220 : stickY             : float
+	224 : inputBitmask       : int
+	228 : dpadX              : int        % 0-360
+	22C : dpadY              : int        % 0-60
+	230 : holdInputBuffer    : int[64`]
+	330 : pushInputBuffer    : int[64`]
+	430 : holdInputBufferPos??? : ubyte
+	431 : inputBufferPos     : ubyte
+	432 : field_0x432        : ubyte
+	433 : field_0x433        : ubyte
+	434 : field_0x434        : int
+	438 : foregroundModelList : int*
+	43C : buffTurnCounter?   : ptr        % some kind of an icon list? used with cloud nine and turbo charge
+	440 : tattleFlags        : byte[27`]
+%	45B : UNK 5
+	460 : uiBattleState      : int        % battle state being used for the UI, tracks main state at 800dc068 during draw_main_battle_ui
+	464 : field_0x464        : int
+	468 : defeatBattleSubstate : int        % last before being defeated
+	46C : battleSubstate     : int        % values have different meaning for each state
+	470 : hasState           : int        % = 1 after any call to set_battle_state
+	474 : defeatBattleState  : int        % last before being defeated
+	478 : battleID           : int        % fmt: 00-00-section-battle
+	47C : stageID            : int
+	480 : field_0x480        : int
+	484 : alternateFormationTable : StaticFormationEntry*
+	488 : unkWord            : int        % set by 80072bcc, used only for flo_11 (hedge maze)
+	48C : formationTableEntry : StaticFormationEntry*
+}
+

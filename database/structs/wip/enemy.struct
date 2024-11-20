@@ -1,0 +1,56 @@
+% enemy
+type: ram
+size: F0
+fields:
+{
+	  0 : flags              : int
+	  4 : encounterIndex     : ubyte
+	  5 : encountered        : ubyte
+	  6 : scriptGroup        : ubyte      % scripts launched for this npc controller will be assigned this group
+	  7 : useOverridePos     : ubyte      % boolean
+	  8 : npcID              : short
+	  A : spawnPos           : short[3`]
+	 10 : overridePos        : short[3`]  % used by bullet bills as they update this pos. purpose unclear.
+%	 16 : UNK 2
+	 18 : npcSettings        : StaticNpcSettings*
+	 1C : initBytecode       : bytecode*
+	 20 : interactBytecode   : bytecode*
+	 24 : aiBytecode         : bytecode*
+	 28 : hitBytecode        : bytecode*
+	 2C : auxBytecode        : bytecode*
+	 30 : defeatBytecode     : bytecode*
+	 34 : initScript         : script_context*
+	 38 : interactScript     : script_context*
+	 3C : aiScript           : script_context*
+	 40 : hitScript          : script_context*
+	 44 : auxScript          : script_context*
+	 48 : defeatScript       : script_context*
+	 4C : initScriptID       : int
+	 50 : interactScriptID   : int
+	 54 : aiScriptID         : int
+	 58 : hitScriptID        : int
+	 5C : auxScriptID        : int
+	 60 : defeatScriptID     : int
+	 64 : field_0x64         : ptr
+%	 68 : UNK 4
+	 6C : varTable           : int[16`]
+	 AC : field_0xac         : ubyte
+%	 AD : UNK 3
+	 B0 : field_0xb0         : int*       % might be flags of some sort
+	 B4 : blinkTimer         : ubyte
+	 B5 : field_0xb5         : ubyte
+%	 B6 : UNK 2
+	 B8 : unkSettings24      : int
+	 BC : field_0xbc         : int
+	 C0 : field_0xc0         : int
+	 C4 : field_0xc4         : int
+	 C8 : field_0xc8         : int
+	 CC : animList           : ptr
+	 D0 : territoryData      : ptr
+	 D4 : dropTables         : enemy_drops*
+	 D8 : tattleString       : uint
+	 DC : field_0xdc         : int
+	 E0 : field_0xe0         : short
+%	 E2 : UNK E
+}
+

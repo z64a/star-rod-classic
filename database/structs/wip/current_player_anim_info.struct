@@ -1,0 +1,10 @@
+% current_player_anim_info
+type: ram
+size: C
+fields:
+{
+	  0 : componentList      : sprite_component**
+	  4 : animID             : int
+	  8 : unk_08             : int
+}
+

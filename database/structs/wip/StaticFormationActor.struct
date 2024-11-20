@@ -1,0 +1,11 @@
+% StaticFormationActor
+type: ram
+size: 1C
+fields:
+{
+	  0 : actorData          : StaticActorData*
+	  4 : spawnPos           : float**
+	  8 : priority           : int
+	  C : vars               : int[4`]
+}
+

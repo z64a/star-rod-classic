@@ -1,0 +1,12 @@
+% transition_stencil
+type: ram
+size: 18
+fields:
+{
+	  0 : color              : byte[3`]
+%	  3 : UNK 1
+	  4 : screenPos0         : int[2`]
+	  C : screenPos1         : int[2`]
+	 14 : alpha              : float
+}
+

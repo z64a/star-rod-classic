@@ -1,0 +1,11 @@
+% spr_raster_info
+type: ram
+size: 10
+fields:
+{
+	  0 : raster             : byte*
+	  4 : defaultPal         : byte*
+	  8 : width              : int
+	  C : height             : int
+}
+

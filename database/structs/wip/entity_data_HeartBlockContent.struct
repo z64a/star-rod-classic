@@ -1,0 +1,27 @@
+% entity_data_HeartBlockContent
+type: ram
+size: D8
+fields:
+{
+	  0 : parentEntityIndex  : ubyte
+	  1 : state              : ubyte      % 0 = hit, 1 = rising
+	  2 : sparkleTimer       : ubyte
+	  3 : field_0x3          : ubyte
+	  4 : field_0x4          : float
+	  8 : heartBeatTimer     : ubyte
+	  9 : field_0x9          : ubyte
+	  A : field_0xa          : ubyte
+%	  B : UNK 1
+	  C : field_0xc          : int
+	 10 : field_0x10         : int
+	 14 : riseVelocity       : float
+	 18 : unkAngle           : float
+	 1C : angularVelocity    : float      % unused?
+	 20 : bouncePhase        : float
+	 24 : blurBufferPos      : short
+%	 26 : UNK 2
+	 28 : blurYawBuffer      : float[12`]
+	 58 : mtxBlur1           : matrix4s   % rotation from 2 frames ago
+	 98 : mtxBlur2           : matrix4s   % rotation from 3 frames ago
+}
+

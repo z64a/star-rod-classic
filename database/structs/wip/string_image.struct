@@ -1,0 +1,13 @@
+% string_image
+type: ram
+size: 14
+fields:
+{
+	  0 : raster             : ptr
+	  4 : palette            : ptr
+	  8 : width              : short
+	  A : height             : short
+	  C : fmt                : int
+	 10 : depth              : int
+}
+

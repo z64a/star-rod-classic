@@ -1,0 +1,125 @@
+
+/%
+We wish to expand the item table, but it cannot be moved due to many references to it in overlays.
+The table of hud_scripts for items immediately follows it and is only referenced in lib functions
+and a single overlay (hos_03), so we will move this table instead.
+
+8007F210    EffectTable             effect_table_entry[136]
+8007FEF0    item hud scripts                                    DO NOT MOVE
+800878E0    ItemTable               item_table_entry[365]       MANY xref
+8008A680    ItemHudScripts          hud_script*[337][2]         ~17 xref
+8008B108    item entity scripts
+8008DDD4    ItemEntityScripts       item_script*[385]           1 xref
+8008E3D8    ItemIconRasterOffsets   int[349]                    2 xref
+8008E94C    ItemIconPaletteOffsets  int[349]                    2 xref
+%/
+
+% 000800F4 --> 800E6C44
+@Function 800F4 % setup_item_popup
+{
+  [10]  LA          T2, $Global_ItemHudScripts
+}
+
+% 000CBDDC --> 801356DC
+@Function CBDDC % update_item_entity_temp
+{
+ [1E4]  LTW         A0, V0 ($Global_ItemHudScripts)
+ [944]  LA          T2, $Global_ItemHudScripts
+        SLL         V0, V0, 3
+        LTW         V0, V0 ($Global_ItemHudScripts)
+}
+
+% 0018CA70 --> 8025E190
+@Function 18CA70 % func_8025E190
+{
+ [C74]  LTW         A1, V0 ($Global_ItemHudScripts)
+[1034]  LTW         A1, V0 ($Global_ItemHudScripts)
+}
+
+% 0013A848 --> 80247508
+@Function 13A848 % pause_badges_draw_contents
+{
+ [79C]  LA          T2, $Global_ItemHudScripts
+ [7E0]  LA          T2, $Global_ItemHudScripts
+ [810]  LA          T2, $Global_ItemHudScripts
+}
+
+% 0013CCB0 --> 80249970
+@Function 13CCB0 % pause_items_draw_contents
+{
+ [514]  LA          T3, $Global_ItemHudScripts
+ [548]  LA          T3, $Global_ItemHudScripts
+}
+
+% 007E17D4 --> 80280954
+@Function 7E17D4 % func_80280954
+{
+  [C0]  LA          A1, $Global_ItemHudScripts
+}
+
+% 0041A718 --> 802A5988
+@Function 41A718 % update_player_menu
+{
+ [E58]  LA          T6, $Global_ItemHudScripts
+[146C]  LA          T6, $Global_ItemHudScripts
+[173C]  LA          T6, $Global_ItemHudScripts
+[1D1C]  LA          T6, $Global_ItemHudScripts
+}
+
+% 0041CF58 --> 802A81C8
+@Function 41CF58 % update_partner_menu
+{
+ [BD4]  LA          T0, $Global_ItemHudScripts
+}
+
+% 000FADD0 --> 802D6420
+@Function FADD0 % func_802D6420
+{
+  [84]  LA          T3, $Global_ItemHudScripts
+}
+
+% 000FAFEC --> 802D663C
+@Function FAFEC % func_802D663C
+{
+  [84]  LA          T3, $Global_ItemHudScripts
+}
+
+% relocate item icon table
+
+% 000C7828 --> 80131128
+@Function C7828 % func_80131128
+{
+  [44]  LTW         S0, V0 ($Global_ItemEntityScripts)
+}
+
+% 000BAC70 --> 80124570
+@Function $msg_copy_to_print_buffer
+{
+ [958]  LTW       V0, S0 ($Global_ItemIconRasters)
+ [974]  LTW       A1, S0 ($Global_ItemIconPalettes)
+}
+
+% From ~func:pause_badges_load_badges
+@Function 13C118 % 80248DD8
+{
+    NOP % ignore check for non-items in badge menu preparation
+}
+
+% fix switch table for item pickups at update_item_entity_collectable[F5C]
+% otherwise all items added to end of table are treated as hp/fp/coin drops
+% instead of proper items when picked up in the world.
+@Function 801351AC
+{
+	% if(V1 < 155)
+	SLTIU	V0, V1, 155
+	BNE		V0, R0, 40 % .oFA4
+	LI		V0, A
+	% if(!(V1 < 16C))
+	SLTIU	V0, V1, 16D
+	BEQ		V0, R0, 34 % .oFA4
+	LI		V0, A
+	% zero out additional replaced instructions
+	NOP
+	NOP
+	NOP
+}

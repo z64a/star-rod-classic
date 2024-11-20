@@ -1,0 +1,38 @@
+% entity
+type: ram
+size: F8
+fields:
+{
+	  0 : flags              : int
+	  4 : listIndex          : ubyte
+	  5 : unk_05             : ubyte      % initialized to 1 in create_entity
+	  6 : collisionFlags     : ubyte
+	  7 : collisionCheckCounter? : ubyte      % only do collision every 10 frames? see: 8010F860
+	  8 : unk_08             : ubyte      % just a guess: alpha multiplier?
+	  9 : hasEntityScript    : ubyte
+	  A : entityType         : ubyte
+	  B : alpha              : ubyte
+	  C : aabb               : short[3`]
+	 12 : vertexSegment      : short      % always A, used during render with G_MW_SEGMENT for vertex data
+	 14 : entityModelIndex   : short
+	 16 : shadowIndex        : short
+	 18 : scriptReadPos      : int*
+	 1C : fpUpdateScriptCallback : code
+	 20 : fpUpdateMatrixOverride : code
+	 24 : boundScriptInstance : script_context*
+	 28 : boundScriptBytecode : bytecode*
+	 2C : savedReadPos       : int*[3`]
+	 38 : static_data        : static_entity_data*
+	 3C : fpRenderSetup      : code       % function to add Gfx before the actual entity is drawn
+	 40 : userData           : ptr
+	 44 : vertexData         : int*
+	 48 : position           : float[3`]
+	 54 : scale              : float[3`]
+	 60 : rotation           : float[3`]
+	 6C : shadowPosY         : float
+	 70 : inverseRotationMatrix : matrix4f   % world-to-local
+	 B0 : effectiveSize      : float      % = sqrt((sizeX/2)^2 + (sizeZ/2)^2 + sizeY^2)
+	 B4 : _padding_B4        : int
+	 B8 : transformMatrix    : matrix4s
+}
+

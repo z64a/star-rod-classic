@@ -1,0 +1,10 @@
+ActionRating	% namespace
+actionRating	% library name
+false	% reversed
+
+00 = Nice			% sets nice hits = 1
+01 = Miss			% clears nice hits
+02 = Lucky			% clears nice hits
+03 = Super			% sets nice hits = 2
+04 = NiceNoCombo	% clears nice hits
+05 = NiceSuperCombo	% 'Nice' but becomes 'Super' if nice hits > 2

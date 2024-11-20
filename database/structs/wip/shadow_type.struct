@@ -1,0 +1,13 @@
+% shadow_type
+type: ram
+size: 24
+fields:
+{
+	  0 : flags              : short
+%	  2 : UNK 2
+	  4 : meshData?          : ptr
+	  8 : animData?          : ptr
+	  C : onCreateCallback   : code
+%	 10 : UNK 14
+}
+

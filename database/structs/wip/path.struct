@@ -1,0 +1,14 @@
+% path
+type: ram
+size: 1C
+fields:
+{
+	  0 : numVectors         : int
+	  4 : lengths            : float*
+	  8 : staticVectorList   : float[3]*
+	  C : vectors            : float[3]*
+	 10 : timeElapsed        : int
+	 14 : timeLeft           : int
+	 18 : easingType         : int
+}
+

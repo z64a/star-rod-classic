@@ -1,0 +1,10 @@
+
+@Function 8974 % 8002D574
+{
+    % standard viewport is 296x200 in a 320x240 window
+    % this gives a viewport aspect ratio of 1.48
+    % this overrides the viewport width in the calculation of
+    % the world camera perspective matrix to use 356 insead,
+    % giving an effective viewport aspect ratio of ~1.78
+    LI  A3, 356`
+}

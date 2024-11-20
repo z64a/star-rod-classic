@@ -1,0 +1,15 @@
+% enemy_drops
+type: ram
+size: B8
+fields:
+{
+	  0 : flags              : ubyte
+	  1 : chance             : ubyte
+	  2 : itemDrops          : short[8`][3`]
+	 32 : heartDrops         : short[8`][4`]
+	 72 : flowerDrops        : short[8`][4`]
+	 B2 : coinsMin           : short
+	 B4 : coinsMax           : short
+%	 B6 : UNK 2
+}
+

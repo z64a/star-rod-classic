@@ -1,0 +1,21 @@
+% shop
+type: ram
+size: 35C
+fields:
+{
+	  0 : flags              : short
+	  2 : numItems           : short
+	  4 : numSpecialPrices   : short
+%	  6 : UNK 2
+	  8 : currentItemSlot    : int        % which one the player is standing next to
+	  C : selectedStoreItemSlot : int
+	 10 : shopOwner          : shop_owner*
+	 14 : staticItemPositions : shop_item_location*
+	 18 : staticInventory    : shop_static_inventory*
+	 1C : staticPriceList    : shop_static_sell_price*
+	 20 : costIconID         : int        % floating coin ID that appears next to prices
+	 24 : inventoryItemFlags : int
+	 28 : itemSelectMenu     : popup_menu
+	358 : field_0x358        : int
+}
+

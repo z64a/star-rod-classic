@@ -1,0 +1,23 @@
+% entity_data_shattering
+type: ram
+size: 250
+fields:
+{
+	  0 : field_0x0          : short[25`]
+%	 32 : UNK 2
+	 34 : piecesGfx          : ptr
+	 38 : basePosY           : float
+	 3C : alpha              : short
+	 3E : lifetime?          : short
+	 40 : pieceState         : byte[25`]
+	 59 : angularVelocity    : byte[25`]
+	 72 : moveAngle          : byte[25`]  % XZ, scaled to make (0,255) -> (0,360) degrees
+	 8B : rotX               : byte[25`]  % scaled to make (0,255) -> (0,360) degrees
+	 A4 : rotY               : byte[25`]  % scaled to make (0,255) -> (0,360) degrees
+%	 BD : UNK 3
+	 C0 : posX               : float[25`]
+	124 : posY               : float[25`]
+	188 : posZ               : float[25`]
+	1EC : fallVelocity       : float[25`]
+}
+

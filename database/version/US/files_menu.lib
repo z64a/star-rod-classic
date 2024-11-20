@@ -1,0 +1,169 @@
+
+% functions, scripts, etc. only loaded on the file select / main menu screen
+
+{version=1.0}
+{scope=us:mainmenu}
+
+sig : window_draw_filemenu : void : A0 menu_panel* menu, A1 int baseX, A2 int baseY, ...
+	A3 int width, SP[10] int height, SP[14] int opacity, SP[18] int darkening
+
+sig : window_update_filemenu : void : A0 int windowIndex, {out} A1 int* flags, ...
+	{out} A2 int* posX,	{out} A3 int* posY, {out} SP[10] int* posZ, ...
+	{out} SP[14] int* scaleX, {out} SP[18] int* scaleY, ...
+	{out} SP[1C] int* rotX,   {out} SP[20] int* rotY,   {out} SP[24] int* rotZ, ...
+	{out} SP[28] int* darkening, {out} SP[2C] int* opacity
+
+% .text -->
+asm : 80242BA0, 163400 : mainmenu_draw_rect : void : int ulx, int uly, int lrx, int lry, ...
+	int tileDesc "typically 0", int uls "typically 0", int ult "typically 0", ...
+	int dsdx "typically 400", int dtdy "typically 400"
+asm : 80242D94, 1635F4 : filemenu_set_selected : void : menu_panel*, int col, int row
+asm : 80242DEC, 16364C : filemenu_set_cursor_alpha "must be called every frame to keep it hidden" : void : int alpha
+asm : 80242E00, 163660 : filemenu_set_cursor_goal_pos : void : int windowIndex, int posX, int posY
+asm : 80242F68, 1637C8 : filemenu_update_cursor : void : void
+asm : 802431A0, 163A00 : filemenu_update : void : int
+% 8024330C : int : void -- unknown cleanup function
+asm : 80243380, 163BE0 : filemenu_update_show_name_input		: @window_update_filemenu
+asm : 802433F4, 163C54 : filemenu_update_show_options_left		: @window_update_filemenu
+asm : 80243468, 163CC8 : filemenu_update_show_options_right		: @window_update_filemenu
+asm : 802434DC, 163D3C : filemenu_update_show_options_bottom	: @window_update_filemenu
+asm : 80243550, 163DB0 : filemenu_update_show_title				: @window_update_filemenu
+% 802435C4 -- @window_update_filemenu updates from LUT at 80249C7C
+asm : 80243628, 163E88 : filemenu_update_hidden_name_input		: @window_update_filemenu
+asm : 8024368C, 163EEC : filemenu_update_hidden_options_left	: @window_update_filemenu
+asm : 802436F0, 163F50 : filemenu_update_hidden_options_right	: @window_update_filemenu
+asm : 80243754, 163FB4 : filemenu_update_hidden_title			: @window_update_filemenu
+asm : 802437B8, 164018 : filemenu_update_hidden_options_bottom	: @window_update_filemenu
+asm : 8024381C, 16407C : filemenu_update_show_with_rotation		: @window_update_filemenu
+asm : 80243898, 1640F8 : filemenu_update_hidden_with_rotation	: @window_update_filemenu
+asm : 80243908, 164168 : filemenu_update_select_file			: @window_update_filemenu
+asm : 80243B10, 164370 : filemenu_update_deselect_file			: @window_update_filemenu
+asm : 80243CCC, 16452C : filemenu_update_show_name_confirm		: @window_update_filemenu
+asm : 80243EEC, 16474C : filemenu_update_hidden_name_confirm	: @window_update_filemenu
+asm : 80244030, 164890 : filemenu_draw_cursor : @window_draw_filemenu
+asm : 802440BC, 16491C : filemenu_draw_contents_copy_arrow : @window_draw_filemenu
+asm : 802448E0, 165140 : filemenu_init : void : int
+asm : 80244B00, 165360 : filemenu_cleanup : void : void
+% 80244BC4
+% <-- split -->
+asm : 80244C30, 165490 : filemenu_draw_contents_title : @window_draw_filemenu
+asm : 80244CEC, 16554C : filemenu_draw_contents_stereo : @window_draw_filemenu
+asm : 80244D60, 1655C0 : filemenu_draw_contents_mono : @window_draw_filemenu
+asm : 80244DD0, 165630 : filemenu_draw_contents_option_left : @window_draw_filemenu
+asm : 80244E54, 1656B4 : filemenu_draw_contents_option_center : @window_draw_filemenu
+asm : 80244F44, 1657A4 : filemenu_draw_contents_option_right : @window_draw_filemenu
+asm : 80244FD4, 165834 : filemenu_draw_contents_file_info		: void : int fileIndex, menu_panel* data, int baseX, int baseY, int width, int height, int opacity
+asm : 8024544C, 165CAC : filemenu_draw_contents_file_title		: void : int fileIndex, menu_panel* data, int baseX, int baseY, int width, int height, int opacity
+asm : 80245588, 165DE8 : filemenu_draw_contents_file_0_info		: @window_draw_filemenu
+asm : 802455D8, 165E38 : filemenu_draw_contents_file_1_info		: @window_draw_filemenu
+asm : 80245628, 165E88 : filemenu_draw_contents_file_2_info		: @window_draw_filemenu
+asm : 80245678, 165ED8 : filemenu_draw_contents_file_3_info		: @window_draw_filemenu
+asm : 802456C8, 165F28 : filemenu_draw_contents_file_0_title	: @window_draw_filemenu
+asm : 80245718, 165F78 : filemenu_draw_contents_file_1_title	: @window_draw_filemenu
+asm : 80245768, 165FC8 : filemenu_draw_contents_file_2_title	: @window_draw_filemenu
+asm : 802457B8, 166018 : filemenu_draw_contents_file_3_title	: @window_draw_filemenu
+asm : 80245808, 166068 : filemenu_main_init : void : bool* success
+asm : 80245A40, 1662A0 : filemenu_main_handle_input : void : menu_panel*
+asm : 80246B2C, 16738C : filemenu_main_update : void : menu_panel*
+asm : 80246CBC, 16751C : filemenu_main_cleanup : void : void
+% <-- split -->
+asm : 80246D10, 167570 : filemenu_yesno_draw_options_contents "Yes/No" : @window_draw_filemenu
+asm : 80246E24, 167684 : filemenu_yesno_draw_prompt_contents "Delete/Start game with/etc File X?" : @window_draw_filemenu
+asm : 80247198, 1679F8 : filemenu_yesno_init : void : bool* success
+asm : 802471EC, 167A4C : filemenu_yesno_handle_input : void : menu_panel*
+asm : 80247D14, 168574 : filemenu_yesno_update : void : menu_panel*
+asm : 80247D1C, 16857C : filemenu_yesno_cleanup : void : void
+% <-- split -->
+asm : 80247D30, 168590 : filemenu_info_draw_message_contents : @window_draw_filemenu
+asm : 80247FD0, 168830 : filemenu_info_init : void : bool* success
+asm : 80248024, 168884 : filemenu_info_handle_input : void : menu_panel*
+asm : 80248160, 1689C0 : filemenu_info_update : void : menu_panel*
+asm : 80248168, 1689C8 : filemenu_info_cleanup : void : void
+% <-- split -->
+% 80248170
+asm : 802481B8, 168A18 : filemenu_draw_contents_file_create_header	: @window_draw_filemenu
+asm : 8024830C, 168B6C : filemenu_draw_contents_choose_name	: @window_draw_filemenu
+asm : 80248A80, 1692E0 : filemenu_choose_name_init : void : bool* success
+asm : 80248BF4, 169454 : filemenu_choose_name_handle_input : void : menu_panel*
+asm : 80249324, 169B84 : filemenu_choose_name_update : void : menu_panel*
+asm : 8024932C, 169B8C : filemenu_choose_name_cleanup : void : void
+% <-- split -->
+asm : 80249380, 169BE0 : filemenu_draw_char : int width : int character, int posX, int posY, int variant, int color, int dropShadow
+asm : 8024997C, 16A1DC : filemenu_draw_message : void : msg*, int posX, int posY, int alpha, int color, uint flags "1 = variation (raised slightly), 8 = drop shadow"
+asm : 80249AA4, 16A304 : filemenu_get_menu_message : msg* : int index "0x01-0x22"
+asm : 80249AB8, 16A318 : filemenu_draw_file_name : void : msg*, int len, int posX, int posY, int alpha, ???, uint flags, int charSpacing
+% <-- .text
+
+% .data -->
+
+dat : 80249B84 : FileMenu_Menus : menu_panel*[4]
+dat : 80249B94 : FileMenu_CursorPos : int[2]
+dat : 80249B9C : FileMenu_CursorAlpha : int
+dat : 80249BA0 : FileMenu_CursorGoalPos : int[2]
+dat : 80249BA8 : FileMenu_CursorGoalAlpha : int[2]
+dat : 80249BB0 : FileMenu_CursorDisableInterp : int
+dat : 80249BB8 : ??? : int
+dat : 80249BBC : FileMenu_UnusedShowLUT : short[16`]
+dat : 80249BDC : FileMenu_ShowNameInputLUT : short[16`]
+dat : 80249BFC : FileMenu_ShowOptionsLeftLUT : short[16`]
+dat : 80249C1C : FileMenu_ShowOptionsRightLUT : short[16`]
+dat : 80249C3C : FileMenu_ShowOptionsBottomLUT : short[16`]
+dat : 80249C5C : FileMenu_ShowTitleLUT : short[16`]
+dat : 80249C7C : FileMenu_UnusedHideLUT : short[10`]
+dat : 80249C90 : FileMenu_HideNameInputLUT : short[10`]
+dat : 80249CA4 : FileMenu_HideOptionsLeftLUT : short[10`]
+dat : 80249CB8 : FileMenu_HideOptionsRightLUT : short[10`]
+dat : 80249CCC : FileMenu_HideTitleLUT : short[10`]
+dat : 80249CE0 : FileMenu_HideOptionsBottomLUT : short[10`]
+dat : 80249CF4 : FileMenu_ShowWithRotationLUT : short[16`]
+dat : 80249D14 : FileMenu_HideWithRotationLUT : short[16`]
+dat : 80249D34 : FileMenu_ShowNameConfirmLUT : short[10`]
+dat : 80249D48 : FileMenu_HideNameConfirmLUT : short[10`]
+
+dat : 80249D70 : FileMenu_CopyArrowAnimLUT : float[14`]
+dat : 80249DAC : FileMenu_CursorBPs : menu_window_bp[3]
+dat : 80249E20 : FileMenu_HudScripts : hud_script*[20`]
+dat : 80249E70 : FileMenu_Main_Options : byte[5][9]
+dat : 80249EA0 : FileMenu_Main_WindowBPs : menu_window_bp[14`] % 80245808(menu_panel*)
+dat : 8024A098 : FileMenu_Main_Panel : menu_panel
+dat : 8024A0C0 : FileMenu_YesNo_Options : byte[5][2]
+dat : 8024A0CC : FileMenu_YesNo_WindowBPs : menu_window_bp[2]
+dat : 8024A114 : FileMenu_YesNo_Panel : menu_panel
+dat : 8024A130 : FileMenu_Info_Layout : byte[4]
+dat : 8024A134 : FileMenu_Info_WindowBPs : menu_window_bp[1]
+dat : 8024A158 : FileMenu_Info_Panel : menu_panel
+dat : 8024A180 : FileMenu_ChooseName_HudScripts : hud_script*[3`]
+dat : 8024A18C : ??? : int
+dat : 8024A190 : FileMenu_ChooseName_WindowBPs : menu_window_bp[2]
+dat : 8024A1D8 : FileMenu_ChooseName_Panel : menu_panel
+
+dat : 8024B6B0 : ??? : vertex[4]
+dat : 8024B6F0 : ??? : gfx[6]
+dat : 8024B708 : ??? : gfx[8]
+
+dat : 8024B74C : FileMenu_ChooseName_ButtonMessages : msg*[5]
+dat : 8024B760 : FileMenu_DrawMsgInitGfx : gfx[26`]
+dat : 8024B7C8 : FileMenu_DrawMsgGfxPos : gfx*
+dat : 8024B7CC : FileMenu_DrawMsgVariation : int
+dat : 8024B7D0 : FileMenu_DrawMsgCharVariation : int
+dat : 8024B7D4 : FileMenu_DrawMsgColor : int
+
+dat : 8024B978 : FileMenu_ChooseName_Options : byte[6][13`]
+
+dat : 8024B9D0 : FileMenuMessages : msg*[35`]
+dat : 8024BA60 : FileMenu_WindowStyles : window_style_custom[23`]
+
+dat : 8024C094 : FileMenu_LoadedFileIndex : int
+
+dat : 8024C0A0 : FileMenu_CursorHudElemID : int
+
+dat : 8024C0B0 : FileMenu_HudElemIDs : int[20`]
+dat : 8024C100 : FileMenu_ChooseName_HudElemIDs : int[3`]
+dat : 8024C110 : FileMenu_NameBuffer : char[8]
+
+
+
+dat : 8024C080 : FileMenu_IterFileIndex : int
+
+dat : 8024C084 : FileMenu_PressedButtons : #buttons
+dat : 8024C08C : FileMenu_HeldButtons : #buttons

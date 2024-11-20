@@ -1,0 +1,22 @@
+% light_data
+type: ram
+size: 78
+fields:
+{
+	  0 : ambient            : Ambient
+	  8 : light0             : Light
+%	 14 : UNK 4
+	 18 : light1             : Light      % optional: numLights > 1
+%	 24 : UNK 4
+	 28 : light2             : Light      % optional: numLights > 2
+%	 34 : UNK 4
+	 38 : light3             : Light      % optional: numLights > 3
+%	 44 : UNK 4
+	 48 : light4             : Light      % optional: numLights > 4
+%	 54 : UNK 4
+	 58 : light5             : Light      % optional: numLights > 5
+%	 64 : UNK 4
+	 68 : light6             : Light      % optional: numLights > 6
+%	 74 : UNK 4
+}
+

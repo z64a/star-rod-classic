@@ -1,0 +1,635 @@
+
+{version=1.0}
+{scope=us:common}
+
+dat : 80000400 : PauseBackgroundBuffer : short[320`][240`] % up to 80025C00
+
+dat : 80074020 : MainLoopDelay : byte
+dat : 80074021 : MainLoopDelayCounter : byte
+
+dat : 80074024 : GameStatus : game_status
+dat : 8007419C : CurrentGameStatus : game_status*
+dat : 800741A8 : DrawFrameBaseMtx "identity" : matrix4s
+
+dat : 800741F0 : MatrixStackPos : short
+dat : 800741F4 : CurrentDisplayContextIndex : int
+
+dat : 80074260 : MaxRumbleDuration : short
+dat : 80074264 : RumbleButtons : #buttons
+
+dat : 80074270 : NextUniqueNodeID : short
+dat : 80074274 : CosLookupTable : float[91`]
+dat : 800743E0 : IntToCharTable : char[36`]
+dat : 80074410 : RngValue : int
+dat : 80074414 : AtanLookupTable : float[91`]
+dat : 80074580 : GfxInitStartupPrimRect : int[20`]
+dat : 800745D0 : DefaultFileName: char[16`]
+
+dat : 80077410 : CurrentStateCamIndex : int
+
+dat : 800776E8 : GameModeBlueprints : game_mode_bp[18`]
+dat : 80077850 : GameModeBlueprintList : game_mode_bp*[18`]
+dat : 800778A0 : BattleFrameBuffers : ptr[3]
+dat : 80077950 : PauseFrameBuffers : ptr[3]
+dat : 8007795C : PauseDataOverlay : NUPiOverlaySegment
+dat : 80077980 : LanguageFrameBuffers : ptr[3]
+dat : 8007798C : FileSelectOverlay : NUPiOverlaySegment
+
+dat : 800779C4 : SaveSlotMetadata : save_metadata[4]
+dat : 80077A24 : SaveSlotHasData : byte[4]
+
+dat : 80078400 : SEFCommandHandlers : void*[25`] % void cmd(snd_manager* mngr, snd_sound_player* player)
+
+dat : 80078470 : SeqCmdHandlers : void*[25`] % void cmd(bgm_player *player, bgm_player_track* track)
+dat : 800784F0 : SeqCmdArgCounts : byte[25`]
+
+dat : 8007F210 : EffectTable : effect_table_entry[136`]
+% many hud_scripts ...
+dat : 800878E0 : ItemTable : item_table_entry[365`]
+dat : 8008A680 : ItemHudScripts : hud_script*[337`][2] % menu icons
+
+dat : 8008ddd4 : ItemEntityScripts : item_entity_script*[385`]
+
+dat : 8008E3D8 : ItemIconRasterOffsets : int[349`]
+dat : 8008E94C : ItemIconPaletteOffsets : int[349`]
+
+dat : 8008ef20 : PartnerPopupProperties : int[13`][4]
+dat : 8008eff8 : PartnerIconHudScripts : hud_script*[13`][2]
+dat : 8008F060 : MoveTable : move_table_entry[185`]
+dat : 8008FEE0 : MessageBoxFrameParts : ptr[2][16`]
+
+dat : 8008FF70 : EntityColliderFaces : short[36`]
+dat : 8008FFB8 : EntityColliderVertices : float[12`][3]
+dat : 80090050 : MapTable : map_config[421`]
+dat : 800934F0 : AreaTable : area_config[28`]
+
+dat : 80093BA8 : DefaultFrameBuffers : ptr[3]
+
+dat : 80093D10 : GfxRetraceCallbackPtr : void*
+dat : 80093D14 : GfxPreNMICallbackPtr : void*
+
+dat : 80098A10 : fmtShape : char[12`]
+dat : 80098A1C : fmtHit : char[8]
+dat : 80098A24 : fmtTex : char[8]
+
+dat : 8009A5B8 : ContPad : OSContPad
+dat : 8009A5C0 : SoundGlobalsPtr : snd_globals*
+dat : 8009A5C8 : TimeLastCount : int
+dat : 8009A5CC : BgmPlayerCPtr : bgm_player*
+dat : 8009A5D0 : EncounterSubstate : int*
+dat : 8009A5D4 : CurrentSEFCmdHandler : void*
+dat : 8009A5D8 : TimeFreezeMode : int
+dat : 8009a5dc : PauseBackgroundBufferPtr : short[320`][240`]*
+dat : 8009A5E0 : ContDataLocked : int
+dat : 8009A5E4 : TimeFrameCount : int
+dat : 8009A5EC : CamDistScale : float
+dat : 8009A5F4 : CurrentModelTreeNodeInfo : mdl_tree_info**
+dat : 8009A5F8 : GfxDisplayEnabled : int
+dat : 8009A5FC : BgmPlayerBPtr : bgm_player*
+dat : 8009A600 : EncounterState : int
+dat : 8009A604 : NpcCount : short
+dat : 8009A606 : NumControllers : byte
+dat : 8009A608 : OSTime : longlong
+dat : 8009A618 : GfxTaskNum : int
+
+dat : 8009A628 : SndUnk834Ptr : snd_unk_834*
+
+dat : 8009A630 : nuIdleCallbackPtr : void*
+dat : 8009A634 : CurrentIterCamIndex : short
+dat : 8009A638 : PiHandlePtr : OSPiHandle*
+dat : 8009A640 : SoundManagerPtr : snd_manager*
+
+dat : 8009A650 : GlobalOverrideFlags : int
+
+dat : 8009A664 : BgmPlayerAPtr : bgm_player*
+dat : 8009A668 : FirstStrikeBasePosX : short
+
+dat : 8009A66C : MasterGfxEnd : gfx*
+
+dat : 8009A674 : CurrentDisplayContext : display_context*
+dat : 8009A678 : NormalBattle "1 = normal, 0 = boss" : int
+
+%dat : 8009a680 : CurrentFrameBuffers : ptr[3]
+
+dat : 8009A6B0 : SaveDataTempBuffer : savedata
+dat : 8009BA30 : LogicalSaveInfo : int[4][2] % physical page number and static saveID for each logical save (0-3 inclusive)
+dat : 8009BA50 : PhysicalSaveInfo : int[6][2] % logical save slot and static saveID for each physical save slot (flash pages 0-5 inclusive)
+dat : 8009BA80 : NextAvailableSavePage : int
+
+dat : 8009BA90 : CurtainScale : float
+dat : 8009BA94 : CurtainScaleGoal : float
+dat : 8009BA98 : CurtainFadeAmount : float
+dat : 8009BA9C : CurtainFadeAmountGoal "1.0 = fully dark" : float
+dat : 8009BAA0 : CurtainDrawCallback "add custom rendering code for curtains here" : code
+
+dat : 800A08C0 : BlendedCamSettings : cam_pos_settings
+
+dat : 800A08E4 : CameraZonePositionDelta : float[3]
+
+dat : 800A08F0 : GameMode : short
+dat : 800A0900 : BattleStartCountdown : byte
+dat : 800A0908 : SavedWorldFreezeMode : int
+dat : 800A0940 : WorldScreenTransitionProgress : short
+dat : 800A0942 : WorldScreenTransitionProgressDelta : short
+dat : 800A0944 : ChangeMapState : short
+dat : 800A0946 : ChangeMapStateTimer : short
+dat : 800A0948 : EnteringFromSaveFile : short
+dat : 800A0988 : TitleDemoCountdown : short
+
+dat : 800A4000 : EffectGraphics : effect_graphics_data[15`]
+dat : 800A41E0 : CurrentMapConfig : map_config*
+dat : 800A41E8 : CurrentMapHeader : map_data_header
+
+dat : 800A4230 : CurrentRay : collision_current_ray
+
+dat : 800A0990 : WorldNpcs  : npc*[64`]
+dat : 800A0A90 : BattleNpcs : npc*[64`]
+dat : 800A0B90 : CurrentNpcs : npc**
+dat : 800A0B94 : EnableNpcCollision : byte
+
+dat : 800A0BA0 : MerleeEffectCounter : int
+dat : 800A0BA4 : MerleeStartPosY : float
+dat : 800A0BA8 : MerleeEffectA : effect_instance*
+dat : 800A0BAC : MerleeEffectB : effect_instance*
+dat : 800A0BB0 : MerleeCoinDropScriptInstance : script_instance*
+dat : 800A0BB4 : MerleeCoinDropScriptID : script_instance*
+dat : 800A0BB8 : MerleeEffectState : short
+dat : 800A0BC0 : MerleeMessages : merlee_message_info[32`]
+dat : 800A0F40 : MerleeMessageDone : int
+
+dat : 800B0CF0 : TexAssetName : char[24`]
+
+dat : 800B0F10 : EncounterStatus : encounter_status
+
+dat : 800B1D68 : ContPads "unused?" : OSContPad[4]
+dat : 800B1D80 : Cameras : camera[4]
+
+dat : 800B42E0 : ColliderHitData : hit_collider_data
+
+dat : 800B4398 : EffectInstances : effect_instance*[96`]
+
+dat : 800D91D0 : ZoneHitData : hit_zone_data
+dat : 800D91E0 : HitAssetName : char[24`]
+
+dat : 800D9230 : ShapeAssetName : char[24`]
+dat : 800D9248 : AlHeap : ALHeap
+
+dat : 800D95E8 : SaveDataHeaderBuffer : save_fetched_header
+
+dat : 800DACC0 : SaveDataIOBuffer : savedata
+
+dat : 800DC064 : BattleStageName : char*
+dat : 800DC068 : BattleState : eBattleState
+dat : 800DC070 : BattleStatus : battle_status
+
+dat : 800F7B30 : PlayerStatusPtr : player_status*
+
+dat : 800F7B50 : GravityParamsJump : float[4]
+dat : 800F7B60 : GravityParamsFall : float[4]
+
+dat : 800F7B70 : DefaultWalkSpeed : float
+dat : 800F7B74 : DefaultRunSpeed : float
+dat : 800F7B78 : DefaultMaxJumpSpeed : float
+
+dat : 800F7B94 : ClubbaDisguiseExtraAnims : int[10`]
+dat : 800F7BBC : HammerBrosDisguiseExtraAnims : int[11`]
+dat : 800F7BE8 : KoopatrolDisguiseExtraAnims : int[13`]
+dat : 800F7C1C : PeachDisguiseBasicAnims : int[4][6]
+dat : 800F7C7C : PeachDisguiseExtraAnimLists : int*[4]
+dat : 800F7C8C : PlayerActionTable : action_table_entry[39`]
+dat : 800F7F00 : PartnerHudScripts : hud_script*[2][16`]
+dat : 800F7F80 : DigitHudScripts : hud_script*[10`]
+dat : 800F7FA8 : TimesHudScriptPtr : hud_script*
+dat : 800F7FAC : SlashHudScriptPtr : hud_script*
+dat : 800F7FB0 : SPIncrementHudScripts : hud_script*[7]
+dat : 800F7FCC : SPStarHudScripts : hud_script*[7]
+dat : 800F7FE8 : SPStarXOffsets : int[7]
+
+dat : 800F8010 : UseItemDmaStart : int
+dat : 800F8014 : UseItemDmaEnd : int
+dat : 800F8018 : UseItemScript : ptr
+
+dat : 800F8024 : PartnerMoveGoalPos : int[2]
+dat : 800F802C : PartnerMoveToTime : int
+dat : 800F8030 : PartnerMoveSpeed : int
+dat : 800F8034 : PartnerMoveToYaw : float
+
+dat : 800F807C : PartnerTable : partner_table_entry[11`]
+dat : 800F833C : SavedPartnerPos : float[3]
+dat : 800F8348 : PartnerAnimSets : partner_anim_set[121]
+
+dat : 8010C920 : PulseStoneNotificationCallback : void*
+dat : 8010C930 : PartnerNpc : npc*
+dat : 8010C938 : PlayerFloorHitYaw : float
+dat : 8010C93C : ISpyNotificationCallback : void*
+dat : 8010C940 : TalkNotificationCallback : void*
+dat : 8010C944 : SpinHistoryBufferPos : int
+
+dat : 8010C958 : InteractNotificationCallback : void*
+dat : 8010C95C : PlayerFacingRight : int
+
+dat : 8010C96C : PeachDisguiseNpc : int
+
+dat : 8010C990 : PlayerFloorHitPitch : float
+
+dat : 8010C9C8 : PopupMenu : popup_menu
+dat : 8010CCF8 : MenuToOpen : short
+
+dat : 8010CD38 : PlayerMoveHistory : player_path_element[40`]
+dat : 8010CFB8 : PlayerMoveHistoryPos : int
+
+dat : 8010CFC0 : PartnerTetherDistance : float
+
+dat : 8010CFD0 : PartnerNpcID : int
+dat : 8010CFD4 : PartnerCurrentScript : script_instance*
+dat : 8010CFD8 : CurrentPartnerID : int
+dat : 8010CFDC : PartnerCurrentScriptID : int
+
+dat : 8010CFEC : CurrentPartnerTableEntry : partner_table_entry*
+
+dat : 8010D69C : PopupMenuPtr : popup_menu*
+
+dat : 8010EBB0 : PartnerActionStatus : partner_action_status
+
+dat : 8010EF10 : SpinHistoryPosY : int[5]
+dat : 8010EF28 : SpinHistoryPosX : int[5]
+dat : 8010EF40 : SpinHistoryPosZ : int[5]
+dat : 8010EF58 : UIStatus : ui_status
+dat : 8010EFC8 : PlayerStatus : player_status
+dat : 8010F250 : PlayerSpinState : player_spin_state
+dat : 8010F290 : PlayerData : player_data
+dat : 8010F6B8 : SpinHistoryAngle : short[5]
+
+dat : 8014B748 : TextureBaseAddress : ptr
+dat : 8014B74C : BackgroundMultiplyAlpha : byte
+dat : 8014B74D : BackgroundMultiplyColor : byte[3]
+dat : 8014B750 : RenderModelFogPrimColor : byte[4]
+dat : 8014B754 : RenderModelFogColor : byte[4]
+dat : 8014B758 : RenderModelFogStart : int
+dat : 8014B75C : RenderModelFogEnd : int
+dat : 8014B760 : RenderModelPrimColor : byte[3]
+dat : 8014B763 : RenderModelEnvColor : byte[3]
+dat : 8014B768 : RDPIdentity : matrix4s
+
+dat : 8014C188 : RenderModeDepthOffsets : int[48`]
+dat : 8014C260 : DummyEntityModelCommandList : int[1]
+
+dat : 8014C290 : MessagePlural : char[4]
+dat : 8014C294 : MessageSingular : char[2]
+dat : 8014C296 : NextMessageBuffer : short
+dat : 8014C340 : MsgNumbers : msg_number[2]
+dat : 8014C368 : GfxDigitOtherModeSetup : int[22`]
+dat : 8014C3C0 : MsgSpeechBoxLQuad : vertex[4]
+dat : 8014C400 : MsgSpeechBoxMQuad : vertex[4]
+dat : 8014C440 : MsgSpeechBoxRQuad : vertex[4]
+dat : 8014C480 : MsgSpeechArrowQuad : vertex[4]
+dat : 8014C4C0 : MsgUnkQuad : vertex[4]
+
+dat : 8014C6F0 : MapTransitionEffect : int
+
+% dat : 8014ef64 : : int[20`] % deformation offsets table
+
+dat : 8014EFC0 : NonWorldHudElementCache : ptr % if == 0, HudElementCache will be created on the heap
+dat : 8014EFC4 : HudElementCacheSize : int
+dat : 8014EFC8 : DefaultHudScript : hud_script*
+dat : 8014EFCC : HudElementSizes : short[25`][3]
+dat : 8014F078 : GfxInitHudBackUI : gfx
+dat : 8014F0A0 : GfxInitHudFrontUI : gfx
+dat : 8014F0C8 : HudElementQuad : vertex[4]
+
+dat : 8014F120 : BackgroundNameFloA : char[7]
+dat : 8014F128 : BackgroundNameFloB : char[7]
+dat : 8014F12F : UseBackgroundWave : byte
+dat : 8014F130 : BackgroundOffsetY : short
+dat : 8014F134 : BackgroundWavePhase : float
+% 8014F140 default ambient sound struct
+
+dat : 8014F150 : WindowStyles : window_style_custom*[64`] % can either be a preset ID or a custom style pointer
+dat : 8014F250 : WindowRenderProperties : window_render_unk[12`] % selected by return value of fpUpdate
+dat : 8014F298 : WindowOpeningScale : byte[5]
+dat : 8014F2A0 : WindowOpeningFlags : byte[5]
+dat : 8014F2A8 : WindowClosingScale : byte[10`]
+dat : 8014F2B4 : WindowClosingFlags : byte[10`]
+dat : 8014F2C0 : WindowSetRanges : byte[4][2]
+
+dat : 8014F2D0 : LoopingSoundIDs : int[111`]
+dat : 8014F48C : AlternatingSoundData "soundIDs for 'AlternatingSounds'" : int[35`][2]
+dat : 8014F5A4 : AlternatingSounds : snd_alternating_sound_set[34`]
+dat : 8014F6B4 : DoorSounds : int[7][2]
+
+dat : 8014F6F0 : DefaultMusicSettings "no music" : snd_music_settings
+
+dat : 8014F950 : dbl_PlayerWorldShadowScale : double
+dat : 8014F958 : dbl_PlayerBattleShadowScale : double
+dat : 8014F960 : dbl_PlayerMinimumShadowScale : double
+dat : 8014F968 : dbl_NpcWorldShadowScale : double
+dat : 8014F970 : dbl_NpcBattleShadowScale : double
+dat : 8014F978 : dbl_NpcMinimumShadowScale : double
+dat : 8014F980 : dbl_PeachWorldShadowScale : double
+dat : 8014F988 : dbl_PeachBattleShadowScale : double
+
+dat : 801512B0 : CurrentSpriteShadingB : sprite_shading_profile*
+dat : 801512B4 : HudElementCounter : int
+dat : 801512B8 : CurrentCustomModelGfxBuilders : mdl_custom_gfx_builder*
+%dat : 801512bc : : int
+dat : 801512C0 : EntityUpdateIndex : int
+dat : 801512C4 : EntityHeapBase : ptr
+dat : 801512C8 : HudRasterCache : hud_cache_entry**
+dat : 801512CC : CurrentModels : model**
+dat : 801512D0 : HudPaletteCache : hud_cache_entry**
+dat : 801512D4 : AnimatorCount : int
+dat : 801512D8 : MessageBGScrollAmountX : int
+dat : 801512E0 : CurrentTransformGroups : mdl_transform_group**
+dat : 801512E4 : MessageGlobalWaveCounter : short
+dat : 801512E8 : CurrentCustomModelGfx : mdl_custom_gfx*
+dat : 801512EC : LastCreatedEntityIndex : int
+dat : 801512F0 : CurrentBackgroundRenderType : byte*
+dat : 801512F4 : MessageVarImages : ptr
+dat : 801512F8 : ItemEntitiesCreated : int
+dat : 801512FC : ModelTreeRoot : model_node**
+%dat : 80151300 : some entity heap ptr, used only for Munchlesia?
+%dat : 80151304 : 
+dat : 80151308 : AdvancedDoorSounds : int
+dat : 8015130C : MessageBGScrollAmountY : int
+dat : 80151310 : EntityHideMode : int
+dat : 80151314 : HudElementCache : ptr
+dat : 80151318 : EntityModelCount : int
+dat : 8015131C : MessageItemImage : ptr
+dat : 80151324 : ShadowUpdateIndex : int
+dat : 80151328 : CurrentSpriteShadingA : sprite_shading_profile*
+
+dat : 80151334 : TriggerCount : short
+
+dat : 8015133C : HudElementCacheCurPos : int*
+
+dat : 80151380 : WorldEntities : entity*[30`]
+dat : 801513F8 : BattleEntities : entity*[30`]
+dat : 80151470 : CurrentEntities : entity**
+
+dat : 80151478 : WorldShadows : shadow*[60`]
+dat : 80151568 : BattleShadows : shadow*[60`]
+dat : 80151658 : CurrentShadows : shadow**
+dat : 8015165C : WorldStaticEntityDataSize : int
+dat : 80151660 : BattleStaticEntityDataSize : int
+dat : 80151668 : WorldStaticEntityData : StaticEntityData*[30`] % $EntityBP[30`]
+dat : 801516E8 : BattleStaticEntityData : StaticEntityData*[4`] % $EntityBP[4]
+% 801516FC : boolean connected with clearing static entity data. set to 1 on clear, never read.
+dat : 80151700 : CurrentGameMode : game_mode[2]
+% dat : 80151700 : MainGameState "0 = battle, 1 = pause, 2 = world" : short
+% dat : 8015170C : CurrentUpdateFunction : void*
+dat : 80151740 : CurrentTileDescriptor : tile_descriptor
+dat : 80151770 : WorldModels : model*[256`]
+dat : 80151B70 : BattleModels : model*[256`]
+dat : 80151F70 : WorldTransformGroups  : mdl_transform_group*[4]
+dat : 80151F80 : BattleTransformGroups : mdl_transform_group*[4]
+dat : 80151F90 : WorldCustomModelGfx : mdl_custom_gfx*[16`]
+dat : 80152010 : BattleCustomModelGfx : mdl_custom_gfx*[16`]
+dat : 80152090 : WorldCustomModelGfxBuilders  : mdl_custom_gfx_builder[16`]
+dat : 80152110 : BattleCustomModelGfxBuilders : mdl_custom_gfx_builder[16`]
+dat : 80152190 : WorldModelLocalVertexBuffers   : model_local_vertex_copy*[16`]
+dat : 801521D0 : BattleModelLocalVertexBuffers  : model_local_vertex_copy*[16`]
+dat : 80152210 : CurrentModelLocalVertexBuffers : model_local_vertex_copy**
+%80152214
+%80152218
+%8015221d
+dat : 80152220 : WorldModelTreeNodeInfo		 : mdl_tree_info[512`]
+dat : 80152A20 : BattleModelTreeNodeInfo	 : mdl_tree_info[512`]
+dat : 80153220 : WorldBackgroundRenderType : byte mode "0-2"
+dat : 80153221 : BattleBackgroundRenderType : byte mode "0-2"
+dat : 80153224 : ModelTreeIterPos : int
+dat : 80153228 : WorldFogSettings   : fog_settings
+dat : 80153248 : BattleFogSettings  : fog_settings
+dat : 80153264 : CurrentFogSettings : fog_settings*
+dat : 80153268 : MainTexPannerOffsets : int[16`][2]
+dat : 801532E8 : AuxTexPannerOffsets  : int[16`][2]
+
+dat : 80153368 : NextTextureAddress : ptr
+dat : 8015336C : CurrentTransformGroupChildIndex : short
+
+dat : 801533A0 : RenderTasksLists : render_task*[3]
+dat : 801533AC : RenderTaskMode : int
+dat : 801533B0 : RenderTaskCount : int
+dat : 801533C0 : AnimatedMeshVertexCopies : display_list_buffer_handle[96`]
+dat : 801536C0 : AnimatedMeshGfxCopies : display_list_buffer_handle[96`]
+dat : 801539C0 : WorldAnimatorList : model_animator*[16`]
+dat : 80153A00 : BattleAnimatorList : model_animator*[16`]
+dat : 80153A40 : CurrentAnimatorList : model_animator** 
+dat : 80153A44 : AnimatorFogSettings : fog_settings
+dat : 80153A60 : AnimatorVertexSeg : int
+dat : 80153A68 : AnimatorRotMtx : matrix4f
+dat : 80153AA8 : AnimatorScaleMtx : matrix4f
+dat : 80153AE8 : AnimatorTranslateMtx : matrix4f
+dat : 80153B28 : AnimatorRotScaleMtx : matrix4f
+dat : 80153B68 : AnimatorTreeRoot "while loading the tree" : anim_model_node**
+dat : 80153B70 : WorldEntityModels   : entity_model*[256`]
+dat : 80153F70 : BattleEntityModels  : entity_model*[256`]
+dat : 80154370 : CurrentEntityModels : entity_model**
+dat : 80154374 : EntityModelVertexSeg "always A?" : int
+dat : 80154378 : EntityModelFogSettings : fog_settings
+% <-- split -->
+dat : 801543A0 : WorldGenericEntities   : generic_entity*[16`] 
+dat : 801543E0 : BattleGenericEntities  : generic_entity*[16`]
+dat : 80154420 : CurrentGenericEntities : generic_entity**
+% <-- split -->
+dat : 80154430 : MessageBufferA : char[1024`]
+dat : 80154830 : MessageBufferB : char[1024`]
+dat : 80154C30 : MessagePrinters : msg_print_state[3]
+dat : 80155C38 : MessageStringVars : char[3][32`]
+dat : 80155C98 : MessageFontSet : short
+dat : 80155CA0 : MessageWindowProjMatrix : matrix4s[2] "one for each display context"
+dat : 80155D20 : MessageDrawState : msg_draw_state
+dat : 80155D74 : MessageDrawStatePtr : msg_draw_state*
+
+dat : 80155D88 : ItemEntityRenderGroup "selects which group of item entities to render" : int
+
+dat : 80155DA0 : WorldItemEntities : item_entity*[256`]
+dat : 801561A0 : BattleItemEntities : item_entity*[256`]
+dat : 801565A0 : CurrentItemEntities : item_entity**
+dat : 801565A4 : bPickingUpItem : short
+
+dat : 801568E0 : GotItemHudElemID : int
+
+dat : 80156900 : ScreenOverlayFrontType : int
+dat : 80156904 : ScreenOverlayFrontZoom : float
+dat : 80156908 : ScreenOverlayBackType : int
+dat : 8015690C : ScreenOverlayBackZoom : float
+
+dat : 80156F60 : WorldHudElements  : hud_element*[320`]
+dat : 80157460 : NonWorldHudElements  : hud_element*[320`]
+dat : 80157960 : CurrentHudElements : hud_element**
+
+
+dat : 80157964 : WorldHudCache   : ptr
+dat : 80157968 : WorldHudCachePos : int
+dat : 80157970 : WorldHudRasterCache  : hud_cache_entry[192`]
+dat : 80157F70 : WorldHudPaletteCache : hud_cache_entry[192`]
+dat : 80158570 : NonWorldHudCache   : ptr
+dat : 80158574 : NonWorldHudCachePos : int
+dat : 80158580 : NonWorldHudRasterCache  : hud_cache_entry[192`]
+dat : 80158B80 : NonWorldHudPaletteCache : hud_cache_entry[192`]
+
+dat : 80159190 : WorldTriggers : trigger*[64`]
+dat : 80159290 : BattleTriggers : trigger*[64`]
+dat : 80159390 : CurrentTriggers : trigger**
+dat : 801593A0 : BlendedBackgroundPalette : short[256`]
+dat : 801595A0 : BackgroundParallaxOffset : float
+dat : 801595C0 : WorldSpriteShadingA  : sprite_shading_profile
+dat : 80159670 : BattleSpriteShadingA : sprite_shading_profile
+dat : 80159720 : WorldSpriteShadingB  : sprite_shading_profile
+dat : 801597D0 : BattleSpriteShadingB : sprite_shading_profile
+dat : 801598A0 : WorldEnvSounds   : snd_env_sound[10`]
+dat : 801599B8 : BattleEnvSounds  : snd_env_sound[10`]
+dat : 80159AD0 : CurrentEnvSounds : snd_env_sound*
+% 80159ad4
+dat : 80159AE0 : DefaultVolume : short
+dat : 80159AE2 : TargetVolume : short
+dat : 80159AE4 : MaxVolume : short
+dat : 80159AE6 : CurrentVolume : short
+dat : 80159AF0 : MusicSettings : snd_music_settings[2]
+dat : 80159B50 : MessageItemImageBuffer : byte[480`]
+dat : 80159D30 : UnkWindow : window
+dat : 80159D50 : Windows : window[64`]
+dat : 8015A550 : CollisionStatus : collision_status
+
+dat : 8015A57A : ISpyNotification : byte
+dat : 8015A590 : TextureHandles : texture_handle[128`]
+dat : 8015C790 : ScreenOverlays : screen_overlay[2]
+dat : 8015C7C0 : AmbientSounds : snd_ambient_sound
+dat : 8015C7D0 : CreateEntityVarargBuffer : int[4]
+dat : 8015C7E0 : MessageItemPalette : byte[32`]
+
+dat : 80164000 : DisplayContexts : display_context[2`]
+
+lbl : 80197000 : EffectInstanceData % up to 801A6000
+lbl : 801AA000 : AudioHeap % up to 80200000
+
+% NOTE: THESE ARE ON THE AUDIO HEAP, BUT ALWAYS (?) END UP AT THE SAME ADDRESS
+%dat : 801d4c20 : : short[736`]
+%dat : 801d51e0 : : short[736`]
+dat : 801D57A0 : SoundGlobals : snd_globals
+dat : 801D7180 : BgmPlayerA : bgm_player
+dat : 801D7C20 : BgmPlayerB : bgm_player
+dat : 801D86C0 : BgmPlayerC : bgm_player
+dat : 801D9160 : SndManager : snd_manager
+dat : 801D9830 : SndUnk834 : snd_unk_834
+dat : 801DA070 : BgmTrackDataBuffer : byte[32768`]
+% / AUDIO HEAP
+
+dat : 802B7E00 : RenderTasks0 : render_task[256`]
+dat : 802B8E00 : RenderTasks1 : render_task[256`]
+dat : 802B9E00 : RenderTasks2 : render_task[256`]
+
+dat : 802D9CA0 : NextUniqueScriptID : int
+dat : 802D9CA4 : bUpdatingScripts : int
+dat : 802D9CA8 : GlobalScriptTimescale : float
+
+dat : 8029fbe0 : ActionCommandStatus : action_command_status
+
+dat : 802DA480 : CurrentMapFlags : int*
+dat : 802DA484 : CurrentMapVars  : int*
+dat : 802DA488 : NumScripts : int
+dat : 802DA490 : WorldScripts   : script_instance*[128`]
+dat : 802DA690 : BattleScripts  : script_instance*[128`]
+dat : 802DA890 : CurrentScripts : script_instance**
+dat : 802DA898 : ScriptIndices : int[128`]
+dat : 802DAA98 : ScriptIDs : int[128`]
+dat : 802DAC98 : ScriptCount : int  % does not decrement when scripts end
+dat : 802DACA0 : ScriptDebugPrintBuffer : char[256`]
+dat : 802DADA0 : LavaResetList : ptr
+dat : 802DADA4 : LavaResetFloorID : int
+
+dat : 802DADB0 : BattleAnimatedModelSets  : animated_model_set*[16`]
+dat : 802DADF0 : WorldAnimatedModelSets   : animated_model_set*[16`]
+dat : 802DAE30 : CurrentAnimatedModelSets : animated_model_set**
+
+% dat : 802dae40 : : npc* -- partner swap npc?
+
+dat : 802DB260 : SpeechPrintState : msg_print_state*
+dat : 802DB264 : SpeechDoneCallback : int
+dat : 802DB268 : ChoicePrintState : msg_print_state*
+
+dat : 802DB5C0 : BattleVirtualEntities  : virtual_entity*[64`]
+dat : 802DB6C0 : WorldVirtualEntities   : virtual_entity*[64`]
+dat : 802DB7C0 : CurrentVirtualEntities : virtual_entity**
+
+dat : 802DB830 : KeyItemPopup : popup_menu
+dat : 802DBB60 : SpriteShadingDmaArgs : int[2]
+dat : 802DBB68 : SpriteShadingData : sprite_shading_profile_packed
+
+dat : 802DBC70 : WorldMapFlags  : int[3]
+dat : 802DBC7C : DoorModelsSwingCW  : int[3]
+dat : 802DBC88 : PushBlockGrids : push_block_grid*[8]
+dat : 802DBCA8 : WorldMapVars   : int[16`]
+dat : 802DBCE8 : BattleMapVars  : int[16`]
+dat : 802DBD28 : DoorModelsSwingCCW : int[3]
+dat : 802DBD34 : BattleMapFlags : int[3]
+
+dat : 802DF390 : DefaultSpriteQuad : vertex[4]
+
+dat : 802DF3F0 : GfxComponentMode0 : int[14`]
+dat : 802DF460 : GfxComponentMode1 : int[12`]
+dat : 802DF490 : GfxComponentMode3 : int[12`]
+dat : 802DF4C0 : SpriteAnimTimeScale : float
+dat : 802DF4C4 : PlayerSpriteSets : spr_player_set[7]
+dat : 802DF524 : bAllocateComponentsOnWorldHeap : int
+dat : 802DF530 : MaxLoadedInstanceID : int
+
+dat : 802DF548 : PlayerSprites : sprite_anim_data*[13`]
+dat : 802DF57C : CurrentPlayerSpriteIndex : int
+dat : 802DF580 : PlayerSpritesMaxComponents : int
+dat : 802DF588 : PlayerCurrentAnimInfo : current_player_anim_info[3]
+dat : 802DF5B0 : NpcSprites : sprite_anim_data*[234`]
+dat : 802DF958 : NpcSpriteInstanceCount : byte[234`]
+dat : 802DFA48 : SpriteInstances : sprite_instance[51`]
+dat : 802DFE44 : SpriteQuadCachePtr : sprite_quad**
+dat : 802DFE48 : SpriteQuadSizes : int[22`]
+dat : 802DFEA0 : UnkSpriteRotation : int[3]
+
+dat : 802DFEB0 : SpriteYay0DmaArgs : int[2]
+dat : 802DFEB8 : CurrentPlayerRasters : int[101`]
+dat : 802E004C : PlayerRasterSetsLoaded : int
+dat : 802E0050 : PlayerRasterBufferSetOffsets : int[13`]
+dat : 802E0090 : PlayerRasterBuffer : int[736`]
+dat : 802E0C10 : PlayerRasterHeader : spr_player_raster_header
+dat : 802E0C20 : PlayerRasterSets : int[14`]
+dat : 802E0C58 : PlayerRasterCacheSize : int
+dat : 802E0C5C : PlayerRasterMaxSize : int
+dat : 802E0C60 : SpriteDataHeader : spritedata_header
+dat : 802E0C70 : PlayerRasterCache : spr_player_cache_entry[18`]
+
+dat : 802EB390 : bSaveBlockMessageClosed : int[2]
+dat : 802EB398 : SaveBlockPrinters : msg_print_state*[2]
+% 802eb3a0
+dat : 802EB3B0 : TriggerBlockVanishEffect : effect_instance*
+dat : 802EB3C0 : bHealBlockPrinterDone : int
+
+dat : 802EB3D0 : MsgCharWidthStandard : byte[168`]
+dat : 802EB478 : MsgCharDataStandard : msg_char_data[4]
+dat : 802EB4B4 : MsgCharDataMenu : msg_char_data[4]
+dat : 802EB4F0 : MsgCharsetDefault : msg_charset
+dat : 802EB4FC : MsgCharsetMenu : msg_charset
+dat : 802EB534 : MsgCharWidthCreditsSubtitle : byte[44`]
+dat : 802EB560 : MsgCharDataCreditsTitle : msg_char_data[2]
+dat : 802EB578 : MsgCharDataCreditsSubtitle : msg_char_data[2]
+dat : 802EB590 : MsgCharsetCreditsTitle : msg_charset
+dat : 802EB59C : MsgCharsetCreditsSubtitle : msg_charset
+dat : 802EB5A8 : MsgCharsets : msg_charset*[5]
+dat : 802EB5C0 : MsgLetterRasterOffsets : int[12`]
+dat : 802EB5F0 : MsgLetterPaletteOffsets : int[12`]
+dat : 802EB620 : MsgVoices : msg_voice[3]
+dat : 802EB644 : MsgStyleVerticalLineOffsets : short[22`]
+dat : 802EB670 : CI4_MsgSpeechL : byte[1024`]
+dat : 802EBA70 : CI4_MsgSpeechM : short[256`]
+dat : 802EBB70 : CI4_MsgSpeechR : short[1024`]
+dat : 802EBF70 : CI4_MsgSpeechArrow : short[128`]
+dat : 802EBFF0 : CI4_MsgFrameParts : byte[32`][32`]
+dat : 802EC3F0 : MsgPalettes : palette16[16`]
+%dat : 802ec5f0 : CI4_MsgSignUL
+
+dat : 802ECD10 : MsgSignPalette : palette16
+dat : 802ECD30 : MsgLampPalette : palette16
+
+dat : 802ECD50 : I4_MsgRasterScrollPattern : byte[2048`]
+%
+
+dat : 802FB800 : WorldHeapBase : heap_node

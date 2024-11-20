@@ -1,0 +1,1039 @@
+
+#define .ModBytesStartIndex	1000
+#define .ModFlagsStartIndex	1000
+
+% where sprite heap used to be
+#define .ptrTempBuffer  	80350000
+#define .ptrFileBuffer  	80354000
+#define .ModBytesStartAddr	80356000 % 1000 bytes
+#define .ModFlagsStartAddr	80357000 % 1000 bytes
+#define .NewFileSize		4000
+#define .ChecksumIter		1000	% = NewFileSize / 4
+
+% @Hook DBA20 --> 80145320
+@Hook DBA88 % 80145388
+{
+	LIO		V0, .ModBytesStartAddr
+	LOOP	V1 = 0,1000
+		SW		R0, 0 (V0)
+		ADDIU	V0, V0, 4
+	ENDLOOP
+	JR		RA
+	NOP
+}
+
+% 000DBC20 --> 80145520
+% $Function_SetGlobalByte
+@Hook DBC20 % completely replace it
+{
+	PUSH	RA, S0, S1
+	#DEF	S0, *Index
+	#DEF	S1, *Value
+	COPY	*Index, A0
+	ADDIU	V1, R0, .ModBytesStartIndex
+	BLT		A0, V1, .GameByte
+	COPY	*Value, A1
+	
+	.ModByte
+	SUBU	*Index, *Index, V1
+	##[IF:LogVars]
+		JAL		$Debug_LogSetModByte
+		SUBU	A0, A0, V1
+	##[ENDIF]
+	LA		V0, .ModBytesStartAddr
+	B		.Ready
+	RESERVED
+	
+	.GameByte
+	##[IF:LogVars]
+		JAL		$Debug_LogSetGameByte
+		NOP
+	##[ENDIF]
+	LA		V0, 800DBD70
+	
+	.Ready
+	ADDU	A0, *Index, V0
+	LB		V0, 0 (A0)
+	SB		*Value, 0 (A0)
+	#UNDEF	All
+	JPOP	RA, S0, S1
+}
+
+% 000DBC38 --> 80145538
+% $Function_GetGlobalByte
+@Hook DBC38 % completely replace it
+{
+	LIA		V0, 800DBD70
+	ADDIU	V1, R0, .ModBytesStartIndex
+	BLT		A0, V1, .Ready
+	NOP
+	SUBU	A0, A0, V1
+	LIA		V0, .ModBytesStartAddr
+	.Ready
+	DADDU	V0, V0, A0
+	LB		V0, 0 (V0)
+	JR		RA
+	NOP
+}
+
+% 000DBAE0 --> 801453E0
+% $Function_ClearGlobalFlag
+@Hook DBAE0 % completely replace it
+{
+	PUSH	RA, S0, S1
+	LI		V0, -120000000` % F8D8F200
+	BGTL	A0, V0, .HaveIndex
+	COPY	S0, A0
+	LI		V0, 130000000` % 7BFA480
+	ADDU	S0, A0, V0
+	
+	#DEF	A2, *ADDRESS
+%	#DEF	S1, *INDEX
+	
+	.HaveIndex
+	BGEZ	S0, .HavePositiveIndex
+	COPY	S1, S0
+	% ADDIU	S1, A0, 1F
+	LW		SP, 0 (R0) % force a crash if negative
+	
+	.HavePositiveIndex
+	LI		V1, .ModFlagsStartIndex
+	BLT		S1, V1, .GameFlag
+	NOP
+	
+	.ModFlag
+	SUBU	S1, S1, V1
+	##[IF:LogVars]
+		COPY	A0, S1
+		JAL		$Debug_LogSetModFlag
+		CLEAR	A1
+	##[ENDIF]
+	LIA		*ADDRESS, .ModFlagsStartAddr
+	B		.IndexReady
+	NOP
+	
+	.GameFlag
+	##[IF:LogVars]
+		COPY	A0, S1
+		JAL		$Debug_LogSetGlobalFlag
+		CLEAR	A1
+	##[ENDIF]
+	LIA		*ADDRESS, 800DBC70
+	B		.IndexReady
+	NOP
+	
+	.IndexReady
+	SRA		V0, S1, 5
+	SLL		V1, V0, 5
+	SUBU	V1, S0, V1
+	SLL		V0, V0, 2
+	ADDU	A1, V0, *ADDRESS
+	#UNDEF	ALL
+	
+	LI		V0, 1
+	LW		A0, 0 (A1)
+	SLLV	V0, V0, V1
+	AND		V1, A0, V0
+	BNEL	V1, R0, 4
+	LI		V1, 1
+	NOR		V0, R0, V0
+	
+	AND		V0, A0, V0
+	SW		V0, 0 (A1)
+	COPY	V0, V1
+	JPOP	RA, S0, S1
+}
+
+% 000DBB50 --> 80145450
+% $Function_SetGlobalFlag
+@Hook DBB50 % completely replace it
+{
+	PUSH	RA, S0, S1
+	LI		V0, -120000000` % F8D8F200
+	BGTL	A0, V0, .HaveIndex
+	COPY	S0, A0
+	LI		V0, 130000000` % 7BFA480
+	ADDU	S0, A0, V0
+	
+	#DEF	A2, *ADDRESS
+%	#DEF	S1, *INDEX
+	
+	.HaveIndex
+	BGEZ	S0, .HavePositiveIndex
+	COPY	S1, S0
+	B		.Done % ingore negative indices
+	CLEAR	V0
+	
+	.HavePositiveIndex
+	LI		V1, .ModFlagsStartIndex
+	BLT		S1, V1, .GameFlag
+	NOP
+	
+	.ModFlag
+	SUBU	S1, S1, V1
+	##[IF:LogVars]
+		COPY	A0, S1
+		JAL		$Debug_LogSetModFlag
+		LI		A1, 1
+	##[ENDIF]
+	LIA		*ADDRESS, .ModFlagsStartAddr
+	B		.IndexReady
+	NOP
+	
+	.GameFlag
+	##[IF:LogVars]
+		COPY	A0, S1
+		JAL		$Debug_LogSetGlobalFlag
+		LI		A1, 1
+	##[ENDIF]
+	LIA		*ADDRESS, 800DBC70
+	B		.IndexReady
+	NOP
+	
+	.IndexReady
+	SRA			V0, S1, 5
+	SLL			V1, V0, 5
+	SUBU		V1, S0, V1
+	SLL			V0, V0, 2
+	ADDU		A1, V0, *ADDRESS
+	#UNDEF	ALL
+	
+	LI			V0, 1
+	LW			A0, 0 (A1)
+	SLLV		V0, V0, V1
+	AND			V1, A0, V0
+	BNEL		V1, R0, 4
+	LI			V1, 1
+	
+	OR			V0, A0, V0
+	SW			V0, 0 (A1)
+	COPY		V0, V1
+	.Done
+	JPOP		RA, S0, S1
+}
+
+% 000DBBBC --> 801454BC
+% $Function_GetGlobalFlag
+@Hook DBBBC % completely replace it
+{
+	LI			V0, -120000000` % F8D8F200
+	BGTL		A0, V0, .HaveIndex
+	COPY		A1, A0
+	LI			V0, 130000000` % 7BFA480
+	ADDU		A1, A0, V0
+	
+	.HaveIndex
+	BGEZ		A1, .HavePositiveIndex
+	COPY		V1, A1
+	B			.Done % ingore negative indices
+	CLEAR		V0
+	
+	.HavePositiveIndex
+	% convert flag -> index
+	#DEF		V1, *INDEX		% in
+	#DEF		A2, *ADDRESS	% out
+	#DEF		A0, *TEMP
+	LIA			*ADDRESS, 800DBC70 % == 800DACC0 + FB0
+	ADDIU		*TEMP, R0, .ModFlagsStartIndex
+	BLT			*INDEX, *TEMP, .IndexReady
+	NOP
+	SUBU		*INDEX, *INDEX, *TEMP
+	LIA			*ADDRESS, .ModFlagsStartAddr
+	#UNDEF		ALL
+	.IndexReady
+	SRA			V1, V1, 5
+	SLL			A0, V1, 5
+	SUBU		A0, A1, A0
+	SLL			V1, V1, 2
+	ADDIU		V0, R0, 1
+	ADDU		A2, V1, A2	% add byte offset to base
+	LW			V1, 0 (A2)
+%	LTW			V1, V1 (800DBC70)
+	SLLV		V0, V0, A0
+	AND			V0, V1, V0
+	BNEL		V0, R0, .Done
+	ADDIU		V0, R0, 1
+	.Done
+	JR			RA
+	NOP
+}
+	
+% ====================================================================
+
+%   ReadBuffer:	8009A6B0 - 8009BA30
+%  WriteBuffer:	800DACC0 - 800DC040
+%  note: 800DAD00 - 800DB120 contain 420 bytes starting with 8010F290
+
+/% NOT CHANGED
+% 00006340 --> 8002AF40
+#new:Function $Function_fio_calc_header_checksum
+    0:  DADDU		A1, R0, R0
+    4:  LIA			A0, 800D95E8
+    C:  DADDU		V1, A1, R0
+        .o10
+   10:  ADDIU		V1, V1, 1
+   14:  LW			V0, 0 (A0)
+   18:  ADDU		A1, A1, V0
+   1C:  SLTIU		V0, V1, 20
+   20:  BNE			V0, R0, .o10
+   24:  ADDIU		A0, A0, 4
+   28:  JR			RA
+   2C:  DADDU		V0, A1, R0
+%/
+
+/% NOT CHANGED
+% 00006370 --> 8002AF70
+#new:Function $Function_fio_validate_header_checksums
+    0:  ADDIU		SP, SP, FFE8
+    4:  LIA			V0, 800D95E8
+    C:  SW			S0, 10 (SP)
+   10:  DADDU		S0, V0, R0
+   14:  LIA			A1, $???_800745D0
+   1C:  SW			RA, 14 (SP)
+   20:  JAL			{Func:strcmp}
+   24:  DADDU		A0, S0, R0
+   28:  BNE			V0, R0, .o58
+   2C:  DADDU		V0, R0, R0
+   30:  LW			V0, 34 (S0)
+   34:  LW			V1, 30 (S0)
+   38:  NOR			V0, R0, V0
+   3C:  BNEL		V1, V0, .o58
+   40:  DADDU		V0, R0, R0
+   44:  JAL			{Func:fio_calc_header_checksum}
+   48:  NOP
+   4C:  LW			V1, 30 (S0)
+   50:  XOR			V0, V0, V1
+   54:  SLTIU		V0, V0, 1
+        .o58
+   58:  LW			RA, 14 (SP)
+   5C:  LW			S0, 10 (SP)
+   60:  JR			RA
+   64:  ADDIU		SP, SP, 18
+%/
+
+/% NOT CHANGED
+% 000063D8 --> 8002AFD8
+#new:Function $Function_8002AFD8
+    0:  ADDIU		SP, SP, FFE8
+    4:  ADDIU		A0, R0, 6
+    8:  SW			S0, 10 (SP)
+    C:  LIA			S0, 800D95E8
+   14:  DADDU		A1, S0, R0
+   18:  SW			RA, 14 (SP)
+   1C:  JAL			{Func:fio_read_flash}
+   20:  ADDIU		A2, R0, 80
+   24:  JAL			{Func:fio_validate_header_checksums}
+   28:  NOP
+   2C:  BNE			V0, R0, .o64
+   30:  ADDIU		V0, R0, 1
+   34:  ADDIU		A0, R0, 7
+   38:  DADDU		A1, S0, R0
+   3C:  JAL			{Func:fio_read_flash}
+   40:  ADDIU		A2, R0, 80
+   44:  JAL			{Func:fio_validate_header_checksums}
+   48:  NOP
+   4C:  BNE			V0, R0, .o64
+   50:  ADDIU		V0, R0, 1
+   54:  DADDU		A0, S0, R0
+   58:  JAL			{Func:bzero}
+   5C:  ADDIU		A1, R0, 80
+   60:  DADDU		V0, R0, R0
+        .o64
+   64:  LW			RA, 14 (SP)
+   68:  LW			S0, 10 (SP)
+   6C:  JR			RA
+   70:  ADDIU		SP, SP, 18
+%/
+
+/% NOT CHANGED
+% 0000644C --> 8002B04C
+#new:Function $Function_8002B04C
+    0:  ADDIU		SP, SP, FFE8
+    4:  SW			S0, 10 (SP)
+    8:  LIA			S0, 800D95E8
+   10:  LIA			A1, $???_800745D0
+   18:  SW			RA, 14 (SP)
+   1C:  JAL			{Func:strcpy}
+   20:  DADDU		A0, S0, R0
+   24:  ADDIU		V0, R0, FFFF
+   28:  SW			R0, 30 (S0)
+   2C:  JAL			{Func:fio_calc_header_checksum}
+   30:  SW			V0, 34 (S0)
+   34:  ADDIU		A0, R0, 6
+   38:  SW			V0, 30 (S0)
+   3C:  NOR			V0, R0, V0
+   40:  JAL			{Func:fio_erase_flash}
+   44:  SW			V0, 34 (S0)
+   48:  ADDIU		A0, R0, 6
+   4C:  DADDU		A1, S0, R0
+   50:  JAL			{Func:fio_write_flash}
+   54:  ADDIU		A2, R0, 80
+   58:  JAL			{Func:fio_erase_flash}
+   5C:  ADDIU		A0, R0, 7
+   60:  ADDIU		A0, R0, 7
+   64:  DADDU		A1, S0, R0
+   68:  JAL			{Func:fio_write_flash}
+   6C:  ADDIU		A2, R0, 80
+   70:  LW			RA, 14 (SP)
+   74:  LW			S0, 10 (SP)
+   78:  ADDIU		V0, R0, 1
+   7C:  JR			RA
+   80:  ADDIU		SP, SP, 18
+%/
+
+/%
+% 000064D0 --> 8002B0D0
+% $Function_fio_calc_file_checksum
+@Hook 64D0
+    0:  DADDU		A1, R0, R0
+    4:  DADDU		V1, A1, R0
+        .o8
+    8:  ADDIU		V1, V1, 1
+    C:  LW			V0, 0 (A0)
+   10:  ADDU		A1, A1, V0
+   14:  SLTIU		V0, V1, .ChecksumIter		% was 4E0
+   18:  BNE			V0, R0, .o8
+   1C:  ADDIU		A0, A0, 4
+   20:  JR			RA
+   24:  DADDU		V0, A1, R0
+%/ % better to leave this alone, i think
+
+/% NOT CHANGED
+% 000064F8 --> 8002B0F8
+#new:Function $Function_fio_validate_file_checksum
+    0:  ADDIU		SP, SP, FFE8
+    4:  SW			S0, 10 (SP)
+    8:  LIA			A1, 800745D0
+   10:  SW			RA, 14 (SP)
+   14:  JAL			{Func:strcmp}
+   18:  DADDU		S0, A0, R0
+   1C:  BNE			V0, R0, .o4C
+   20:  DADDU		V0, R0, R0
+   24:  LW			V0, 34 (S0)
+   28:  LW			V1, 30 (S0)
+   2C:  NOR			V0, R0, V0
+   30:  BNEL		V1, V0, .o4C
+   34:  DADDU		V0, R0, R0
+   38:  JAL			{Func:fio_calc_file_checksum}
+   3C:  DADDU		A0, S0, R0
+   40:  LW			V1, 30 (S0)
+   44:  XOR			V0, V0, V1
+   48:  SLTIU		V0, V0, 1
+        .o4C
+   4C:  LW			RA, 14 (SP)
+   50:  LW			S0, 10 (SP)
+   54:  JR			RA
+   58:  ADDIU		SP, SP, 18
+%/
+
+% 00006554 --> 8002B154
+% $Function_fio_fetch_saved_file_info
+@Hook 6554
+{
+    0:  ADDIU		SP, SP, FFD8
+    4:  SW			S2, 18 (SP)
+    8:  LIA			S2, .ptrTempBuffer
+   10:  SW			S4, 20 (SP)
+   14:  DADDU		S4, S2, R0
+   18:  SW			S0, 10 (SP)
+   1C:  DADDU		S0, R0, R0
+   20:  ADDIU		A0, R0, FFFF
+   24:  LIA			V1, 8009BA30
+   2C:  SW			RA, 24 (SP)
+   30:  SW			S3, 1C (SP)
+   34:  SW			S1, 14 (SP)
+        .o38
+   38:  SW			A0, 0 (V1)
+   3C:  SW			A0, 4 (V1)
+   40:  ADDIU		S0, S0, 1
+   44:  SLTI		V0, S0, 4
+   48:  BNE			V0, R0, .o38
+   4C:  ADDIU		V1, V1, 8
+   50:  DADDU		S0, R0, R0
+   54:  LIA			S3, 8009BA30
+   5C:  LIA			S1, 8009BA50
+        .o64
+   64:  DADDU		A0, S0, R0
+   68:  DADDU		A1, S4, R0
+   6C:  JAL			~Func:fio_read_flash
+   70:  ADDIU		A2, R0, .NewFileSize	% was 1380
+   74:  JAL			~Func:fio_validate_file_checksum
+   78:  DADDU		A0, S4, R0
+   7C:  BEQL		V0, R0, .oD0
+   80:  ADDIU		S0, S0, 1
+   84:  LW			V0, 38 (S2)
+   88:  SW			V0, 0 (S1)
+   8C:  LW			V0, 3C (S2)
+   90:  SW			V0, 4 (S1)
+   94:  LW			V0, 38 (S2)
+   98:  LW			V1, 3C (S2)
+   9C:  SLL			V0, V0, 3
+   A0:  ADDU		A0, V0, S3
+   A4:  LW			V0, 4 (A0)
+   A8:  SLT			V0, V0, V1
+   AC:  BEQL		V0, R0, .oD0
+   B0:  ADDIU		S0, S0, 1
+   B4:  SW			S0, 0 (A0)
+   B8:  LW			V0, 38 (S2)
+   BC:  LW			V1, 3C (S2)
+   C0:  SLL			V0, V0, 3
+   C4:  ADDU		V0, V0, S3
+   C8:  SW			V1, 4 (V0)
+   CC:  ADDIU		S0, S0, 1
+        .oD0
+   D0:  SLTI		V0, S0, 6
+   D4:  BNE			V0, R0, .o64
+   D8:  ADDIU		S1, S1, 8
+   DC:  LIO			A2, 7FFFFFFF
+   E4:  DADDU		A0, R0, R0
+   E8:  LIA			T1, 8009BA30
+   F0:  ADDIU		T0, R0, 4
+   F4:  LIA			A3, 8009BA80
+   FC:  LIA			A1, 8009BA50
+        .o104
+  104:  DADDU		S0, R0, R0
+  108:  DADDU		V1, T1, R0
+        .o10C
+  10C:  LW			V0, 0 (V1)
+  110:  BEQ			A0, V0, .o128
+  114:  NOP
+  118:  ADDIU		S0, S0, 1
+  11C:  SLTI		V0, S0, 4
+  120:  BNE			V0, R0, .o10C
+  124:  ADDIU		V1, V1, 8
+        .o128
+  128:  BNEL		S0, T0, .o14C
+  12C:  ADDIU		A0, A0, 1
+  130:  LW			V1, 4 (A1)
+  134:  SLT			V0, V1, A2
+  138:  BEQL		V0, R0, .o14C
+  13C:  ADDIU		A0, A0, 1
+  140:  DADDU		A2, V1, R0
+  144:  SW			A0, 0 (A3)
+  148:  ADDIU		A0, A0, 1
+        .o14C
+  14C:  SLTI		V0, A0, 6
+  150:  BNE			V0, R0, .o104
+  154:  ADDIU		A1, A1, 8
+  158:  LW			RA, 24 (SP)
+  15C:  LW			S4, 20 (SP)
+  160:  LW			S3, 1C (SP)
+  164:  LW			S2, 18 (SP)
+  168:  LW			S1, 14 (SP)
+  16C:  LW			S0, 10 (SP)
+  170:  ADDIU		V0, R0, 1
+  174:  JR			RA
+  178:  ADDIU		SP, SP, 28
+}
+
+% 000066D0 --> 8002B2D0
+% $Function_fio_load_game
+@Hook 66D0
+{
+    0:  ADDIU		SP, SP, FFE0
+    4:  SW			S2, 18 (SP)
+    8:  LIA			S2, 8007419C
+   10:  SW			RA, 1C (SP)
+   14:  SW			S1, 14 (SP)
+   18:  SW			S0, 10 (SP)
+   1C:  LW			V0, 0 (S2)
+   20:  DADDU		S0, A0, R0
+   24:  JAL			~Func:fio_fetch_saved_file_info
+   28:  SB			S0, 166 (V0)
+   2C:  LIA			S1, 800DACC0
+%  34:  DADDU		A1, S1, R0
+		% read to new buffer
+		LIO			A1, .ptrFileBuffer
+   38:  SLL			S0, S0, 3
+   3C:  LTW			A0, S0 (8009BA30)
+   48:  JAL			~Func:fio_read_flash
+		ADDIU		A2, R0, .NewFileSize	% was 1380
+		% copy serialized data to original location
+		LIO			A0, .ptrFileBuffer
+		DADDU		A1, S1, R0
+   		JAL			~Func:bcopy
+		ADDIU		A2, R0, 1380
+   50:  LIA			A1, 800745D0
+   58:  JAL			~Func:strcmp
+   5C:  DADDU		A0, S1, R0
+   60:  BNE			V0, R0, .o8C
+   64:  DADDU		V0, R0, R0
+   68:  LW			V1, 0 (S2)
+   6C:  LW			A0, 3C (S1)
+   70:  LW			V0, 168 (V1)
+   74:  SLTU		V0, V0, A0
+   78:  BNEL		V0, R0, .o80
+   7C:  SW			A0, 168 (V1)
+        .o80
+   80:  JAL			~Func:fio_deserialize_state
+   84:  NOP
+   88:  ADDIU		V0, R0, 1
+        .o8C
+   8C:  LW			RA, 1C (SP)
+   90:  LW			S2, 18 (SP)
+   94:  LW			S1, 14 (SP)
+   98:  LW			S0, 10 (SP)
+   9C:  JR			RA
+   A0:  ADDIU		SP, SP, 20
+}
+
+% 00006774 --> 8002B374
+% $Function_fio_save_game
+@Hook 6774
+{
+    0:  ADDIU		SP, SP, FFE0
+    4:  SW			S2, 18 (SP)
+    8:  DADDU		S2, A0, R0
+    C:  SW			RA, 1C (SP)
+   10:  SW			S1, 14 (SP)
+   14:  JAL			~Func:fio_fetch_saved_file_info
+   18:  SW			S0, 10 (SP)
+   1C:  LIA			S1, 8007419C
+   24:  LW			V0, 0 (S1)
+   28:  JAL			~Func:fio_serialize_state
+   2C:  SB			S2, 166 (V0)
+   30:  LIA			S0, 800DACC0
+   38:  LIA			A1, 800745D0
+   40:  JAL			~Func:strcpy
+   44:  DADDU		A0, S0, R0
+   48:  LW			V1, 0 (S1)
+   4C:  SW			S2, 38 (S0)
+   50:  LW			V0, 168 (V1)
+   54:  DADDU		A0, S0, R0
+   58:  ADDIU		V0, V0, 1
+   5C:  SW			V0, 168 (V1)
+   60:  SW			V0, 3C (S0)
+   64:  ADDIU		V0, R0, FFFF
+   68:  SW			R0, 30 (S0)
+   6C:  JAL			~Func:fio_calc_file_checksum
+   70:  SW			V0, 34 (S0)
+   74:  LIA			S1, 8009BA80
+   7C:  LW			A0, 0 (S1)
+   80:  SW			V0, 30 (S0)
+   84:  NOR			V0, R0, V0
+   88:  JAL			~Func:fio_erase_flash
+   8C:  SW			V0, 34 (S0)
+		% copy serialized data to new file buffer
+		DADDU		A0, S0, R0
+		LIO			A1, .ptrFileBuffer
+   		JAL			~Func:bcopy
+		ADDIU		A2, R0, 1380
+%  90:  DADDU		A1, S0, R0
+		% write from new buffer
+		LIO			A1, .ptrFileBuffer
+   94:  LW			A0, 0 (S1)
+   98:  JAL			~Func:fio_write_flash
+		ADDIU		A2, R0, .NewFileSize	% was 1380
+   A0:  LW			RA, 1C (SP)
+   A4:  LW			S2, 18 (SP)
+   A8:  LW			S1, 14 (SP)
+   AC:  LW			S0, 10 (SP)
+   B0:  JR			RA
+   B4:  ADDIU		SP, SP, 20
+}
+
+/% NOT CHANGED
+% 0000682C --> 8002B42C
+#new:Function $Function_fio_erase_game
+    0:  ADDIU		SP, SP, FFE0
+    4:  SW			S2, 18 (SP)
+    8:  DADDU		S2, A0, R0
+    C:  SW			RA, 1C (SP)
+   10:  SW			S1, 14 (SP)
+   14:  JAL			{Func:fio_fetch_saved_file_info}
+   18:  SW			S0, 10 (SP)
+   1C:  DADDU		S0, R0, R0
+   20:  LIA			S1, 8009BA50
+        .o28
+   28:  LW			V0, 0 (S1)
+   2C:  BNEL		V0, S2, .o40
+   30:  ADDIU		S0, S0, 1
+   34:  JAL			{Func:fio_erase_flash}
+   38:  DADDU		A0, S0, R0
+   3C:  ADDIU		S0, S0, 1
+        .o40
+   40:  SLTI		V0, S0, 6
+   44:  BNE			V0, R0, .o28
+   48:  ADDIU		S1, S1, 8
+   4C:  LW			RA, 1C (SP)
+   50:  LW			S2, 18 (SP)
+   54:  LW			S1, 14 (SP)
+   58:  LW			S0, 10 (SP)
+   5C:  JR			RA
+   60:  ADDIU		SP, SP, 20
+%/
+
+/% NOT CHANGED
+% 00006890 --> 8002B490
+% $Function_fio_deserialize_state
+@Hook 6890
+    0:  LIA			V1, 8010F290
+    8:  LIA			A3, 800DACC0
+   10:  ADDIU		V0, A3, 40
+   14:  ADDIU		A0, A3, 460
+        .o18
+		% copy 428 bytes from 8010F290 to 800DAD00
+   18:  LW			T1, 0 (V0)
+   1C:  LW			T2, 4 (V0)
+   20:  LW			T3, 8 (V0)
+   24:  LW			T4, C (V0)
+   28:  SW			T1, 0 (V1)
+   2C:  SW			T2, 4 (V1)
+   30:  SW			T3, 8 (V1)
+   34:  SW			T4, C (V1)
+   38:  ADDIU		V0, V0, 10
+   3C:  BNE			V0, A0, .o18
+   40:  ADDIU		V1, V1, 10
+		% last 8 bytes
+   44:  LW			T1, 0 (V0)
+   48:  LW			T2, 4 (V0)
+   4C:  SW			T1, 0 (V1)
+   50:  SW			T2, 4 (V1)
+		% now load spawn info (6 bytes)
+   54:  LAW			V1, 8007419C
+   5C:  LHU			V0, 468 (A3)	% area
+   60:  SH			V0, 86 (V1)
+   64:  LHU			V0, 46A (A3)	% map
+   68:  SH			V0, 8C (V1)
+   6C:  LHU			V0, 46C (A3)	% entry
+   70:  SH			V0, 8E (V1)
+   74:  LHU			V0, 12E6 (A3)	% posX
+   78:  SH			V0, 160 (V1)
+   7C:  LHU			V0, 12E8 (A3)	% posY
+   80:  DADDU		A2, R0, R0
+   84:  SH			V0, 162 (V1)
+   88:  LHU			V0, 12EA (A3)	% posZ
+   8C:  LIA			T0, 800B0F10
+   94:  SH			V0, 164 (V1)
+		% copy B40 bytes from 800DACC0[470] to 800B0FC0-800B1B00
+   98:  DADDU		A1, R0, R0
+        .o9C
+   9C:  SLL			A0, A2, 2
+        .oA0
+   A0:  ADDU		V1, A0, T0
+   A4:  ADDU		V0, A3, A0
+   A8:  LW			V0, 470 (V0)
+   AC:  ADDIU		A1, A1, 1
+   B0:  SW			V0, B0 (V1)
+   B4:  SLTI		V0, A1, 3C
+   B8:  BNE			V0, R0, .oA0
+   BC:  ADDIU		A0, A0, 30
+   C0:  ADDIU		A2, A2, 1
+   C4:  SLTI		V0, A2, C
+   C8:  BNE			V0, R0, .o9C
+   CC:  DADDU		A1, R0, R0
+		% clear some bytes at 80074024 
+   D0:  LIA			V1, 8007419C
+   D8:  LW			V0, 0 (V1)
+   DC:  SB			R0, 74 (V0)
+   E0:  LW			V0, 0 (V1)
+   E4:  SB			R0, 76 (V0)
+   E8:  LW			V0, 0 (V1)
+   EC:  SB			R0, 77 (V0)
+		% set a byte
+   F0:  LW			A0, 0 (V1)
+   F4:  ADDIU		V0, R0, 1
+   F8:  SB			V0, 7A (A0)
+   FC:  LW			V0, 0 (V1)
+  100:  LBU			V1, 166 (V0)
+  104:  SLL			V0, V1, 1
+  108:  ADDU		V0, V0, V1
+  10C:  SLL			V0, V0, 3
+  110:  LW			T1, 12EC (A3)
+  114:  LW			T2, 12F0 (A3)
+  118:  LW			T3, 12F4 (A3)
+  11C:  LW			T4, 12F8 (A3)
+  120:  STW			T1, V0 (800779C4)
+  12C:  STW			T2, V0 (800779C8)
+  138:  STW			T3, V0 (800779CC)
+  144:  STW			T4, V0 (800779D0)
+  150:  LW			T1, 12FC (A3)
+  154:  LW			T2, 1300 (A3)
+  158:  STW			T1, V0 (800779D4)
+  164:  STW			T2, V0 (800779D8)
+  170:  JR			RA
+  174:  NOP
+%/
+
+/% NOT CHANGED
+% 00006A08 --> 8002B608
+#new:Function $Function_8002B608
+    0:  ADDIU		SP, SP, FFE8
+    4:  LAW			V1, 8007419C
+    C:  ADDIU		V0, R0, A
+   10:  SW			RA, 10 (SP)
+   14:  JAL			{Func:fio_serialize_state}
+   18:  SH			V0, 8E (V1)
+   1C:  LW			RA, 10 (SP)
+   20:  JR			RA
+   24:  ADDIU		SP, SP, 18
+%/
+
+/% NOT CHANGED
+% 00006A30 --> 8002B630
+% $Function_fio_serialize_state
+@Hook 6A30
+    0:  ADDIU		SP, SP, FFE0
+    4:  SW			S2, 18 (SP)
+    8:  LIA			S2, 800DACC0
+   10:  ADDIU		A0, S2, 40
+   14:  LIA			V0, 8010F290
+   1C:  ADDIU		V1, V0, 420
+   20:  SW			RA, 1C (SP)
+   24:  SW			S1, 14 (SP)
+   28:  SW			S0, 10 (SP)
+        .o2C
+   2C:  LW			T0, 0 (V0)
+   30:  LW			T1, 4 (V0)
+   34:  LW			T2, 8 (V0)
+   38:  LW			T3, C (V0)
+   3C:  SW			T0, 0 (A0)
+   40:  SW			T1, 4 (A0)
+   44:  SW			T2, 8 (A0)
+   48:  SW			T3, C (A0)
+   4C:  ADDIU		V0, V0, 10
+   50:  BNE			V0, V1, .o2C
+   54:  ADDIU		A0, A0, 10
+   58:  LAW			V1, 8007419C
+   60:  LW			T0, 0 (V0)
+   64:  LW			T1, 4 (V0)
+   68:  SW			T0, 0 (A0)
+   6C:  SW			T1, 4 (A0)
+   70:  LHU			V0, 86 (V1)
+   74:  SH			V0, 468 (S2)
+   78:  LHU			V0, 8C (V1)
+   7C:  SH			V0, 46A (S2)
+   80:  LHU			V0, 8E (V1)
+   84:  SH			V0, 46C (S2)
+   88:  LHU			V0, 160 (V1)
+   8C:  SH			V0, 12E6 (S2)
+   90:  LHU			V0, 162 (V1)
+   94:  DADDU		A2, R0, R0
+   98:  SH			V0, 12E8 (S2)
+   9C:  LHU			V0, 164 (V1)
+   A0:  LIA			A3, 800B0F10
+   A8:  SH			V0, 12EA (S2)
+   AC:  DADDU		A1, R0, R0
+        .oB0
+   B0:  SLL			A0, A2, 2
+        .oB4
+   B4:  ADDU		V1, S2, A0
+   B8:  ADDU		V0, A0, A3
+   BC:  LW			V0, B0 (V0)
+   C0:  ADDIU		A1, A1, 1
+   C4:  SW			V0, 470 (V1)
+   C8:  SLTI		V0, A1, 3C
+   CC:  BNE			V0, R0, .oB4
+   D0:  ADDIU		A0, A0, 30
+   D4:  ADDIU		A2, A2, 1
+   D8:  SLTI		V0, A2, C
+   DC:  BNE			V0, R0, .oB0
+   E0:  DADDU		A1, R0, R0
+   E4:  LIA			S0, 8007419C
+   EC:  LW			V0, 0 (S0)
+   F0:  LW			V1, 0 (S0)
+   F4:  LBU			V0, 74 (V0)
+   F8:  SB			V0, 12E0 (S2)
+   FC:  LBU			V0, 76 (V1)
+  100:  LW			V1, 0 (S0)
+  104:  SB			V0, 12E1 (S2)
+  108:  LBU			V0, 77 (V1)
+  10C:  LW			V1, 0 (S0)
+  110:  SB			V0, 12E2 (S2)
+  114:  LBU			V0, 7A (V1)
+  118:  LW			V1, 0 (S0)
+  11C:  SB			V0, 12E3 (S2)
+  120:  LBU			V1, 166 (V1)
+  124:  LIA			S1, 8010F290
+  12C:  SLL			V0, V1, 1
+  130:  ADDU		V0, V0, V1
+  134:  LBU			V1, 9 (S1)
+  138:  SLL			V0, V0, 3
+  13C:  STB			V1, V0 (800779CA)
+  148:  JAL			{Func:get_spirits_rescued}
+  14C:  NOP
+  150:  LW			V1, 0 (S0)
+  154:  LBU			A0, 166 (V1)
+  158:  SLL			V1, A0, 1
+  15C:  ADDU		V1, V1, A0
+  160:  SLL			V1, V1, 3
+  164:  STB			V0, V1 (800779C8)
+  170:  LW			A0, 0 (S0)
+  174:  LBU			V1, 166 (A0)
+  178:  SLL			V0, V1, 1
+  17C:  ADDU		V0, V0, V1
+  180:  LW			V1, 2BC (S1)
+  184:  SLL			V0, V0, 3
+  188:  STW			V1, V0 (800779C4)
+  194:  LBU			V1, 166 (A0)
+  198:  SLL			V0, V1, 1
+  19C:  ADDU		V0, V0, V1
+  1A0:  SLL			V0, V0, 3
+  1A4:  LTW			T0, V0 (800779C4)
+  1B0:  LTW			T1, V0 (800779C8)
+  1BC:  LTW			T2, V0 (800779CC)
+  1C8:  LTW			T3, V0 (800779D0)
+  1D4:  SW			T0, 12EC (S2)
+  1D8:  SW			T1, 12F0 (S2)
+  1DC:  SW			T2, 12F4 (S2)
+  1E0:  SW			T3, 12F8 (S2)
+  1E4:  LTW			T0, V0 (800779D4)
+  1F0:  LTW			T1, V0 (800779D8)
+  1FC:  SW			T0, 12FC (S2)
+  200:  SW			T1, 1300 (S2)
+  204:  LW			RA, 1C (SP)
+  208:  LW			S2, 18 (SP)
+  20C:  LW			S1, 14 (SP)
+  210:  LW			S0, 10 (SP)
+  214:  JR			RA
+  218:  ADDIU		SP, SP, 20
+%/
+
+/% NOT CHANGED
+% 00006C4C --> 8002B84C
+#new:Function $Function_fio_init_flash
+    0:  ADDIU		SP, SP, FFE8
+    4:  SW			RA, 10 (SP)
+    8:  JAL			{Func:osFlashInit}
+    C:  NOP
+   10:  LW			RA, 10 (SP)
+   14:  JR			RA
+   18:  ADDIU		SP, SP, 18
+%/
+   
+/% NOT CHANGED
+% 00006C68 --> 8002B868
+#new:Function $Function_fio_read_flash
+    0:  ADDIU		SP, SP, FF90
+    4:  SW			S4, 60 (SP)
+    8:  DADDU		S4, A0, R0
+    C:  SW			S1, 54 (SP)
+   10:  DADDU		S1, A2, R0
+   14:  SW			S2, 58 (SP)
+   18:  DADDU		S2, A1, R0
+   1C:  DADDU		A0, S2, R0
+   20:  DADDU		A1, S1, R0
+   24:  SW			RA, 6C (SP)
+   28:  SW			S6, 68 (SP)
+   2C:  SW			S5, 64 (SP)
+   30:  SW			S3, 5C (SP)
+   34:  JAL			{Func:osInvalDCache}
+   38:  SW			S0, 50 (SP)
+   3C:  ADDIU		S0, SP, 30
+   40:  DADDU		A0, S0, R0
+   44:  ADDIU		A1, SP, 48
+   48:  JAL			{Func:osCreateMesgQueue}
+   4C:  ADDIU		A2, R0, 1
+   50:  BEQ			S1, R0, .oB4
+   54:  DADDU		S3, R0, R0
+   58:  SLL			S5, S4, 7
+   5C:  ADDIU		S6, R0, 1
+   60:  DADDU		S4, S0, R0
+        .o64
+   64:  SLTIU		V0, S1, 81
+   68:  BNE			V0, R0, .o74
+   6C:  DADDU		S0, S1, R0
+   70:  ADDIU		S0, R0, 80
+        .o74
+   74:  ADDIU		A0, SP, 18
+   78:  DADDU		A1, R0, R0
+   7C:  ANDI		A2, S3, FFFF
+   80:  ADDU		A2, S5, A2
+   84:  DADDU		A3, S2, R0
+   88:  SW			S6, 10 (SP)
+   8C:  JAL			{Func:osFlashReadArray}
+   90:  SW			S4, 14 (SP)
+   94:  DADDU		A0, S4, R0
+   98:  DADDU		A1, R0, R0
+   9C:  JAL			{Func:osRecvMesg}
+   A0:  ADDIU		A2, R0, 1
+   A4:  ADDIU		S3, S3, 1
+   A8:  SUBU		S1, S1, S0
+   AC:  BNE			S1, R0, .o64
+   B0:  ADDU		S2, S2, S0
+        .oB4
+   B4:  LW			RA, 6C (SP)
+   B8:  LW			S6, 68 (SP)
+   BC:  LW			S5, 64 (SP)
+   C0:  LW			S4, 60 (SP)
+   C4:  LW			S3, 5C (SP)
+   C8:  LW			S2, 58 (SP)
+   CC:  LW			S1, 54 (SP)
+   D0:  LW			S0, 50 (SP)
+   D4:  ADDIU		V0, R0, 1
+   D8:  JR			RA
+   DC:  ADDIU		SP, SP, 70
+%/
+
+/% NOT CHANGED
+% 00006D48 --> 8002B948
+#new:Function $Function_fio_write_flash
+    0:  ADDIU		SP, SP, FF98
+    4:  SW			S5, 5C (SP)
+    8:  DADDU		S5, A0, R0
+    C:  SW			S2, 50 (SP)
+   10:  DADDU		S2, A1, R0
+   14:  SW			S1, 4C (SP)
+   18:  DADDU		S1, A2, R0
+   1C:  DADDU		A0, S2, R0
+   20:  DADDU		A1, S1, R0
+   24:  SW			RA, 60 (SP)
+   28:  SW			S4, 58 (SP)
+   2C:  SW			S3, 54 (SP)
+   30:  JAL			{Func:osWritebackDCache}
+   34:  SW			S0, 48 (SP)
+   38:  ADDIU		S0, SP, 28
+   3C:  DADDU		A0, S0, R0
+   40:  ADDIU		A1, SP, 40
+   44:  JAL			{Func:osCreateMesgQueue}
+   48:  ADDIU		A2, R0, 1
+   4C:  BEQ			S1, R0, .oAC
+   50:  DADDU		S3, R0, R0
+   54:  DADDU		S4, S0, R0
+   58:  SLL			S5, S5, 7
+        .o5C
+   5C:  SLTIU		V0, S1, 81
+   60:  BNE			V0, R0, .o6C
+   64:  DADDU		S0, S1, R0
+   68:  ADDIU		S0, R0, 80
+        .o6C
+   6C:  ADDIU		A0, SP, 10
+   70:  DADDU		A1, R0, R0
+   74:  DADDU		A2, S2, R0
+   78:  JAL			{Func:osFlashWriteBuffer}
+   7C:  DADDU		A3, S4, R0
+   80:  ANDI		A0, S3, FFFF
+   84:  JAL			{Func:osFlashWriteArray}
+   88:  ADDU		A0, S5, A0
+   8C:  DADDU		A0, S4, R0
+   90:  DADDU		A1, R0, R0
+   94:  JAL			{Func:osRecvMesg}
+   98:  ADDIU		A2, R0, 1
+   9C:  ADDIU		S3, S3, 1
+   A0:  SUBU		S1, S1, S0
+   A4:  BNE			S1, R0, .o5C
+   A8:  ADDU		S2, S2, S0
+        .oAC
+   AC:  LW			RA, 60 (SP)
+   B0:  LW			S5, 5C (SP)
+   B4:  LW			S4, 58 (SP)
+   B8:  LW			S3, 54 (SP)
+   BC:  LW			S2, 50 (SP)
+   C0:  LW			S1, 4C (SP)
+   C4:  LW			S0, 48 (SP)
+   C8:  ADDIU		V0, R0, 1
+   CC:  JR			RA
+   D0:  ADDIU		SP, SP, 68
+%/
+
+/% NOT CHANGED
+% 00006E1C --> 8002BA1C
+#new:Function $Function_fio_erase_flash
+    0:  ADDIU		SP, SP, FFE8
+    4:  SW			RA, 10 (SP)
+    8:  JAL			{Func:osFlashSectorErase}
+    C:  SLL			A0, A0, 7
+   10:  LW			RA, 10 (SP)
+   14:  JR			RA
+   18:  ADDIU		SP, SP, 18
+%/

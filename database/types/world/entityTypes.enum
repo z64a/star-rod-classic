@@ -1,0 +1,87 @@
+EntityType	% namespace
+entityType	% library name
+false		% reversed
+
+% 00
+01 = Shadow
+% 02
+03 = Padlock
+04 = PadlockRedFrame
+05 = PadlockRedFace
+06 = PadlockBlueFace
+07 = BlueSwitch
+
+08 = RedSwitch
+09 = HugeBlueSwitch
+0A = GreenStompSwitch
+0B = MultiTriggerBlock
+0C = PushBlock
+0D = BrickBlock
+0E = MultiCoinBrick
+0F = YellowBlock
+
+10 = SingleTriggerBlock
+11 = HiddenYellowBlock
+12 = HiddenRedBlock
+13 = InactiveBLock
+14 = RedBlock
+15 = Hammer1Block
+16 = Hammer2Block
+17 = Hammer3Block
+
+18 = Hammer1BlockTiny
+19 = Hammer2BlockTiny
+1A = Hammer3BlockTiny
+1B = HealingBlock
+% 1C
+% 1D
+% 1E
+1F = HealingBlockFrame
+
+20 = SavePoint
+21 = PowBlock
+22 = SuperBlock
+23 = UltraBlock
+24 = WoodenCrate
+25 = BoardedFloor
+26 = BombableRock
+% 27
+
+% 28
+% 29
+% 2A
+2B = BlueWarpPipe
+% 2C
+% 2D
+2E = SimpleSpring
+2F = ScriptSpring
+
+30 = HiddenPanel
+31 = StarBoxLaucher
+32 = Chest
+33 = Signpost
+34 = RedArrowSigns
+35 = BellbellPlant
+36 = TrumpetPlant
+37 = Munchlesia
+
+38 = CymbalPlant
+39 = PinkFlower
+3A = SpinningFlower
+% 3B
+3C = Tweester
+% 3D
+% 3E
+3F = HealingBlockContent
+
+% 40
+41 = SuperBlockHitEffect
+42 = UltraBlockHitEffect
+43 = ResetMunchlesia
+44 = MunchlesiaGrab
+45 = MunchlesiaEnvelop
+46 = MunchlesiaBeginChew
+47 = MunchlesiaChewing
+48 = MunchlesiaSpitOut
+49 = MunchlesiaReset1
+4A = MunchlesiaReset2

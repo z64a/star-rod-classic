@@ -1,0 +1,20 @@
+% shadow
+type: ram
+size: 78
+fields:
+{
+	  0 : flags              : int
+	  4 : listIndex          : ubyte
+	  5 : unk_05             : ubyte
+	  6 : unk_06             : ubyte
+	  7 : _padding_07        : ubyte
+	  8 : entityModelID      : short
+	  A : vertexSegment      : short
+	  C : vertexArray        : f3dex2_vertex**
+	 10 : position           : float[3`]
+	 1C : scale              : float[3`]
+	 28 : rotation           : float[3`]
+	 34 : _padding_3C        : int
+	 38 : transformMatrix    : matrix4s
+}
+

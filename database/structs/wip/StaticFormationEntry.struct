@@ -1,0 +1,12 @@
+% StaticFormationEntry
+type: ram
+size: 14
+fields:
+{
+	  0 : sjisName           : char*
+	  4 : numActors          : int
+	  8 : actors             : StaticFormationActor*
+	  C : stageName          : char*
+	 10 : _zero_10           : int
+}
+

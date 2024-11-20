@@ -1,0 +1,28 @@
+
+@Hook F4A4 % intro_logos_update (800340A4)
+{
+	PUSH    RA
+	LIO     V1, 800D9624
+	LW      A0, 0 (V1)
+	
+	SLTI    V0, A0, 4
+	BEQL    V0, R0, 4
+	CLEAR   A0
+	LAW     V1, 8007419C
+	SB      A0, 166 (V1)
+	
+	% from menu code 80247a88
+	JAL     8002B2D0 % fio_load_game
+	LBU     A0, 166 (V1)
+	
+%	JAL     801382A0
+%	ADDIU   A0, R0, 0   % special effect type here
+	
+	JAL     800334F0 % set_game_mode
+	ADDIU   A0, R0, 7
+	
+	LIO		V1, 8009A650
+	SW		R0, 0 (V1)
+
+	JPOP    RA
+}

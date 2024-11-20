@@ -1,0 +1,18 @@
+% unk_struct_8013AF70
+% renderable_quad in 8013af70
+type: ram
+size: 20
+fields:
+{
+	  0 : raster             : ptr
+	  4 : palette            : ptr
+	  8 : width              : short
+	  A : height             : short
+	  C : negativeHalfWidth  : short
+	  E : duplicateHeight    : short
+	 10 : alpha              : ubyte
+%	 11 : UNK 7
+	 18 : quadCacheIndex     : int
+	 1C : mtx                : matrix4f*
+}
+

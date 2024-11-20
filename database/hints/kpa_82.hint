@@ -1,0 +1,141 @@
+
+name	802404A0	Script_SetMusic
+
+name	80240510	ModelList_RightDoor
+name	8024052C	ModelList_LeftDoor
+
+name	80240548	Script_ExitDoubleDoor_Simple
+name	802405EC	Script_ExitDoubleDoor_Face
+name	80240690	Script_InspectFaceDoor
+
+name	802406D0	Script_BindTriggers
+name	80240754	Script_EnterMap
+
+name	80240A80	NpcSettings_AntiGuy
+
+% used for Bobombs and Goombas
+name	80240AAC	AISettings_Short
+name	80240ADC	Script_NpcAI_Short
+
+name	80240AFC	NpcSettings_Bobomb
+
+name	80240B28	AISettings_Koopa
+name	80240B58	Script_NpcAI_Koopa
+
+name	80240B78	NpcSettings_KoopaTroopa
+
+name	80240BA4	AISettings_ShyGuy
+name	80240BD4	Script_NpcAI_ShyGuy
+
+name	80240BF4	NpcSettings_ShyGuy
+
+name	80240C28	Script_ChooseKey_UnusedA
+name	80240D6C	Script_BindLock_UnusedA
+
+name	80240DBC	Script_ChooseKey_UnusedB
+name	80240EF0	Script_BindLock_UnusedB
+
+name	80240F40	Script_CamFocusDoor
+name	8024129C	Script_CamShowRoom
+
+name	80241454	Script_OpenDoors
+name	80241590	Script_CloseDoors
+
+name	802416CC	Script_ReleaseFrom_Door0
+name	80241774	Script_ReleaseFrom_Door1
+name	8024181C	Script_ReleaseFrom_Door2
+
+name	802418C4	Script_WithdrawTo_Door0
+name	80241944	Script_WithdrawTo_Door1
+name	802419C4	Script_WithdrawTo_Door2
+
+name	80241AC4	Script_WithdrawTo_RandomDoor
+name	80241A44	Script_ReleaseFrom_RandomDoor
+
+name	80241B44	Script_Idle_Goomba
+name	80241B54	Script_Release_Goomba
+name	80241BA0	Script_Withdraw_Goomba
+
+name	80241BCC	Script_Idle_ShyGuy
+name	80241BDC	Script_Release_RedShyGuy
+name	80241C28	Script_Withdraw_RedShyGuy
+name	80241C54	Script_Release_RedShyGuy_Door1
+name	80241CA0	Script_Withdraw_RedShyGuy_Door1
+name	80241CCC	Script_Release_BlueShyGuy
+name	80241D18	Script_Withdraw_BlueShyGuy
+name	80241D44	Script_Release_BlueShyGuy_Door2
+name	80241D90	Script_Withdraw_BlueShyGuy_Door2
+name	80241DBC	Script_Release_GreenShyGuy
+name	80241E08	Script_Withdraw_GreenShyGuy
+
+name	80241E34	Script_Idle_KoopaTroopa
+name	80241E44	Script_Release_DarkTroopa
+name	80241E90	Script_Withdraw_DarkTroopa
+name	80241EBC	Script_Release_KoopaTroopa
+name	80241F08	Script_Withdraw_KoopaTroopa
+
+name	80241F34	Script_Idle_Bobomb
+name	80241F44	Script_Release_Bobomb
+name	80241F90	Script_Withdraw_Bobomb
+name	80241FBC	Script_Release_Bobomb_Door0
+name	80242008	Script_Withdraw_Bobomb_Door0
+
+name	80242034	Script_Release_Wave0
+name	802420A0	Script_Release_Wave1
+name	8024214C	Script_Release_Wave2
+name	802421A8	Script_Release_Wave3
+name	80242224	Script_Release_Wave4
+name	80242250	Script_Release_Wave5
+name	802422EC	Script_Release_Wave6
+
+newline	80242034	2
+newline	802420A0	2
+newline	8024214C	2
+newline	802421A8	2
+newline	80242224	2
+newline	80242250	2
+newline	802422EC	2
+
+name	80242370	Script_Withdraw_Wave0
+name	802423AC	Script_Withdraw_Wave1
+name	80242408	Script_Withdraw_Wave2
+name	8024244C	Script_Withdraw_Wave3
+name	802424A0	Script_Withdraw_Wave4
+name	802424BC	Script_Withdraw_Wave5
+name	80242510	Script_Withdraw_Wave6
+
+newline	80242370	2
+newline	802423AC	2
+newline	80242408	2
+newline	8024244C	2
+newline	802424A0	2
+newline	802424BC	2
+newline	80242510	2
+
+name	80242564	Script_Release_Wave
+name	802426B4	Script_Withdraw_Wave
+
+name	80242804	Script_AskQuestion
+
+name	802432AC	Script_ShowResultCard
+
+name	80243460	Script_Idle_Door
+name	80243FD0	Script_Defeat_Door
+
+name	8024416C	Script_Init_Door
+name	80244204	Script_Init_Goomba
+name	80244258	Script_Init_ShyGuy
+name	802442AC	Script_Init_KoopaTroopa
+name	80244300	Script_Init_Bobomb
+name	80244354	Script_Init_AntiGuy
+
+name	80244364	NpcGroup_Antiguys
+name	80244B24	NpcGroup_Goombas
+name	802454D4	NpcGroup_RedShyGuys
+name	80245E84	NpcGroup_BlueShyGuys
+name	80246834	NpcGroup_GreenShyGuys
+name	802471E4	NpcGroup_DarkTroopas
+name	80247B94	NpcGroup_KoopaTroopas
+name	80248544	NpcGroup_Bobombs
+
+name	80248EF4	NpcGroups

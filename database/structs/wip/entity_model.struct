@@ -1,0 +1,19 @@
+% entity_model
+type: ram
+size: 68
+fields:
+{
+	  0 : flags              : int
+	  4 : renderMode         : ubyte
+%	  5 : UNK 3
+	  8 : nextFrameTime      : float      % set to 1.0 after each update
+	  C : timeScale          : float      % default: 1.0
+	 10 : cmdListReadPos     : uint*
+	 14 : displayList        : gfx*
+	 18 : transformMatrix    : matrix4s
+	 58 : cmdListSavedPos    : uint*
+	 5C : vertexArray        : f3dex2_vertex**
+	 60 : fpSetupGfxCallback : code
+	 64 : setupGfxCallbackArg0 : int
+}
+

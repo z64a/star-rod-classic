@@ -1,0 +1,14 @@
+% window_style_custom
+type: ram
+size: 38
+fields:
+{
+	  0 : background         : window_background
+	  C : corners            : window_corners
+%	 1C : UNK 4
+	 20 : opaqueCombineMode  : int[2`]    % used when alpha == 255
+	 28 : transparentCombineMode : int[2`]    % used when alpha < 255
+	 30 : color1             : byte[4`]
+	 34 : color2             : byte[4`]
+}
+

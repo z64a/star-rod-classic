@@ -1,0 +1,33 @@
+% savedata
+type: ram
+size: 1380
+fields:
+{
+	  0 : magicString        : char[16`]  % "Mario Story 006" string
+	 10 : pad                : byte[32`]  % always zero
+	 30 : crc1               : int
+	 34 : crc2               : int
+	 38 : saveSlot           : int
+	 3C : saveCount          : int
+	 40 : player             : player_data
+%	380 : UNK E0
+	460 : starPoints         : int
+%	464 : UNK 4
+	468 : areaID             : short
+	46A : mapID              : short
+	46C : entryID            : short
+%	46E : UNK 2
+	470 : enemyDefeatFlags   : int[720`]
+	FB0 : globalFlag         : byte[256`]
+	10B0 : globalByte         : byte[512`]
+	12B0 : areaFlag           : byte[32`]
+	12D0 : areaByte           : byte[16`]
+%	12E0 : UNK 6
+	12E6 : savePos            : short[3`]
+	12EC : field_0x12ec       : int
+	12F0 : field_0x12f0       : char[12`]  % player name starts at 4th char
+	12FC : field_0x12fc       : int
+	1300 : field_0x1300       : int
+%	1304 : UNK 7C
+}
+

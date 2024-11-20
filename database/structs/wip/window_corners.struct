@@ -1,0 +1,14 @@
+% window_corners
+type: ram
+size: 10
+fields:
+{
+	  0 : imgData            : ptr
+	  4 : packedTileFormat   : ubyte      % upper = fmt, lower = depth; e.g., 31 = CI-8
+	  5 : size1              : byte[2`]
+	  7 : size2              : byte[2`]
+	  9 : size3              : byte[2`]
+	  B : size4              : byte[2`]
+%	  D : UNK 3
+}
+

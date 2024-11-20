@@ -1,0 +1,33 @@
+
+#new:Script $Script_Chest_GiveItem
+{
+	Call  DisablePlayerInput    ( .True )
+	Set   *Var[0]  *Var[A]
+	If  *Var[A]  !=  00000000
+		ExecWait  $Script_Chest_ShowGotItem
+	EndIf
+	Switch  *Var[B]
+		Case  ==  00000000
+			Call  AddItem   ( *Var[A] *Var[0] )
+		Case  ==  00000001
+			Call  AddKeyItem    ( *Var[A] )
+		Case  ==  00000002
+			Call  AddBadge  ( *Var[A] *Var[0] )
+	EndSwitch
+	Wait  15`
+	Call  DisablePlayerInput    ( .False )
+	Return
+	End
+}
+
+#new:Script $Script_Chest_ShowGotItem
+{
+	SetGroup  00000000
+	Call  802D5830      ( 00000002 )
+	Wait  40`
+	Call  ShowGotItem   ( *Var[0] .False 00000000 )
+	Call  802D5830      ( 00000000 )
+	Return
+	Return
+	End
+}

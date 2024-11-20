@@ -1,0 +1,11 @@
+% PlayerSpriteCacheEntry
+type: ram
+size: 10
+fields:
+{
+	  0 : useCount?          : int        % decremented every frame
+	  4 : rasterIndex        : int        % raster ID for sprite, 0 to N
+	  8 : spriteIndex        : int        % player sprite ID, 0 to C
+	  C : raster             : ptr
+}
+
