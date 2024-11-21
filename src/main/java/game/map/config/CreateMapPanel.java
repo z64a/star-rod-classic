@@ -40,7 +40,7 @@ public class CreateMapPanel extends JPanel
 		mapNameField.setBorder(BorderFactory.createCompoundBorder(
 			mapNameField.getBorder(),
 			BorderFactory.createEmptyBorder(2, 4, 2, 4)));
-		mapNameField.setDocument(new LimitedLengthDocument(7));
+		mapNameField.setDocument(new LimitedLengthDocument(8));
 
 		mapNameField.setText(defaultName);
 
@@ -50,7 +50,7 @@ public class CreateMapPanel extends JPanel
 		bgField.setBorder(BorderFactory.createCompoundBorder(
 			bgField.getBorder(),
 			BorderFactory.createEmptyBorder(2, 4, 2, 4)));
-		bgField.setDocument(new LimitedLengthDocument(7));
+		bgField.setDocument(new LimitedLengthDocument(8));
 
 		mapNicknameField = new JTextField();
 		mapNicknameField.setBorder(BorderFactory.createCompoundBorder(
