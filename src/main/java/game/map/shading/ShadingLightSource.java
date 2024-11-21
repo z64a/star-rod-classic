@@ -242,10 +242,25 @@ public class ShadingLightSource extends PointObject implements XmlSerializable
 		texShader.multiplyBaseColor.set(true);
 		texShader.selected.set(selected);
 
-		Vector3f deltaPos = Vector3f.sub(cameraPos, position.getVector());
-		double R = Math.sqrt(deltaPos.x * deltaPos.x + deltaPos.z * deltaPos.z);
-		float renderYaw = -(float) Math.toDegrees(Math.atan2(deltaPos.x, deltaPos.z));
-		float renderPitch = (float) Math.toDegrees(Math.atan2(deltaPos.y, R));
+		float renderYaw = 0;
+		float renderPitch = 0;
+
+		switch (viewport.type) {
+			case PERSPECTIVE:
+				Vector3f deltaPos = Vector3f.sub(cameraPos, position.getVector());
+				double R = Math.sqrt(deltaPos.x * deltaPos.x + deltaPos.z * deltaPos.z);
+				renderYaw = -(float) Math.toDegrees(Math.atan2(deltaPos.x, deltaPos.z));
+				renderPitch = (float) Math.toDegrees(Math.atan2(deltaPos.y, R));
+				break;
+			case FRONT:
+				break;
+			case SIDE:
+				renderYaw = 90.0f;
+				break;
+			case TOP:
+				renderPitch = 90.0f;
+				break;
+		}
 
 		TransformMatrix mtx = TransformMatrix.identity();
 		mtx.rotate(Axis.X, -renderPitch);
