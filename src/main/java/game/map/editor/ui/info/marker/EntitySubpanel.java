@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -39,41 +40,8 @@ import util.ui.IntTextField;
 import util.ui.StringField;
 import util.ui.StringSelectorDialog;
 
-public class MarkerEntityTab extends JPanel implements ActionListener
+public class EntitySubpanel extends JPanel implements ActionListener
 {
-	//TODO
-	/*
-	private static class FieldPanel extends JPanel
-	{
-		private FieldPanel(String text, JCheckBox cb, JComponent comp)
-		{
-			setLayout(new MigLayout("fillx, ins 0", "[][grow][70%]"));
-			add(cb);
-			add(new JLabel(text));
-			add(comp, "growx");
-		}
-	
-		private FieldPanel(String text, JCheckBox cb, JComponent comp, JButton but)
-		{
-			setLayout(new MigLayout("fillx, ins 0", "[][grow][][]"));
-			add(cb);
-			add(new JLabel(text));
-			add(comp, "w 61%!");
-			add(but, "w 7%!");
-		}
-	
-		private FieldPanel(String text, JCheckBox cb, JComponent comp, JButton but1, JButton but2)
-		{
-			setLayout(new MigLayout("fillx, ins 0", "[][grow][70%]"));
-			add(cb);
-			add(new JLabel(text));
-			add(comp, "growx, pushx, split 3");
-			add(but1);
-			add(but2);
-		}
-	}
-	*/
-
 	private static class MarkerFieldPanel<T extends JComponent> extends JPanel
 	{
 		private final LabelWithTip lbl;
@@ -160,9 +128,11 @@ public class MarkerEntityTab extends JPanel implements ActionListener
 
 	private JCheckBox cbHasFlag;
 	private StandardEditableComboBox flagNameBox;
+	private JButton selectGameFlagButton;
 
 	private JCheckBox cbHasSpawnFlag;
 	private StandardEditableComboBox spawnFlagNameBox;
+	private JButton selectSpawnFlagButton;
 
 	private MarkerFieldPanel<StandardEditableComboBox> itemSpawnPanel;
 
@@ -187,6 +157,7 @@ public class MarkerEntityTab extends JPanel implements ActionListener
 
 	private JCheckBox cbHasItem;
 	private StandardEditableComboBox itemNameBox;
+	private JButton selectItemButton;
 
 	private String openBoxChooserDialog(JComboBox<?> box, String title)
 	{
@@ -203,7 +174,7 @@ public class MarkerEntityTab extends JPanel implements ActionListener
 			return null;
 	}
 
-	public MarkerEntityTab(MarkerInfoPanel parent)
+	public EntitySubpanel(MarkerInfoPanel parent)
 	{
 		this.parent = parent;
 
@@ -220,67 +191,13 @@ public class MarkerEntityTab extends JPanel implements ActionListener
 		SwingUtils.addBorderPadding(entityTypeButton);
 		entityTypeButton.setHorizontalAlignment(SwingConstants.LEFT);
 
-		//TODO
-		/*
-		add(new JLabel("Entity Type"), "split 2, growx");
-		add(entityTypeButton, "w 70%!");
-
-		addItemPanel();
-
-		addGameFlagPanel();
-		addAreaFlagPanel();
-		addMapVarPanel();
-		addScriptPanel();
-		
-		addIndexPanel();
-		addStylePanel();
-		
-		addModelPanel();
-		addColliderPanel();
-		addTargetPanel();
-		
-		addEntryPanel();
-		addPathsPanel();
-		addAnglePanel();
-		addLaunchDistPanel();
-		addSpawnModePanel();
-
-		add(new JLabel(), "pushy");
-		*/
-
 		cbHasCallback = new JCheckBox(" Has script callback");
 		cbHasCallback.addActionListener((e) -> MapEditor.execute(
 			parent.getData().entityComponent.hasCallback.mutator(cbHasCallback.isSelected())));
 
-		cbHasFlag = new JCheckBox(" Sets flag");
-		cbHasFlag.addActionListener((e) -> MapEditor.execute(
-			parent.getData().entityComponent.hasFlag.mutator(cbHasFlag.isSelected())));
-
-		flagNameBox = new StandardEditableComboBox((s) -> {
-			if (parent.ignoreEvents() || parent.getData() == null)
-				return;
-			MapEditor.execute(parent.getData().entityComponent.flagName.mutator(s));
-		}, ProjectDatabase.getModFlagList());
-
-		cbHasSpawnFlag = new JCheckBox(" Spawn flag");
-		cbHasSpawnFlag.addActionListener((e) -> MapEditor.execute(
-			parent.getData().entityComponent.hasSpawnFlag.mutator(cbHasSpawnFlag.isSelected())));
-
-		spawnFlagNameBox = new StandardEditableComboBox((s) -> {
-			if (parent.ignoreEvents() || parent.getData() == null)
-				return;
-			MapEditor.execute(parent.getData().entityComponent.spawnFlagName.mutator(s));
-		}, ProjectDatabase.getModFlagList());
-
-		cbHasItem = new JCheckBox(" Has item");
-		cbHasItem.addActionListener((e) -> MapEditor.execute(
-			parent.getData().entityComponent.hasItem.mutator(cbHasItem.isSelected())));
-
-		itemNameBox = new StandardEditableComboBox((s) -> {
-			if (parent.ignoreEvents() || parent.getData() == null)
-				return;
-			MapEditor.execute(parent.getData().entityComponent.itemName.mutator(s));
-		}, ProjectDatabase.getItemNames());
+		makeGameFlagFields();
+		makeSpawnFlagFields();
+		makeItemFields();
 
 		StandardEditableComboBox itemSpawnField = new StandardEditableComboBox((s) -> {
 			if (parent.ignoreEvents() || parent.getData() == null)
@@ -406,58 +323,100 @@ public class MarkerEntityTab extends JPanel implements ActionListener
 		});
 		pipeEntryPanel = new MarkerFieldPanel<>(pipeEntryBox, "Map Entry", "Entry should be placed 35 units above the ground.");
 
-		JPanel contents = new JPanel(new MigLayout("fillx, ins 0, hidemode 3, wrap"));
+		setLayout(new MigLayout("fillx, ins 0, hidemode 3, wrap"));
 
 		String layoutConst = "sgy row, growx";
 
-		contents.add(new JLabel("Type"), "split 2, w 28%!");
-		contents.add(entityTypeButton, "w 50%!");
+		add(new JLabel("Entity Type"), "split 2, w 28%!");
+		add(entityTypeButton, "w 50%!");
 
-		contents.add(pipeEntryPanel, layoutConst);
+		add(pipeEntryPanel, layoutConst);
 
-		contents.add(cbHasAreaFlag, "split 2, w 28%!");
-		contents.add(areaFlagField, "w 25%!");
+		add(cbHasAreaFlag, "split 2, w 28%!");
+		add(areaFlagField, "w 25%!");
 
-		contents.add(mapVarPanel, layoutConst);
+		add(mapVarPanel, layoutConst);
 
-		contents.add(cbHasFlag, "split 2, w 28%!");
-		contents.add(flagNameBox, "growx");
+		add(cbHasFlag, "split 3, w 28%!");
+		add(flagNameBox, "w 60%!");
+		add(selectGameFlagButton);
 
-		contents.add(cbHasSpawnFlag, "split 2, w 28%!");
-		contents.add(spawnFlagNameBox, "growx");
+		add(cbHasSpawnFlag, "split 3, w 28%!");
+		add(spawnFlagNameBox, "w 60%!");
+		add(selectSpawnFlagButton);
 
-		contents.add(cbHasItem, "split 2, w 28%!");
-		contents.add(itemNameBox, "w 50%!");
-		contents.add(itemSpawnPanel, "growx");
+		add(cbHasItem, "split 3, w 28%!");
+		add(itemNameBox, "w 60%!");
+		add(selectItemButton);
 
-		contents.add(modelPanel, layoutConst);
-		contents.add(colliderPanel, layoutConst);
-		contents.add(destMarkerPanel, layoutConst);
-		contents.add(pathMarkerPanel, layoutConst);
+		add(itemSpawnPanel, "growx");
 
-		contents.add(launchHeightPanel, layoutConst);
-		contents.add(launchTimePanel, layoutConst);
-		contents.add(signAnglePanel, layoutConst);
+		add(modelPanel, layoutConst);
+		add(colliderPanel, layoutConst);
+		add(destMarkerPanel, layoutConst);
+		add(pathMarkerPanel, layoutConst);
 
-		contents.add(destMapPanel, layoutConst);
-		contents.add(destEntryPanel, layoutConst);
+		add(launchHeightPanel, layoutConst);
+		add(launchTimePanel, layoutConst);
+		add(signAnglePanel, layoutConst);
 
-		contents.add(cbHasCallback, layoutConst);
+		add(destMapPanel, layoutConst);
+		add(destEntryPanel, layoutConst);
 
-		setLayout(new MigLayout("fill, ins n 16 n 16"));
-		add(contents, "growx, gapbottom push");
+		add(cbHasCallback, layoutConst);
 	}
 
-	//TODO
-	/*
-	private void addItemPanel()
+	private void makeGameFlagFields()
 	{
-		cbHasItem = new JCheckBox();
-		cbHasItem.addActionListener((e) -> MapEditor.execute(
-			parent.getData().entityComponent.itemName.enabler(cbHasItem.isSelected())
-		));
+		cbHasFlag = new JCheckBox(" Sets flag");
+		cbHasFlag.addActionListener((e) -> MapEditor.execute(
+			parent.getData().entityComponent.hasFlag.mutator(cbHasFlag.isSelected())));
 
-		itemBox = new StandardEditableComboBox((s) -> {
+		flagNameBox = new StandardEditableComboBox((s) -> {
+			if (parent.ignoreEvents() || parent.getData() == null)
+				return;
+			MapEditor.execute(parent.getData().entityComponent.flagName.mutator(s));
+		}, ProjectDatabase.getModFlagList());
+
+		selectGameFlagButton = new JButton("~");
+		selectGameFlagButton.setToolTipText("Select from list");
+		selectGameFlagButton.addActionListener((e) -> {
+			String newFlag = openBoxChooserDialog(flagNameBox, "Choose Game Flag");
+			if (newFlag != null)
+				MapEditor.execute(parent.getData().entityComponent.flagName.mutator(newFlag));
+		});
+		SwingUtils.addBorderPadding(selectGameFlagButton);
+	}
+
+	private void makeSpawnFlagFields()
+	{
+		cbHasSpawnFlag = new JCheckBox(" Spawn flag");
+		cbHasSpawnFlag.addActionListener((e) -> MapEditor.execute(
+			parent.getData().entityComponent.hasSpawnFlag.mutator(cbHasSpawnFlag.isSelected())));
+
+		spawnFlagNameBox = new StandardEditableComboBox((s) -> {
+			if (parent.ignoreEvents() || parent.getData() == null)
+				return;
+			MapEditor.execute(parent.getData().entityComponent.spawnFlagName.mutator(s));
+		}, ProjectDatabase.getModFlagList());
+
+		selectSpawnFlagButton = new JButton("~");
+		selectSpawnFlagButton.setToolTipText("Select from list");
+		selectSpawnFlagButton.addActionListener((e) -> {
+			String newFlag = openBoxChooserDialog(spawnFlagNameBox, "Choose Game Flag");
+			if (newFlag != null)
+				MapEditor.execute(parent.getData().entityComponent.spawnFlagName.mutator(newFlag));
+		});
+		SwingUtils.addBorderPadding(selectSpawnFlagButton);
+	}
+
+	private void makeItemFields()
+	{
+		cbHasItem = new JCheckBox(" Has item");
+		cbHasItem.addActionListener((e) -> MapEditor.execute(
+			parent.getData().entityComponent.hasItem.mutator(cbHasItem.isSelected())));
+
+		itemNameBox = new StandardEditableComboBox((s) -> {
 			if (parent.ignoreEvents() || parent.getData() == null)
 				return;
 			MapEditor.execute(parent.getData().entityComponent.itemName.mutator(s));
@@ -465,16 +424,12 @@ public class MarkerEntityTab extends JPanel implements ActionListener
 
 		selectItemButton = new JButton("~");
 		selectItemButton.addActionListener((e) -> {
-			String newName = openBoxChooserDialog(itemBox, "Choose Item");
+			String newName = openBoxChooserDialog(itemNameBox, "Choose Item");
 			if (newName != null)
 				MapEditor.execute(parent.getData().entityComponent.itemName.mutator(newName));
 		});
 		SwingUtils.addBorderPadding(selectItemButton);
-
-		itemPanel = new FieldPanel("Item", cbHasItem, itemBox, selectItemButton);
-		add(itemPanel, "growx");
 	}
-	*/
 
 	private JPopupMenu createPopupMenu(JPopupMenu popupMenu)
 	{
@@ -521,133 +476,6 @@ public class MarkerEntityTab extends JPanel implements ActionListener
 		pipeEntryPanel.child().updateNames(parent.getData().entityComponent.pipeEntry.get());
 	}
 
-	//TODO
-	/*
-	private void updateBoxPanel(MapKey key, JPanel panel, JCheckBox cb,
-		StandardEditableComboBox ui, EditableField<String> field)
-	{
-		EntityComponent data = parent.getData().entityComponent;
-		EntityParam param = data.type.get().getParam(key);
-	
-		if (param != null) {
-			boolean cbEnabled;
-			boolean uiEnabled;
-	
-			if (param.required) {
-				cbEnabled = false;
-				uiEnabled = true;
-			}
-			else {
-				cbEnabled = true;
-				uiEnabled = field.isEnabled();
-			}
-	
-			cb.setEnabled(cbEnabled);
-			cb.setSelected(uiEnabled);
-			ui.setEnabled(uiEnabled);
-	
-			ui.setSelectedItem(field.get());
-			panel.setVisible(true);
-		}
-		else {
-			panel.setVisible(false);
-		}
-	}
-	
-	private void updateMapObjPanel(MapKey key, JPanel panel, JCheckBox cb,
-		MapObjectComboBox ui, EditableField<String> field)
-	{
-		EntityComponent data = parent.getData().entityComponent;
-		EntityParam param = data.type.get().getParam(key);
-	
-		if (param != null) {
-			boolean cbEnabled;
-			boolean uiEnabled;
-	
-			if (param.required) {
-				cbEnabled = false;
-				uiEnabled = true;
-			}
-			else {
-				cbEnabled = true;
-				uiEnabled = field.isEnabled();
-			}
-	
-			cb.setEnabled(cbEnabled);
-			cb.setSelected(uiEnabled);
-			ui.setEnabled(uiEnabled);
-	
-			ui.setSelectedItem(field.get());
-			panel.setVisible(true);
-		}
-		else {
-			panel.setVisible(false);
-		}
-	}
-	
-	private void updateStringPanel(MapKey key, JPanel panel, JCheckBox cb,
-		StringField ui, EditableField<String> field)
-	{
-		EntityComponent data = parent.getData().entityComponent;
-		EntityParam param = data.type.get().getParam(key);
-	
-		if (param != null) {
-			boolean cbEnabled;
-			boolean uiEnabled;
-	
-			if (param.required) {
-				cbEnabled = false;
-				uiEnabled = true;
-			}
-			else {
-				cbEnabled = true;
-				uiEnabled = field.isEnabled();
-			}
-	
-			cb.setEnabled(cbEnabled);
-			cb.setSelected(uiEnabled);
-			ui.setEnabled(uiEnabled);
-	
-			ui.setText(field.get());
-			panel.setVisible(true);
-		}
-		else {
-			panel.setVisible(false);
-		}
-	}
-	
-	private void updateIntPanel(MapKey key, JPanel panel, JCheckBox cb,
-		IntTextField ui, EditableField<Integer> field)
-	{
-		EntityComponent data = parent.getData().entityComponent;
-		EntityParam param = data.type.get().getParam(key);
-	
-		if (param != null) {
-			boolean cbEnabled;
-			boolean uiEnabled;
-	
-			if (param.required) {
-				cbEnabled = false;
-				uiEnabled = true;
-			}
-			else {
-				cbEnabled = true;
-				uiEnabled = field.isEnabled();
-			}
-	
-			cb.setEnabled(cbEnabled);
-			cb.setSelected(uiEnabled);
-			ui.setEnabled(uiEnabled);
-	
-			ui.setValue(field.get());
-			panel.setVisible(true);
-		}
-		else {
-			panel.setVisible(false);
-		}
-	}
-	*/
-
 	public void onUpdateFields()
 	{
 		boolean visible;
@@ -662,47 +490,9 @@ public class MarkerEntityTab extends JPanel implements ActionListener
 		if (visible)
 			cbHasCallback.setSelected(data.hasCallback.get());
 
-		boolean hasFlagVisible = ((typeFlags & FIELD_HAS_FLAG) != 0);
-		boolean flagVisible = ((typeFlags & FIELD_FLAG) != 0);
-
-		cbHasFlag.setEnabled(hasFlagVisible);
-		cbHasFlag.setVisible(flagVisible);
-		cbHasFlag.setSelected(!hasFlagVisible || data.hasFlag.get());
-
-		flagNameBox.setVisible(flagVisible);
-		flagNameBox.setEnabled(!hasFlagVisible || data.hasFlag.get());
-		if (flagVisible)
-			flagNameBox.setSelectedItem(data.flagName.get());
-
-		boolean hasSpawnFlagVisible = ((typeFlags & FIELD_HAS_SPAWN_FLAG) != 0);
-		boolean spawnFlagVisible = ((typeFlags & FIELD_SPAWN_FLAG) != 0);
-
-		cbHasSpawnFlag.setEnabled(hasSpawnFlagVisible);
-		cbHasSpawnFlag.setVisible(spawnFlagVisible);
-		cbHasSpawnFlag.setSelected(!hasSpawnFlagVisible || data.hasSpawnFlag.get());
-
-		spawnFlagNameBox.setVisible(spawnFlagVisible);
-		spawnFlagNameBox.setEnabled(!hasSpawnFlagVisible || data.hasSpawnFlag.get());
-		if (spawnFlagVisible)
-			spawnFlagNameBox.setSelectedItem(data.spawnFlagName.get());
-
-		boolean hasItemVisible = ((typeFlags & FIELD_HAS_ITEM) != 0);
-		boolean itemVisible = ((typeFlags & FIELD_ITEM) != 0);
-
-		cbHasItem.setEnabled(hasItemVisible);
-		cbHasItem.setVisible(itemVisible);
-		cbHasItem.setSelected(!hasItemVisible || data.hasItem.get());
-
-		itemNameBox.setVisible(itemVisible);
-		itemNameBox.setEnabled(!hasItemVisible || data.hasItem.get());
-		if (itemVisible)
-			itemNameBox.setSelectedItem(data.itemName.get());
-
-		visible = ((typeFlags & FIELD_ITEM_SPAWN) != 0);
-		itemSpawnPanel.setVisible(visible);
-		itemSpawnPanel.child().setEnabled(!hasItemVisible || data.hasItem.get());
-		if (visible)
-			itemSpawnPanel.child().setSelectedItem(data.itemSpawnMode.get());
+		updateGameFlag(data, typeFlags);
+		updateSpawnFlag(data, typeFlags);
+		updateItem(data, typeFlags);
 
 		visible = ((typeFlags & FIELD_MODEL) != 0);
 		modelPanel.setVisible(visible);
@@ -783,5 +573,65 @@ public class MarkerEntityTab extends JPanel implements ActionListener
 		pipeEntryPanel.setVisible(visible);
 		if (visible)
 			pipeEntryPanel.child().setText(data.pipeEntry.get());
+	}
+
+	private void updateGameFlag(EntityComponent data, int typeFlags)
+	{
+		boolean hasFlagVisible = ((typeFlags & FIELD_HAS_FLAG) != 0);
+		boolean flagVisible = ((typeFlags & FIELD_FLAG) != 0);
+
+		cbHasFlag.setEnabled(hasFlagVisible);
+		cbHasFlag.setVisible(flagVisible);
+		cbHasFlag.setSelected(!hasFlagVisible || data.hasFlag.get());
+
+		flagNameBox.setVisible(flagVisible);
+		flagNameBox.setEnabled(!hasFlagVisible || data.hasFlag.get());
+		if (flagVisible)
+			flagNameBox.setSelectedItem(data.flagName.get());
+
+		selectGameFlagButton.setVisible(flagVisible);
+		selectGameFlagButton.setEnabled(!hasFlagVisible || data.hasFlag.get());
+	}
+
+	private void updateSpawnFlag(EntityComponent data, int typeFlags)
+	{
+		boolean hasSpawnFlagVisible = ((typeFlags & FIELD_HAS_SPAWN_FLAG) != 0);
+		boolean spawnFlagVisible = ((typeFlags & FIELD_SPAWN_FLAG) != 0);
+
+		cbHasSpawnFlag.setEnabled(hasSpawnFlagVisible);
+		cbHasSpawnFlag.setVisible(spawnFlagVisible);
+		cbHasSpawnFlag.setSelected(!hasSpawnFlagVisible || data.hasSpawnFlag.get());
+
+		spawnFlagNameBox.setVisible(spawnFlagVisible);
+		spawnFlagNameBox.setEnabled(!hasSpawnFlagVisible || data.hasSpawnFlag.get());
+		if (spawnFlagVisible)
+			spawnFlagNameBox.setSelectedItem(data.spawnFlagName.get());
+
+		selectSpawnFlagButton.setVisible(spawnFlagVisible);
+		selectSpawnFlagButton.setEnabled(!hasSpawnFlagVisible || data.hasSpawnFlag.get());
+	}
+
+	private void updateItem(EntityComponent data, int typeFlags)
+	{
+		boolean hasItemVisible = ((typeFlags & FIELD_HAS_ITEM) != 0);
+		boolean itemVisible = ((typeFlags & FIELD_ITEM) != 0);
+
+		cbHasItem.setEnabled(hasItemVisible);
+		cbHasItem.setVisible(itemVisible);
+		cbHasItem.setSelected(!hasItemVisible || data.hasItem.get());
+
+		itemNameBox.setVisible(itemVisible);
+		itemNameBox.setEnabled(!hasItemVisible || data.hasItem.get());
+		if (itemVisible)
+			itemNameBox.setSelectedItem(data.itemName.get());
+
+		selectItemButton.setVisible(itemVisible);
+		selectItemButton.setEnabled(!hasItemVisible || data.hasItem.get());
+
+		boolean visible = ((typeFlags & FIELD_ITEM_SPAWN) != 0);
+		itemSpawnPanel.setVisible(visible);
+		itemSpawnPanel.child().setEnabled(!hasItemVisible || data.hasItem.get());
+		if (visible)
+			itemSpawnPanel.child().setSelectedItem(data.itemSpawnMode.get());
 	}
 }

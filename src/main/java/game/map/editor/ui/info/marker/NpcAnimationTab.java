@@ -27,7 +27,7 @@ import net.miginfocom.swing.MigLayout;
 import shared.SwingUtils;
 import util.ui.ListAdapterComboboxModel;
 
-public class MarkerAnimationTab extends JPanel
+public class NpcAnimationTab extends JPanel
 {
 	private final MarkerInfoPanel parent;
 
@@ -40,7 +40,7 @@ public class MarkerAnimationTab extends JPanel
 	private RangeCheckComboBox<?>[] animComboBox = new RangeCheckComboBox[16];
 	private JRadioButton[] animRadioButton = new JRadioButton[16];
 
-	public MarkerAnimationTab(MarkerInfoPanel parent)
+	public NpcAnimationTab(MarkerInfoPanel parent)
 	{
 		this.parent = parent;
 

@@ -44,15 +44,13 @@ public class MarkerInfoPanel extends MapInfoPanel<Marker>
 	private Container subpanelContainer;
 	private GridSubpanel gridSubpanel;
 	private PathSubpanel pathSubpanel;
+	private EntitySubpanel entitySubpanel;
 	private BombPosSubpanel bombPosSubpanel;
 	//private VolumeSubpanel volumeSubpanel;
 
 	private boolean npcTabsAvailable = false;
 	private TerritoryTab territoryTab;
-	private MarkerAnimationTab npcAnimationsTab;
-
-	private boolean entityTabAvailable = false;
-	private MarkerEntityTab entityTab;
+	private NpcAnimationTab npcAnimationsTab;
 
 	private CamTargetSubpanel cameraSubpanel;
 
@@ -70,8 +68,7 @@ public class MarkerInfoPanel extends MapInfoPanel<Marker>
 		super(true);
 
 		territoryTab = new TerritoryTab(this);
-		npcAnimationsTab = new MarkerAnimationTab(this);
-		entityTab = new MarkerEntityTab(this);
+		npcAnimationsTab = new NpcAnimationTab(this);
 
 		tabs = new JTabbedPane();
 		tabs.addTab("Marker", createGeneralTab());
@@ -138,6 +135,7 @@ public class MarkerInfoPanel extends MapInfoPanel<Marker>
 		pathSubpanel = new PathSubpanel(this);
 		gridSubpanel = new GridSubpanel(this);
 		bombPosSubpanel = new BombPosSubpanel(this);
+		entitySubpanel = new EntitySubpanel(this);
 		cameraSubpanel = new CamTargetSubpanel(this);
 
 		JPanel commonMarkerPanel = new JPanel();
@@ -161,7 +159,7 @@ public class MarkerInfoPanel extends MapInfoPanel<Marker>
 		if (getData() == null)
 			return;
 
-		entityTab.onSetData();
+		entitySubpanel.onSetData();
 		npcAnimationsTab.onSetData();
 	}
 
@@ -209,7 +207,8 @@ public class MarkerInfoPanel extends MapInfoPanel<Marker>
 					npcAnimationsTab.updateFields();
 					break;
 				case Entity:
-					entityTab.onUpdateFields();
+					subpanelContainer.add(entitySubpanel, "growx");
+					entitySubpanel.onUpdateFields();
 					break;
 				case CamTarget:
 					subpanelContainer.add(cameraSubpanel, "growx");
@@ -238,20 +237,6 @@ public class MarkerInfoPanel extends MapInfoPanel<Marker>
 					npcTabsAvailable = false;
 				}
 			}
-
-			if (type == MarkerType.Entity) {
-				if (!entityTabAvailable) {
-					tabs.addTab("Entity", entityTab);
-					entityTabAvailable = true;
-				}
-			}
-			else {
-				if (entityTabAvailable) {
-					tabs.remove(entityTab);
-					entityTabAvailable = false;
-				}
-			}
-
 		}
 		SwingGUI.instance().repaintObjectPanel();
 	}

@@ -52,11 +52,12 @@ public class StandardEditableComboBox extends JComboBox<String>
 
 	public void setSelectedItem(String s)
 	{
+		super.setSelectedItem(s);
+
 		boolean found = false;
 		if (s != null) {
-			for (int i = 0; i < dataModel.getSize(); i++) {
-				String element = dataModel.getElementAt(i);
-				if (s.equals(element)) {
+			for (int i = 0; i < getItemCount(); i++) {
+				if (getItemAt(i).equals(s)) {
 					found = true;
 					break;
 				}

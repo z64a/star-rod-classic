@@ -551,6 +551,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 		// refresh database
 
 		ProjectDatabase.reload(true);
+		ProjectDatabase.loadGlobals(true);
 
 		// ------------------------------------------------------------
 		// create editor components

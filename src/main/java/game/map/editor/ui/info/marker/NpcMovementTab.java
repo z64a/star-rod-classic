@@ -24,7 +24,7 @@ import shared.SwingUtils;
 import util.ui.FloatTextField;
 import util.ui.IntVectorPanel;
 
-public class MarkerMovementTab extends JPanel
+public class NpcMovementTab extends JPanel
 {
 	private static enum VolumeType
 	{
@@ -53,7 +53,7 @@ public class MarkerMovementTab extends JPanel
 	private JSpinner wanderSpinner1;
 	private JSpinner wanderSpinner2;
 
-	public MarkerMovementTab(MarkerInfoPanel parent)
+	public NpcMovementTab(MarkerInfoPanel parent)
 	{
 		this.parent = parent;
 
