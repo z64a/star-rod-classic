@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.5] - 2024-11-20
+
+### Changed
+- Project updater no longer runs for patch version changes
+
+### Fixed
+- Map editor crashes when opening a new project
+- World partner data is corrupted when a partner patch adds new data
+
 ## [0.5.4] - 2024-11-20
 
 ### Added

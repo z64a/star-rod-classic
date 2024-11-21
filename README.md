@@ -2,7 +2,7 @@
 
 [![Release](https://img.shields.io/github/v/release/z64a/star-rod-classic)][releases]
 [![Download](https://img.shields.io/github/downloads/z64a/star-rod-classic/total)][download]
-![Build Status](https://img.shields.io/github/actions/workflow/status/z64a/star-rod-classic/validate.yaml)
+![Build Status](https://img.shields.io/github/actions/workflow/status/z64a/star-rod-classic/validate.yml)
 [![#star-rod channel in the Star Haven Discord][discord-badge]][discord]
 
 A suite of tools for modding and editing assets from the US version of Paper Mario (N64). This repository contains the legacy version of Star Rod, prior to its integration with the decomp project. For the updated tools with decomp support, visit the [Star Rod](https://github.com/z64a/star-rod) repository.

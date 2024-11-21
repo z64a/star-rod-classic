@@ -918,7 +918,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 
 		if (editorConfig != null) {
 			String lastFilename = editorConfig.getString(Options.RecentMap0);
-			if (!lastFilename.isBlank()) {
+			if (lastFilename != null && !lastFilename.isBlank()) {
 				lastMap = new File(lastFilename);
 
 				if (lastMap.exists()) {

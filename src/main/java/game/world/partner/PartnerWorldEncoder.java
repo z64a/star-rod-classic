@@ -21,6 +21,7 @@ public class PartnerWorldEncoder extends BaseDataEncoder
 	public PartnerWorldEncoder(IGlobalDatabase db) throws IOException
 	{
 		super(StructTypes.mapTypes, LibScope.World, db, null, true);
+		setAddressLimit(RAM.WORLD_PARTNER_LIMIT);
 	}
 
 	public void encode(PartnerConfig cfg) throws IOException
@@ -31,7 +32,7 @@ public class PartnerWorldEncoder extends BaseDataEncoder
 
 		setSource(new FileSource(patchFile));
 
-		File indexFile = new File(MOD_ASSIST_SRC + cfg.name + ".widx");
+		File indexFile = new File(DUMP_ASSIST_SRC + cfg.name + ".widx");
 		File rawFile = new File(DUMP_ASSIST_RAW + cfg.name + ".bin");
 		File outFile = new File(MOD_ASSIST_TEMP + cfg.name + ".bin");
 		File outIndexFile = new File(MOD_ASSIST_TEMP + cfg.name + ".widx");

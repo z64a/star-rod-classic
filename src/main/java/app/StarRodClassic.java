@@ -1483,7 +1483,7 @@ public class StarRodClassic extends JFrame
 
 		int[] curVer = tokenizeVersionString(Environment.getVersionString());
 		int[] modVer = tokenizeVersionString(modVersion);
-		if ((curVer[0] == modVer[0]) && (curVer[1] == modVer[1]) && (curVer[2] != modVer[2])) {
+		if ((curVer[0] != modVer[0]) || (curVer[1] != modVer[1])) { // && (curVer[2] != modVer[2])) {
 			update(modVersion, modConfig, (f) -> {
 				new MinorUpdator(f);
 			});

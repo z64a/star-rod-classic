@@ -19,7 +19,7 @@ public class RAM
 
 	public static final int WORLD_PARTNER_START		= 0x802BD100;
 	public static final int WORLD_PARTNER_LIMIT		= 0x802C0000;
-	public static final int WORLD_PARTNER_MAX_SIZE = WORLD_PARTNER_LIMIT - WORLD_PARTNER_START; // 0x2F00 -- could be 2E00 though!
+	public static final int WORLD_PARTNER_MAX_SIZE = WORLD_PARTNER_LIMIT - WORLD_PARTNER_START; // 0x2F00
 
 	public static final int BATTLE_DATA_START 		= 0x80218000;
 	public static final int BATTLE_DATA_LIMIT		= 0x80238000;
