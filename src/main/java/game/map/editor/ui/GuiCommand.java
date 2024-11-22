@@ -9,6 +9,7 @@ public enum GuiCommand
 	SAVE_MAP,
 	OPEN_FILE,
 	SAVE_AS,
+	SAVE_SHADING,
 
 	// import/export
 	SAVE_OBJECTS,

@@ -4043,6 +4043,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 		try {
 			SpriteShadingEditor.saveShadingProfiles(ProjectDatabase.SpriteShading);
 			ProjectDatabase.SpriteShading.modified = false;
+			Logger.log("Saved shading profiles.");
 		}
 		catch (Exception e) {
 			displayStackTrace(e);

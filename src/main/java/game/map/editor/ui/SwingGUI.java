@@ -528,6 +528,10 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		addButtonCommand(item, GuiCommand.SAVE_AS);
 		menu.add(item);
 
+		item = new JMenuItem("Save Shading Profiles");
+		addButtonCommand(item, GuiCommand.SAVE_SHADING);
+		menu.add(item);
+
 		menu.addSeparator();
 
 		JMenu importMenu = new JMenu("Import");
@@ -1176,6 +1180,10 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 				break;
 			case SAVE_AS:
 				prompt_SaveMapAs();
+				break;
+			case SAVE_SHADING:
+				if (ProjectDatabase.SpriteShading.modified)
+					editor.action_SaveShading();
 				break;
 
 			case LOAD_OBJECTS:
