@@ -1,2 +1,2 @@
 @echo off
-javaw -jar -mx2G StarRod.jar
+start "" javaw -jar -mx2G StarRod.jar
