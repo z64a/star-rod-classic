@@ -22,15 +22,16 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.JTree;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
+import app.Themes.Theme;
 import app.config.Options;
 import game.shared.ProjectDatabase;
 import game.shared.ProjectDatabase.ConstEnum.EnumPair;
 import net.miginfocom.swing.MigLayout;
-import shared.Globals;
 import shared.SwingUtils;
 
 public class ThemesEditor
@@ -38,10 +39,10 @@ public class ThemesEditor
 	public static final int WINDOW_SIZE_X = 640;
 	public static final int WINDOW_SIZE_Y = 600;
 
-	private JFrame frame;
+	private StarRodFrame frame;
 	public boolean exitToMainMenu;
 
-	public String initialThemeName;
+	public Theme initialTheme;
 
 	private JLabel lblR;
 	private JLabel lblG;
@@ -60,12 +61,11 @@ public class ThemesEditor
 
 	public ThemesEditor(CountDownLatch guiClosedSignal)
 	{
-		initialThemeName = Themes.getCurrentThemeName();
+		initialTheme = Themes.getCurrentTheme();
 
-		frame = new JFrame();
+		frame = new StarRodFrame();
 
-		frame.setTitle(Environment.decorateTitle("Themes Editor"));
-		frame.setIconImage(Globals.getDefaultIconImage());
+		frame.setTitle(Environment.decorateTitle("Choose Theme"));
 
 		frame.setBounds(0, 0, WINDOW_SIZE_X, WINDOW_SIZE_Y);
 		frame.setLocationRelativeTo(null);
@@ -76,8 +76,8 @@ public class ThemesEditor
 			public void windowClosing(WindowEvent e)
 			{
 				exitToMainMenu = true;
-				String currentThemeName = Themes.getCurrentThemeName();
-				if (!initialThemeName.equals(currentThemeName)) {
+				Theme currentTheme = Themes.getCurrentTheme();
+				if (initialTheme != currentTheme) {
 					int choice = SwingUtils.getConfirmDialog()
 						.setTitle("Save Changes")
 						.setMessage("Theme has been changed.", "Do you want to save changes?")
@@ -85,18 +85,19 @@ public class ThemesEditor
 
 					switch (choice) {
 						case JOptionPane.YES_OPTION:
-							Environment.mainConfig.setString(Options.Theme, Themes.getCurrentThemeKey());
-							Environment.mainConfig.saveConfigFile();
+							if (Themes.getCurrentTheme() != null) {
+								Environment.mainConfig.setString(Options.Theme, Themes.getCurrentTheme().key);
+								Environment.mainConfig.saveConfigFile();
 
-							SwingUtils.getWarningDialog()
-								.setTitle("Theme Changed")
-								.setMessage("Theme has been changed.", "Star Rod must restart.")
-								.show();
-
+								SwingUtils.getWarningDialog()
+									.setTitle("Theme Changed")
+									.setMessage("Theme has been changed.", "Star Rod must restart.")
+									.show();
+							}
 							exitToMainMenu = false;
 							break;
 						case JOptionPane.NO_OPTION:
-							Themes.setThemeByName(initialThemeName);
+							Themes.setTheme(initialTheme);
 							SwingUtilities.updateComponentTreeUI(frame);
 							break;
 						case JOptionPane.CANCEL_OPTION:
@@ -118,18 +119,18 @@ public class ThemesEditor
 
 	private JPanel getThemesPanel()
 	{
-		DefaultListModel<String> themes = new DefaultListModel<>();
+		DefaultListModel<Theme> themes = new DefaultListModel<>();
 
-		for (String name : Themes.getThemeNames())
-			themes.addElement(name);
+		for (Theme theme : Themes.getThemes())
+			themes.addElement(theme);
 
-		JList<String> themeList = new JList<>(themes);
+		JList<Theme> themeList = new JList<>(themes);
 		themeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-		themeList.setSelectedValue(Themes.getCurrentThemeName(), true);
+		themeList.setSelectedValue(Themes.getCurrentTheme(), true);
 
 		themeList.addListSelectionListener(e -> SwingUtilities.invokeLater(() -> {
-			Themes.setThemeByName(themeList.getSelectedValue());
+			Themes.setTheme(themeList.getSelectedValue());
 			SwingUtilities.updateComponentTreeUI(frame);
 			lblR.setForeground(SwingUtils.getRedTextColor());
 			lblG.setForeground(SwingUtils.getGreenTextColor());
@@ -195,9 +196,9 @@ public class ThemesEditor
 
 		tabPanel.add(slider, "grow");
 
-		lblR = SwingUtils.getLabel("<html><b>Red Text</b></html>", JLabel.CENTER, 12);
-		lblG = SwingUtils.getLabel("<html><b>Green Text</b></html>", JLabel.CENTER, 12);
-		lblB = SwingUtils.getLabel("<html><b>Blue Text</b></html>", JLabel.CENTER, 12);
+		lblR = SwingUtils.getLabel("<html><b>Red Text</b></html>", SwingConstants.CENTER, 12);
+		lblG = SwingUtils.getLabel("<html><b>Green Text</b></html>", SwingConstants.CENTER, 12);
+		lblB = SwingUtils.getLabel("<html><b>Blue Text</b></html>", SwingConstants.CENTER, 12);
 		lblR.setForeground(SwingUtils.getRedTextColor());
 		lblG.setForeground(SwingUtils.getGreenTextColor());
 		lblB.setForeground(SwingUtils.getBlueTextColor());
