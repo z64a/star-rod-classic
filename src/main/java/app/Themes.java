@@ -19,7 +19,7 @@ import util.Priority;
 public abstract class Themes
 {
 	private static final List<Theme> THEMES = new ArrayList<>();
-	private static Theme SYSTEM_THEME;
+	private static Theme DEFAULT_THEME;
 	private static Theme currentTheme = null;
 
 	public static class Theme
@@ -64,13 +64,13 @@ public abstract class Themes
 	private static void setTheme(Theme theme)
 	{
 		if (theme == null)
-			theme = SYSTEM_THEME;
+			theme = DEFAULT_THEME;
 		else if (theme == currentTheme)
 			return;
 
 		if (theme.custom) {
 			try {
-				IntelliJTheme.install(new BufferedInputStream(new FileInputStream(new File(theme.className))));
+				IntelliJTheme.setup(new BufferedInputStream(new FileInputStream(new File(theme.className))));
 				currentTheme = theme;
 				return;
 			}
@@ -78,7 +78,7 @@ public abstract class Themes
 				Logger.logError("Could not find file for theme: " + theme.name);
 			}
 			// if error, reset to system
-			theme = SYSTEM_THEME;
+			theme = DEFAULT_THEME;
 		}
 
 		try {
@@ -94,7 +94,7 @@ public abstract class Themes
 	public static void setThemeByKey(String themeKey)
 	{
 		if (themeKey == null || themeKey.isEmpty())
-			themeKey = SYSTEM_THEME.key;
+			themeKey = DEFAULT_THEME.key;
 
 		if (currentTheme != null && themeKey.equalsIgnoreCase(currentTheme.key))
 			return;
@@ -113,7 +113,7 @@ public abstract class Themes
 	public static void setThemeByName(String themeName)
 	{
 		if (themeName == null || themeName.isEmpty())
-			themeName = SYSTEM_THEME.name;
+			themeName = DEFAULT_THEME.name;
 
 		if (currentTheme != null && themeName.equalsIgnoreCase(currentTheme.name))
 			return;
@@ -131,68 +131,7 @@ public abstract class Themes
 
 	static {
 		if (!Environment.isCommandLine()) {
-			SYSTEM_THEME = new Theme("System", UIManager.getSystemLookAndFeelClassName());
-			THEMES.add(SYSTEM_THEME);
-			// @formatter:off
-			THEMES.add(new Theme("Flat Light",				"com.formdev.flatlaf.FlatLightLaf"));
-			THEMES.add(new Theme("Flat Dark",				"com.formdev.flatlaf.FlatDarkLaf"));
-			THEMES.add(new Theme("Arc",						"com.formdev.flatlaf.intellijthemes.FlatArcIJTheme"));
-			THEMES.add(new Theme("Arc Orange",				"com.formdev.flatlaf.intellijthemes.FlatArcOrangeIJTheme"));
-			THEMES.add(new Theme("Arc Dark",				"com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatArcDarkIJTheme"));
-			THEMES.add(new Theme("Arc Dark Contrast",		"com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatArcDarkContrastIJTheme"));
-			THEMES.add(new Theme("Atom One Dark",			"com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkIJTheme"));
-			THEMES.add(new Theme("Atom One Dark Contrast",	"com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkContrastIJTheme"));
-			THEMES.add(new Theme("Atom One Light",			"com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneLightIJTheme"));
-			THEMES.add(new Theme("Atom One Light Contrast",	"com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneLightContrastIJTheme"));
-			THEMES.add(new Theme("Cyan light",				"com.formdev.flatlaf.intellijthemes.FlatCyanLightIJTheme"));
-			THEMES.add(new Theme("Dark Flat",				"com.formdev.flatlaf.intellijthemes.FlatDarkFlatIJTheme"));
-			THEMES.add(new Theme("Dark purple",				"com.formdev.flatlaf.intellijthemes.FlatDarkPurpleIJTheme"));
-			THEMES.add(new Theme("Dracula",					"com.formdev.flatlaf.intellijthemes.FlatDraculaIJTheme"));
-		//	THEMES.add(new Theme("Dracula2",				"com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatDraculaIJTheme"));
-		//	THEMES.add(new Theme("Dracula Contrast",		"com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatDraculaContrastIJTheme"));
-			THEMES.add(new Theme("GitHub",					"com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatGitHubIJTheme"));
-		//	THEMES.add(new Theme("GitHub Contrast",			"com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatGitHubContrastIJTheme"));
-			THEMES.add(new Theme("Gradianto Dark Fuchsia",	"com.formdev.flatlaf.intellijthemes.FlatGradiantoDarkFuchsiaIJTheme"));
-			THEMES.add(new Theme("Gradianto Deep Ocean",	"com.formdev.flatlaf.intellijthemes.FlatGradiantoDeepOceanIJTheme"));
-			THEMES.add(new Theme("Gradianto Midnight Blue",	"com.formdev.flatlaf.intellijthemes.FlatGradiantoMidnightBlueIJTheme"));
-			THEMES.add(new Theme("Gray",					"com.formdev.flatlaf.intellijthemes.FlatGrayIJTheme"));
-			THEMES.add(new Theme("Gruvbox Dark Hard",		"com.formdev.flatlaf.intellijthemes.FlatGruvboxDarkHardIJTheme"));
-			THEMES.add(new Theme("Gruvbox Dark Medium",		"com.formdev.flatlaf.intellijthemes.FlatGruvboxDarkMediumIJTheme"));
-			THEMES.add(new Theme("Gruvbox Dark Soft",		"com.formdev.flatlaf.intellijthemes.FlatGruvboxDarkSoftIJTheme"));
-			THEMES.add(new Theme("Hiberbee Dark",			"com.formdev.flatlaf.intellijthemes.FlatHiberbeeDarkIJTheme"));
-			THEMES.add(new Theme("High contrast",			"com.formdev.flatlaf.intellijthemes.FlatHighContrastIJTheme"));
-			THEMES.add(new Theme("Light Flat",				"com.formdev.flatlaf.intellijthemes.FlatLightFlatIJTheme"));
-			THEMES.add(new Theme("Light Owl",				"com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatLightOwlIJTheme"));
-		//	THEMES.add(new Theme("Light Owl Contrast",		"com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatLightOwlContrastIJTheme"));
-			THEMES.add(new Theme("Material Design Dark",	"com.formdev.flatlaf.intellijthemes.FlatMaterialDesignDarkIJTheme"));
-			THEMES.add(new Theme("Monocai",					"com.formdev.flatlaf.intellijthemes.FlatMonocaiIJTheme"));
-			THEMES.add(new Theme("Nord",					"com.formdev.flatlaf.intellijthemes.FlatNordIJTheme"));
-			THEMES.add(new Theme("Night Owl",				"com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatNightOwlIJTheme"));
-			THEMES.add(new Theme("Night Owl Contrast",		"com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatNightOwlContrastIJTheme"));
-			THEMES.add(new Theme("One Dark",				"com.formdev.flatlaf.intellijthemes.FlatOneDarkIJTheme"));
-			THEMES.add(new Theme("Solarized Dark",			"com.formdev.flatlaf.intellijthemes.FlatSolarizedDarkIJTheme"));
-			THEMES.add(new Theme("Solarized Light",			"com.formdev.flatlaf.intellijthemes.FlatSolarizedLightIJTheme"));
-			THEMES.add(new Theme("Spacegray",				"com.formdev.flatlaf.intellijthemes.FlatSpacegrayIJTheme"));
-			THEMES.add(new Theme("Vuesion",					"com.formdev.flatlaf.intellijthemes.FlatVuesionIJTheme"));
-			/*
-			THEMES.add(new Theme("Material Darker","com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMaterialDarkerIJTheme"));
-			THEMES.add(new Theme("Material Darker Contrast","com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMaterialDarkerContrastIJTheme"));
-			THEMES.add(new Theme("Material Deep Ocean","com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMaterialDeepOceanIJTheme"));
-			THEMES.add(new Theme("Material Deep Ocean Contrast","com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMaterialDeepOceanContrastIJTheme"));
-			THEMES.add(new Theme("Material Lighter","com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMaterialLighterIJTheme"));
-			THEMES.add(new Theme("Material Lighter Contrast","com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMaterialLighterContrastIJTheme"));
-			THEMES.add(new Theme("Material Oceanic","com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMaterialOceanicIJTheme"));
-			THEMES.add(new Theme("Material Oceanic Contrast","com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMaterialOceanicContrastIJTheme"));
-			THEMES.add(new Theme("Material Palenight","com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMaterialPalenightIJTheme"));
-			THEMES.add(new Theme("Material Palenight Contrast","com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMaterialPalenightContrastIJTheme"));
-			THEMES.add(new Theme("Monokai Pro","com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMonokaiProIJTheme"));
-			THEMES.add(new Theme("Monokai Pro Contrast","com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMonokaiProContrastIJTheme"));
-			THEMES.add(new Theme("Solarized Dark","com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatSolarizedDarkIJTheme"));
-			THEMES.add(new Theme("Solarized Dark Contrast","com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatSolarizedDarkContrastIJTheme"));
-			THEMES.add(new Theme("Solarized Light","com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatSolarizedLightIJTheme"));
-			THEMES.add(new Theme("Solarized Light Contrast","com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatSolarizedLightContrastIJTheme"));
-			*/
-			// @formatter:on
+			// SYSTEM_THEME = new Theme("System", UIManager.getSystemLookAndFeelClassName());
 
 			try {
 				for (File f : IOUtils.getFilesWithExtension(Directories.DATABASE_THEMES, "theme.json", true)) {
@@ -203,6 +142,61 @@ public abstract class Themes
 			catch (IOException e) {
 				Logger.logError("IOException while loading custom themes: " + e.getMessage());
 			}
+
+			// @formatter:off
+			DEFAULT_THEME = new Theme("Flat Light",			"com.formdev.flatlaf.FlatLightLaf");
+			THEMES.add(DEFAULT_THEME);
+
+			THEMES.add(new Theme("Flat Dark",               	   "com.formdev.flatlaf.FlatDarkLaf"));
+			THEMES.add(new Theme("Arc Light",                      "com.formdev.flatlaf.intellijthemes.FlatArcIJTheme"));
+			THEMES.add(new Theme("Arc Light Orange",               "com.formdev.flatlaf.intellijthemes.FlatArcOrangeIJTheme"));
+			THEMES.add(new Theme("Arc Dark",                       "com.formdev.flatlaf.intellijthemes.FlatArcDarkIJTheme"));
+			THEMES.add(new Theme("Arc Dark Orange",                "com.formdev.flatlaf.intellijthemes.FlatArcDarkOrangeIJTheme"));
+			THEMES.add(new Theme("Arc Dark (Material)",            "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatArcDarkIJTheme"));
+			THEMES.add(new Theme("Atom One Dark (Material)",       "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneDarkIJTheme"));
+			THEMES.add(new Theme("Atom One Light (Material)",      "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatAtomOneLightIJTheme"));
+			THEMES.add(new Theme("Carbon",                         "com.formdev.flatlaf.intellijthemes.FlatCarbonIJTheme"));
+			THEMES.add(new Theme("Cobalt 2",                       "com.formdev.flatlaf.intellijthemes.FlatCobalt2IJTheme"));
+			THEMES.add(new Theme("Cyan Light",                     "com.formdev.flatlaf.intellijthemes.FlatCyanLightIJTheme"));
+			THEMES.add(new Theme("Dark Flat",                      "com.formdev.flatlaf.intellijthemes.FlatDarkFlatIJTheme"));
+			THEMES.add(new Theme("Dark Purple",                    "com.formdev.flatlaf.intellijthemes.FlatDarkPurpleIJTheme"));
+			THEMES.add(new Theme("Dracula (Material)",             "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatDraculaIJTheme"));
+			THEMES.add(new Theme("Dracula",                        "com.formdev.flatlaf.intellijthemes.FlatDraculaIJTheme"));
+			THEMES.add(new Theme("GitHub (Material)",              "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatGitHubIJTheme"));
+			THEMES.add(new Theme("GitHub Dark (Material)",         "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatGitHubDarkIJTheme"));
+			THEMES.add(new Theme("Gradianto Dark Fuchsia",         "com.formdev.flatlaf.intellijthemes.FlatGradiantoDarkFuchsiaIJTheme"));
+			THEMES.add(new Theme("Gradianto Deep Ocean",           "com.formdev.flatlaf.intellijthemes.FlatGradiantoDeepOceanIJTheme"));
+			THEMES.add(new Theme("Gradianto Midnight Blue",        "com.formdev.flatlaf.intellijthemes.FlatGradiantoMidnightBlueIJTheme"));
+			THEMES.add(new Theme("Gradianto Nature Green",         "com.formdev.flatlaf.intellijthemes.FlatGradiantoNatureGreenIJTheme"));
+			THEMES.add(new Theme("Gray",                           "com.formdev.flatlaf.intellijthemes.FlatGrayIJTheme"));
+			THEMES.add(new Theme("Gruvbox Dark Hard",              "com.formdev.flatlaf.intellijthemes.FlatGruvboxDarkHardIJTheme"));
+			THEMES.add(new Theme("Gruvbox Dark Medium",            "com.formdev.flatlaf.intellijthemes.FlatGruvboxDarkMediumIJTheme"));
+			THEMES.add(new Theme("Gruvbox Dark Soft",              "com.formdev.flatlaf.intellijthemes.FlatGruvboxDarkSoftIJTheme"));
+			THEMES.add(new Theme("Hiberbee Dark",                  "com.formdev.flatlaf.intellijthemes.FlatHiberbeeDarkIJTheme"));
+			THEMES.add(new Theme("High Contrast",                  "com.formdev.flatlaf.intellijthemes.FlatHighContrastIJTheme"));
+			THEMES.add(new Theme("Light Flat",                     "com.formdev.flatlaf.intellijthemes.FlatLightFlatIJTheme"));
+			THEMES.add(new Theme("Light Owl (Material)",           "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatLightOwlIJTheme"));
+			THEMES.add(new Theme("Material Darker (Material)",     "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMaterialDarkerIJTheme"));
+			THEMES.add(new Theme("Material Deep Ocean (Material)", "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMaterialDeepOceanIJTheme"));
+			THEMES.add(new Theme("Material Design Dark",           "com.formdev.flatlaf.intellijthemes.FlatMaterialDesignDarkIJTheme"));
+			THEMES.add(new Theme("Material Lighter (Material)",    "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMaterialLighterIJTheme"));
+			THEMES.add(new Theme("Material Oceanic (Material)",    "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMaterialOceanicIJTheme"));
+			THEMES.add(new Theme("Material Palenight (Material)",  "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMaterialPalenightIJTheme"));
+			THEMES.add(new Theme("Monocai",                        "com.formdev.flatlaf.intellijthemes.FlatMonocaiIJTheme"));
+			THEMES.add(new Theme("Monokai Pro (Material)",         "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMonokaiProIJTheme"));
+			THEMES.add(new Theme("Monokai Pro",                    "com.formdev.flatlaf.intellijthemes.FlatMonokaiProIJTheme"));
+			THEMES.add(new Theme("Moonlight (Material)",           "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMoonlightIJTheme"));
+			THEMES.add(new Theme("Night Owl (Material)",           "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatNightOwlIJTheme"));
+			THEMES.add(new Theme("Nord",                           "com.formdev.flatlaf.intellijthemes.FlatNordIJTheme"));
+			THEMES.add(new Theme("One Dark",                       "com.formdev.flatlaf.intellijthemes.FlatOneDarkIJTheme"));
+			THEMES.add(new Theme("Solarized Dark (Material)",      "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatSolarizedDarkIJTheme"));
+			THEMES.add(new Theme("Solarized Dark",                 "com.formdev.flatlaf.intellijthemes.FlatSolarizedDarkIJTheme"));
+			THEMES.add(new Theme("Solarized Light (Material)",     "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatSolarizedLightIJTheme"));
+			THEMES.add(new Theme("Solarized Light",                "com.formdev.flatlaf.intellijthemes.FlatSolarizedLightIJTheme"));
+			THEMES.add(new Theme("Spacegray",                      "com.formdev.flatlaf.intellijthemes.FlatSpacegrayIJTheme"));
+			THEMES.add(new Theme("Vuesion",                        "com.formdev.flatlaf.intellijthemes.FlatVuesionIJTheme"));
+			THEMES.add(new Theme("Xcode-Dark",                     "com.formdev.flatlaf.intellijthemes.FlatXcodeDarkIJTheme"));
+			// @formatter:on
 
 			Logger.log("Loaded " + THEMES.size() + " themes.");
 		}

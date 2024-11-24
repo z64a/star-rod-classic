@@ -1,15 +1,11 @@
 package game.map.tree;
 
-import java.awt.Component;
-import java.awt.Font;
 import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
@@ -28,13 +24,7 @@ import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
-import javax.swing.event.CellEditorListener;
-import javax.swing.event.ChangeEvent;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellEditor;
-import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeSelectionModel;
-import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
@@ -44,6 +34,7 @@ import game.map.editor.MapEditor;
 import game.map.editor.commands.AbstractCommand;
 import game.map.editor.ui.GuiCommand;
 import game.map.editor.ui.MapObjectPanel;
+import game.map.editor.ui.MapObjectTreeCellRenderer;
 import game.map.editor.ui.SwingGUI;
 import util.BasicNode;
 import util.Logger;
@@ -75,47 +66,6 @@ public abstract class MapObjectJTree<T extends MapObject> extends JTree implemen
 	public MapObjectNode<T> dropDestination = null;
 	public int dropChildIndex = 0;
 
-	private static class MapObjectTreeCellRenderer extends DefaultTreeCellRenderer implements TreeCellRenderer
-	{
-		/*
-		private static final Dimension DEFAULT_SIZE = new Dimension(300,20);
-
-		@Override
-		public Dimension getPreferredSize()
-		{
-			return DEFAULT_SIZE;
-		}
-		*/
-
-		@Override
-		public Component getTreeCellRendererComponent(JTree tree, Object obj,
-			boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus)
-		{
-			super.getTreeCellRendererComponent(tree, obj, selected, expanded, leaf, row, hasFocus);
-			DefaultMutableTreeNode node = (DefaultMutableTreeNode) obj;
-			if (node.getAllowsChildren())
-				if (expanded)
-					setIcon(openIcon);
-				else
-					setIcon(closedIcon);
-			else
-				setIcon(leafIcon);
-
-			if (node.getUserObject() instanceof MapObject) {
-				MapObject mobj = (MapObject) node.getUserObject();
-				if (mobj.hidden)
-					setFont(getFont().deriveFont(Font.ITALIC));
-				else
-					setFont(getFont().deriveFont(Font.PLAIN));
-				setText(mobj.toString());
-
-				setForeground(null);
-			}
-
-			return this;
-		}
-	}
-
 	/**
 	 * The JTree implementation does not include a mechanism for TreeSelectionListeners
 	 * to distinguish additive vs replacement selection changes. This presents a problem
@@ -127,31 +77,12 @@ public abstract class MapObjectJTree<T extends MapObject> extends JTree implemen
 	 */
 	public boolean additiveSelection = false;
 
-	public boolean editingCell = false;
-
 	public MapObjectJTree(MapEditor editor, SwingGUI gui, final MapObjectPanel panel)
 	{
 		this.editor = editor;
 		this.objectPanel = panel;
 
 		setCellRenderer(new MapObjectTreeCellRenderer());
-		setEditable(true);
-		setInvokesStopCellEditing(true);
-		setCellEditor(new FocusAwareCellEditor(this, getCellRenderer()));
-
-		getCellEditor().addCellEditorListener(new CellEditorListener() {
-			@Override
-			public void editingCanceled(ChangeEvent e)
-			{
-				editingCell = false;
-			}
-
-			@Override
-			public void editingStopped(ChangeEvent e)
-			{
-				editingCell = false;
-			}
-		});
 
 		setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 		setSelectionModel(new DefaultTreeSelectionModel() {
@@ -763,52 +694,4 @@ public abstract class MapObjectJTree<T extends MapObject> extends JTree implemen
 			});
 		}
 	}
-
-	private static class FocusAwareCellEditor extends DefaultTreeCellEditor
-	{
-		public FocusAwareCellEditor(JTree tree, TreeCellRenderer renderer)
-		{
-			super(tree, (DefaultTreeCellRenderer) renderer);
-		}
-
-		@Override
-		public Component getTreeCellEditorComponent(final JTree tree, Object value, boolean isSelected, boolean expanded, boolean leaf, int row)
-		{
-			Component container = super.getTreeCellEditorComponent(tree, value, isSelected, expanded, leaf, row);
-			editingComponent.addFocusListener(new FocusListener() {
-				@Override
-				public void focusGained(FocusEvent e)
-				{}
-
-				@Override
-				public void focusLost(FocusEvent e)
-				{
-					tree.stopEditing();
-				}
-			});
-			return container;
-		}
-	}
-
-	/*
-	public BasicNode<T> getBackupTree()
-	{
-
-	}
-
-	public BasicNode<T> getBackupExpandedState()
-	{
-
-	}
-
-	public void restoreTree(BasicNode<T> broot)
-	{
-
-	}
-
-	public void restoreExpandedState()
-	{
-
-	}
-	*/
 }

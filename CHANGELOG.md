@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## Upcoming Release
+
+### Added
+- New file menu option for saving shading profiles in Map Editor
+
+### Changed
+- Increased the length limit for map and background names in the Level Editor
+- Restored icons to groups and objects in MapObject tree view
+- Moved Windows launcher functionality into batch file
+- Added new themes, renamed and removed some old ones
+
+### Fixed
+- Entity subpanel UI much less likely to stretch beyond the window
+- Fixed orientation for lightbulb icons in ortho viewports
+
+### Removed
+- System UI theme
+
 ## [0.5.5] - 2024-11-20
 
 ### Changed

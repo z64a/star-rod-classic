@@ -133,13 +133,12 @@ public class MapTableTreeCellRenderer extends JPanel implements TreeCellRenderer
 		this.hasFocus = hasFocus;
 		this.selected = selected;
 
-		if (obj instanceof AreaConfig) {
+		if (obj instanceof AreaConfig area) {
 			if (expanded)
 				iconLabel.setIcon(openIcon);
 			else
 				iconLabel.setIcon(closedIcon);
 
-			AreaConfig area = (AreaConfig) obj;
 			nameLabel.setText(area.name);
 			nickLabel.setText("<html><i>" + area.nickname + "</i></html>");
 
@@ -147,11 +146,8 @@ public class MapTableTreeCellRenderer extends JPanel implements TreeCellRenderer
 			nameLabel.setForeground(textColor);
 			nickLabel.setForeground(textColor);
 		}
-
-		else if (obj instanceof MapConfig) {
+		else if (obj instanceof MapConfig map) {
 			iconLabel.setIcon(leafIcon);
-
-			MapConfig map = (MapConfig) obj;
 			nameLabel.setText(map.name);
 			nickLabel.setText("<html><i>" + map.nickname + "</i></html>");
 
@@ -159,10 +155,8 @@ public class MapTableTreeCellRenderer extends JPanel implements TreeCellRenderer
 			nameLabel.setForeground(textColor);
 			nickLabel.setForeground(textColor);
 		}
-
-		else if (obj instanceof Resource) {
+		else if (obj instanceof Resource res) {
 			iconLabel.setIcon(leafIcon);
-			Resource res = (Resource) obj;
 			nameLabel.setText(res.name);
 			nickLabel.setText("<html><i>" + res.nickname + "</i></html>");
 
@@ -170,7 +164,6 @@ public class MapTableTreeCellRenderer extends JPanel implements TreeCellRenderer
 			nameLabel.setForeground(textColor);
 			nickLabel.setForeground(textColor);
 		}
-
 		else
 			iconLabel.setIcon(leafIcon);
 
