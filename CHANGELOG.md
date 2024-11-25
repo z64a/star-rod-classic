@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - Restored icons to groups and objects in MapObject tree view
 - Moved Windows launcher functionality into batch file
 - Added new themes, renamed and removed some old ones
+- Support for user-supplied custom themes has been improved
 
 ### Fixed
 - Entity subpanel UI much less likely to stretch beyond the window
