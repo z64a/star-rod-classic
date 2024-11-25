@@ -7,9 +7,9 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.SwingConstants;
 
+import app.Environment;
+import app.SwingUtils;
 import net.miginfocom.swing.MigLayout;
-import shared.Globals;
-import shared.SwingUtils;
 
 public class ImportOptionsDialog extends JDialog
 {
@@ -25,7 +25,7 @@ public class ImportOptionsDialog extends JDialog
 		JFrame dialogFrame = new JFrame("Import Options");
 		dialogFrame.setUndecorated(true);
 		dialogFrame.setVisible(true);
-		dialogFrame.setIconImage(Globals.getDefaultIconImage());
+		dialogFrame.setIconImage(Environment.getDefaultIconImage());
 
 		ImportOptionsDialog dialog = new ImportOptionsDialog(dialogFrame);
 		return dialog.selected;

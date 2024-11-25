@@ -29,6 +29,7 @@ import javax.swing.event.ListDataListener;
 
 import com.alexandriasoftware.swing.JSplitButton;
 
+import app.SwingUtils;
 import game.sprite.Sprite;
 import game.sprite.SpriteAnimation;
 import game.sprite.SpriteComponent;
@@ -41,7 +42,6 @@ import game.sprite.editor.animators.KeyframeAnimator.Goto;
 import game.sprite.editor.animators.KeyframeAnimator.Keyframe;
 import game.sprite.editor.animators.KeyframeAnimator.Loop;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.DragReorderList;
 import util.ui.ListAdapterComboboxModel;
 

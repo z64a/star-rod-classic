@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 
+import app.SwingUtils;
 import game.map.Map;
 import game.map.MapObject.MapObjectType;
 import game.map.editor.MapEditor;
@@ -13,7 +14,6 @@ import game.map.hit.Zone;
 import game.map.marker.Marker;
 import game.map.marker.Marker.MarkerType;
 import game.map.shape.Model;
-import shared.SwingUtils;
 
 public class MapObjectComboBox extends JComboBox<String>
 {

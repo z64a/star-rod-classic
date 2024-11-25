@@ -32,6 +32,7 @@ import org.apache.commons.io.FilenameUtils;
 import com.alexandriasoftware.swing.JSplitButton;
 
 import app.StarRodException;
+import app.SwingUtils;
 import app.input.IOUtils;
 import game.globals.editor.GlobalsData.GlobalsCategory;
 import game.globals.editor.GlobalsEditor;
@@ -43,7 +44,6 @@ import game.texture.TileFormat;
 import game.texture.images.ImageRecord;
 import game.texture.images.ImageRecord.ImageReference;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.Logger;
 import util.Pair;
 import util.ui.HexTextField;

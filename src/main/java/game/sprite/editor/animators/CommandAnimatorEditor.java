@@ -39,6 +39,7 @@ import javax.swing.text.DocumentFilter;
 
 import com.alexandriasoftware.swing.JSplitButton;
 
+import app.SwingUtils;
 import game.sprite.Sprite;
 import game.sprite.SpriteAnimation;
 import game.sprite.SpriteComponent;
@@ -60,7 +61,6 @@ import game.sprite.editor.animators.CommandAnimator.SetScale;
 import game.sprite.editor.animators.CommandAnimator.SetUnknown;
 import game.sprite.editor.animators.CommandAnimator.Wait;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.DragReorderList;
 import util.ui.ListAdapterComboboxModel;
 

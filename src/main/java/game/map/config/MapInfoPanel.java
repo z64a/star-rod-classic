@@ -26,6 +26,8 @@ import org.apache.commons.io.FileUtils;
 
 import app.Directories;
 import app.StarRodClassic;
+import app.SwingUtils;
+import app.SwingUtils.TextColor;
 import app.input.IOUtils;
 import game.map.Map;
 import game.map.compiler.CollisionCompiler;
@@ -33,8 +35,6 @@ import game.map.compiler.GeometryCompiler;
 import game.map.config.MapConfigTable.MapConfig;
 import game.map.editor.MapEditor;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
-import shared.SwingUtils.TextColor;
 import util.Logger;
 import util.ui.HexTextField;
 import util.ui.ImagePanel;

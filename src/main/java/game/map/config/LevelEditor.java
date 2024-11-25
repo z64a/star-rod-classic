@@ -45,13 +45,12 @@ import app.Directories;
 import app.Environment;
 import app.LoadingScreen;
 import app.StarRodClassic;
+import app.SwingUtils;
 import app.config.Options;
 import game.map.config.MapConfigTable.AreaConfig;
 import game.map.config.MapConfigTable.MapConfig;
 import game.map.config.MapConfigTable.Resource;
 import net.miginfocom.swing.MigLayout;
-import shared.Globals;
-import shared.SwingUtils;
 import util.Logger;
 
 public class LevelEditor
@@ -123,7 +122,7 @@ public class LevelEditor
 			@Override public void treeNodesInserted(TreeModelEvent e)    { treeChanged(); }
 			@Override public void treeNodesRemoved(TreeModelEvent e)     { treeChanged(); }
 			@Override public void treeStructureChanged(TreeModelEvent e) { treeChanged(); }
-		
+
 			private void treeChanged()
 			{
 				//TODO
@@ -171,7 +170,7 @@ public class LevelEditor
 		frame = new JFrame();
 
 		frame.setTitle(Environment.decorateTitle("Level Editor"));
-		frame.setIconImage(Globals.getDefaultIconImage());
+		frame.setIconImage(Environment.getDefaultIconImage());
 
 		frame.setBounds(0, 0, WINDOW_SIZE_X, WINDOW_SIZE_Y);
 		frame.setLocationRelativeTo(null);
@@ -552,7 +551,7 @@ public class LevelEditor
 		bg.add(engineOption);
 		bg.add(friendOption);
 		engineOption.setSelected(true);
-		
+
 		ActionListener nameModeListener = new ActionListener()
 		{
 			@Override

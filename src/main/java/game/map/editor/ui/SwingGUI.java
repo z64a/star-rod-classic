@@ -51,6 +51,8 @@ import org.apache.commons.io.FilenameUtils;
 
 import app.Environment;
 import app.StarRodFrame;
+import app.SwingUtils;
+import app.SwingUtils.OpenDialogCounter;
 import app.config.PreferencesPanel;
 import game.globals.editor.DialogResult;
 import game.map.Map;
@@ -96,9 +98,6 @@ import game.shared.ProjectDatabase;
 import game.texture.ModelTexture;
 import net.miginfocom.swing.MigLayout;
 import renderer.shaders.postprocess.PostProcessFX;
-import shared.Globals;
-import shared.SwingUtils;
-import shared.SwingUtils.OpenDialogCounter;
 import util.Logger;
 import util.Logger.Listener;
 import util.Logger.Message;
@@ -210,7 +209,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		setPreferredSize(new Dimension(desktopX * 4 / 5, desktopY * 4 / 5));
 
 		// set icon
-		setIconImage(Globals.getDefaultIconImage());
+		setIconImage(Environment.getDefaultIconImage());
 
 		/* handle window closing */
 		setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -279,7 +278,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 			}
 			catch (IOException openDefaultIOE) {
 				try {
-					if (Environment.os.isWindows()) {
+					if (Environment.isWindows()) {
 						Runtime rs = Runtime.getRuntime();
 						rs.exec("notepad " + logFile.getCanonicalPath());
 						success = true;
@@ -296,7 +295,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 					.setMessage(logScrollPane)
 					.setMessageType(JOptionPane.PLAIN_MESSAGE)
 					.setOptionsType(JOptionPane.YES_NO_CANCEL_OPTION)
-					.setIcon(Globals.ICON_DEFAULT)
+					.setIcon(Environment.ICON_DEFAULT)
 					.setOptions("Copy to Clipboard")
 					.choose();
 
@@ -1520,7 +1519,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 				});
 
 			generatePrimitiveDialog.setTitle(GeneratePrimitiveOptionsDialog.FRAME_TITLE);
-			generatePrimitiveDialog.setIconImage(Globals.getDefaultIconImage());
+			generatePrimitiveDialog.setIconImage(Environment.getDefaultIconImage());
 			generatePrimitiveDialog.setLocationRelativeTo(null);
 			generatePrimitiveDialog.setModal(false);
 		}
@@ -1545,7 +1544,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 				});
 
 			generateFromTrianglesDialog.setTitle(GeneratePrimitiveOptionsDialog.FRAME_TITLE);
-			generateFromTrianglesDialog.setIconImage(Globals.getDefaultIconImage());
+			generateFromTrianglesDialog.setIconImage(Environment.getDefaultIconImage());
 			generateFromTrianglesDialog.setLocationRelativeTo(null);
 			generateFromTrianglesDialog.setModal(false);
 		}
@@ -1570,7 +1569,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 				});
 
 			generateFromPathsDialog.setTitle(GeneratePrimitiveOptionsDialog.FRAME_TITLE);
-			generateFromPathsDialog.setIconImage(Globals.getDefaultIconImage());
+			generateFromPathsDialog.setIconImage(Environment.getDefaultIconImage());
 			generateFromPathsDialog.setLocationRelativeTo(null);
 			generateFromPathsDialog.setModal(false);
 		}

@@ -8,6 +8,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 
+import app.SwingUtils;
 import game.map.MapObject;
 import game.map.MapObject.HitType;
 import game.map.MapObject.ShapeType;
@@ -16,7 +17,6 @@ import game.map.hit.Zone;
 import game.map.marker.Marker;
 import game.map.shape.Model;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 
 public class FindObjectCellRenderer extends JPanel implements ListCellRenderer<MapObject>
 {

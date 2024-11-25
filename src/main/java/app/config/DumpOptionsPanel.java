@@ -8,9 +8,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
+import app.SwingUtils;
 import app.config.Options.ConfigOptionEditor;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 
 public class DumpOptionsPanel extends JPanel
 {

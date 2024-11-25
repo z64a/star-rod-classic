@@ -22,6 +22,7 @@ import javax.swing.SwingConstants;
 
 import com.alexandriasoftware.swing.JSplitButton;
 
+import app.SwingUtils;
 import game.map.MapObject.MapObjectType;
 import game.map.editor.MapEditor;
 import game.map.editor.ui.LabelWithTip;
@@ -34,7 +35,6 @@ import game.shared.ProjectDatabase;
 import game.world.entity.EntityInfo.EntityType;
 import game.world.entity.EntityMenuGroup;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.HexTextField;
 import util.ui.IntTextField;
 import util.ui.StringField;

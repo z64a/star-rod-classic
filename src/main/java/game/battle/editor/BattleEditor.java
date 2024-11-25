@@ -41,6 +41,7 @@ import com.alexandriasoftware.swing.JSplitButton;
 import app.Directories;
 import app.Environment;
 import app.StarRodException;
+import app.SwingUtils;
 import common.BaseEditor;
 import common.BaseEditorSettings;
 import common.KeyboardInput.KeyInputEvent;
@@ -70,8 +71,6 @@ import renderer.shaders.RenderState;
 import renderer.shaders.RenderState.PolygonMode;
 import renderer.shaders.ShaderManager;
 import renderer.shaders.scene.BasicTexturedShader;
-import shared.Globals;
-import shared.SwingUtils;
 import util.Logger;
 import util.Priority;
 import util.ui.ListAdapterComboboxModel;
@@ -86,7 +85,7 @@ public class BattleEditor extends BaseEditor
 
 	private static final BaseEditorSettings EDITOR_SETTINGS = BaseEditorSettings.create()
 		.setTitle(Environment.decorateTitle("Battle Editor"))
-		.setIcon(Globals.getDefaultIconImage())
+		.setIcon(Environment.getDefaultIconImage())
 		.setLog("battle_editor.log")
 		.setFullscreen(true)
 		.setResizeable(true)

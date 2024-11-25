@@ -14,7 +14,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
 
-import shared.SwingUtils;
+import app.SwingUtils;
 
 public class HexTextField extends JTextField
 {

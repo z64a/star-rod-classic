@@ -26,6 +26,7 @@ import javax.swing.undo.UndoManager;
 import com.alexandriasoftware.swing.JSplitButton;
 
 import app.StarRodException;
+import app.SwingUtils;
 import app.input.IOUtils;
 import game.globals.ItemRecord;
 import game.globals.editor.GlobalsData.GlobalsCategory;
@@ -34,7 +35,6 @@ import game.globals.editor.ListConfirmDialog;
 import game.globals.editor.renderers.ItemEntityListRenderer;
 import game.texture.images.ItemEntityRecord;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.Logger;
 import util.ui.StringField;
 

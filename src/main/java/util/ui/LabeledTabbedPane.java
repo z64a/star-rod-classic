@@ -9,7 +9,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.ScrollPaneConstants;
 
-import shared.SwingUtils;
+import app.SwingUtils;
 
 public class LabeledTabbedPane extends JTabbedPane
 {

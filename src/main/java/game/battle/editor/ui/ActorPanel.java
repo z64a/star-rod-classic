@@ -5,11 +5,11 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
+import app.SwingUtils;
 import common.InfoPanel;
 import game.battle.editor.Actor;
 import game.battle.editor.BattleEditor;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.FlagEditorPanel;
 import util.ui.HexTextField;
 import util.ui.IntSpinner;

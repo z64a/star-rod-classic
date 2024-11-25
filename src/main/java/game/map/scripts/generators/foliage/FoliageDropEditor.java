@@ -7,6 +7,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import app.SwingUtils;
 import game.map.Map;
 import game.map.editor.ui.LabelWithTip;
 import game.map.marker.Marker;
@@ -15,7 +16,6 @@ import game.shared.ProjectDatabase;
 import game.shared.ProjectDatabase.ConstEnum;
 import game.shared.struct.script.ScriptVariable;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 
 public class FoliageDropEditor extends JPanel
 {

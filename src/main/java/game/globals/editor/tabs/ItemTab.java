@@ -23,6 +23,7 @@ import javax.swing.SwingConstants;
 import com.alexandriasoftware.swing.JSplitButton;
 
 import app.IconResource;
+import app.SwingUtils;
 import game.globals.ItemRecord;
 import game.globals.MoveRecord;
 import game.globals.editor.BadgeReorderDialog;
@@ -44,7 +45,6 @@ import game.texture.images.HudElementRecord;
 import game.texture.images.ImageRecord;
 import game.texture.images.ItemEntityRecord;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.Logger;
 import util.MathUtil;
 import util.ui.FlagEditorPanel;

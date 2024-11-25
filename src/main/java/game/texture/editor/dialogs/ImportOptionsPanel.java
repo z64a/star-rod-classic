@@ -3,9 +3,9 @@ package game.texture.editor.dialogs;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
+import app.SwingUtils;
 import game.texture.TileFormat;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 
 public class ImportOptionsPanel extends JPanel
 {

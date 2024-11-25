@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 import javax.swing.AbstractAction;
 import javax.swing.JTextField;
 
-import shared.SwingUtils;
+import app.SwingUtils;
 
 public class NameTextField extends JTextField
 {

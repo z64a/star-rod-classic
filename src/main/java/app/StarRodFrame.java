@@ -2,8 +2,6 @@ package app;
 
 import javax.swing.JFrame;
 
-import shared.Globals;
-
 public class StarRodFrame extends JFrame
 {
 	public StarRodFrame()
@@ -22,6 +20,6 @@ public class StarRodFrame extends JFrame
 
 	public void reloadIcon()
 	{
-		setIconImage(Globals.getDefaultIconImage());
+		setIconImage(Environment.getDefaultIconImage());
 	}
 }

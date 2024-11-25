@@ -10,6 +10,7 @@ import java.util.TreeMap;
 
 import javax.swing.DefaultListModel;
 
+import app.SwingUtils;
 import game.sprite.RawAnimation;
 import game.sprite.SpriteComponent;
 import game.sprite.SpritePalette;
@@ -18,7 +19,6 @@ import game.sprite.editor.SpriteEditor;
 import game.sprite.editor.animators.KeyframeAnimatorEditor.GotoPanel;
 import game.sprite.editor.animators.KeyframeAnimatorEditor.KeyframePanel;
 import game.sprite.editor.animators.KeyframeAnimatorEditor.LoopPanel;
-import shared.SwingUtils;
 import util.Logger;
 
 public class KeyframeAnimator implements ComponentAnimator

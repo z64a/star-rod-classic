@@ -30,12 +30,12 @@ import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.border.EtchedBorder;
 
+import app.SwingUtils;
 import game.map.editor.MapEditor;
 import game.map.editor.commands.AbstractCommand;
 import game.map.editor.selection.SelectablePoint.SetPointPosition;
 import game.map.marker.PathPoint;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.IterableListModel;
 import util.Logger;
 

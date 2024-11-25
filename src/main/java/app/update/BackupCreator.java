@@ -23,7 +23,6 @@ import app.Directories;
 import app.Environment;
 import app.Project;
 import app.config.Options;
-import shared.Globals;
 import util.LogFile;
 import util.Logger;
 
@@ -42,7 +41,7 @@ public class BackupCreator extends JFrame
 	{
 		// frame setup
 		setTitle("Star Rod Backup Creator");
-		setIconImage(Globals.getDefaultIconImage());
+		setIconImage(Environment.getDefaultIconImage());
 
 		File fileToZip = mod.getDirectory();
 

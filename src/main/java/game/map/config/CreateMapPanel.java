@@ -8,9 +8,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
+import app.SwingUtils;
 import game.map.config.MapConfigTable.MapConfig;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.HexTextField;
 import util.ui.LimitedLengthDocument;
 

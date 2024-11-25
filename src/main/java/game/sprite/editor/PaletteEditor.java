@@ -17,11 +17,11 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 
+import app.SwingUtils;
 import game.map.editor.ui.SwatchPanel;
 import game.sprite.Sprite;
 import game.sprite.SpritePalette;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.ColorSlider;
 import util.ui.ColorSlider.SliderListener;
 import util.ui.HexTextField;

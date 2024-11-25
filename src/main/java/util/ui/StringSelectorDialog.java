@@ -18,9 +18,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import app.SwingUtils;
 import game.globals.editor.DialogResult;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.FilteredListModel.ListFilter;
 
 public final class StringSelectorDialog extends JDialog

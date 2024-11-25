@@ -11,6 +11,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 
+import app.SwingUtils;
 import game.map.Map;
 import game.map.editor.MapEditor;
 import game.map.editor.MapEditor.IShutdownListener;
@@ -22,7 +23,6 @@ import game.map.scripts.MainOptionsPanel;
 import game.map.scripts.PannerListPanel;
 import game.map.scripts.ShadingPanel;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 
 public class ScriptManager implements IShutdownListener, UpdateListener
 {

@@ -26,6 +26,7 @@ import javax.swing.KeyStroke;
 
 import app.Directories;
 import app.Environment;
+import app.SwingUtils;
 import common.BaseEditor;
 import common.BaseEditorSettings;
 import common.BasicCamera;
@@ -48,8 +49,6 @@ import renderer.shaders.RenderState.PolygonMode;
 import renderer.shaders.ShaderManager;
 import renderer.shaders.scene.BasicTexturedShader;
 import renderer.shaders.scene.WSPointShader;
-import shared.Globals;
-import shared.SwingUtils;
 import util.Logger;
 import util.MathUtil;
 
@@ -65,7 +64,7 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 
 	private static final BaseEditorSettings EDITOR_SETTINGS = BaseEditorSettings.create()
 		.setTitle(Environment.decorateTitle("World Map Editor"))
-		.setIcon(Globals.getDefaultIconImage())
+		.setIcon(Environment.getDefaultIconImage())
 		.setLog("image_editor.log")
 		.setFullscreen(true)
 		.setResizeable(true)

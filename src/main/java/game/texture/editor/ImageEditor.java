@@ -24,6 +24,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import app.Environment;
+import app.SwingUtils;
 import common.BaseEditor;
 import common.BaseEditorSettings;
 import common.BasicCamera;
@@ -62,8 +63,6 @@ import renderer.shaders.scene.BasicTexturedShader;
 import renderer.text.DrawableString;
 import renderer.text.TextRenderer;
 import renderer.text.TextStyle;
-import shared.Globals;
-import shared.SwingUtils;
 import util.Logger;
 
 public class ImageEditor extends BaseEditor implements MouseManagerListener, ColorUpdateListener
@@ -78,7 +77,7 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 
 	private static final BaseEditorSettings EDITOR_SETTINGS = BaseEditorSettings.create()
 		.setTitle(Environment.decorateTitle("Image Editor"))
-		.setIcon(Globals.getDefaultIconImage())
+		.setIcon(Environment.getDefaultIconImage())
 		.setLog("image_editor.log")
 		.setFullscreen(true)
 		.setResizeable(true)
@@ -1190,7 +1189,7 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 			else
 				image.draw(mousePixelX, mousePixelY, pickedPixel);
 		}
-		
+
 		if(mouseManager.holdingRMB && mousePixelValid)
 			image.deselect(mousePixelX, mousePixelY);
 			*/
