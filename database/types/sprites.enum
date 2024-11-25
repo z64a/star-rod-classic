@@ -45,7 +45,7 @@ false		% reversed
 29 = KoopaTroopa
 2A = ParaTroopa
 2B = Fuzzy
-2C = Bombomb
+2C = Bobomb
 2D = BulletBill
 2E = BillBlaster
 2F = MontyMole
@@ -146,7 +146,7 @@ false		% reversed
 8E = ArtistToad
 8F = Koopa
 90 = KoopaWithoutShell
-91 = WorldBombomb
+91 = WorldBobomb
 92 = Whacka
 93 = Dryite
 94 = Mouser
