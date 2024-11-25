@@ -10,27 +10,27 @@ import app.input.IOUtils;
 import app.input.InputFileException;
 import app.input.InvalidInputException;
 import game.ROM.LibScope;
-import game.ROM.Version;
+import game.ROM.RomVersion;
 import util.Logger;
 
 public class LibraryFile implements Iterable<LibEntry>
 {
 	public final File source;
-	public final Version version;
+	public final RomVersion version;
 	public final LibScope scope;
 	public final String versionString;
 
 	private List<LibEntry> entries = new LinkedList<>();
 	public List<LibEntry> signatures = new LinkedList<>();
 
-	public LibraryFile(Version targetVersion, File source) throws IOException
+	public LibraryFile(RomVersion targetVersion, File source) throws IOException
 	{
 		this.source = source;
 		List<String> lines = IOUtils.readFormattedTextFile(source, false);
 		Iterator<String> iter = lines.iterator();
 
 		String versionString = "0";
-		Version version = null;
+		RomVersion version = null;
 		LibScope scope = null;
 
 		boolean readingHeader = true;
@@ -61,7 +61,7 @@ public class LibraryFile implements Iterable<LibEntry>
 
 					String[] scopeParts = scopeString.split(":");
 
-					for (Version v : Version.values()) {
+					for (RomVersion v : RomVersion.values()) {
 						if (scopeParts[0].equalsIgnoreCase(v.name()))
 							version = v;
 					}

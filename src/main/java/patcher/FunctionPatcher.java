@@ -210,7 +210,7 @@ public class FunctionPatcher
 		rp.seek("Version Info", offset);
 
 		int starRodStringAddress = Patcher.toAddress(rp.getCurrentOffset());
-		rp.write(StringEncoder.encodeString("Star Rod v" + Environment.getVersionString(), true));
+		rp.write(StringEncoder.encodeString("Star Rod " + Environment.getVersionString(), true));
 		rp.padOut(4);
 
 		int modStringAddress = Patcher.toAddress(rp.getCurrentOffset());

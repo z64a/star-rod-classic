@@ -10,7 +10,7 @@ public class ROM_CN extends ROM
 
 	public ROM_CN(File databaseDir)
 	{
-		super(Version.CN, RAM_BLOCKS, databaseDir);
+		super(RomVersion.CN, RAM_BLOCKS, databaseDir);
 	}
 
 	@Override

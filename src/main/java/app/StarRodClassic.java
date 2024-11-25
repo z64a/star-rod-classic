@@ -45,6 +45,7 @@ import javax.swing.WindowConstants;
 
 import org.apache.commons.io.FileUtils;
 
+import app.AppVersion.VersionLevel;
 import app.config.BuildOptionsPanel;
 import app.config.Config;
 import app.config.DumpOptionsPanel;
@@ -821,7 +822,7 @@ public class StarRodClassic extends JFrame
 			Environment.createNewDumpConfig();
 			Environment.dumpConfig.setString(Options.DumpVersion, Environment.getVersionString());
 			Environment.dumpConfig.saveConfigFile();
-			Environment.dumpVersion = Environment.getVersionString();
+			Environment.dumpVersion = Environment.getVersion();
 			Environment.hasCurrentDump = true;
 
 			Logger.log("Finished ROM dump: " + new java.util.Date().toString(), Priority.IMPORTANT);
@@ -1086,7 +1087,7 @@ public class StarRodClassic extends JFrame
 		for (int i = 0; i < args.length; i++) {
 			switch (args[i].toUpperCase()) {
 				case "-VERSION":
-					System.out.println("VERSION=" + Environment.getVersionString());
+					System.out.println("VERSION=" + Environment.getVersion());
 					break;
 				case "-DUMPASSETS":
 					if (!Environment.hasCurrentDump)
@@ -1419,46 +1420,6 @@ public class StarRodClassic extends JFrame
 		button.setHorizontalTextPosition(SwingConstants.RIGHT);
 	}
 
-	/**
-	 * @return positive = a later than b, negative = b later than a, 0 = equal
-	 */
-	public static int compareVersionStrings(String a, String b)
-	{
-		int[] avals, bvals;
-
-		avals = tokenizeVersionString(a);
-		bvals = tokenizeVersionString(b);
-
-		for (int i = 0; i < avals.length; i++) {
-			if (avals[i] > bvals[i])
-				return 1;
-			else if (avals[i] < bvals[i])
-				return -1;
-		}
-
-		return 0;
-	}
-
-	private static int[] tokenizeVersionString(String ver)
-	{
-		if (ver == null || !ver.contains("."))
-			throw new IllegalArgumentException("Invalid version string: " + ver);
-
-		String[] tokens = ver.split("\\.");
-		int[] values = new int[3];
-
-		for (int i = 0; i < 3; i++) {
-			try {
-				values[i] = Integer.parseInt(tokens[i]);
-			}
-			catch (NumberFormatException e) {
-				throw new IllegalArgumentException("Invalid version string: " + ver);
-			}
-		}
-
-		return values;
-	}
-
 	private static void checkVersion() throws IOException, InterruptedException
 	{
 		Config modConfig = Environment.project.config;
@@ -1468,48 +1429,59 @@ public class StarRodClassic extends JFrame
 			return;
 		}
 
-		String modVersion = modConfig.getString(Options.CompileVersion);
-		if (modVersion.equals(Environment.getVersionString()))
-			return;
+		String modVersionString = modConfig.getString(Options.CompileVersion);
+		AppVersion modVersion = AppVersion.fromString(modVersionString);
+		if (modVersion.isNewerThan(Environment.getVersion())) {
+			SwingUtils.getWarningDialog()
+				.setTitle("Unknown Mod Version")
+				.setMessage("Detected mod version " + modVersion + ".",
+					"This version is newer than this application.",
+					"Please open this mod with an appropriate version of Star Rod.")
+				.show();
+			Environment.exit();
+		}
 
-		// clear caches
-		FileUtils.deleteDirectory(Directories.MOD_IMG_CACHE.toFile());
-		FileUtils.deleteDirectory(Directories.MOD_SPR_NPC_CACHE.toFile());
-		FileUtils.deleteDirectory(Directories.MOD_SPR_PLR_CACHE.toFile());
-		if (MapIndex.getFile().exists())
-			FileUtils.forceDelete(MapIndex.getFile());
+		if (modVersion.isOlderThan(Environment.getVersion(), VersionLevel.MINOR)) {
+			// going forward, we will drop update support for any mods < 0.6
 
-		int[] curVer = tokenizeVersionString(Environment.getVersionString());
-		int[] modVer = tokenizeVersionString(modVersion);
-		if ((curVer[0] != modVer[0]) || (curVer[1] != modVer[1])) { // && (curVer[2] != modVer[2])) {
+			if (modVersion.minor < 3) {
+				SwingUtils.getWarningDialog()
+					.setTitle("Out of Date Mod")
+					.setMessage("Detected mod version " + modVersion + ".",
+						"This version is no longer supported.")
+					.show();
+				Environment.exit();
+			}
+
+			if (modVersion.minor < 5) {
+				SwingUtils.getWarningDialog()
+					.setTitle("Out of Date Mod")
+					.setMessage("Detected mod version " + modVersion + ".",
+						"Please update to version 0.5 using an older 0.5.x release",
+						"before updating to " + Environment.getVersionString() + ".")
+					.show();
+				Environment.exit();
+			}
+
+			// clear caches
+			FileUtils.deleteDirectory(Directories.MOD_IMG_CACHE.toFile());
+			FileUtils.deleteDirectory(Directories.MOD_SPR_NPC_CACHE.toFile());
+			FileUtils.deleteDirectory(Directories.MOD_SPR_PLR_CACHE.toFile());
+			if (MapIndex.getFile().exists())
+				FileUtils.forceDelete(MapIndex.getFile());
+
 			update(modVersion, modConfig, (f) -> {
 				new MinorUpdator(f);
 			});
 		}
-		else if (modVer[0] == 0 && modVer[1] == 4) {
-			SwingUtils.getWarningDialog()
-				.setTitle("Out of Date Mod")
-				.setMessage("Detected mod version " + modVersion + ".",
-					"Please update to version 0.5 using an older 0.5.x release",
-					"before updating to " + Environment.getVersionString() + ".")
-				.show();
-			Environment.exit();
-		}
-		else if (modVer[0] == 0 && modVer[1] < 2) {
-			SwingUtils.getWarningDialog()
-				.setTitle("Out of Date Mod")
-				.setMessage("Detected mod version " + modVersion + ".", "This version is no longer supported.")
-				.show();
-			Environment.exit();
-		}
 	}
 
-	private static void update(String modVersion, Config modConfig, UpdateFunction updateFunc) throws IOException, InterruptedException
+	private static void update(AppVersion modVersion, Config modConfig, UpdateFunction updateFunc) throws IOException, InterruptedException
 	{
 		int choice = SwingUtils.getConfirmDialog()
 			.setTitle("Out of Date Mod")
 			.setMessage("Detected mod version " + modVersion + ".",
-				"Migrate mod to " + Environment.getVersionString() + "?")
+				"Migrate mod to " + Environment.getVersion() + "?")
 			.setOptionsType(JOptionPane.YES_NO_OPTION)
 			.setMessageType(JOptionPane.WARNING_MESSAGE)
 			.choose();

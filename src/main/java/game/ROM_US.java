@@ -10,7 +10,7 @@ public class ROM_US extends ROM
 
 	public ROM_US(File databaseDir)
 	{
-		super(Version.US, RAM_BLOCKS, databaseDir);
+		super(RomVersion.US, RAM_BLOCKS, databaseDir);
 	}
 
 	@Override
