@@ -45,6 +45,7 @@ import app.LoadingScreen;
 import app.StackTraceDialog;
 import app.StarRodClassic;
 import app.StarRodException;
+import app.SwingUtils;
 import app.config.Config;
 import app.config.Options;
 import app.config.Options.Scope;
@@ -155,7 +156,6 @@ import game.texture.ModelTexture;
 import renderer.buffers.LineRenderQueue;
 import renderer.shaders.RenderState;
 import renderer.shaders.postprocess.PostProcessFX;
-import shared.SwingUtils;
 import util.LogFile;
 import util.Logger;
 import util.MathUtil;
@@ -573,7 +573,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 		gui = new SwingGUI(this, glCanvas, logFile);
 		Logger.addListener(gui);
 
-		if (Environment.os.isMacOS())
+		if (Environment.isMacOS())
 			setFullScreenEnabled(gui, false);
 
 		loadPreferences();

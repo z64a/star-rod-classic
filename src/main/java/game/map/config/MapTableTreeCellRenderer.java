@@ -16,12 +16,12 @@ import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 
+import app.Environment;
+import app.SwingUtils;
 import game.map.config.MapConfigTable.AreaConfig;
 import game.map.config.MapConfigTable.MapConfig;
 import game.map.config.MapConfigTable.Resource;
 import net.miginfocom.swing.MigLayout;
-import shared.Globals;
-import shared.SwingUtils;
 
 public class MapTableTreeCellRenderer extends JPanel implements TreeCellRenderer
 {
@@ -68,7 +68,7 @@ public class MapTableTreeCellRenderer extends JPanel implements TreeCellRenderer
 	{
 		super();
 		this.editor = editor;
-		iconLabel = new JLabel(Globals.ICON_ERROR, JLabel.CENTER);
+		iconLabel = new JLabel(Environment.ICON_ERROR, JLabel.CENTER);
 		nameLabel = new JLabel();
 		nickLabel = new JLabel();
 

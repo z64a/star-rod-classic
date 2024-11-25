@@ -8,6 +8,7 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
 
+import app.SwingUtils;
 import game.map.MapObject.SetObjectName;
 import game.map.MutableAngle;
 import game.map.MutablePoint;
@@ -22,7 +23,6 @@ import game.map.marker.Marker.SetX;
 import game.map.marker.Marker.SetY;
 import game.map.marker.Marker.SetZ;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.FloatTextField;
 import util.ui.IntTextField;
 import util.ui.NameTextField;

@@ -1,5 +1,6 @@
 package app;
 
+import java.awt.Image;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -7,17 +8,22 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.security.CodeSource;
 import java.util.Properties;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
 
+import app.Resource.ResourceType;
 import app.config.Config;
 import app.config.Options;
 import app.config.Options.Scope;
@@ -27,9 +33,6 @@ import game.map.editor.ui.dialogs.ChooseDialogResult;
 import game.map.editor.ui.dialogs.DirChooser;
 import game.map.editor.ui.dialogs.OpenFileChooser;
 import game.shared.ProjectDatabase;
-import shared.Globals;
-import shared.RomValidator;
-import shared.SwingUtils;
 import util.Logger;
 import util.Priority;
 
@@ -37,8 +40,21 @@ public abstract class Environment
 {
 	private static DirChooser projectChooser;
 	private static OpenFileChooser romChooser;
-	private static final String MAIN_CONFIG_FILENAME = "cfg/main.cfg";
-	private static final String DUMP_CONFIG_FILENAME = "dump.cfg";
+	private static final String FN_MAIN_CONFIG = "cfg/main.cfg";
+	private static final String FN_DUMP_CONFIG = "dump.cfg";
+
+	public static ImageIcon ICON_DEFAULT = loadIconResource(ResourceType.Icon, "icon.png");
+	public static ImageIcon ICON_ERROR = null;
+
+	private static enum OSFamily
+	{
+		Windows,
+		Mac,
+		Linux,
+		Unknown
+	}
+
+	private static OSFamily osFamily = OSFamily.Unknown;
 
 	public static Config mainConfig = null;
 	public static Project project;
@@ -59,8 +75,6 @@ public abstract class Environment
 	private static String gitBuildBranch;
 	private static String gitBuildCommit;
 	private static String gitBuildTag;
-
-	public static OS os;
 
 	public static String getVersionString()
 	{
@@ -91,12 +105,21 @@ public abstract class Environment
 		if (initialized)
 			return;
 
-		os = new OS();
+		if (SystemUtils.IS_OS_WINDOWS)
+			osFamily = OSFamily.Windows;
+		else if (SystemUtils.IS_OS_LINUX)
+			osFamily = OSFamily.Linux;
+		else if (SystemUtils.IS_OS_MAC)
+			osFamily = OSFamily.Mac;
+		else
+			osFamily = OSFamily.Unknown;
+
 		commandLine = isCommandLine;
 
 		// running from a jar, we need to set the natives directory at runtime
 		try {
-			String sourceName = StarRodClassic.class.getProtectionDomain().getCodeSource().getLocation().toURI().toString();
+			CodeSource src = StarRodClassic.class.getProtectionDomain().getCodeSource();
+			String sourceName = src.getLocation().toURI().toString();
 
 			Matcher matcher = Pattern.compile("%[0-9A-Fa-f]{2}").matcher(sourceName);
 			StringBuffer sb = new StringBuffer(sourceName.length());
@@ -160,7 +183,7 @@ public abstract class Environment
 
 			Logger.setDefaultOuputPriority(mainConfig.getBoolean(Options.LogDetails) ? Priority.DETAIL : Priority.STANDARD);
 			ProjectDatabase.initialize(false);
-			Globals.reloadIcons();
+			Environment.reloadIcons();
 		}
 		catch (Throwable t) {
 			StarRodClassic.handleEarlyCrash(t);
@@ -214,7 +237,7 @@ public abstract class Environment
 
 	private static final void readStarRodConfig() throws IOException
 	{
-		File configFile = new File(codeSource.getParent(), MAIN_CONFIG_FILENAME);
+		File configFile = new File(codeSource.getParent(), FN_MAIN_CONFIG);
 
 		// we may need to create a new config file here
 		if (!configFile.exists()) {
@@ -358,7 +381,7 @@ public abstract class Environment
 
 	public static Config createNewDumpConfig() throws IOException
 	{
-		File dumpConfigFile = new File(Directories.getDumpPath() + "/" + Environment.DUMP_CONFIG_FILENAME);
+		File dumpConfigFile = new File(Directories.getDumpPath() + "/" + Environment.FN_DUMP_CONFIG);
 		Environment.dumpConfig = new Config(dumpConfigFile, Scope.Dump);
 		return Environment.dumpConfig;
 	}
@@ -389,7 +412,7 @@ public abstract class Environment
 
 	private static void loadDump()
 	{
-		File dumpConfigFile = new File(Directories.getDumpPath() + "/" + DUMP_CONFIG_FILENAME);
+		File dumpConfigFile = new File(Directories.getDumpPath() + "/" + FN_DUMP_CONFIG);
 		dumpConfig = new Config(dumpConfigFile, Scope.Dump);
 
 		if (dumpConfigFile.exists()) {
@@ -498,5 +521,66 @@ public abstract class Environment
 	{
 		FileUtils.copyFile(baseRom, copy);
 		return copy;
+	}
+
+	public static boolean isWindows()
+	{
+		return osFamily == OSFamily.Windows;
+	}
+
+	public static boolean isMacOS()
+	{
+		return osFamily == OSFamily.Mac;
+	}
+
+	public static boolean isLinux()
+	{
+		return osFamily == OSFamily.Linux;
+	}
+
+	public static void reloadIcons()
+	{
+		ICON_DEFAULT = loadIconFile(Directories.DUMP_IMG_ASSETS + "item/battle/ShootingStar.png");
+		if (ICON_DEFAULT == null)
+			ICON_DEFAULT = loadIconResource(ResourceType.Icon, "icon.png");
+		ICON_ERROR = loadIconFile(Directories.DUMP_SPR_NPC_SRC + "3B/Raster_1A.png");
+	}
+
+	public static final Image getDefaultIconImage()
+	{
+		return (ICON_DEFAULT == null) ? null : ICON_DEFAULT.getImage();
+	}
+
+	public static final Image getErrorIconImage()
+	{
+		return (ICON_DEFAULT == null) ? null : ICON_DEFAULT.getImage();
+	}
+
+	private static ImageIcon loadIconFile(String fileName)
+	{
+		File imageFile = new File(fileName);
+		if (!imageFile.exists()) {
+			System.err.println("Unable to find image " + fileName);
+			return null;
+		}
+
+		try {
+			return new ImageIcon(ImageIO.read(imageFile));
+		}
+		catch (IOException e) {
+			System.err.println("Exception while loading image " + fileName);
+			return null;
+		}
+	}
+
+	private static ImageIcon loadIconResource(ResourceType type, String resourceName)
+	{
+		try {
+			return new ImageIcon(ImageIO.read(Resource.getStream(type, resourceName)));
+		}
+		catch (IOException e) {
+			System.err.println("Exception while loading image " + resourceName);
+			return null;
+		}
 	}
 }

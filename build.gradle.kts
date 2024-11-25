@@ -16,7 +16,7 @@ plugins {
     id("java")
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("net.nemerosa.versioning") version "3.1.0"
-    id("com.jaredsburrows.license") version "0.9.7"
+    id("com.cmgapps.licenses") version "4.8.0"
 }
 
 java {
@@ -126,8 +126,8 @@ tasks {
             into("contributed")
         }
         
-        from(file(layout.buildDirectory.dir("reports"))) {
-            into("database")
+        from(file(layout.buildDirectory.dir("reports/licenses/licenseReport"))) {
+            into("database/licenses")
         }
         
         from(file("exec")) {
@@ -150,7 +150,7 @@ tasks {
 
     named("createReleaseZip") {
         dependsOn("clean")
-        dependsOn("shadowJar")
         dependsOn("licenseReport")
+        dependsOn("shadowJar")
     }
 }

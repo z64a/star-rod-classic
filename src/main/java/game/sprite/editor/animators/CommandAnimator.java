@@ -10,6 +10,7 @@ import java.util.TreeMap;
 
 import javax.swing.DefaultListModel;
 
+import app.SwingUtils;
 import game.sprite.RawAnimation;
 import game.sprite.SpriteComponent;
 import game.sprite.SpritePalette;
@@ -27,7 +28,6 @@ import game.sprite.editor.animators.CommandAnimatorEditor.SetRotationPanel;
 import game.sprite.editor.animators.CommandAnimatorEditor.SetScalePanel;
 import game.sprite.editor.animators.CommandAnimatorEditor.SetUnknownPanel;
 import game.sprite.editor.animators.CommandAnimatorEditor.WaitPanel;
-import shared.SwingUtils;
 import util.Logger;
 
 public class CommandAnimator implements ComponentAnimator

@@ -16,7 +16,6 @@ import app.Environment;
 import app.StarRodClassic;
 import app.StarRodException;
 import app.input.InvalidInputException;
-import shared.Globals;
 import util.LogFile;
 import util.Logger;
 
@@ -42,7 +41,7 @@ public class VersionUpdater_0_4 extends JFrame
 		}
 
 		setTitle("Star Rod Updater");
-		setIconImage(Globals.getDefaultIconImage());
+		setIconImage(Environment.getDefaultIconImage());
 
 		final JDialog dialog = new JDialog(this, true); // modal
 		dialog.setMinimumSize(new Dimension(480, 32));

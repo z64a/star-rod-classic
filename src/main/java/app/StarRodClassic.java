@@ -107,8 +107,6 @@ import patcher.Patcher;
 import reports.BattleMapTracker;
 import reports.EffectTypeTracker;
 import reports.FunctionCallTracker;
-import shared.Globals;
-import shared.SwingUtils;
 import util.LogFile;
 import util.Logger;
 import util.Logger.Listener;
@@ -253,7 +251,7 @@ public class StarRodClassic extends JFrame
 
 		setTitle(Environment.decorateTitle("Mod Manager"));
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-		setIconImage(Globals.getDefaultIconImage());
+		setIconImage(Environment.getDefaultIconImage());
 
 		setMinimumSize(new Dimension(480, 32));
 		setLocationRelativeTo(null);
@@ -324,8 +322,8 @@ public class StarRodClassic extends JFrame
 							revalidate();
 							pack();
 
-							Globals.reloadIcons();
-							setIconImage(Globals.getDefaultIconImage());
+							Environment.reloadIcons();
+							setIconImage(Environment.getDefaultIconImage());
 							Toolkit.getDefaultToolkit().beep();
 
 							SwingUtils.getMessageDialog()
@@ -412,7 +410,7 @@ public class StarRodClassic extends JFrame
 							String.format("Available memory: %.2f MB", maxMemory / 1e6))
 						.setMessageType(JOptionPane.WARNING_MESSAGE)
 						.setOptionsType(JOptionPane.YES_NO_CANCEL_OPTION)
-						.setIcon(Globals.ICON_ERROR)
+						.setIcon(Environment.ICON_ERROR)
 						.setOptions("Continue", "Abort")
 						.choose();
 
@@ -1069,7 +1067,7 @@ public class StarRodClassic extends JFrame
 		}
 		catch (IOException openDefaultIOE) {
 			try {
-				if (Environment.os.isWindows()) {
+				if (Environment.isWindows()) {
 					Runtime rs = Runtime.getRuntime();
 					rs.exec("notepad " + file.getCanonicalPath());
 				}
@@ -1355,7 +1353,7 @@ public class StarRodClassic extends JFrame
 			});
 
 			setTitle(Environment.decorateTitle("Star Rod"));
-			setIconImage(Globals.getDefaultIconImage());
+			setIconImage(Environment.getDefaultIconImage());
 
 			//	setMinimumSize(new Dimension(320,64)); // 2x2
 			setMinimumSize(new Dimension(220, 220));

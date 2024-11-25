@@ -6,8 +6,6 @@ import javax.swing.JFrame;
 import javax.swing.JProgressBar;
 
 import net.miginfocom.swing.MigLayout;
-import shared.Globals;
-import shared.SwingUtils;
 import util.Logger;
 import util.Logger.Listener;
 import util.Logger.Message;
@@ -20,7 +18,7 @@ public class LoadingScreen extends JFrame implements Listener
 	{
 		super();
 		setTitle("Loading");
-		setIconImage(Globals.getDefaultIconImage());
+		setIconImage(Environment.getDefaultIconImage());
 
 		setMinimumSize(new Dimension(320, 64));
 		setLocationRelativeTo(null);

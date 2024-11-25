@@ -3,7 +3,7 @@ package game.map.editor.ui;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 
-import shared.SwingUtils;
+import app.SwingUtils;
 
 public class LabelWithTip extends JLabel
 {

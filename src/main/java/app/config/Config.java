@@ -8,11 +8,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
+import app.SwingUtils;
 import app.config.Options.Scope;
 import app.config.Options.Type;
 import app.input.IOUtils;
 import app.input.InputFileException;
-import shared.SwingUtils;
 import util.Logger;
 
 public class Config

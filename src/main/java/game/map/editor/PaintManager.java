@@ -28,6 +28,7 @@ import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 
+import app.SwingUtils;
 import common.Vector3f;
 import game.map.editor.render.RenderingOptions.SurfaceMode;
 import game.map.editor.render.TextureManager;
@@ -35,7 +36,6 @@ import game.map.editor.ui.GuiCommand;
 import game.map.editor.ui.SwingGUI;
 import game.map.mesh.Vertex;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.identity.IdentityHashSet;
 import util.ui.LimitedLengthDocument;
 

@@ -7,9 +7,9 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import app.SwingUtils;
 import game.map.config.MapConfigTable.Resource;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.LimitedLengthDocument;
 
 public class ResourceInfoPanel extends JPanel

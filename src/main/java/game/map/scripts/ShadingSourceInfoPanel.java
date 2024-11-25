@@ -9,6 +9,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 
+import app.SwingUtils;
 import game.map.editor.MapEditor;
 import game.map.editor.MapInfoPanel;
 import game.map.editor.ui.SwatchPanel;
@@ -21,7 +22,6 @@ import game.map.shading.ShadingLightSource.SetLightEnabled;
 import game.map.shading.ShadingLightSource.SetLightFalloff;
 import game.map.shading.ShadingLightSource.SetLightFalloffType;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.FloatTextField;
 import util.ui.HexTextField;
 import util.ui.IntTextField;

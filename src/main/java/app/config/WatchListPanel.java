@@ -8,10 +8,10 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import app.StarRodException;
+import app.SwingUtils;
 import app.config.WatchListEntry.Category;
 import app.config.WatchListEntry.MemoryType;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.HexTextField;
 import util.ui.StandardInputField;
 

@@ -26,12 +26,12 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 
+import app.SwingUtils;
 import game.globals.editor.GlobalsEditor;
 import game.globals.editor.GlobalsEditor.GlobalEditorTab;
 import game.globals.editor.GlobalsListModel;
 import game.globals.editor.GlobalsRecord;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.Logger;
 import util.Logger.Message;
 import util.ui.FadingLabel;

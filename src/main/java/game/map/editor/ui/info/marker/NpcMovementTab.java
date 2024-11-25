@@ -10,6 +10,7 @@ import javax.swing.JSpinner;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerNumberModel;
 
+import app.SwingUtils;
 import game.map.MutablePoint;
 import game.map.editor.MapEditor;
 import game.map.editor.ui.PathList;
@@ -20,7 +21,6 @@ import game.map.marker.NpcComponent.SetDetectPos;
 import game.map.marker.NpcComponent.SetWanderPos;
 import game.map.marker.PathData.AddPathPoint;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.FloatTextField;
 import util.ui.IntVectorPanel;
 

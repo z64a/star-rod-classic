@@ -14,7 +14,6 @@ import app.config.DecompConfig;
 import app.config.Options;
 import app.config.Options.Scope;
 import patcher.RomPatcher;
-import shared.SwingUtils;
 import util.Logger;
 
 public final class Project

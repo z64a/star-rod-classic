@@ -19,9 +19,9 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import app.SwingUtils;
 import game.string.PMString;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.FilteredListModel;
 import util.ui.HexTextField;
 import util.ui.StandardInputField;

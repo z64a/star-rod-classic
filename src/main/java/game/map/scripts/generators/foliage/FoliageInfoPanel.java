@@ -16,6 +16,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 
+import app.SwingUtils;
 import game.map.MapObject;
 import game.map.MapObject.MapObjectType;
 import game.map.editor.MapEditor;
@@ -35,7 +36,6 @@ import game.map.tree.CategoryTreeModel;
 import game.map.tree.CategoryTreeModel.CategoryTreeCellRenderer;
 import game.map.tree.CategoryTreeModel.CategoryTreeNode;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.StringField;
 
 public class FoliageInfoPanel extends JPanel implements IShutdownListener

@@ -8,6 +8,7 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
 
+import app.SwingUtils;
 import game.map.MapObject.HitType;
 import game.map.MapObject.SetObjectName;
 import game.map.editor.MapEditor;
@@ -17,7 +18,6 @@ import game.map.hit.Collider;
 import game.shared.ProjectDatabase;
 import game.shared.ProjectDatabase.EnumComboBox;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.HexTextField;
 import util.ui.NameTextField;
 

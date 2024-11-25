@@ -7,9 +7,9 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 
+import app.Environment;
+import app.SwingUtils;
 import net.miginfocom.swing.MigLayout;
-import shared.Globals;
-import shared.SwingUtils;
 
 public class ColorSelectionDialogPanel extends JDialog
 {
@@ -66,7 +66,7 @@ public class ColorSelectionDialogPanel extends JDialog
 		dialogFrame.pack();
 
 		panel.setTitle(TITLE);
-		panel.setIconImage(Globals.getDefaultIconImage());
+		panel.setIconImage(Environment.getDefaultIconImage());
 		panel.pack();
 
 		panel.result = -1;
@@ -84,7 +84,7 @@ public class ColorSelectionDialogPanel extends JDialog
 		dialogFrame.setUndecorated(true);
 		dialogFrame.setVisible(true);
 		dialogFrame.setLocationRelativeTo(parentComponent);
-		dialogFrame.setIconImage(Globals.getDefaultIconImage());
+		dialogFrame.setIconImage(Environment.getDefaultIconImage());
 		return dialogFrame;
 	}
 }

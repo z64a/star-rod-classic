@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 
-import shared.SwingUtils;
+import app.SwingUtils;
 
 public class StandardEditableComboBox extends JComboBox<String>
 {

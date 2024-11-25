@@ -6,7 +6,7 @@ import java.util.function.Consumer;
 
 import javax.swing.JTextField;
 
-import shared.SwingUtils;
+import app.SwingUtils;
 
 public class StringField extends JTextField
 {

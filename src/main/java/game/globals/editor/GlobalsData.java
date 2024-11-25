@@ -11,6 +11,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 
 import app.StarRodException;
+import app.SwingUtils;
 import app.input.InputFileException;
 import game.globals.ItemModder;
 import game.globals.ItemRecord;
@@ -24,7 +25,6 @@ import game.texture.images.ImageRecord;
 import game.texture.images.ImageRecord.ImageReference;
 import game.texture.images.ImageScriptModder;
 import game.texture.images.ItemEntityRecord;
-import shared.SwingUtils;
 import util.Logger;
 
 public class GlobalsData

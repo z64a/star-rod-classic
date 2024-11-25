@@ -8,7 +8,7 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
-import shared.SwingUtils;
+import app.SwingUtils;
 
 public class SaveFileChooser
 {

@@ -1,4 +1,4 @@
-package shared;
+package app;
 
 import java.awt.Dimension;
 import java.io.File;
@@ -48,7 +48,7 @@ public class RomValidator
 		JDialog pleaseWait = new JDialog((JDialog) null);
 		pleaseWait.setLocationRelativeTo(null);
 		pleaseWait.setTitle("Please Wait");
-		pleaseWait.setIconImage(Globals.getDefaultIconImage());
+		pleaseWait.setIconImage(Environment.getDefaultIconImage());
 
 		JProgressBar progressBar = new JProgressBar();
 		progressBar.setIndeterminate(true);
@@ -87,7 +87,7 @@ public class RomValidator
 				/*
 				String extension = path.substring(path.lastIndexOf("."));
 				path = path.substring(0, path.lastIndexOf("."));
-				
+
 				if(extension.equals("n64"))
 					swapped = new File(path + ".z64");
 				else

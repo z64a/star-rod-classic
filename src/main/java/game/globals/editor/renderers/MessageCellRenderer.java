@@ -8,9 +8,9 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 
+import app.SwingUtils;
 import game.string.PMString;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 
 public class MessageCellRenderer extends JPanel implements ListCellRenderer<PMString>
 {

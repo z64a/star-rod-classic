@@ -17,6 +17,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.border.EtchedBorder;
 
+import app.SwingUtils;
 import game.map.Map;
 import game.map.editor.MapEditor;
 import game.map.editor.commands.ApplyPannerToList;
@@ -25,7 +26,6 @@ import game.map.editor.ui.SwingGUI;
 import game.map.shape.Model;
 import game.map.shape.TexturePanner;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 
 public class PannerListPanel extends JPanel
 {

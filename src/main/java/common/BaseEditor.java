@@ -42,6 +42,9 @@ import app.LoadingScreen;
 import app.StarRodClassic;
 import app.StarRodException;
 import app.StarRodFrame;
+import app.SwingUtils;
+import app.SwingUtils.DialogBuilder;
+import app.SwingUtils.OpenDialogCounter;
 import app.config.Config;
 import app.config.Options;
 import app.config.Options.Scope;
@@ -52,10 +55,6 @@ import game.map.editor.GLEditor;
 import game.map.editor.Tickable;
 import game.map.editor.commands.AbstractCommand;
 import net.miginfocom.swing.MigLayout;
-import shared.Globals;
-import shared.SwingUtils;
-import shared.SwingUtils.DialogBuilder;
-import shared.SwingUtils.OpenDialogCounter;
 import util.LogFile;
 import util.Logger;
 import util.Logger.Listener;
@@ -165,7 +164,7 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 			Environment.exit(-1);
 		}
 
-		if (Environment.os.isMacOS())
+		if (Environment.isMacOS())
 			setFullScreenEnabled(frame, false);
 		frame.pack();
 
@@ -413,7 +412,7 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 				}
 				catch (IOException openDefaultIOE) {
 					try {
-						if (Environment.os.isWindows()) {
+						if (Environment.isWindows()) {
 							Runtime rs = Runtime.getRuntime();
 							rs.exec("notepad " + logFile.getCanonicalPath());
 							success = true;
@@ -430,7 +429,7 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 					.setMessage(logScrollPane)
 					.setMessageType(JOptionPane.PLAIN_MESSAGE)
 					.setOptionsType(JOptionPane.YES_NO_CANCEL_OPTION)
-					.setIcon(Globals.ICON_DEFAULT)
+					.setIcon(Environment.ICON_DEFAULT)
 					.setOptions("Copy to Clipboard")
 					.choose();
 				openDialogs.decrement();
