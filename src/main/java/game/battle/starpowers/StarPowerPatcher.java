@@ -36,8 +36,6 @@ public class StarPowerPatcher
 	private final RomPatcher rp;
 	private List<StarPowerConfig> configs;
 
-	private boolean foundPatches = false;
-
 	public StarPowerPatcher(Patcher patcher)
 	{
 		this.patcher = patcher;
@@ -56,15 +54,11 @@ public class StarPowerPatcher
 			String name = FilenameUtils.removeExtension(f.getName());
 			StarPowerEncoder encoder = new StarPowerEncoder(patcher);
 			encoder.encode(name);
-			foundPatches = true;
 		}
 	}
 
 	public void generateConfigs() throws IOException
 	{
-		if (!foundPatches)
-			return;
-
 		configs = new LinkedList<>();
 
 		for (int i = 0; i < NUM_STAR_POWERS; i++) {
@@ -107,9 +101,6 @@ public class StarPowerPatcher
 
 	public void writeStarPowerTable() throws IOException
 	{
-		if (!foundPatches)
-			return;
-
 		rp.seek("Star Power Table", 0x1CB0B0);
 		for (StarPowerConfig cfg : configs) {
 			cfg.entryOffset = rp.getCurrentOffset();
@@ -123,9 +114,6 @@ public class StarPowerPatcher
 
 	public void writeStarPowerData() throws IOException
 	{
-		if (!foundPatches)
-			return;
-
 		for (StarPowerConfig cfg : configs) {
 			byte[] data = FileUtils.readFileToByteArray(cfg.source);
 			int start = patcher.getBattleDataPos(data.length);

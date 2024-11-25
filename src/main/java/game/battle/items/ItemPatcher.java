@@ -42,8 +42,6 @@ public class ItemPatcher
 	private final RomPatcher rp;
 	private List<ItemConfig> configs;
 
-	private boolean foundPatches = false;
-
 	public ItemPatcher(Patcher patcher)
 	{
 		this.patcher = patcher;
@@ -62,15 +60,11 @@ public class ItemPatcher
 			String name = FilenameUtils.removeExtension(f.getName());
 			ItemEncoder encoder = new ItemEncoder(patcher);
 			encoder.encode(name);
-			foundPatches = true;
 		}
 	}
 
 	public void generateConfigs() throws IOException
 	{
-		if (!foundPatches)
-			return;
-
 		configs = new LinkedList<>();
 		File table = new File(MOD_ITEM + FN_BATTLE_ITEMS);
 		List<String> lines = IOUtils.readFormattedTextFile(table, false);
@@ -130,9 +124,6 @@ public class ItemPatcher
 
 	public void writeItemTable() throws IOException
 	{
-		if (!foundPatches)
-			return;
-
 		boolean relocate = configs.size() > 32;
 		int useItemIDs = ProjectDatabase.rom.getOffset(EOffset.ITEM_SCRIPT_LIST);
 		int useItemTable = ProjectDatabase.rom.getOffset(EOffset.ITEM_SCRIPT_TABLE);
@@ -191,9 +182,6 @@ public class ItemPatcher
 
 	public void writeItemData() throws IOException
 	{
-		if (!foundPatches)
-			return;
-
 		HashMap<File, Region> sourceMap = new LinkedHashMap<>();
 
 		for (ItemConfig cfg : configs) {

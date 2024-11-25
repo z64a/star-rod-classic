@@ -33,8 +33,6 @@ public class MinigamePatcher
 	private final RomPatcher rp;
 	private List<MinigameConfig> configs;
 
-	private boolean foundPatches = false;
-
 	public MinigamePatcher(Patcher patcher)
 	{
 		this.patcher = patcher;
@@ -53,15 +51,11 @@ public class MinigamePatcher
 			String name = FilenameUtils.removeExtension(f.getName());
 			MinigameEncoder encoder = new MinigameEncoder(patcher);
 			encoder.encode(name);
-			foundPatches = true;
 		}
 	}
 
 	public void generateConfigs() throws IOException
 	{
-		if (!foundPatches)
-			return;
-
 		configs = new LinkedList<>();
 		ConstEnum commandsEnum = ProjectDatabase.getFromNamespace("ActionCommand");
 
@@ -93,9 +87,6 @@ public class MinigamePatcher
 
 	public void writeTable() throws IOException
 	{
-		if (!foundPatches)
-			return;
-
 		int tableOffset = 0x1C2DA0;
 		if (configs.size() <= 23) {
 			rp.seek("Action Command Table", tableOffset);
@@ -121,9 +112,6 @@ public class MinigamePatcher
 
 	public void writeData() throws IOException
 	{
-		if (!foundPatches)
-			return;
-
 		for (MinigameConfig cfg : configs) {
 			byte[] data = FileUtils.readFileToByteArray(cfg.source);
 			int start = patcher.getBattleDataPos(data.length);

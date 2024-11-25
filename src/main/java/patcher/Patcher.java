@@ -77,8 +77,11 @@ public class Patcher implements IGlobalDatabase
 	private List<Region> emptyRegions = new ArrayList<>();
 	private LinkedHashMap<String, Timer> timerLookup;
 
+	private static final int ROM_BATTLE_DATA_START = 0x4219F0;
+	private static final int ROM_BATTLE_DATA_END = 0x79EF40;
+
 	private RomPatcher rp = null;
-	private int nextBattleDataPos = 0x4219F0;
+	private int nextBattleDataPos = ROM_BATTLE_DATA_START;
 
 	private HashMap<String, Integer> globalPointerMap; // globally accessible pointers $Name -> address
 	private HashMap<String, String> globalConstantMap; // globally accessible constants .Name -> value
@@ -859,8 +862,8 @@ public class Patcher implements IGlobalDatabase
 			throw new IllegalStateException();
 
 		int offset = nextBattleDataPos;
-		if (offset + sizeNeeded > 0x79EF40) {
-			addEmptyRegion(new Region(offset, 0x79EF40));
+		if (offset + sizeNeeded > ROM_BATTLE_DATA_END) {
+			addEmptyRegion(new Region(offset, ROM_BATTLE_DATA_END));
 			offset = rp.nextAlignedOffset();
 		}
 		nextBattleDataPos = offset + sizeNeeded;
@@ -870,8 +873,8 @@ public class Patcher implements IGlobalDatabase
 
 	private void sealBattleData()
 	{
-		if (nextBattleDataPos < 0x79EF40) {
-			addEmptyRegion(new Region(nextBattleDataPos, 0x79EF40));
+		if (nextBattleDataPos < ROM_BATTLE_DATA_END) {
+			addEmptyRegion(new Region(nextBattleDataPos, ROM_BATTLE_DATA_END));
 		}
 		nextBattleDataPos = -1;
 	}

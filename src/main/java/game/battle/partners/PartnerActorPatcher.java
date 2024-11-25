@@ -40,8 +40,6 @@ public class PartnerActorPatcher
 	private final RomPatcher rp;
 	private List<PartnerActorConfig> configs;
 
-	private boolean foundPatches = false;
-
 	public PartnerActorPatcher(Patcher patcher)
 	{
 		this.patcher = patcher;
@@ -60,15 +58,11 @@ public class PartnerActorPatcher
 			String name = FilenameUtils.removeExtension(f.getName());
 			PartnerActorEncoder encoder = new PartnerActorEncoder(patcher);
 			encoder.encode(name);
-			foundPatches = true;
 		}
 	}
 
 	public void generateConfigs() throws IOException
 	{
-		if (!foundPatches)
-			return;
-
 		File xmlFile = new File(Directories.MOD_GLOBALS + "/" + Directories.FN_PARTNERS);
 		configs = new LinkedList<>();
 
@@ -117,9 +111,6 @@ public class PartnerActorPatcher
 
 	public void writePartnerTable() throws IOException
 	{
-		if (!foundPatches)
-			return;
-
 		rp.seek("Partner Battle Table", 0x1B2804);
 
 		for (PartnerActorConfig cfg : configs) {
@@ -145,9 +136,6 @@ public class PartnerActorPatcher
 
 	public void writePartnerData() throws IOException
 	{
-		if (!foundPatches)
-			return;
-
 		HashMap<File, Region> sourceMap = new LinkedHashMap<>();
 
 		for (PartnerActorConfig cfg : configs) {
