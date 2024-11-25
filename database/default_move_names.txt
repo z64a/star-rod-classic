@@ -110,7 +110,7 @@
 6D = SpeedySpin
 6E = Refund
 6F = Unused_FinalGoompa
-70 = Unused_FinalBombomb
+70 = Unused_FinalBobomb
 71 = DeepFocus
 72 = SuperFocus
 73 = Kaiden
