@@ -16,6 +16,7 @@ import javax.swing.tree.TreePath;
 
 import com.alexandriasoftware.swing.JSplitButton;
 
+import app.SwingUtils;
 import game.map.Map;
 import game.map.MapObject;
 import game.map.MapObject.MapObjectType;
@@ -39,7 +40,6 @@ import game.map.tree.MarkerJTree;
 import game.map.tree.ModelJTree;
 import game.map.tree.ZoneJTree;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.Logger;
 
 public class MapObjectPanel extends JTabbedPane implements TreeSelectionListener, GUISelectionInterface

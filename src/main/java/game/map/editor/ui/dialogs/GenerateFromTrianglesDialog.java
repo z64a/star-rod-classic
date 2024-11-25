@@ -19,6 +19,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeListener;
 
+import app.SwingUtils;
 import game.globals.editor.DialogResult;
 import game.map.Axis;
 import game.map.editor.MapEditor;
@@ -30,7 +31,6 @@ import game.map.mesh.Triangle;
 import game.map.shape.TriangleBatch;
 import game.map.tree.MapObjectNode;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 
 public class GenerateFromTrianglesDialog extends JDialog
 {

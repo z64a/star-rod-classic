@@ -11,10 +11,10 @@ import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
 
 import app.IconResource;
+import app.SwingUtils;
 import game.globals.editor.GlobalsData;
 import game.texture.images.HudElementRecord;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 
 public class MenuIconBoxRenderer extends JPanel implements ListCellRenderer<String>
 {

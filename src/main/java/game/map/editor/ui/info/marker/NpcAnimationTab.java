@@ -10,6 +10,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 
 import app.StarRodException;
+import app.SwingUtils;
 import game.map.editor.MapEditor;
 import game.map.marker.NpcComponent;
 import game.map.marker.NpcComponent.SetAnimation;
@@ -24,7 +25,6 @@ import game.sprite.SpriteLoader.SpriteMetadata;
 import game.sprite.SpriteLoader.SpriteSet;
 import game.sprite.editor.IndexableComboBoxRenderer;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.ListAdapterComboboxModel;
 
 public class NpcAnimationTab extends JPanel

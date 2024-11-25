@@ -52,8 +52,8 @@ import game.shared.ProjectDatabase.ConstEnum.EnumPair;
 import game.shared.encoder.GlobalPatchManager;
 import game.shared.struct.script.ScriptVariable;
 import game.sound.AudioEditor;
-import game.sprite.SpritePatcher;
 import game.sprite.SpriteLoader.SpriteSet;
+import game.sprite.SpritePatcher;
 import game.string.MessageBoxes;
 import game.string.StringPatcher;
 import game.string.font.FontManager;
@@ -62,7 +62,6 @@ import game.texture.images.ImageScriptModder;
 import game.world.partner.PartnerWorldPatcher;
 import game.worldmap.WorldMapModder;
 import game.yay0.Yay0Helper;
-import shared.Globals;
 import util.CaseInsensitiveMap;
 import util.Logger;
 import util.Pair;
@@ -71,6 +70,7 @@ import util.Priority;
 public class Patcher implements IGlobalDatabase
 {
 	private static final int OUT_BUFFER_SIZE_MB = 128; //XXX read this from config
+	private static final int MOD_PACKAGE_IDENTIFIER = 0x504D5352;
 
 	public static final int ROM_BASE = 0x02800000;
 	public static final int RAM_BASE = 0x80400000;
@@ -347,18 +347,18 @@ public class Patcher implements IGlobalDatabase
 
 		/*
 		// ======== Phase 4: add things that will be loaded via DMA -- these can move around!
-
+		
 		// clear old map table - will help to root out hard-coded map table instructions
 		//clearRegion(0x6B450, 0x6EAC0); // map and area config tables
 		clearRegion(0x6B860, 0x6EAC0); // map and area config tables (with extended move table)
 		clearRegion(0x73DA0, 0x73E10); // area SJIS strings
 		clearRegion(0x73E2C, 0x74EA0); // map and area name strings
-
+		
 		clearRegion(0x65A80, 0x66508);
 		clearRegion(0x66508, 0x691D4);
 		clearRegion(0x691D4, 0x697D8);
 		clearRegion(0x5B8F0, 0x62CE0);
-
+		
 		 */
 
 		imgPatcher.patchCompressedImages();
@@ -806,7 +806,7 @@ public class Patcher implements IGlobalDatabase
 		Logger.log("Copying differences to diff file...", Priority.MILESTONE);
 
 		ByteBuffer buf = ByteBuffer.allocate(totalSize);
-		buf.putInt(Globals.MOD_HEADER_IDENTIFIER);
+		buf.putInt(MOD_PACKAGE_IDENTIFIER);
 		buf.putInt(diffStarts.size());
 
 		for (int i = 0; i < diffStarts.size(); i++) {

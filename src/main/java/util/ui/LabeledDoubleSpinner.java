@@ -9,8 +9,8 @@ import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeListener;
 
+import app.SwingUtils;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 
 public class LabeledDoubleSpinner extends JComponent
 {

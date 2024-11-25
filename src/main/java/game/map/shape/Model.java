@@ -9,6 +9,7 @@ import java.util.function.Consumer;
 
 import org.w3c.dom.Element;
 
+import app.SwingUtils;
 import game.map.BoundingBox;
 import game.map.MapObject;
 import game.map.MutablePoint;
@@ -30,7 +31,6 @@ import game.map.mesh.TexturedMesh;
 import game.map.mesh.Triangle;
 import game.map.mesh.Vertex;
 import game.map.tree.MapObjectNode;
-import shared.SwingUtils;
 import util.Logger;
 import util.Priority;
 import util.identity.IdentityHashSet;

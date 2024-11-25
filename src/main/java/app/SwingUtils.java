@@ -1,4 +1,4 @@
-package shared;
+package app;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -43,8 +43,6 @@ import javax.swing.text.JTextComponent;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoManager;
-
-import app.StarRodFrame;
 
 public class SwingUtils
 {
@@ -182,7 +180,7 @@ public class SwingUtils
 					break;
 				case ERROR:
 					messageType = JOptionPane.ERROR_MESSAGE;
-					icon = Globals.ICON_ERROR;
+					icon = Environment.ICON_ERROR;
 					break;
 			}
 		}
@@ -315,7 +313,7 @@ public class SwingUtils
 	public static final void showDialog(JDialog dialog, String title)
 	{
 		dialog.setTitle(title);
-		dialog.setIconImage(Globals.getDefaultIconImage());
+		dialog.setIconImage(Environment.getDefaultIconImage());
 
 		dialog.pack();
 		dialog.setLocationRelativeTo(null);
@@ -326,7 +324,7 @@ public class SwingUtils
 	public static final void showModalDialog(JDialog dialog, String title)
 	{
 		dialog.setTitle(title);
-		dialog.setIconImage(Globals.getDefaultIconImage());
+		dialog.setIconImage(Environment.getDefaultIconImage());
 
 		dialog.pack();
 		dialog.setLocationRelativeTo(null);

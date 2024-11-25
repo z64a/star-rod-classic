@@ -41,7 +41,6 @@ import renderer.shaders.scene.LineShader;
 import renderer.text.DrawableString;
 import renderer.text.TextRenderer;
 import renderer.text.TextStyle;
-import shared.Globals;
 import util.Logger;
 
 public class FoldEditor extends BaseEditor
@@ -54,7 +53,7 @@ public class FoldEditor extends BaseEditor
 
 	private static final BaseEditorSettings EDITOR_SETTINGS = BaseEditorSettings.create()
 		.setTitle(Environment.decorateTitle("Fold Viewer"))
-		.setIcon(Globals.getDefaultIconImage())
+		.setIcon(Environment.getDefaultIconImage())
 		.setLog("battle_editor.log")
 		.setFullscreen(true)
 		.setResizeable(true)
@@ -260,19 +259,19 @@ public class FoldEditor extends BaseEditor
 		// left
 		shader.setXYQuadCoords(leftX - 16, 120, leftX + 16, 120 - 16, 0);
 		shader.renderQuad();
-
+		
 		// right
 		shader.setXYQuadCoords(rightX - 16, 120, rightX + 16, 120 - 16, 0);
 		shader.renderQuad();
-
+		
 		// top
 		shader.setXYQuadCoords(160 - 16, topY + 16, 160 + 16, topY, 0);
 		shader.renderQuad();
-
+		
 		// bottom
 		shader.setXYQuadCoords(160 - 16, bottomY, 160 + 16, bottomY - 16, 0);
 		shader.renderQuad();
-
+		
 		*/
 
 		uiText.draw(16, 0, 0, (float) super.getDeltaTime());

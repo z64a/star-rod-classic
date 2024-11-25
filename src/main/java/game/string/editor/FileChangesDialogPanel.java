@@ -9,10 +9,10 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
+import app.Environment;
+import app.SwingUtils;
 import game.string.editor.io.SourceWatcher.FileEvent;
 import net.miginfocom.swing.MigLayout;
-import shared.Globals;
-import shared.SwingUtils;
 
 public class FileChangesDialogPanel extends JDialog
 {
@@ -60,7 +60,7 @@ public class FileChangesDialogPanel extends JDialog
 		dialogFrame.pack();
 
 		panel.setTitle(TITLE);
-		panel.setIconImage(Globals.getDefaultIconImage());
+		panel.setIconImage(Environment.getDefaultIconImage());
 		panel.pack();
 
 		panel.setLocationRelativeTo(parentComponent);
@@ -76,7 +76,7 @@ public class FileChangesDialogPanel extends JDialog
 		dialogFrame.setUndecorated(true);
 		dialogFrame.setVisible(true);
 		dialogFrame.setLocationRelativeTo(parentComponent);
-		dialogFrame.setIconImage(Globals.getDefaultIconImage());
+		dialogFrame.setIconImage(Environment.getDefaultIconImage());
 		return dialogFrame;
 	}
 }

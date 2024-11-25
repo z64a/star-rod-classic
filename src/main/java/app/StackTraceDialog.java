@@ -13,8 +13,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 import app.input.InputFileException;
-import shared.Globals;
-import shared.SwingUtils;
 import util.Logger;
 import util.Priority;
 
@@ -106,7 +104,7 @@ public class StackTraceDialog extends JDialog implements PropertyChangeListener
 			msgBuilder.toString(),
 			JOptionPane.ERROR_MESSAGE,
 			JOptionPane.YES_NO_CANCEL_OPTION,
-			Globals.ICON_ERROR,
+			Environment.ICON_ERROR,
 			options,
 			options[0]);
 

@@ -6,11 +6,11 @@ import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import app.SwingUtils;
 import game.texture.TileFormat;
 import game.texture.editor.Dither.DitherMethod;
 import game.texture.editor.dialogs.ConvertOptionsPanel.ConvertSettings.IntensityMethod;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 
 public class ConvertOptionsPanel extends JPanel
 {

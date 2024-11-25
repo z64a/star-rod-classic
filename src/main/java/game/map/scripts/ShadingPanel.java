@@ -6,6 +6,7 @@ import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
+import app.SwingUtils;
 import game.map.Map;
 import game.map.editor.MapEditor;
 import game.map.editor.MapEditor.IShutdownListener;
@@ -19,7 +20,6 @@ import game.map.shading.SpriteShadingData.CreateProfile;
 import game.map.shading.SpriteShadingData.DeleteProfile;
 import game.shared.ProjectDatabase;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.ListAdapterComboboxModel;
 
 /**

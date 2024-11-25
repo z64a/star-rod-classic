@@ -6,6 +6,7 @@ import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
 
+import app.SwingUtils;
 import game.map.MapObject.HitType;
 import game.map.MapObject.SetObjectName;
 import game.map.editor.MapEditor;
@@ -13,7 +14,6 @@ import game.map.editor.MapInfoPanel;
 import game.map.editor.ui.SwingGUI;
 import game.map.hit.Zone;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.NameTextField;
 
 public class ZoneInfoPanel extends MapInfoPanel<Zone>

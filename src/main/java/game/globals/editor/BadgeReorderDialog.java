@@ -8,9 +8,9 @@ import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.ListCellRenderer;
 
+import app.SwingUtils;
 import game.globals.ItemRecord;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.DragReorderList;
 
 public final class BadgeReorderDialog extends JDialog

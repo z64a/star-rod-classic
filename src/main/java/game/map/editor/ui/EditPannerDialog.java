@@ -23,13 +23,13 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
+import app.Environment;
+import app.SwingUtils;
 import game.map.editor.MapEditor;
 import game.map.shape.TexturePanner;
 import game.map.shape.TexturePanner.PannerParams;
 import game.map.shape.TexturePanner.SetTexPannerParams;
 import net.miginfocom.swing.MigLayout;
-import shared.Globals;
-import shared.SwingUtils;
 import util.ui.LimitedLengthDocument;
 
 public class EditPannerDialog extends JDialog
@@ -187,7 +187,7 @@ public class EditPannerDialog extends JDialog
 		setResizable(false);
 
 		setTitle(FRAME_TITLE);
-		setIconImage(Globals.getDefaultIconImage());
+		setIconImage(Environment.getDefaultIconImage());
 		setLocationRelativeTo(parent);
 		setModal(false);
 	}

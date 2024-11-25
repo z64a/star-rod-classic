@@ -13,12 +13,12 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import app.SwingUtils;
 import game.map.editor.render.TextureManager;
 import game.sprite.Sprite;
 import game.sprite.SpritePalette;
 import game.sprite.SpriteRaster;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.ListAdapterComboboxModel;
 
 public class RasterInfoPanel extends JPanel

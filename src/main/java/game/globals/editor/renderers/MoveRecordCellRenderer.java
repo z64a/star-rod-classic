@@ -8,9 +8,9 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 
+import app.SwingUtils;
 import game.globals.MoveRecord;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 
 public class MoveRecordCellRenderer extends JPanel implements ListCellRenderer<MoveRecord>
 {

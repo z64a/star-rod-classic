@@ -15,9 +15,9 @@ import javax.swing.plaf.UIResource;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 
+import app.Environment;
 import game.map.MapObject;
 import net.miginfocom.swing.MigLayout;
-import shared.Globals;
 import util.ui.CircleIcon;
 
 public class MapObjectTreeCellRenderer extends JPanel implements TreeCellRenderer
@@ -44,7 +44,7 @@ public class MapObjectTreeCellRenderer extends JPanel implements TreeCellRendere
 	public MapObjectTreeCellRenderer()
 	{
 		super();
-		iconLabel = new JLabel(Globals.ICON_ERROR, SwingConstants.CENTER);
+		iconLabel = new JLabel(Environment.ICON_ERROR, SwingConstants.CENTER);
 		nameLabel = new JLabel("placeholder");
 
 		setLayout(new MigLayout("ins 0, fillx"));
@@ -94,7 +94,7 @@ public class MapObjectTreeCellRenderer extends JPanel implements TreeCellRendere
 			nameLabel.setForeground(null);
 		}
 		else {
-			iconLabel.setIcon(Globals.ICON_ERROR);
+			iconLabel.setIcon(Environment.ICON_ERROR);
 		}
 
 		return this;

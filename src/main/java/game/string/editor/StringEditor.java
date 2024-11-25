@@ -67,6 +67,7 @@ import app.Directories;
 import app.Environment;
 import app.StarRodClassic;
 import app.StarRodException;
+import app.SwingUtils;
 import app.config.Config;
 import app.config.Options;
 import app.config.Options.Scope;
@@ -94,8 +95,6 @@ import game.texture.Tile;
 import game.texture.images.ImageScriptModder;
 import net.miginfocom.swing.MigLayout;
 import renderer.shaders.RenderState;
-import shared.Globals;
-import shared.SwingUtils;
 import util.Logger;
 import util.ui.ImagePanel;
 
@@ -107,7 +106,7 @@ public class StringEditor extends BaseEditor
 
 	private static final BaseEditorSettings EDITOR_SETTINGS = BaseEditorSettings.create()
 		.setTitle(Environment.decorateTitle("String Editor"))
-		.setIcon(Globals.getDefaultIconImage())
+		.setIcon(Environment.getDefaultIconImage())
 		.setConfig(Scope.StringEditor, FN_STRING_EDITOR_CONFIG)
 		.setLog("string_editor.log")
 		.setFullscreen(false)
@@ -1234,7 +1233,7 @@ public class StringEditor extends BaseEditor
 				.setMessage(detailScrollPane)
 				.setMessageType(JOptionPane.PLAIN_MESSAGE)
 				.setOptionsType(JOptionPane.YES_NO_CANCEL_OPTION)
-				.setIcon(Globals.ICON_DEFAULT)
+				.setIcon(Environment.ICON_DEFAULT)
 				.setOptions("Copy to Clipboard")
 				.choose();
 			super.decrementDialogsOpen();

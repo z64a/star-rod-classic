@@ -5,8 +5,8 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
+import app.SwingUtils;
 import app.config.Options.ConfigOptionEditor;
-import shared.SwingUtils;
 
 public class ConfigIntSpinner extends JSpinner implements ConfigOptionEditor
 {

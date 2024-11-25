@@ -13,9 +13,9 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 
 import app.StarRodException;
+import app.SwingUtils;
 import app.config.Options.ConfigOptionEditor;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 
 public class BuildOptionsPanel extends JPanel
 {

@@ -10,10 +10,10 @@ import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
 
 import app.IconResource;
+import app.SwingUtils;
 import game.globals.editor.GlobalsData;
 import game.texture.images.ImageRecord;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 
 public class ImageAssetBoxRenderer extends JPanel implements ListCellRenderer<String>
 {

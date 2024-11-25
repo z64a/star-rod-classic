@@ -11,10 +11,10 @@ import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
 
 import app.IconResource;
+import app.SwingUtils;
 import game.globals.editor.GlobalsData;
 import game.texture.images.ItemEntityRecord;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 
 public class ItemEntityListRenderer extends JPanel implements ListCellRenderer<ItemEntityRecord>
 {

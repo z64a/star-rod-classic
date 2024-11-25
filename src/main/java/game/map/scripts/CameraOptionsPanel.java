@@ -5,10 +5,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import app.SwingUtils;
 import game.map.Map;
 import game.map.editor.MapEditor;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.IntTextField;
 import util.ui.IntVectorPanel;
 

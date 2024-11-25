@@ -5,8 +5,8 @@ import java.util.function.BiConsumer;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import app.SwingUtils;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 
 public class IntVectorPanel extends JPanel
 {

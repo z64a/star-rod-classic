@@ -30,6 +30,7 @@ import app.Directories;
 import app.Environment;
 import app.LoadingScreen;
 import app.StarRodException;
+import app.SwingUtils;
 import app.config.Options;
 import app.input.IOUtils;
 import game.globals.editor.GlobalsData.GlobalsCategory;
@@ -41,8 +42,6 @@ import game.globals.editor.tabs.MoveTab;
 import game.string.PMString;
 import game.string.editor.io.StringResource;
 import net.miginfocom.swing.MigLayout;
-import shared.Globals;
-import shared.SwingUtils;
 import util.IterableListModel;
 import util.Logger;
 
@@ -182,7 +181,7 @@ public class GlobalsEditor
 		frame = new JFrame();
 
 		frame.setTitle(Environment.decorateTitle("Globals Editor"));
-		frame.setIconImage(Globals.getDefaultIconImage());
+		frame.setIconImage(Environment.getDefaultIconImage());
 
 		frame.setBounds(0, 0, WINDOW_SIZE_X, WINDOW_SIZE_Y);
 		frame.setLocationRelativeTo(null);

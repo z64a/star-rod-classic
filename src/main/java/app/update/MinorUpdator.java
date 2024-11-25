@@ -13,7 +13,6 @@ import javax.swing.SwingWorker;
 
 import app.Directories;
 import app.Environment;
-import shared.Globals;
 import util.LogFile;
 import util.Logger;
 
@@ -34,7 +33,7 @@ public class MinorUpdator extends JFrame
 	public MinorUpdator(File oldDatabase) throws IOException, InterruptedException
 	{
 		setTitle("Star Rod Updater");
-		setIconImage(Globals.getDefaultIconImage());
+		setIconImage(Environment.getDefaultIconImage());
 
 		final JDialog dialog = new JDialog(this, true); // modal
 		dialog.setMinimumSize(new Dimension(480, 32));

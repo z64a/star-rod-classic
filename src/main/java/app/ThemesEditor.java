@@ -32,7 +32,6 @@ import app.config.Options;
 import game.shared.ProjectDatabase;
 import game.shared.ProjectDatabase.ConstEnum.EnumPair;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 
 public class ThemesEditor
 {

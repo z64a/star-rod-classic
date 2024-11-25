@@ -20,6 +20,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeListener;
 
+import app.SwingUtils;
 import game.globals.editor.DialogResult;
 import game.map.editor.MapEditor;
 import game.map.editor.geometry.FromPathsGenerator;
@@ -31,7 +32,6 @@ import game.map.marker.PathPoint;
 import game.map.shape.TriangleBatch;
 import game.map.tree.MapObjectNode;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.IterableListModel;
 
 public class GenerateFromPathsDialog extends JDialog

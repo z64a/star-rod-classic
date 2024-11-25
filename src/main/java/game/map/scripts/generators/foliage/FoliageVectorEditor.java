@@ -7,11 +7,11 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import app.SwingUtils;
 import game.map.Map;
 import game.map.marker.Marker;
 import game.map.marker.Marker.MarkerType;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 
 public class FoliageVectorEditor extends JPanel
 {

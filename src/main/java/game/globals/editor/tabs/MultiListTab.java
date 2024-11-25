@@ -28,13 +28,13 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 
+import app.SwingUtils;
 import game.globals.editor.GlobalsEditor;
 import game.globals.editor.GlobalsEditor.GlobalEditorTab;
 import game.globals.editor.GlobalsListModel;
 import game.globals.editor.GlobalsRecord;
 import game.globals.editor.renderers.PaddedCellRenderer;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.IterableListModel;
 import util.Logger;
 import util.Logger.Message;

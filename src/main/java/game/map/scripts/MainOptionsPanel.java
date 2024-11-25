@@ -18,6 +18,7 @@ import org.apache.commons.io.FileUtils;
 
 import app.Environment;
 import app.StarRodClassic;
+import app.SwingUtils;
 import app.input.IOUtils;
 import app.input.InvalidInputException;
 import game.map.Map;
@@ -25,7 +26,6 @@ import game.map.editor.MapEditor;
 import game.map.editor.ui.StandardEditableComboBox;
 import game.shared.ProjectDatabase;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.Logger;
 import util.ui.IntTextField;
 import util.ui.IntVectorPanel;

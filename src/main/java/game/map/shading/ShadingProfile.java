@@ -14,6 +14,7 @@ import javax.swing.JList;
 
 import org.w3c.dom.Element;
 
+import app.SwingUtils;
 import common.BaseCamera;
 import common.Vector3f;
 import game.map.Axis;
@@ -29,7 +30,6 @@ import game.map.shape.TransformMatrix;
 import game.shared.ProjectDatabase;
 import game.sprite.Sprite;
 import renderer.shaders.scene.SpriteShader;
-import shared.SwingUtils;
 import util.IterableListModel;
 import util.MathUtil;
 import util.xml.XmlWrapper.XmlReader;

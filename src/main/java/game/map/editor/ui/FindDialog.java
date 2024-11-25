@@ -14,6 +14,8 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import app.Environment;
+import app.SwingUtils;
 import game.map.Map;
 import game.map.MapObject;
 import game.map.hit.Collider;
@@ -22,8 +24,6 @@ import game.map.marker.Marker;
 import game.map.shape.Model;
 import game.map.tree.MapObjectTreeModel;
 import net.miginfocom.swing.MigLayout;
-import shared.Globals;
-import shared.SwingUtils;
 import util.ui.FilteredListModel;
 
 public class FindDialog extends JDialog
@@ -153,7 +153,7 @@ public class FindDialog extends JDialog
 			list.setSelectedValue(null, true);
 
 		setTitle(FRAME_TITLE);
-		setIconImage(Globals.getDefaultIconImage());
+		setIconImage(Environment.getDefaultIconImage());
 
 		pack();
 		setResizable(false);

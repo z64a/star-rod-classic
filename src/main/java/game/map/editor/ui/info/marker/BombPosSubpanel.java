@@ -4,11 +4,11 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import app.SwingUtils;
 import game.map.editor.MapEditor;
 import game.map.marker.BombPosComponent;
 import game.map.marker.Marker.MarkerType;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.FloatTextField;
 
 public class BombPosSubpanel extends JPanel

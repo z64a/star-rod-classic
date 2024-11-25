@@ -8,8 +8,8 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 
+import app.SwingUtils;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 
 public class PaddedCellRenderer<T> extends JPanel implements ListCellRenderer<T>
 {

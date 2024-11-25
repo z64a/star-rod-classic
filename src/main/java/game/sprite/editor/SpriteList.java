@@ -15,9 +15,9 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import app.SwingUtils;
 import game.sprite.SpriteLoader.SpriteMetadata;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.FilteredListModel;
 
 public class SpriteList extends JPanel

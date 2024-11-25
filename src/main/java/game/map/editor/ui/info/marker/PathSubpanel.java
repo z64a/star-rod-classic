@@ -5,13 +5,13 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 
+import app.SwingUtils;
 import game.map.editor.MapEditor;
 import game.map.editor.selection.SelectionManager.SelectionMode;
 import game.map.editor.ui.PathList;
 import game.map.marker.PathComponent;
 import game.map.marker.PathData.AddPathPoint;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 
 public class PathSubpanel extends JPanel
 {

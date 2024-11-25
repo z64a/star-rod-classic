@@ -17,6 +17,7 @@ import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 
+import app.SwingUtils;
 import game.map.MapObject.SetObjectName;
 import game.map.MapObject.ShapeType;
 import game.map.editor.MapEditor;
@@ -29,7 +30,6 @@ import game.map.shape.Model;
 import game.map.shape.ModelReplaceType;
 import game.map.shape.TexturePanner;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.Logger;
 import util.ui.HexTextField;
 import util.ui.ListAdapterComboboxModel;

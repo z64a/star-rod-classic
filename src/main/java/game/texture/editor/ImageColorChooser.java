@@ -8,8 +8,8 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.border.EtchedBorder;
 
+import app.SwingUtils;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.ColorSlider;
 import util.ui.ColorSlider.SliderListener;
 

@@ -7,7 +7,7 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
-import shared.SwingUtils;
+import app.SwingUtils;
 
 public class IntSpinner extends JSpinner
 {

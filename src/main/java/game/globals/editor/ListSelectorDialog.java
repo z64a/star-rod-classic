@@ -17,8 +17,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import app.SwingUtils;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.FilteredListModel;
 import util.ui.FilteredListModel.ListFilter;
 

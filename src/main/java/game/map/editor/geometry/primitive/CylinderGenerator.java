@@ -2,12 +2,12 @@ package game.map.editor.geometry.primitive;
 
 import javax.swing.JCheckBox;
 
+import app.SwingUtils;
 import game.map.editor.ui.dialogs.GeneratePrimitiveOptionsDialog;
 import game.map.mesh.Triangle;
 import game.map.mesh.Vertex;
 import game.map.shape.TriangleBatch;
 import game.map.shape.UV;
-import shared.SwingUtils;
 import util.ui.LabeledIntegerSpinner;
 
 public class CylinderGenerator extends ShapeGenerator

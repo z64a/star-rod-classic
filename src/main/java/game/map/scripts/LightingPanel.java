@@ -14,6 +14,7 @@ import javax.swing.JScrollPane;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 
+import app.SwingUtils;
 import game.map.Map;
 import game.map.editor.MapEditor;
 import game.map.editor.MapEditor.IShutdownListener;
@@ -27,7 +28,6 @@ import game.map.shape.LightSet.SetAmbientColor;
 import game.map.shape.LightSet.SetLightingName;
 import game.map.shape.Model;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.IntVectorPanel;
 import util.ui.ListAdapterComboboxModel;
 import util.ui.NameTextField;

@@ -52,6 +52,7 @@ import org.apache.commons.io.FilenameUtils;
 import app.Environment;
 import app.IconResource;
 import app.StarRodException;
+import app.SwingUtils;
 import app.config.Config;
 import app.config.Options;
 import app.config.Options.Scope;
@@ -67,10 +68,10 @@ import game.sprite.Sprite;
 import game.sprite.SpriteAnimation;
 import game.sprite.SpriteComponent;
 import game.sprite.SpriteLoader;
-import game.sprite.SpritePalette;
-import game.sprite.SpriteRaster;
 import game.sprite.SpriteLoader.SpriteMetadata;
 import game.sprite.SpriteLoader.SpriteSet;
+import game.sprite.SpritePalette;
+import game.sprite.SpriteRaster;
 import game.sprite.editor.SpriteCamera.BasicTraceRay;
 import game.sprite.editor.animators.CommandAnimatorEditor;
 import game.sprite.editor.animators.KeyframeAnimatorEditor;
@@ -91,8 +92,6 @@ import renderer.buffers.LineRenderQueue;
 import renderer.shaders.RenderState;
 import renderer.shaders.ShaderManager;
 import renderer.shaders.scene.SpriteShader;
-import shared.Globals;
-import shared.SwingUtils;
 import util.Logger;
 import util.ui.ListAdapterComboboxModel;
 import util.xml.XmlWrapper.XmlWriter;
@@ -108,7 +107,7 @@ public class SpriteEditor extends BaseEditor
 
 	private static final BaseEditorSettings EDITOR_SETTINGS = BaseEditorSettings.create()
 		.setTitle(Environment.decorateTitle("Sprite Editor"))
-		.setIcon(Globals.getDefaultIconImage())
+		.setIcon(Environment.getDefaultIconImage())
 		.setConfig(Scope.SpriteEditor, FN_SPRITE_EDITOR_CONFIG)
 		.setLog("sprite_editor.log")
 		.setFullscreen(true)
@@ -1121,12 +1120,12 @@ public class SpriteEditor extends BaseEditor
 				try {
 					int id = SpriteLoader.getMaximumID(spriteSet) + 1;
 					SpriteLoader.create(spriteSet, id);
-		
+
 					if(spriteSet == SpriteSet.Npc)
 						useNpcFiles(id);
 					else
 						usePlayerFiles(id);
-		
+
 				} catch (Throwable t) {
 					Logger.logError("Failed to create new sprite.");
 					incrementDialogsOpen();
@@ -1136,7 +1135,7 @@ public class SpriteEditor extends BaseEditor
 			});
 		});
 		menu.add(item);
-		
+
 		menu.addSeparator();
 		 */
 

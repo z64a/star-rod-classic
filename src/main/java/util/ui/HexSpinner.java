@@ -9,7 +9,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.text.DefaultFormatter;
 import javax.swing.text.DefaultFormatterFactory;
 
-import shared.SwingUtils;
+import app.SwingUtils;
 
 public class HexSpinner extends JSpinner
 {

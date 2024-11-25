@@ -21,6 +21,7 @@ import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 
+import app.SwingUtils;
 import game.map.editor.MapEditor;
 import game.map.editor.MapInfoPanel;
 import game.map.editor.commands.AbstractCommand;
@@ -36,7 +37,6 @@ import game.map.shading.ShadingProfile.SetAmbientColor;
 import game.map.shading.ShadingProfile.SetAmbientIntensity;
 import game.map.shading.ShadingProfile.SetProfileName;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.HexTextField;
 import util.ui.IntTextField;
 import util.ui.NameTextField;

@@ -6,6 +6,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import app.SwingUtils;
 import game.map.MapObject.MapObjectType;
 import game.map.editor.MapEditor;
 import game.map.editor.MapEditor.IShutdownListener;
@@ -16,7 +17,6 @@ import game.map.marker.Marker.MarkerType;
 import game.map.scripts.generators.Entrance.EntranceType;
 import game.shared.ProjectDatabase;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.ui.StringField;
 
 public class EntranceInfoPanel extends JPanel implements IShutdownListener

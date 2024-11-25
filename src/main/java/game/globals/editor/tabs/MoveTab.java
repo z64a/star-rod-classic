@@ -15,6 +15,7 @@ import javax.swing.ListCellRenderer;
 
 import com.alexandriasoftware.swing.JSplitButton;
 
+import app.SwingUtils;
 import game.globals.ItemRecord;
 import game.globals.MoveRecord;
 import game.globals.editor.GlobalsData.GlobalsCategory;
@@ -27,7 +28,6 @@ import game.shared.ProjectDatabase;
 import game.shared.ProjectDatabase.ConstEnum.EnumPair;
 import game.string.PMString;
 import net.miginfocom.swing.MigLayout;
-import shared.SwingUtils;
 import util.Logger;
 import util.MathUtil;
 import util.ui.FlagEditorPanel;

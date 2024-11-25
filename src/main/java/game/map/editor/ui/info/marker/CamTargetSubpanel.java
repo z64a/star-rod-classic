@@ -6,7 +6,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
-import shared.SwingUtils;
+import app.SwingUtils;
 import common.Vector3f;
 import game.map.MutablePoint.SetPosition;
 import game.map.editor.MapEditor;
