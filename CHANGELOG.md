@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.7] - 2024-11-25
+
+### Fixed
+- Action commands would crash in any project that didn't mod them
+
 ## [0.5.6] - 2024-11-25
 
 ### Added
