@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Next Release
+
+### Fixed
+- (Map Editor) Axis lines not showing up in ortho views
+
 ## [0.5.7] - 2024-11-25
 
 ### Fixed

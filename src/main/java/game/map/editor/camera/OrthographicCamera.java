@@ -8,6 +8,7 @@ import common.MousePixelRead;
 import common.Vector3f;
 import game.map.Axis;
 import game.map.BoundingBox;
+import game.map.editor.render.PresetColor;
 import game.map.editor.selection.PickRay;
 import game.map.editor.selection.PickRay.Channel;
 import renderer.buffers.LineRenderQueue;
@@ -390,6 +391,20 @@ public class OrthographicCamera extends MapEditCamera
 				default:
 					break;
 			}
+		}
+
+		if (editor.showAxes) {
+			LineRenderQueue.addLine(
+				LineRenderQueue.addVertex().setPosition(Short.MIN_VALUE, 0, 0).setColor(PresetColor.RED).getIndex(),
+				LineRenderQueue.addVertex().setPosition(Short.MAX_VALUE, 0, 0).setColor(PresetColor.RED).getIndex());
+
+			LineRenderQueue.addLine(
+				LineRenderQueue.addVertex().setPosition(0, Short.MIN_VALUE, 0).setColor(PresetColor.GREEN).getIndex(),
+				LineRenderQueue.addVertex().setPosition(0, Short.MAX_VALUE, 0).setColor(PresetColor.GREEN).getIndex());
+
+			LineRenderQueue.addLine(
+				LineRenderQueue.addVertex().setPosition(0, 0, Short.MIN_VALUE).setColor(PresetColor.BLUE).getIndex(),
+				LineRenderQueue.addVertex().setPosition(0, 0, Short.MAX_VALUE).setColor(PresetColor.BLUE).getIndex());
 		}
 
 		RenderState.setLineWidth(2.0f);
