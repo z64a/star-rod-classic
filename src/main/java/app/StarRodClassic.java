@@ -1123,7 +1123,7 @@ public class StarRodClassic extends JFrame
 
 						Map map = Map.loadMap(mapFile);
 						try {
-							if (args[i].equals("-CompileMap")) {
+							if (args[i].equalsIgnoreCase("-CompileMap")) {
 								new GeometryCompiler(map);
 								new CollisionCompiler(map);
 								if (Environment.project.isDecomp)
@@ -1131,11 +1131,11 @@ public class StarRodClassic extends JFrame
 								else
 									new ScriptGenerator(map);
 							}
-							else if (args[i].equals("-CompileShape"))
+							else if (args[i].equalsIgnoreCase("-CompileShape"))
 								new GeometryCompiler(map);
-							else if (args[i].equals("-CompileHit"))
+							else if (args[i].equalsIgnoreCase("-CompileHit"))
 								new CollisionCompiler(map);
-							else if (args[i].equals("-GenerateScript"))
+							else if (args[i].equalsIgnoreCase("-GenerateScript"))
 								new ScriptGenerator(map);
 							else
 								throw new IllegalStateException();
@@ -1245,7 +1245,7 @@ public class StarRodClassic extends JFrame
 					break;
 
 				default:
-					Logger.logfError("Unrecognized command line arg: ", args[i]);
+					Logger.logfError("Unrecognized command line arg: %s", args[i]);
 			}
 		}
 	}
