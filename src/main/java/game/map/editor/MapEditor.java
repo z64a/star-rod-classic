@@ -41,7 +41,7 @@ import org.w3c.dom.Element;
 import app.AssetManager;
 import app.Directories;
 import app.Environment;
-import app.LoadingScreen;
+import app.LoadingBar;
 import app.StackTraceDialog;
 import app.StarRodClassic;
 import app.StarRodException;
@@ -183,6 +183,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 
 	private boolean loading = true;
 	private boolean exitCompletely = !Environment.mainConfig.getBoolean(Options.ExitToMenu);
+	private boolean showLoadingScreen;
 
 	public boolean needsTextureReload;
 	public boolean needsBackgroundReload;
@@ -451,7 +452,6 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 	private CommandManager commandManager; // handles comnmand execution and undo/redo
 	private DrawTrianglesManager drawTriManager;
 	public SwingGUI gui;
-	private LoadingScreen loadingScreen;
 
 	public boolean showLightingPanel;
 	public boolean showMapCameraTab;
@@ -524,8 +524,9 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 		instance = this;
 		singletonList = new LinkedList<>();
 
+		this.showLoadingScreen = showLoadingScreen;
 		if (showLoadingScreen)
-			loadingScreen = new LoadingScreen();
+			LoadingBar.show("Launching Map Editor");
 
 		// ------------------------------------------------------------
 		// read settings from config
@@ -594,16 +595,15 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 	 */
 	public boolean launch()
 	{
-		if (loadingScreen != null)
-			loadingScreen.setVisible(false);
+		LoadingBar.dismiss();
 
 		Map selectedMap = checkForCrashData();
 
 		if (selectedMap == null)
 			selectedMap = showOpeningPrompt();
 
-		if (loadingScreen != null)
-			loadingScreen.setVisible(true);
+		if (showLoadingScreen)
+			LoadingBar.show("Launching Map Editor");
 
 		return launch(selectedMap);
 	}
@@ -614,8 +614,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 	public boolean launch(Map map)
 	{
 		if (map == null) {
-			if (loadingScreen != null)
-				loadingScreen.dispose();
+			LoadingBar.dismiss();
 
 			runInContext(() -> {
 				TextureManager.clear();
@@ -648,8 +647,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 				glCanvas.render();
 			}
 
-			if (loadingScreen != null)
-				loadingScreen.dispose();
+			LoadingBar.dismiss();
 
 			gui.showGUI();
 
@@ -674,8 +672,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			throw new StarRodException(t);
 		}
 		finally {
-			if (loadingScreen != null)
-				loadingScreen.dispose();
+			LoadingBar.dismiss();
 		}
 
 		return !exitCompletely;

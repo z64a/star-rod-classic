@@ -42,8 +42,9 @@ public class StarRodBootstrap
 
 	private static void launchApp(boolean isCommandLine, String[] args) throws Exception
 	{
-		String javaExecutable = System.getProperty("java.home")
-			+ (isCommandLine ? "/bin/java" : "/bin/javaw");
+		String javaHome = System.getProperty("java.home");
+		String javaExec = javaHome + "/bin/java";
+
 		String jarPath = StarRodBootstrap.class
 			.getProtectionDomain()
 			.getCodeSource()
@@ -54,7 +55,7 @@ public class StarRodBootstrap
 		ProcessBuilder processBuilder;
 		if (args.length > 0) {
 			processBuilder = new ProcessBuilder(
-				javaExecutable,
+				javaExec,
 				"-cp",
 				jarPath,
 				"app.StarRodClassic",
@@ -62,7 +63,7 @@ public class StarRodBootstrap
 		}
 		else {
 			processBuilder = new ProcessBuilder(
-				javaExecutable,
+				javaExec,
 				"-cp",
 				jarPath,
 				"app.StarRodClassic");

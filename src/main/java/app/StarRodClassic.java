@@ -127,6 +127,7 @@ public class StarRodClassic extends JFrame
 		}
 
 		try {
+			LoadingBar.dismiss();
 			checkVersion();
 
 			boolean showMenu = true;
@@ -246,9 +247,6 @@ public class StarRodClassic extends JFrame
 	private StarRodClassic()
 	{
 		doneSignal = new CountDownLatch(1);
-		LoadingScreen loadingScreen = null;
-		if (!Environment.isCommandLine())
-			loadingScreen = new LoadingScreen();
 
 		setTitle(Environment.decorateTitle("Mod Manager"));
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -316,7 +314,7 @@ public class StarRodClassic extends JFrame
 					.choose();
 
 			if (choice == JOptionPane.OK_OPTION) {
-				startTask(new TaskWorker(() -> {
+				new TaskWorker(() -> {
 					if (dumpAssets()) {
 						SwingUtilities.invokeLater(() -> {
 							// frame will not properly resize unless we do this here
@@ -334,7 +332,7 @@ public class StarRodClassic extends JFrame
 								.show();
 						});
 					}
-				}));
+				});
 			}
 		});
 		buttons.add(dumpROMButton);
@@ -376,7 +374,7 @@ public class StarRodClassic extends JFrame
 				.choose();
 
 			if (choice == JOptionPane.OK_OPTION) {
-				startTask(new TaskWorker(() -> {
+				new TaskWorker(() -> {
 					if (copyAssets()) {
 						SwingUtilities.invokeLater(() -> {
 							// frame will not properly resize unless we do this here
@@ -392,7 +390,7 @@ public class StarRodClassic extends JFrame
 								.show();
 						});
 					}
-				}));
+				});
 			}
 		});
 		buttons.add(createModButton);
@@ -424,7 +422,7 @@ public class StarRodClassic extends JFrame
 				}
 			}
 
-			startTask(new TaskWorker(() -> {
+			new TaskWorker(() -> {
 				if (compileMod()) {
 					SwingUtilities.invokeLater(() -> {
 						// frame will not properly resize unless we do this here
@@ -440,7 +438,7 @@ public class StarRodClassic extends JFrame
 							.show();
 					});
 				}
-			}));
+			});
 		});
 		buttons.add(compileModButton);
 
@@ -472,9 +470,9 @@ public class StarRodClassic extends JFrame
 
 		packageModButton = new JButton("Package Mod");
 		packageModButton.addActionListener(e -> {
-			startTask(new TaskWorker(() -> {
+			new TaskWorker(() -> {
 				packageMod();
-			}));
+			});
 		});
 		buttons.add(packageModButton);
 
@@ -590,8 +588,6 @@ public class StarRodClassic extends JFrame
 		add(progressPanel, "grow, span, wrap");
 		add(consoleScrollPane, "grow, span, wrap 8");
 
-		if (loadingScreen != null)
-			loadingScreen.dispose();
 		pack();
 		setResizable(false);
 		setVisible(!Environment.isCommandLine());
@@ -599,57 +595,60 @@ public class StarRodClassic extends JFrame
 		Logger.addListener(consoleListener);
 	}
 
-	private void startTask(SwingWorker<?, ?> worker)
+	public interface TaskWork
 	{
-		taskRunning = true;
-
-		for (JButton button : buttons)
-			button.setEnabled(false);
-
-		Logger.setProgressListener(progressListener);
-		consoleTextArea.setText("");
-		progressLabel.setText("");
-		progressPanel.setVisible(true);
-		revalidate();
-		pack();
-
-		worker.execute();
-	}
-
-	private void endTask()
-	{
-		for (JButton button : buttons)
-			button.setEnabled(true);
-
-		Logger.removeProgressListener();
-		progressPanel.setVisible(false);
-		progressLabel.setText("");
-		revalidate();
-		pack();
-
-		taskRunning = false;
+		void execute() throws Exception;
 	}
 
 	private class TaskWorker extends SwingWorker<Boolean, String>
 	{
-		private final Runnable runnable;
+		private final TaskWork work;
 
-		private TaskWorker(Runnable runnable)
+		private TaskWorker(TaskWork work)
 		{
-			this.runnable = runnable;
+			this.work = work;
+
+			taskRunning = true;
+
+			for (JButton button : buttons)
+				button.setEnabled(false);
+
+			Logger.setProgressListener(progressListener);
+			consoleTextArea.setText("");
+			progressLabel.setText("");
+			progressPanel.setVisible(true);
+			revalidate();
+			pack();
+
+			execute();
 		}
 
 		@Override
 		protected Boolean doInBackground()
 		{
-			runnable.run();
+			try {
+				work.execute();
+			}
+			catch (Throwable t) {
+				LoadingBar.dismiss();
+				displayStackTrace(t);
+			}
 			return true;
 		}
 
 		@Override
 		protected void done()
 		{
-			endTask();
+			for (JButton button : buttons)
+				button.setEnabled(true);
+
+			Logger.removeProgressListener();
+			progressPanel.setVisible(false);
+			progressLabel.setText("");
+			revalidate();
+			pack();
+
+			taskRunning = false;
 		}
 	}
 
@@ -941,25 +940,6 @@ public class StarRodClassic extends JFrame
 		}
 		return true;
 	}
-
-	/*
-	private void makeBackup() throws IOException
-	{
-		Backup b = new Backup();
-
-		b.addDirectory(Directories.MOD_PATCH.toFile());
-		b.addDirectory(Directories.MOD_GLOBALS.toFile());
-		b.addDirectory(Directories.MOD_STRINGS.toFile());
-		b.addDirectory(Directories.MOD_MAP_CFG.toFile());
-		b.addDirectory(Directories.MOD_MAP_PATCH.toFile());
-		b.addDirectory(Directories.MOD_MAP_BUILD.toFile());
-		// map areas.cfg and AssetTable.txt
-		b.addDirectory(Directories.MOD_BATTLE_PATCH.toFile());
-
-		File backupFile = new File(Directories.MOD_OUT + "backup");
-		b.writeAllFiles(backupFile);
-	}
-	 */
 
 	private static boolean compileMod()
 	{

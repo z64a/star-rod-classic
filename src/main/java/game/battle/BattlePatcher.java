@@ -175,7 +175,7 @@ public final class BattlePatcher
 		if (offset < Patcher.ROM_BASE)
 			return;
 
-		int addr = Patcher.toAddress(offset);
+		int addr = rp.toAddress(offset);
 		String LIO = String.format("LIO    V1, %08X", addr);
 
 		// patch 80072BEC (load battle code)

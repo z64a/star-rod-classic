@@ -43,7 +43,7 @@ import javax.swing.tree.TreeSelectionModel;
 
 import app.Directories;
 import app.Environment;
-import app.LoadingScreen;
+import app.LoadingBar;
 import app.StarRodClassic;
 import app.SwingUtils;
 import app.config.Options;
@@ -108,7 +108,7 @@ public class LevelEditor
 
 	public LevelEditor(CountDownLatch guiClosedSignal)
 	{
-		LoadingScreen loadingScreen = new LoadingScreen();
+		LoadingBar.show("Please Wait");
 
 		table = MapConfigTable.readXML(new File(MOD_MAP + FN_MAP_TABLE));
 		table.createTreeModels();
@@ -122,7 +122,7 @@ public class LevelEditor
 			@Override public void treeNodesInserted(TreeModelEvent e)    { treeChanged(); }
 			@Override public void treeNodesRemoved(TreeModelEvent e)     { treeChanged(); }
 			@Override public void treeStructureChanged(TreeModelEvent e) { treeChanged(); }
-
+		
 			private void treeChanged()
 			{
 				//TODO
@@ -137,7 +137,7 @@ public class LevelEditor
 		setSelectedNode(null);
 		currentTab = TabMode.MAPS;
 
-		loadingScreen.dispose();
+		LoadingBar.dismiss();
 		frame.setVisible(true);
 	}
 
@@ -551,7 +551,7 @@ public class LevelEditor
 		bg.add(engineOption);
 		bg.add(friendOption);
 		engineOption.setSelected(true);
-
+		
 		ActionListener nameModeListener = new ActionListener()
 		{
 			@Override

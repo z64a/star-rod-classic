@@ -38,7 +38,7 @@ import org.apache.commons.io.FileUtils;
 
 import app.Directories;
 import app.Environment;
-import app.LoadingScreen;
+import app.LoadingBar;
 import app.StarRodClassic;
 import app.StarRodException;
 import app.StarRodFrame;
@@ -89,8 +89,6 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 	protected KeyboardInput keyboard;
 	protected MouseInput mouse;
 
-	private LoadingScreen loadingScreen;
-
 	private static final float MESSAGE_HOLD_TIME = 4.0f;
 	private static final float MESSAGE_FADE_TIME = 0.5f;
 
@@ -122,7 +120,7 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 	{
 		super();
 
-		loadingScreen = new LoadingScreen();
+		LoadingBar.show("Please Wait");
 
 		glWindowGrabsMouse = settings.glWindowGrabsMouse;
 		glWindowHaltsForDialogs = settings.glWindowHaltsForDialogs;
@@ -253,8 +251,7 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 
 				if (warmup) {
 					warmup = false;
-					loadingScreen.dispose();
-					loadingScreen = null;
+					LoadingBar.dismiss();
 					frame.setVisible(true);
 				}
 			}
