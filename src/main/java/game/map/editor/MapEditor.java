@@ -52,6 +52,7 @@ import app.config.Options.Scope;
 import app.input.IOUtils;
 import app.input.InvalidInputException;
 import common.FrameLimiter;
+import common.GLEditor;
 import common.KeyboardInput;
 import common.KeyboardInput.KeyInputEvent;
 import common.KeyboardInput.KeyboardInputListener;
