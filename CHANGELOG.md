@@ -2,10 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
-## Upcoming Release
+## Next Release
+
+### Fixed
+- (Map Editor) Axis lines not showing up in ortho views
+
+## [0.5.7] - 2024-11-25
+
+### Fixed
+- Action commands would crash in any project that didn't mod them
+
+## [0.5.6] - 2024-11-25
 
 ### Added
 - New file menu option for saving shading profiles in Map Editor
+- Check for new version on startup, can be disabled with option `CheckForUpdates`
 
 ### Changed
 - Increased the length limit for map and background names in the Level Editor
@@ -17,6 +28,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Entity subpanel UI much less likely to stretch beyond the window
 - Fixed orientation for lightbulb icons in ortho viewports
+- Renamed Bombomb in enum files to Bobomb
 
 ### Removed
 - System UI theme

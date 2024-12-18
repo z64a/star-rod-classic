@@ -10,7 +10,7 @@ public class ROM_PAL extends ROM
 
 	public ROM_PAL(File databaseDir)
 	{
-		super(Version.PAL, RAM_BLOCKS, databaseDir);
+		super(RomVersion.PAL, RAM_BLOCKS, databaseDir);
 	}
 
 	@Override

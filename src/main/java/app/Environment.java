@@ -5,8 +5,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
+import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.security.CodeSource;
 import java.util.Properties;
@@ -23,12 +27,16 @@ import javax.swing.SwingUtilities;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import app.Resource.ResourceType;
+import app.AppVersion.VersionLevel;
 import app.config.Config;
 import app.config.Options;
 import app.config.Options.Scope;
 import app.input.IOUtils;
-import game.ROM.Version;
+import game.ROM.RomVersion;
 import game.map.editor.ui.dialogs.ChooseDialogResult;
 import game.map.editor.ui.dialogs.DirChooser;
 import game.map.editor.ui.dialogs.OpenFileChooser;
@@ -60,7 +68,7 @@ public abstract class Environment
 	public static Project project;
 
 	public static Config dumpConfig = null;
-	public static String dumpVersion = null;
+	public static AppVersion dumpVersion = null;
 	public static boolean hasCurrentDump = false;
 
 	private static boolean fromJar = false;
@@ -71,14 +79,19 @@ public abstract class Environment
 
 	private static boolean initialized = false;
 
-	private static String versionString;
+	private static AppVersion currentVersion;
 	private static String gitBuildBranch;
 	private static String gitBuildCommit;
 	private static String gitBuildTag;
 
+	public static AppVersion getVersion()
+	{
+		return currentVersion;
+	}
+
 	public static String getVersionString()
 	{
-		return versionString;
+		return currentVersion.toString();
 	}
 
 	public static String decorateTitle(String title)
@@ -87,7 +100,7 @@ public abstract class Environment
 
 		sb.append(title);
 
-		sb.append(" (v").append(versionString).append(")");
+		sb.append(" (").append(currentVersion).append(")");
 
 		if (fromJar && (gitBuildTag == null || !gitBuildTag.startsWith("v")) && gitBuildCommit != null)
 			sb.append(" (").append(gitBuildCommit.substring(0, 8)).append(")");
@@ -147,12 +160,12 @@ public abstract class Environment
 			try {
 				Manifest manifest = new Manifest(cl.getResourceAsStream("META-INF/MANIFEST.MF"));
 				Attributes attr = manifest.getMainAttributes();
-				versionString = attr.getValue("App-Version");
+				currentVersion = AppVersion.fromString(attr.getValue("App-Version"));
 				gitBuildBranch = attr.getValue("Build-Branch");
 				gitBuildCommit = attr.getValue("Build-Commit");
 				gitBuildTag = attr.getValue("Build-Tag");
 
-				Logger.logf("Detected version %s (%s-%s)", versionString, gitBuildBranch, gitBuildCommit.subSequence(0, 8));
+				Logger.logf("Detected version %s (%s-%s)", currentVersion, gitBuildBranch, gitBuildCommit.subSequence(0, 8));
 			}
 			catch (IOException e) {
 				Logger.logError("Could not read MANIFEST.MF");
@@ -163,8 +176,8 @@ public abstract class Environment
 			try {
 				Properties prop = new Properties();
 				prop.load(new FileInputStream(new File("./app.properties")));
-				versionString = prop.getProperty("version");
-				Logger.logf("Detected version %s (IDE)", versionString);
+				currentVersion = AppVersion.fromString(prop.getProperty("version"));
+				Logger.logf("Detected version %s (IDE)", currentVersion);
 			}
 			catch (IOException e) {
 				Logger.logError("Could not read version properties file: " + e.getMessage());
@@ -180,6 +193,9 @@ public abstract class Environment
 
 			if (!isCommandLine)
 				Themes.setThemeByKey(Environment.mainConfig.getString(Options.Theme));
+
+			if (fromJar && mainConfig.getBoolean(Options.CheckForUpdates))
+				checkForUpdate();
 
 			Logger.setDefaultOuputPriority(mainConfig.getBoolean(Options.LogDetails) ? Priority.DETAIL : Priority.STANDARD);
 			ProjectDatabase.initialize(false);
@@ -218,6 +234,42 @@ public abstract class Environment
 			return codeSource.getParentFile();
 		else
 			return new File(".");
+	}
+
+	public static void checkForUpdate()
+	{
+		try {
+			URL url = new URI("https://api.github.com/repos/z64a/star-rod-classic/releases/latest").toURL();
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestMethod("GET");
+			connection.setConnectTimeout(1000);
+			connection.setReadTimeout(1000);
+
+			int responseCode = connection.getResponseCode();
+			if (responseCode == HttpURLConnection.HTTP_OK) {
+				InputStreamReader inputStreamReader = new InputStreamReader(connection.getInputStream());
+				JsonObject jsonObject = JsonParser.parseReader(inputStreamReader).getAsJsonObject();
+				String latestTag = jsonObject.get("tag_name").getAsString();
+
+				AppVersion latestVersion = AppVersion.fromString(latestTag);
+
+				if (latestVersion.isNewerThan(currentVersion)) {
+					Logger.log("Detected newer remote version: " + latestVersion);
+
+					SwingUtils.getWarningDialog()
+						.setTitle("Update Available")
+						.setMessage("A newer version is available!", "Please visit the GitHub repo to download it.")
+						.show();
+				}
+			}
+			else {
+				Logger.logError("Update check failed (response code: " + responseCode + ")");
+			}
+		}
+		catch (Exception e) {
+			Logger.logError("IOException while checking for updates: " + e.getMessage());
+			Logger.printStackTrace(e);
+		}
 	}
 
 	private static final void checkForDependencies() throws IOException
@@ -315,7 +367,7 @@ public abstract class Environment
 
 			if (baseRom.exists()) {
 				// do not validate when loading from the config
-				setBaseRom(baseRom, Version.US); //TODO
+				setBaseRom(baseRom, RomVersion.US); //TODO
 				missingROM = false;
 			}
 		}
@@ -330,7 +382,7 @@ public abstract class Environment
 			if (selectedRom == null)
 				System.exit(0);
 
-			setBaseRom(selectedRom, Version.US); //TODO
+			setBaseRom(selectedRom, RomVersion.US); //TODO
 		}
 	}
 
@@ -361,7 +413,7 @@ public abstract class Environment
 		if (selectedRom == null)
 			return false;
 
-		setBaseRom(selectedRom, Version.US); //TODO
+		setBaseRom(selectedRom, RomVersion.US); //TODO
 
 		// set default values for other options
 		for (Options opt : Options.values()) {
@@ -416,9 +468,18 @@ public abstract class Environment
 		dumpConfig = new Config(dumpConfigFile, Scope.Dump);
 
 		if (dumpConfigFile.exists()) {
-			dumpVersion = dumpConfig.getString(Options.DumpVersion);
+			String dumpVersionString = dumpConfig.getString(Options.DumpVersion);
+			dumpVersion = AppVersion.fromString(dumpVersionString);
 
-			if (StarRodClassic.compareVersionStrings(dumpVersion, Environment.getVersionString()) != 0) {
+			if (dumpVersion == null) {
+				SwingUtils.getErrorDialog()
+					.setTitle("Unknown Dump Version")
+					.setMessage("Could not parse dump version: " + dumpVersionString)
+					.show();
+				return;
+			}
+
+			if (dumpVersion.isOlderThan(currentVersion, VersionLevel.MINOR)) {
 				SwingUtils.getErrorDialog()
 					.setTitle("Old Dump Found")
 					.setMessage("Found outdated ROM dump from version " + dumpVersion + ".",
@@ -447,7 +508,7 @@ public abstract class Environment
 
 					if (validatedRom != null) {
 						romChooser.setDirectoryContaining(validatedRom.getParentFile());
-						setBaseRom(validatedRom, Version.US); //TODO
+						setBaseRom(validatedRom, RomVersion.US); //TODO
 						mainConfig.setString(Options.RomPath, validatedRom.getAbsolutePath());
 						mainConfig.saveConfigFile();
 
@@ -465,7 +526,7 @@ public abstract class Environment
 		return null;
 	}
 
-	public static void setBaseRom(File rom, Version version)
+	public static void setBaseRom(File rom, RomVersion version)
 	{
 		baseRom = rom;
 		SwingUtilities.invokeLater(() -> {
@@ -478,7 +539,7 @@ public abstract class Environment
 		else
 			dumpPath = rom.getParentFile().getPath() + "/dump";
 
-		if (version == Version.US)
+		if (version == RomVersion.US)
 			dumpPath += "/";
 		else
 			dumpPath += "_" + version.name().toLowerCase() + "/";

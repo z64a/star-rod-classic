@@ -20,7 +20,7 @@ import util.Logger;
 
 public abstract class ROM
 {
-	public static enum Version
+	public static enum RomVersion
 	{
 		US,
 		JP,
@@ -127,7 +127,7 @@ public abstract class ROM
 		ENTITY_SBKOMO
 	}
 
-	public final Version version;
+	public final RomVersion version;
 	private final List<MemoryRegion> allRegions;
 	private final LinkedHashMap<LibScope, RamContent> ramMaps;
 
@@ -172,7 +172,7 @@ public abstract class ROM
 		}
 	}
 
-	protected ROM(Version version, MemoryRegion[] memoryMap, File databaseDir)
+	protected ROM(RomVersion version, MemoryRegion[] memoryMap, File databaseDir)
 	{
 		this.version = version;
 

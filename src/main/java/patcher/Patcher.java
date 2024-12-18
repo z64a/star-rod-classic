@@ -77,8 +77,11 @@ public class Patcher implements IGlobalDatabase
 	private List<Region> emptyRegions = new ArrayList<>();
 	private LinkedHashMap<String, Timer> timerLookup;
 
+	private static final int ROM_BATTLE_DATA_START = 0x4219F0;
+	private static final int ROM_BATTLE_DATA_END = 0x79EF40;
+
 	private RomPatcher rp = null;
-	private int nextBattleDataPos = 0x4219F0;
+	private int nextBattleDataPos = ROM_BATTLE_DATA_START;
 
 	private HashMap<String, Integer> globalPointerMap; // globally accessible pointers $Name -> address
 	private HashMap<String, String> globalConstantMap; // globally accessible constants .Name -> value
@@ -463,14 +466,14 @@ public class Patcher implements IGlobalDatabase
 	private CaseInsensitiveMap<String> writeDebugSettings(Config cfg, RomPatcher rp) throws IOException
 	{
 		rp.seek("Debug Map Name", rp.nextAlignedOffset());
-		int ptrMapName = Patcher.toAddress(rp.getCurrentOffset());
+		int ptrMapName = rp.toAddress(rp.getCurrentOffset());
 		String mapName = cfg.getString(Options.DebugMapName);
 		rp.write(mapName.getBytes());
 		rp.writeByte(0);
 		while ((rp.getCurrentOffset() & 3) != 0)
 			rp.writeByte(0); // pad to 4 byte boundary
 
-		int ptrBattleID = Patcher.toAddress(rp.getCurrentOffset());
+		int ptrBattleID = rp.toAddress(rp.getCurrentOffset());
 		String battleID = cfg.getString(Options.DebugBattleID);
 		if (battleID.length() > 4 || !DataUtils.isInteger(battleID))
 			battleID = Options.DebugBattleID.defaultValue;
@@ -499,7 +502,7 @@ public class Patcher implements IGlobalDatabase
 		CaseInsensitiveMap<String> rules = new CaseInsensitiveMap<>();
 
 		rp.seek("Debug Watch List", rp.nextAlignedOffset());
-		int ptrWatchList = Patcher.toAddress(rp.getCurrentOffset());
+		int ptrWatchList = rp.toAddress(rp.getCurrentOffset());
 		rp.write(watchListBuffer);
 
 		rules.put("DebugMapPointer", String.format("%08X", ptrMapName));
@@ -540,25 +543,25 @@ public class Patcher implements IGlobalDatabase
 			rules.put("LogVars", "True");
 
 			rp.seek("GameByteNames", rp.nextAlignedOffset());
-			rules.put("GameByteNames", String.format("%08X", Patcher.toAddress(rp.getCurrentOffset())));
+			rules.put("GameByteNames", String.format("%08X", rp.toAddress(rp.getCurrentOffset())));
 			for (int i = 0; i < ScriptVariable.GameByte.getMaxIndex(); i++)
 				writeVarInfo(rp, i, ProjectDatabase.getGameByte(i), ProjectDatabase.isGameByteUnused(i));
 			rp.writeInt(-1);
 
 			rp.seek("ModByteNames", rp.nextAlignedOffset());
-			rules.put("ModByteNames", String.format("%08X", Patcher.toAddress(rp.getCurrentOffset())));
+			rules.put("ModByteNames", String.format("%08X", rp.toAddress(rp.getCurrentOffset())));
 			for (int i = 0; i < ScriptVariable.ModByte.getMaxIndex(); i++)
 				writeVarInfo(rp, i, ProjectDatabase.getModByte(i), false);
 			rp.writeInt(-1);
 
 			rp.seek("GameFlagNames", rp.nextAlignedOffset());
-			rules.put("GameFlagNames", String.format("%08X", Patcher.toAddress(rp.getCurrentOffset())));
+			rules.put("GameFlagNames", String.format("%08X", rp.toAddress(rp.getCurrentOffset())));
 			for (int i = 0; i < ScriptVariable.GameFlag.getMaxIndex(); i++)
 				writeVarInfo(rp, i, ProjectDatabase.getGameFlag(i), ProjectDatabase.isGameFlagUnused(i));
 			rp.writeInt(-1);
 
 			rp.seek("ModFlagNames", rp.nextAlignedOffset());
-			rules.put("ModFlagNames", String.format("%08X", Patcher.toAddress(rp.getCurrentOffset())));
+			rules.put("ModFlagNames", String.format("%08X", rp.toAddress(rp.getCurrentOffset())));
 			for (int i = 0; i < ScriptVariable.ModFlag.getMaxIndex(); i++)
 				writeVarInfo(rp, i, ProjectDatabase.getModFlag(i), false);
 			rp.writeInt(-1);
@@ -859,8 +862,8 @@ public class Patcher implements IGlobalDatabase
 			throw new IllegalStateException();
 
 		int offset = nextBattleDataPos;
-		if (offset + sizeNeeded > 0x79EF40) {
-			addEmptyRegion(new Region(offset, 0x79EF40));
+		if (offset + sizeNeeded > ROM_BATTLE_DATA_END) {
+			addEmptyRegion(new Region(offset, ROM_BATTLE_DATA_END));
 			offset = rp.nextAlignedOffset();
 		}
 		nextBattleDataPos = offset + sizeNeeded;
@@ -870,24 +873,10 @@ public class Patcher implements IGlobalDatabase
 
 	private void sealBattleData()
 	{
-		if (nextBattleDataPos < 0x79EF40) {
-			addEmptyRegion(new Region(nextBattleDataPos, 0x79EF40));
+		if (nextBattleDataPos < ROM_BATTLE_DATA_END) {
+			addEmptyRegion(new Region(nextBattleDataPos, ROM_BATTLE_DATA_END));
 		}
 		nextBattleDataPos = -1;
-	}
-
-	/**
-	 * use method from RomPatcher instead
-	 */
-	@Deprecated
-	public static int toAddress(int offset)
-	{
-		return RAM_BASE + (offset - ROM_BASE);
-	}
-
-	public static int toAddress(long filePointer)
-	{
-		return toAddress((int) filePointer);
 	}
 
 	private static final class Timer

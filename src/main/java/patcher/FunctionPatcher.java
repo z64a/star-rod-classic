@@ -206,19 +206,19 @@ public class FunctionPatcher
 	public static void showVersionInfo(RomPatcher rp, int offset) throws IOException
 	{
 		Logger.log(String.format("Version information will be stored at 0x%08X",
-			Patcher.toAddress(offset)), Priority.IMPORTANT);
+			rp.toAddress(offset)), Priority.IMPORTANT);
 		rp.seek("Version Info", offset);
 
-		int starRodStringAddress = Patcher.toAddress(rp.getCurrentOffset());
-		rp.write(StringEncoder.encodeString("Star Rod v" + Environment.getVersionString(), true));
+		int starRodStringAddress = rp.toAddress(rp.getCurrentOffset());
+		rp.write(StringEncoder.encodeString("Star Rod " + Environment.getVersionString(), true));
 		rp.padOut(4);
 
-		int modStringAddress = Patcher.toAddress(rp.getCurrentOffset());
+		int modStringAddress = rp.toAddress(rp.getCurrentOffset());
 		String modName = Environment.project.config.getString(Options.ModVersionString);
 		rp.write(StringEncoder.encodeString(modName, true));
 		rp.padOut(4);
 
-		int fpPrintVersionString = Patcher.toAddress(rp.getCurrentOffset());
+		int fpPrintVersionString = rp.toAddress(rp.getCurrentOffset());
 		AsmUtils.assembleAndWrite("ShowVersionInfo", rp, new String[] {
 				String.format("LUI	A0, %04X    ", (starRodStringAddress) >>> 16),
 				String.format("ORI	A0, A0, %04X", (starRodStringAddress & 0x0000FFFF)),
@@ -349,7 +349,7 @@ public class FunctionPatcher
 		//	rp.writeInt(0);
 
 		rp.seek("Initial Map Hook", 0x168084); // 80247824
-		rp.writeInt(MIPS.getJumpIns(Patcher.toAddress(offset)));
+		rp.writeInt(MIPS.getJumpIns(rp.toAddress(offset)));
 		rp.writeInt(0);
 		rp.skip(4);
 		rp.writeInt(0); // clear setting default entry

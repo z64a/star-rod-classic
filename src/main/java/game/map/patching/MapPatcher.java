@@ -259,7 +259,7 @@ public class MapPatcher
 		// map table	80090050	<-> 6B450
 		// area table	800934F0
 
-		int addr = Patcher.toAddress(areaTableStart);
+		int addr = rp.toAddress(areaTableStart);
 		int upper = (addr >>> 16);
 		int lower = addr & 0x0000FFFF;
 

@@ -28,7 +28,7 @@ import javax.swing.JTabbedPane;
 
 import app.Directories;
 import app.Environment;
-import app.LoadingScreen;
+import app.LoadingBar;
 import app.StarRodException;
 import app.SwingUtils;
 import app.config.Options;
@@ -116,7 +116,7 @@ public class GlobalsEditor
 
 	public GlobalsEditor(CountDownLatch guiClosedSignal)
 	{
-		LoadingScreen loadingScreen = new LoadingScreen();
+		LoadingBar.show("Please Wait");
 
 		tabList = new ArrayList<>();
 
@@ -136,7 +136,7 @@ public class GlobalsEditor
 
 		createGUI(guiClosedSignal);
 
-		loadingScreen.dispose();
+		LoadingBar.dismiss();
 		frame.setVisible(true);
 	}
 

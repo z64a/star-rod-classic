@@ -20,9 +20,11 @@ public enum Options
 	ModPath				(true, Scope.Main, Type.String, "ModPath", null),
 	RomPath				(true, Scope.Main, Type.String, "RomPath", null),
 //	Dumped				(true, Scope.Main, Type.Boolean, "Dumped", "False"),
+
 	LogDetails			(true, Scope.Main, Type.Boolean, "LogDetails", "false"),
 	Theme				(true, Scope.Main, Type.String, "Theme", "FlatLight"),
 	ExitToMenu			(true, Scope.Main, Type.Boolean, "ExitToMenu", "true"),
+	CheckForUpdates		(true, Scope.Main, Type.Boolean, "CheckForUpdates", "true"),
 
 	// options for dumping assets
 	CleanDump			(true, Scope.Main, Type.Boolean, "FullDump", "False", "Dump everything (clears existing dump)",

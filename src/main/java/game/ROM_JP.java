@@ -10,7 +10,7 @@ public class ROM_JP extends ROM
 
 	public ROM_JP(File databaseDir)
 	{
-		super(Version.JP, RAM_BLOCKS, databaseDir);
+		super(RomVersion.JP, RAM_BLOCKS, databaseDir);
 	}
 
 	@Override
