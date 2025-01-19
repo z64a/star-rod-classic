@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - (Map Editor) Axis lines not showing up in ortho views
+- (Map Editor) Fixed crash when fusing vertices
 
 ## [0.5.7] - 2024-11-25
 
