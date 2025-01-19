@@ -2,11 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## Next Release
+## [0.5.8] - 2025-01-18
 
 ### Fixed
 - (Map Editor) Axis lines not showing up in ortho views
 - (Map Editor) Fixed crash when fusing vertices
+- (Sprite Editor) Copy animation works properly
 
 ## [0.5.7] - 2024-11-25
 
