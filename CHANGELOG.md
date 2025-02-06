@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## Next Release
+
+### Added
+- (Sprite Editor) Copy/paste/duplicate for commands/keyframes
+
 ## [0.5.8] - 2025-01-18
 
 ### Fixed
