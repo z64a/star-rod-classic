@@ -1,0 +1,67 @@
+% Turns the status bar into a single draw_box, "removing" the SE bar bump it usually has
+
+% Patch by SnakemouthDen
+% Credit not required but appreciated :]
+
+@Hook:Pause 800E8634
+{
+    580:  LI        A1, 5
+    584:  LI        S2, FF
+    588:  LI        S1, 140
+    58C:  LW        V1, 0 (A2)
+    590:  LI        S0, F0
+    594:  COPY      V0, V1
+    598:  ADDIU     V1, V1, 8
+    59C:  SW        T0, 0 (V0)
+    5A0:  SW        A3, 4 (V0)
+    5A4:  LH        S8, 34 (S3)
+    5A8:  LH        S5, 36 (S3)
+    5AC:  LI        V0, AE
+    5B0:  SW        V1, 0 (A2)
+    5B4:  SW        V0, 14 (SP)
+    5B8:  LI        V0, 23
+    5BC:  SW        R0, 10 (SP)
+    5C0:  SW        V0, 18 (SP)
+    5C4:  SW        S2, 1C (SP)
+    5C8:  SW        R0, 20 (SP)
+    5CC:  SW        R0, 24 (SP)
+    5D0:  SW        R0, 28 (SP)
+    5D4:  SW        R0, 2C (SP)
+    5D8:  SW        R0, 30 (SP)
+    5DC:  SW        R0, 34 (SP)
+    5E0:  SW        R0, 38 (SP)
+    5E4:  SW        R0, 3C (SP)
+    5E8:  SW        R0, 40 (SP)
+    5EC:  SW        S1, 44 (SP)
+    5F0:  SW        S0, 48 (SP)
+    5F4:  SW        R0, 4C (SP)
+    5F8:  COPY      A2, S8
+    % 5FC:  JAL       ~Func:draw_box
+    600:  COPY      A3, S5
+    604:  CLEAR     A0
+    608:  LI        A1, F
+    60C:  ADDIU     A2, S8, 00
+    610:  COPY      A3, S5
+    614:  LI        V0, 128
+    618:  SW        V0, 14 (SP)
+    61C:  LI        V0, 1D
+    620:  SW        R0, 10 (SP)
+    624:  SW        V0, 18 (SP)
+    628:  SW        S2, 1C (SP)
+    62C:  SW        R0, 20 (SP)
+    630:  SW        R0, 24 (SP)
+    634:  SW        R0, 28 (SP)
+    638:  SW        R0, 2C (SP)
+    63C:  SW        R0, 30 (SP)
+    640:  SW        R0, 34 (SP)
+    644:  SW        R0, 38 (SP)
+    648:  SW        R0, 3C (SP)
+    64C:  SW        R0, 40 (SP)
+    650:  SW        S1, 44 (SP)
+    654:  SW        S0, 48 (SP)
+    658:  JAL       ~Func:draw_box
+    65C:  SW        R0, 4C (SP)
+    J 800E8710
+    NOP
+}
+
