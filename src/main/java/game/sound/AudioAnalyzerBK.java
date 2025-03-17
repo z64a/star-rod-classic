@@ -532,7 +532,7 @@ public class AudioAnalyzerBK
 					if (index >= numPred)
 						index = Math.min(index, numPred - 1);
 
-					state[ind] = inner_prod(ORDER + i, predictors[index][i], inVec);
+					state[ind] = ix[ind] + inner_prod(ORDER + i, predictors[index][i], inVec);
 				}
 			}
 
