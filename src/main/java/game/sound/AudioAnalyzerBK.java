@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioFormat;
@@ -18,7 +19,9 @@ import org.apache.commons.io.FilenameUtils;
 import app.Directories;
 import app.Environment;
 import app.input.IOUtils;
+import game.sound.TableDesign.Table;
 import util.CountingMap;
+import util.Logger;
 
 public class AudioAnalyzerBK
 {
@@ -42,7 +45,7 @@ public class AudioAnalyzerBK
 		System.out.println();
 		System.out.println("Sample Rates:");
 		Instrument.sampleRates.print();
-
+		
 		System.out.println();
 		System.out.println("Key Bases:");
 		Instrument.keyBases.print();
@@ -264,11 +267,6 @@ public class AudioAnalyzerBK
 		public final int unk_28;
 		public final int envelopeOffset;
 
-		// 0100 0000 0008 000C 5E7F FF00 58DF 58BF 589F 5880 FF00
-		// 0100 0000 0008 000C 5E7F FF00 5C00 FF00
-		// 0200 0000 000C 0014 0010 001E 5E7F FF00 5E7F FF00 58DF 58BF 589F 5880 FF00 5C00 FF00
-		// 0100 0000 0008 000C 5E7F FF00 4D00 FF00 0000 0000 0000 0000
-
 		public Instrument(ByteBuffer bb, int start)
 		{
 			super(start, start + 0x30, "Instrument");
@@ -277,11 +275,14 @@ public class AudioAnalyzerBK
 
 			wavOffset = bb.getInt();
 			wavLength = bb.getInt();
+
 			loopPredictorOffset = bb.getInt();
 			loopStart = bb.getInt();
-
 			loopEnd = bb.getInt();
 			loopCount = bb.getInt();
+
+			assert (loopStart == 0 || loopCount == -1);
+
 			predictorOffset = bb.getInt();
 			dc_bookSize = bb.getShort();
 			keyBase = bb.getShort();
@@ -468,15 +469,44 @@ public class AudioAnalyzerBK
 	private static final int FRAME_LENGTH = 9;
 	private static final int ORDER = 2;
 
+	private static class CodeBook
+	{
+		private final int numPred;
+		private final int[][][] predictors;
+
+		private CodeBook(ByteBuffer bb, int offset, int numPred)
+		{
+			this.numPred = numPred;
+			predictors = readBook(bb, offset, numPred);
+		}
+	}
+
 	private static void dumpInstrument(Instrument ins, ByteBuffer bb)
 	{
 		int numFrames = ins.wavLength / FRAME_LENGTH;
-		int numPred = ins.dc_bookSize / 0x20;
+		//	int numPred = ins.dc_bookSize / 0x20;
 
-		int[][][] predictors = readBook(bb, ins.predictorOffset, numPred);
-		int[][] loopPredictors = new int[8][2]; //TODO bookSize used for loop predictors??
+		CodeBook book = new CodeBook(bb, ins.predictorOffset, ins.dc_bookSize / 0x20);
 
-		ArrayList<Integer> samples = new ArrayList<>(ins.wavLength * 2);
+		//	int[][][] predictors = readBook(bb, ins.predictorOffset, numPred);
+		int[] loopPredictors = new int[16];
+
+		if (ins.loopStart != 0) {
+			bb.position(ins.loopPredictorOffset);
+			for (int i = 0; i < 16; i++)
+				loopPredictors[i] = bb.getShort();
+		}
+
+		ArrayList<Integer> samples;
+		ArrayList<Integer> loopSamples;
+		if (ins.loopStart != 0) {
+			samples = new ArrayList<>(ins.loopStart);
+			loopSamples = new ArrayList<>(ins.loopEnd - ins.loopStart);
+		}
+		else {
+			samples = new ArrayList<>(ins.wavLength * 2); // 16 samples per 9 bytes
+			loopSamples = new ArrayList<>();
+		}
 		int[] state = new int[16];
 
 		bb.position(ins.wavOffset);
@@ -511,39 +541,306 @@ public class AudioAnalyzerBK
 			}
 
 			for (int j = 0; j < 2; j++) {
-
 				int[] inVec = new int[16];
 
-				if (j == 0) {
-					for (int i = 0; i < ORDER; i++) {
-						inVec[i] = state[16 - ORDER + i];
-					}
-				}
-				else {
-					for (int i = 0; i < ORDER; i++) {
-						inVec[i] = state[8 - ORDER + i];
-					}
-				}
+				if (j == 0)
+					System.arraycopy(state, 16 - ORDER, inVec, 0, ORDER);
+				else
+					System.arraycopy(state, 8 - ORDER, inVec, 0, ORDER);
 
 				for (int i = 0; i < 8; i++) {
 					int ind = j * 8 + i;
 					inVec[ORDER + i] = ix[ind];
 
-					if (index >= numPred)
-						index = Math.min(index, numPred - 1);
+					if (index >= book.numPred)
+						index = Math.min(index, book.numPred - 1);
 
-					state[ind] = ix[ind] + inner_prod(ORDER + i, predictors[index][i], inVec);
+					state[ind] = ix[ind] + innerProduct(ORDER + i, book.predictors[index][i], inVec);
 				}
 			}
 
 			for (int i : state) {
-				samples.add(i);
+				if (ins.loopStart > 0 && (samples.size() == ins.loopStart)) {
+					loopSamples.add(i);
+				}
+				else {
+					samples.add(i);
+				}
 			}
 		}
 
-		if (ins.loopStart != 0)
-			return; //TODO unsupported
+		File wavFile = new File(Directories.MOD_OUT.toFile(), ins.outName + ".wav");
+		writeWav(wavFile, ins, samples);
 
+		if (loopSamples.size() > 0) {
+			wavFile = new File(Directories.MOD_OUT.toFile(), ins.outName + "_loop.wav");
+			writeWav(wavFile, ins, loopSamples);
+		}
+
+		if (ins.loopStart == 0) {
+			// generate a new code book to test encoding
+			Table tbl = TableDesign.makeTable(samples, ORDER);
+			book = new CodeBook(tbl.buffer, 0, tbl.numPred);
+
+			ByteBuffer recoded = encode(samples, book);
+
+			ArrayList<Integer> outSamples = new ArrayList<>(samples.size());
+			decode(recoded, 0, numFrames, book, outSamples);
+
+			File wavFile2 = new File(Directories.MOD_OUT.toFile(), ins.outName + "_2.wav");
+			writeWav(wavFile2, ins, outSamples);
+		}
+	}
+
+	public static void decode(ByteBuffer bb, int inPos, int numFrames, CodeBook book, List<Integer> outSamples)
+	{
+		int[] state = new int[16];
+
+		bb.position(inPos);
+		for (int frame = 0; frame < numFrames; frame++) {
+			// read frame header byte
+			int header = bb.get() & 0xFF;
+
+			// extract header byte fields
+			int scale = 1 << (header >> 4);
+			int bestPred = header & 0xF;
+
+			if (bestPred >= book.numPred)
+				bestPred = Math.min(bestPred, book.numPred - 1);
+
+			int[] rawSamples = new int[16];
+
+			// read frame sample bytes
+			for (int i = 0; i < 8; i++) {
+				int v = bb.get() & 0xFF;
+
+				// extract 4-bit sample pair
+				int s1 = v >> 4;
+				int s2 = v & 0xF;
+
+				// 4-bit sign extension
+				s1 = (s1 << 28) >> 28;
+				s2 = (s2 << 28) >> 28;
+
+				// apply scale factor
+				s1 *= scale;
+				s2 *= scale;
+
+				rawSamples[2 * i] = s1;
+				rawSamples[2 * i + 1] = s2;
+			}
+
+			for (int j = 0; j < 2; j++) {
+				int[] inVec = new int[16];
+
+				if (j == 0)
+					System.arraycopy(state, 16 - ORDER, inVec, 0, ORDER);
+				else
+					System.arraycopy(state, 8 - ORDER, inVec, 0, ORDER);
+
+				for (int i = 0; i < 8; i++) {
+					int idx = j * 8 + i;
+					inVec[ORDER + i] = rawSamples[idx];
+					state[idx] = rawSamples[idx] + innerProduct(ORDER + i, book.predictors[bestPred][i], inVec);
+				}
+			}
+
+			for (int i : state) {
+				outSamples.add(i);
+			}
+		}
+	}
+
+	/**
+	 * Encodes raw audio samples using VADPCM.
+	 *
+	 * @param samples Raw audio samples.
+	 * @param book    Precomputed predictor codebook.
+	 * @return ByteBuffer containing encoded VADPCM audio.
+	 */
+	public static ByteBuffer encode(List<Integer> samples, CodeBook book)
+	{
+		int numSamples = samples.size();
+		int encodedSize = 9 * (1 + (numSamples / 16)); // 16 samples -> 9
+
+		ByteBuffer encoded = ByteBuffer.allocateDirect(encodedSize);
+		int pos = 0;
+
+		short[] buffer = new short[16];
+		int[] state = new int[16];
+
+		while (pos < numSamples) {
+			int remaining = Math.min(16, numSamples - pos);
+
+			// load frame samples into buffer; pad with zeros if necessary
+			if (numSamples - pos >= remaining) {
+				for (int i = 0; i < remaining; i++) {
+					buffer[i] = (short) (int) samples.get(pos);
+					pos++;
+				}
+				for (int i = remaining; i < 16; i++) {
+					buffer[i] = 0;
+				}
+
+				encodeFrame(encoded, book, buffer, state);
+			}
+			else {
+				Logger.logError("Missed a frame!");
+			}
+		}
+
+		encoded.flip();
+
+		return encoded;
+	}
+
+	/**
+	 * Encodes a single 16-sample audio frame into a compact representation using VADPCM.
+	 *
+	 * <p>This method selects the best LPC predictor from the provided codebook by minimizing the prediction error,
+	 * quantizes the residual error, applies scaling, and writes the encoded data to the output buffer.
+	 *
+	 * @param out        Buffer to store the encoded frame data.
+	 * @param book       Predictor codebook.
+	 * @param buffer     Input audio samples for the current frame.
+	 * @param state      Current encoder state.
+	 */
+	private static void encodeFrame(ByteBuffer out, CodeBook book, short[] buffer, int[] state)
+	{
+		short[] ix = new short[16];
+		int[] prediction = new int[16];
+		int[] inVec = new int[16];
+		int[] saveState = new int[16];
+		float[] error = new float[16];
+		int[] ie = new int[16];
+
+		int encBits = 4;
+		int llevel = -(1 << (encBits - 1));
+		int ulevel = -llevel - 1;
+
+		int scaleFactor = 16 - encBits;
+
+		// determine best-fitting predictor
+		float sumErrSq;
+		float minErrSqr = Float.MAX_VALUE;
+		int bestPred = 0;
+
+		for (int k = 0; k < book.numPred; k++) {
+			do_prediction(state, buffer, inVec, error, prediction, book.predictors, k);
+
+			sumErrSq = 0.0f;
+			for (float v : error) {
+				sumErrSq += v * v;
+			}
+
+			if (sumErrSq < minErrSqr) {
+				minErrSqr = sumErrSq;
+				bestPred = k;
+			}
+		}
+
+		// run prediction with the best predictor
+		do_prediction(state, buffer, inVec, error, prediction, book.predictors, bestPred);
+
+		// clamp errors to 16-bit range
+		clamp_wow(16, error, ie, 16);
+
+		// scale down to 4-bit signed integer range
+
+		// find the largest absolute  value
+		int max = 0;
+		for (int i = 0; i < 16; i++) {
+			if (Math.abs(ie[i]) > Math.abs(max)) {
+				max = ie[i];
+			}
+		}
+
+		// choose a scale that works for all
+		int scale;
+		for (scale = 0; scale <= scaleFactor; scale++) {
+			if (max <= ulevel && max >= llevel)
+				break;
+			max /= 2;
+		}
+
+		System.arraycopy(state, 0, saveState, 0, 16);
+
+		// attempt to encode
+		scale--;
+		int maxClip;
+		int nIter = 0;
+		float err;
+
+		do {
+			nIter++;
+			scale++;
+			maxClip = 0;
+			scale = Math.min(scale, 12);
+
+			System.arraycopy(saveState, 16 - ORDER, inVec, 0, ORDER);
+
+			for (int i = 0; i < 8; i++) {
+				prediction[i] = innerProduct(ORDER + i, book.predictors[bestPred][i], inVec);
+				err = buffer[i] - prediction[i];
+				ix[i] = qSample(err, 1 << scale);
+				int cV = clip(ix[i], llevel, ulevel) - ix[i];
+				maxClip = Math.max(maxClip, Math.abs(cV));
+				ix[i] += cV;
+				inVec[i + ORDER] = ix[i] * (1 << scale);
+				state[i] = prediction[i] + inVec[i + ORDER];
+			}
+
+			for (int i = 0; i < ORDER; i++) {
+				inVec[i] = state[8 - ORDER + i];
+			}
+
+			for (int i = 0; i < 8; i++) {
+				prediction[8 + i] = innerProduct(ORDER + i, book.predictors[bestPred][i], inVec);
+				err = buffer[8 + i] - prediction[8 + i];
+				ix[8 + i] = qSample(err, 1 << scale);
+				int cV = clip(ix[8 + i], llevel, ulevel) - ix[8 + i];
+				maxClip = Math.max(maxClip, Math.abs(cV));
+				ix[8 + i] += cV;
+				inVec[i + ORDER] = ix[8 + i] * (1 << scale);
+				state[8 + i] = prediction[8 + i] + inVec[i + ORDER];
+			}
+
+		}
+		while (maxClip >= 2 && nIter < 2);
+
+		// write header
+		out.put((byte) ((scale << 4) | (bestPred & 0xF)));
+
+		// write encoded samples
+		for (int i = 0; i < 16; i += 2) {
+			out.put((byte) ((ix[i] << 4) | (ix[i + 1] & 0xF)));
+		}
+	}
+
+	private static void do_prediction(int[] state, short[] buffer, int[] inVec, float[] error, int[] prediction,
+		int[][][] coefTable, int k)
+	{
+		System.arraycopy(state, 16 - ORDER, inVec, 0, ORDER);
+
+		for (int i = 0; i < 8; i++) {
+			prediction[i] = innerProduct(i + ORDER, coefTable[k][i], inVec);
+			inVec[i + ORDER] = buffer[i] - prediction[i];
+			error[i] = inVec[i + ORDER];
+		}
+
+		for (int i = 0; i < ORDER; i++) {
+			inVec[i] = prediction[8 - ORDER + i] + inVec[i + 8];
+		}
+
+		for (int i = 0; i < 8; i++) {
+			prediction[8 + i] = innerProduct(ORDER + i, coefTable[k][i], inVec);
+			inVec[i + ORDER] = buffer[i + 8] - prediction[i + 8];
+			error[i + 8] = inVec[i + ORDER];
+		}
+	}
+
+	private static void writeWav(File wavFile, Instrument ins, ArrayList<Integer> samples)
+	{
 		// 16-bit output
 		try {
 			float sampleRate = ins.sampleRate;
@@ -566,7 +863,6 @@ public class AudioAnalyzerBK
 			ByteArrayInputStream bais = new ByteArrayInputStream(rawData);
 			AudioInputStream audioInputStream = new AudioInputStream(bais, format, numSamples);
 
-			File wavFile = new File(Directories.MOD_OUT.toFile(), ins.outName + ".wav");
 			AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, wavFile);
 
 			System.out.println("WAV file created: " + wavFile.getAbsolutePath());
@@ -583,10 +879,10 @@ public class AudioAnalyzerBK
 			int channels = 1;
 			boolean signed = true;
 			boolean bigEndian = false;
-		
+
 			int numSamples = samples.size();
 			byte[] rawData = new byte[numSamples * 4];
-		
+
 			for (int i = 0; i < numSamples; i++) {
 				int sample = samples.get(i);
 				rawData[i * 4] = (byte) (sample & 0xFF);
@@ -594,23 +890,99 @@ public class AudioAnalyzerBK
 				rawData[i * 4 + 2] = (byte) ((sample >> 16) & 0xFF);
 				rawData[i * 4 + 3] = (byte) ((sample >> 24) & 0xFF);
 			}
-		
+
 			// Define audio format
 			AudioFormat format = new AudioFormat(sampleRate, sampleSizeInBits, channels, signed, bigEndian);
-		
+
 			// Write to WAV file
 			ByteArrayInputStream bais = new ByteArrayInputStream(rawData);
 			AudioInputStream audioInputStream = new AudioInputStream(bais, format, numSamples);
-		
-			File wavFile = new File(Directories.MOD_OUT.toFile(), ins.outName + ".wav");
+
 			AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, wavFile);
-		
+
 			System.out.println("WAV file created: " + wavFile.getAbsolutePath());
 		}
 		catch (Exception e) {
 			e.printStackTrace();
 		}
 		 */
+
+		// hand-written output
+		/*
+		try {
+			int sampleRate = ins.sampleRate;
+			int numChannels = 1;
+			int bitsPerSample = 16;
+
+			int dataSize = samples.size() * (bitsPerSample / 8);
+
+			int riffChunkSize = 0xC;
+			int fmtChunkSize = 0x18;
+			int dataChunkSize = 0x8 + dataSize;
+			int smplChunkSize = (ins.loopStart != 0) ? 0x44 : 0;
+			int fileSize = riffChunkSize + fmtChunkSize + smplChunkSize + dataChunkSize;
+
+			ByteBuffer buffer = ByteBuffer.allocateDirect(fileSize);
+			buffer.order(ByteOrder.LITTLE_ENDIAN);
+
+			// Write RIFF Header
+			int byteRate = sampleRate * numChannels * (bitsPerSample / 8);
+			int blockAlign = numChannels * (bitsPerSample / 8);
+
+			// RIFF Chunk
+			buffer.put("RIFF".getBytes());
+			buffer.putInt(fileSize - 8);
+			buffer.put("WAVE".getBytes());
+
+			// fmt Chunk
+			buffer.put("fmt ".getBytes());
+			buffer.putInt(16); // fmt chunk size
+			buffer.putShort((short) 1); // Audio format = PCM
+			buffer.putShort((short) numChannels);
+			buffer.putInt(sampleRate);
+			buffer.putInt(byteRate);
+			buffer.putShort((short) blockAlign);
+			buffer.putShort((short) bitsPerSample);
+
+			// smpl chunk
+			if (ins.loopStart != 0) {
+				buffer.put("smpl".getBytes());
+				buffer.putInt(0x3C); // smpl chunk size (fixed size for one loop point)
+
+				buffer.putInt(0); // Manufacturer
+				buffer.putInt(0); // Product
+				buffer.putInt(1000000000 / sampleRate); // Sample period (in nanoseconds)
+				buffer.putInt(60); // MIDI note (middle C)
+				buffer.putInt(0); // Fine tuning
+				buffer.putInt(0); // SMPTE format
+				buffer.putInt(0); // SMPTE offset
+				buffer.putInt(1); // Number of sample loops
+				buffer.putInt(0); // Sampler data size
+
+				// Loop definition
+				buffer.putInt(0); // Cue point ID
+				buffer.putInt(0); // Type (0 = forward)
+				buffer.putInt(ins.loopStart); // Start sample (loop starts at beginning)
+				buffer.putInt(ins.loopEnd); // End sample (loop for 1 second)
+				buffer.putInt(0); // Fraction
+				buffer.putInt(0); // Play count (0 = infinite)
+			}
+
+			// data Chunk
+			buffer.put("data".getBytes());
+			buffer.putInt(dataSize);
+
+			for (int sample : samples) {
+				buffer.putShort((short) sample);
+			}
+
+			IOUtils.writeBufferToFile(buffer, wavFile);
+			System.out.println("WAV file written with loop points!");
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+		*/
 	}
 
 	private static final int[][][] readBook(ByteBuffer bb, int startPos, int numPred)
@@ -646,7 +1018,7 @@ public class AudioAnalyzerBK
 		return predictors;
 	}
 
-	private static final int inner_prod(int len, int[] a, int[] b)
+	private static final int innerProduct(int len, int[] a, int[] b)
 	{
 		int out = 0;
 
@@ -661,5 +1033,50 @@ public class AudioAnalyzerBK
 			return dout - 1;
 		else
 			return dout;
+	}
+
+	private static short qSample(float x, int scale)
+	{
+		if (x > 0.0f) {
+			return (short) ((x / scale) + 0.4999999f);
+		}
+		else {
+			return (short) ((x / scale) - 0.4999999f);
+		}
+	}
+
+	private static void clamp_wow(int fs, float[] e, int[] ie, int bits)
+	{
+		float ulevel = (1 << (bits - 1)) - 1;
+		float llevel = -ulevel - 1;
+
+		for (int i = 0; i < fs; i++) {
+			// clamp to level range
+			if (e[i] > ulevel) {
+				e[i] = ulevel;
+			}
+			if (e[i] < llevel) {
+				e[i] = llevel;
+			}
+
+			// apply rounding
+			if (e[i] > 0.0f) {
+				ie[i] = (int) (e[i] + 0.5f);
+			}
+			else {
+				ie[i] = (int) (e[i] - 0.5f);
+			}
+		}
+	}
+
+	private static int clip(int ix, int llevel, int ulevel)
+	{
+		if (ix < llevel) {
+			return llevel;
+		}
+		if (ix > ulevel) {
+			return ulevel;
+		}
+		return ix;
 	}
 }
