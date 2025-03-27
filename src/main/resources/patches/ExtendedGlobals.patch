@@ -543,13 +543,13 @@
      LIA			S1, 800DACC0 %gCurrentSaveFile
 
      %check if saveslot is -1 and if so, do not read the flash data
-     LI t0, 8009BA30 %LogicalSaveInfo
-     SLL S0, S0, 3
-     ADDU t0, t0, s0 %pointer to array entry
-     LW t0, 0000 (t0) %load slot
-     ADDIU t1, r0, FFFF %-1 for invalid slot
-     BEQ t0, t1, .fio_load_game_exit
-      DADDU v0, r0, r0 %return FALSE
+     LIA 			T0, 8009BA30 %LogicalSaveInfo
+     SLL 		S0, S0, 3
+     ADDU 		T0, T0, S0 %pointer to array entry
+     LW 		T0, 0000 (T0) %load slot
+     ADDIU 		T1, R0, FFFF %-1 for invalid slot
+     BEQ 		T0, T1, .fio_load_game_exit
+      DADDU 		V0, R0, R0 %return FALSE
      .isValidSlot
      % read to new buffer
      LIO			A1, .ptrFileBuffer
