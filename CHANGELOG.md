@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
 - (Map Editor) Fixed crashes involving empty models and undo/redo during active transforms
 - (Map Editor) Fuse vertices no longer merges vertices with different UVs or colors
 - (Map Editor) More reliable handling of sprite shading light sources
+- (Map Editor) Camera target override toggles now save properly
 
 ### Changed
 - Copy Assets to Mod now copies missing assets into partially populated directories

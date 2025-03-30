@@ -86,7 +86,7 @@ import game.map.shading.SpriteShadingEditor;
 import game.requests.SpecialRequestDumper;
 import game.shared.ProjectDatabase;
 import game.shared.struct.script.ScriptVariable;
-import game.sound.AudioEditor;
+import game.sound.AudioModder;
 import game.sprite.SpriteDumper;
 import game.sprite.editor.SpriteEditor;
 import game.string.MessageBoxes;
@@ -802,7 +802,7 @@ public class StarRodClassic extends JFrame
 
 			if (fullDump || cfg.getBoolean(DumpAudio)) {
 				Logger.log("Dumping audio...", Priority.MILESTONE);
-				AudioEditor.dumpAudio();
+				AudioModder.dumpAudio();
 			}
 
 			WorldMapModder.dump();

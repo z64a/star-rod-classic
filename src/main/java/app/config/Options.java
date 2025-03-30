@@ -113,8 +113,11 @@ public enum Options
 	PatchFonts			(true, Scope.Patch, Type.Boolean, "PatchFonts",	"False", "Inject Font",
 			"Injects font images, making additional adjustments if they are larger than normal."),
 
-	BuildAudio			(true, Scope.Patch, Type.Boolean, "BuildAudio",	"False", "Inject Audio Files",
+	BuildSoundBanks		(true, Scope.Patch, Type.Boolean, "BuildSoundBanks",	"False", "Build Sound Banks",
 			"Only use this option if you are adding custom music."),
+
+	BuildAudio			(true, Scope.Patch, Type.Boolean, "BuildAudio",	"False", "Inject Audio Files",
+			"Use this option if you are adding custom music or sounds."),
 
 	SkipIntroLogos		(true, Scope.Patch, Type.Boolean, "SkipIntroLogos", "True", "Skip Intro Logos",
 			"Developer logos will not appear during boot."),

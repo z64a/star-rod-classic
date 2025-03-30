@@ -51,7 +51,8 @@ import game.shared.ProjectDatabase;
 import game.shared.ProjectDatabase.ConstEnum.EnumPair;
 import game.shared.encoder.GlobalPatchManager;
 import game.shared.struct.script.ScriptVariable;
-import game.sound.AudioEditor;
+import game.sound.AudioModder;
+import game.sound.BankEditor;
 import game.sprite.SpriteLoader.SpriteSet;
 import game.sprite.SpritePatcher;
 import game.string.MessageBoxes;
@@ -396,9 +397,15 @@ public class Patcher implements IGlobalDatabase
 			recordTime("Sprite Sheets Patched");
 		}
 
-		if (cfg.getBoolean(Options.BuildAudio)) {
+		if (cfg.getBoolean(Options.BuildSoundBanks)) {
+			Logger.log("Building sound banks...", Priority.MILESTONE);
+			BankEditor.buildAll();
+			recordTime("Sound Banks Built");
+		}
+
+		if (cfg.getBoolean(Options.BuildAudio) || cfg.getBoolean(Options.BuildSoundBanks)) {
 			Logger.log("Writing audio data...", Priority.MILESTONE);
-			AudioEditor.patchAudio(this, rp);
+			AudioModder.patchAudio(this, rp);
 			recordTime("Audio Patched");
 		}
 

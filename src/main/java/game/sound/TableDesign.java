@@ -19,12 +19,20 @@ public class TableDesign
 		}
 	}
 
-	public static Table makeTable(List<Integer> samples, int order)
+	public static Table makeTable32(List<Integer> samples, int order, int pow)
 	{
 		short[] arr = new short[samples.size()];
 		for (int i = 0; i < arr.length; i++)
 			arr[i] = (short) (int) samples.get(i);
-		return makeTable(arr, order);
+		return makeTable(arr, order, pow);
+	}
+
+	public static Table makeTable(List<Short> samples, int order, int pow)
+	{
+		short[] arr = new short[samples.size()];
+		for (int i = 0; i < arr.length; i++)
+			arr[i] = samples.get(i);
+		return makeTable(arr, order, pow);
 	}
 
 	/**
@@ -41,14 +49,14 @@ public class TableDesign
 	 *
 	 * @param audioSamples   The raw input audio samples.
 	 * @param order          The order of LPC prediction.
+	 * @param pow 			 The final number of predictors will be 2^pow
 	 * @return  {@code Table} containing the predictors.
 	 */
-	public static Table makeTable(short[] audioSamples, int order)
+	public static Table makeTable(short[] audioSamples, int order, int pow)
 	{
 		final int sampleCount = audioSamples.length;
 		final int refineIteration = 2;
 		final int frameSize = 16;
-		final int bits = 2;
 		final double threshold = 10.0;
 
 		final int orderSize = order + 1;
@@ -59,7 +67,7 @@ public class TableDesign
 
 		double[][] framePredictors = new double[sampleCount][orderSize];
 		double[][] autocorrMatrix = new double[orderSize][orderSize];
-		double[][] codebook = new double[1 << bits][orderSize];
+		double[][] codebook = new double[1 << pow][orderSize];
 		double[] autocorr = new double[orderSize];
 		double[] reflection = new double[orderSize];
 		double[] perturbDelta = new double[orderSize];
@@ -152,7 +160,7 @@ public class TableDesign
 
 		// iteratively refine predictor codebook vectors
 		int curBits = 0;
-		while (curBits < bits) {
+		while (curBits < pow) {
 			for (int i = 0; i <= order; i++) {
 				perturbDelta[i] = 0.0;
 			}

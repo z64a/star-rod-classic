@@ -1,4 +1,4 @@
-package game.sound;
+package game.sound.analysis;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,16 +14,16 @@ import app.Resource.ResourceType;
 import app.StarRodException;
 import app.input.IOUtils;
 
-public class AudioAnalyzerSEF
+public class AnalyzeSEF
 {
 	public static void main(String[] args) throws IOException
 	{
 		Environment.initialize();
-		new AudioAnalyzerSEF();
+		new AnalyzeSEF();
 		Environment.exit();
 	}
 
-	private AudioAnalyzerSEF() throws IOException
+	private AnalyzeSEF() throws IOException
 	{
 		for (File f : IOUtils.getFilesWithExtension(Directories.DUMP_AUDIO, new String[] { "sef" }, true)) {
 			System.out.println("------------------------------------");
