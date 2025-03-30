@@ -1,4 +1,4 @@
-package game.sound;
+package game.sound.analysis;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -19,20 +19,21 @@ import org.apache.commons.io.FilenameUtils;
 import app.Directories;
 import app.Environment;
 import app.input.IOUtils;
+import game.sound.TableDesign;
 import game.sound.TableDesign.Table;
 import util.CountingMap;
 import util.Logger;
 
-public class AudioAnalyzerBK
+public class AnalyzeBK
 {
 	public static void main(String[] args) throws IOException
 	{
 		Environment.initialize();
-		new AudioAnalyzerBK();
+		new AnalyzeBK();
 		Environment.exit();
 	}
 
-	private AudioAnalyzerBK() throws IOException
+	private AnalyzeBK() throws IOException
 	{
 		for (File f : IOUtils.getFilesWithExtension(Directories.DUMP_AUDIO, new String[] { "bk" }, true)) {
 			System.out.println("------------------------------------");
@@ -45,7 +46,7 @@ public class AudioAnalyzerBK
 		System.out.println();
 		System.out.println("Sample Rates:");
 		Instrument.sampleRates.print();
-		
+
 		System.out.println();
 		System.out.println("Key Bases:");
 		Instrument.keyBases.print();
@@ -132,12 +133,22 @@ public class AudioAnalyzerBK
 			System.out.println();
 			*/
 
+			HashMap<Integer, Integer> predictorSizes = new HashMap<>();
+
 			instruments = new Instrument[instrumentCount];
 			for (int i = 0; i < instrumentCount; i++) {
 				Instrument ins = new Instrument(bb, instrumentOffsets[i]);
 				instruments[i] = ins;
 				ins.outName = String.format("%s_%02X", name, i);
 				dumpInstrument(ins, bb);
+
+				if (predictorSizes.containsKey(ins.predictorOffset)) {
+					int prevSize = predictorSizes.get(ins.predictorOffset);
+					assert (prevSize == ins.dc_bookSize);
+				}
+				else {
+					predictorSizes.put(ins.predictorOffset, ins.dc_bookSize);
+				}
 
 				addPart(ins);
 				addPart(ins.wavDataPart);
@@ -276,6 +287,8 @@ public class AudioAnalyzerBK
 			wavOffset = bb.getInt();
 			wavLength = bb.getInt();
 
+			assert (wavLength % 2 == 0) : wavLength;
+
 			loopPredictorOffset = bb.getInt();
 			loopStart = bb.getInt();
 			loopEnd = bb.getInt();
@@ -412,6 +425,7 @@ public class AudioAnalyzerBK
 			byte b2 = bb.get();
 			byte b3 = bb.get();
 
+			assert (count == 1 || count == 2 || count == 3 || count == 4) : count;
 			assert (b1 == 0);
 			assert (b2 == 0);
 			assert (b3 == 0);
@@ -579,7 +593,7 @@ public class AudioAnalyzerBK
 
 		if (ins.loopStart == 0) {
 			// generate a new code book to test encoding
-			Table tbl = TableDesign.makeTable(samples, ORDER);
+			Table tbl = TableDesign.makeTable32(samples, ORDER, 0);
 			book = new CodeBook(tbl.buffer, 0, tbl.numPred);
 
 			ByteBuffer recoded = encode(samples, book);
@@ -879,10 +893,10 @@ public class AudioAnalyzerBK
 			int channels = 1;
 			boolean signed = true;
 			boolean bigEndian = false;
-
+		
 			int numSamples = samples.size();
 			byte[] rawData = new byte[numSamples * 4];
-
+		
 			for (int i = 0; i < numSamples; i++) {
 				int sample = samples.get(i);
 				rawData[i * 4] = (byte) (sample & 0xFF);
@@ -890,16 +904,16 @@ public class AudioAnalyzerBK
 				rawData[i * 4 + 2] = (byte) ((sample >> 16) & 0xFF);
 				rawData[i * 4 + 3] = (byte) ((sample >> 24) & 0xFF);
 			}
-
+		
 			// Define audio format
 			AudioFormat format = new AudioFormat(sampleRate, sampleSizeInBits, channels, signed, bigEndian);
-
+		
 			// Write to WAV file
 			ByteArrayInputStream bais = new ByteArrayInputStream(rawData);
 			AudioInputStream audioInputStream = new AudioInputStream(bais, format, numSamples);
-
+		
 			AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, wavFile);
-
+		
 			System.out.println("WAV file created: " + wavFile.getAbsolutePath());
 		}
 		catch (Exception e) {
@@ -913,27 +927,27 @@ public class AudioAnalyzerBK
 			int sampleRate = ins.sampleRate;
 			int numChannels = 1;
 			int bitsPerSample = 16;
-
+		
 			int dataSize = samples.size() * (bitsPerSample / 8);
-
+		
 			int riffChunkSize = 0xC;
 			int fmtChunkSize = 0x18;
 			int dataChunkSize = 0x8 + dataSize;
 			int smplChunkSize = (ins.loopStart != 0) ? 0x44 : 0;
 			int fileSize = riffChunkSize + fmtChunkSize + smplChunkSize + dataChunkSize;
-
+		
 			ByteBuffer buffer = ByteBuffer.allocateDirect(fileSize);
 			buffer.order(ByteOrder.LITTLE_ENDIAN);
-
+		
 			// Write RIFF Header
 			int byteRate = sampleRate * numChannels * (bitsPerSample / 8);
 			int blockAlign = numChannels * (bitsPerSample / 8);
-
+		
 			// RIFF Chunk
 			buffer.put("RIFF".getBytes());
 			buffer.putInt(fileSize - 8);
 			buffer.put("WAVE".getBytes());
-
+		
 			// fmt Chunk
 			buffer.put("fmt ".getBytes());
 			buffer.putInt(16); // fmt chunk size
@@ -943,12 +957,12 @@ public class AudioAnalyzerBK
 			buffer.putInt(byteRate);
 			buffer.putShort((short) blockAlign);
 			buffer.putShort((short) bitsPerSample);
-
+		
 			// smpl chunk
 			if (ins.loopStart != 0) {
 				buffer.put("smpl".getBytes());
 				buffer.putInt(0x3C); // smpl chunk size (fixed size for one loop point)
-
+		
 				buffer.putInt(0); // Manufacturer
 				buffer.putInt(0); // Product
 				buffer.putInt(1000000000 / sampleRate); // Sample period (in nanoseconds)
@@ -958,7 +972,7 @@ public class AudioAnalyzerBK
 				buffer.putInt(0); // SMPTE offset
 				buffer.putInt(1); // Number of sample loops
 				buffer.putInt(0); // Sampler data size
-
+		
 				// Loop definition
 				buffer.putInt(0); // Cue point ID
 				buffer.putInt(0); // Type (0 = forward)
@@ -967,15 +981,15 @@ public class AudioAnalyzerBK
 				buffer.putInt(0); // Fraction
 				buffer.putInt(0); // Play count (0 = infinite)
 			}
-
+		
 			// data Chunk
 			buffer.put("data".getBytes());
 			buffer.putInt(dataSize);
-
+		
 			for (int sample : samples) {
 				buffer.putShort((short) sample);
 			}
-
+		
 			IOUtils.writeBufferToFile(buffer, wavFile);
 			System.out.println("WAV file written with loop points!");
 		}

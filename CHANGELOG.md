@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2025-03-??
+
+### Fixed
+- (Map Editor) Camera target override toggles now save properly
+
 ## [0.5.9] - 2025-02-07
 
 ### Added

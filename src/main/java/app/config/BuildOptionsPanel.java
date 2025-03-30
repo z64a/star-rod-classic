@@ -102,6 +102,7 @@ public class BuildOptionsPanel extends JPanel
 		addCheckbox(tab, Options.BuildBackgrounds, "growx");
 		addCheckbox(tab, Options.BuildSpriteSheets, "growx");
 		addCheckbox(tab, Options.PatchFonts, "growx");
+		addCheckbox(tab, Options.BuildSoundBanks, "growx");
 		addCheckbox(tab, Options.BuildAudio, "growx, gapbottom 8");
 
 		addCheckbox(tab, Options.ClearMapCache, "growx");

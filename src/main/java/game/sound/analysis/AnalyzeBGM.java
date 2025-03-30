@@ -1,4 +1,4 @@
-package game.sound;
+package game.sound.analysis;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,16 +13,16 @@ import app.Environment;
 import app.StarRodException;
 import app.input.IOUtils;
 
-public class AudioAnalyzerBGM
+public class AnalyzeBGM
 {
 	public static void main(String[] args) throws IOException
 	{
 		Environment.initialize();
-		new AudioAnalyzerBGM();
+		new AnalyzeBGM();
 		Environment.exit();
 	}
 
-	private AudioAnalyzerBGM() throws IOException
+	private AnalyzeBGM() throws IOException
 	{
 		Collection<File> files = IOUtils.getFilesWithExtension(Directories.DUMP_AUDIO, new String[] { "bgm" }, true);
 		ArrayList<File> fileList = new ArrayList<>(files);

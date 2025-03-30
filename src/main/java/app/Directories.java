@@ -113,6 +113,10 @@ public enum Directories
 	DUMP_SPR_PLR_SHARED	(Root.DUMP, DUMP_SPR_PLR_SRC,		"/shared/"),
 
 	DUMP_AUDIO			(Root.DUMP,				"/audio/"),
+	DUMP_AUDIO_RAW		(Root.DUMP,	DUMP_AUDIO,		"/raw/"),
+	DUMP_AUDIO_BANK		(Root.DUMP,	DUMP_AUDIO,		"/bank/"),
+	DUMP_AUDIO_MSEQ		(Root.DUMP,	DUMP_AUDIO,		"/mseq/"),
+	DUMP_AUDIO_SFX		(Root.DUMP,	DUMP_AUDIO,		"/sfx/"),
 
 	DUMP_GLOBALS		(Root.DUMP,				"/globals/"),
 
@@ -215,6 +219,11 @@ public enum Directories
 	MOD_SPR_PLR_CACHE	(Root.MOD, MOD_SPR_PLR,			"/cache/"),
 
 	MOD_AUDIO			(Root.MOD,				"/audio/"),
+	MOD_AUDIO_RAW		(Root.MOD,	MOD_AUDIO,		"/raw/"),
+	MOD_AUDIO_BUILD		(Root.MOD,	MOD_AUDIO,		"/build/"),
+	MOD_AUDIO_BANK		(Root.MOD,	MOD_AUDIO,		"/bank/"),
+	MOD_AUDIO_MSEQ		(Root.MOD,	MOD_AUDIO,		"/mseq/"),
+	MOD_AUDIO_SFX		(Root.MOD,	MOD_AUDIO,		"/sfx/"),
 
 	MOD_EDITOR			(Root.MOD,				"/editor/"),
 
@@ -269,8 +278,12 @@ public enum Directories
 	public static final String FN_SPRITESHEET = "SpriteSheet.xml";
 	public static final String FN_SPRITE_CACHE = "checksums.txt";
 
-	public static final String FN_AUDIO_FILES = "FileList.xml";
-	public static final String FN_AUDIO_SONGS = "SongList.xml";
+	public static final String FN_AUDIO_FILES = "Files.xml";
+	public static final String FN_AUDIO_SONGS = "Songs.xml";
+	public static final String FN_AUDIO_BANKS = "Banks.xml";
+	public static final String FN_AUDIO_MSEQS = "MSEQs.xml";
+	public static final String FN_AUDIO_BGMS = "BGMs.xml";
+	public static final String FN_SOUND_BANK = "SoundBank.xml";
 
 	public static final String FN_STRING_CONSTANTS = "StringConstants.xml";
 
@@ -374,6 +387,11 @@ public enum Directories
 			Logger.printStackTrace(e);
 		}
 		return name;
+	}
+
+	public File getFile(String name)
+	{
+		return new File(this.toFile(), name);
 	}
 
 	private enum Root
