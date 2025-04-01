@@ -8,10 +8,11 @@ public class Voice
 {
 	public enum VoiceState
 	{
-		INIT,
-		READY,
-		PLAYING,
-		PAUSED,
+		INIT, // does not have an instrument assigned yet, nothing to play
+		READY, // has an instrument, but not yet playing
+		PLAYING, // can be paused
+		PAUSED, // can resume playing
+		DONE, // nothing left to play
 	}
 
 	private EnvelopePlayer envPlayer;
@@ -23,32 +24,25 @@ public class Voice
 	private float volume;
 	private float pitch;
 	private int pan;
-	public int reverb;
+	private int reverb;
 
 	private int loopIterations;
 
 	public Voice()
 	{
 		envPlayer = new EnvelopePlayer();
-		reset();
-	}
-
-	public void reset()
-	{
 		readPos = 0.0f;
 		volume = 1.0f;
 		pitch = 1.0f;
 		pan = 64;
 
-		if (ins == null)
-			state = VoiceState.INIT;
-		else
-			state = VoiceState.READY;
+		state = VoiceState.INIT;
 	}
 
 	public void setInstrument(Instrument ins)
 	{
 		this.ins = ins;
+
 		state = VoiceState.READY;
 		loopIterations = 0;
 	}
@@ -66,6 +60,24 @@ public class Voice
 	public void setVolume(float volume)
 	{
 		this.volume = volume;
+	}
+
+	public void setPan(int pan)
+	{
+		if (pan < 0 || pan > 127) {
+			Logger.logWarning("Invalid pan value: " + pan);
+			pan = Math.max(0, Math.min(127, pan));
+		}
+		this.pan = pan;
+	}
+
+	public void setReverb(int reverb)
+	{
+		if (reverb < 0 || reverb > 127) {
+			Logger.logWarning("Invalid reverb value: " + reverb);
+			reverb = Math.max(0, Math.min(127, reverb));
+		}
+		this.reverb = reverb;
 	}
 
 	public void play()
@@ -88,30 +100,25 @@ public class Voice
 		}
 	}
 
-	public void setPan(int pan)
-	{
-		if (pan < 0 || pan > 127) {
-			Logger.logWarning("Invalid pan value: " + pan);
-			pan = Math.max(0, Math.min(127, pan));
-		}
-		this.pan = pan;
-	}
-
 	public void release()
 	{
 		if (env != null)
 			envPlayer.release(env);
 		else
-			reset(); // immediately end playback
+			state = VoiceState.DONE;
 	}
 
-	public boolean isReady()
+	public void kill()
 	{
-		return state == VoiceState.READY;
+		state = VoiceState.DONE;
 	}
 
-	public void renderInto(float[] dryBufferL, float[] dryBufferR, float[] wetBufferL, float[] wetBufferR,
-		int numSamples, int outputRate, double deltaTime)
+	public boolean isDone()
+	{
+		return state == VoiceState.DONE;
+	}
+
+	public void renderInto(float[] dryBufferL, float[] dryBufferR, float[] wetBufferL, float[] wetBufferR)
 	{
 		if (state != VoiceState.PLAYING)
 			return;
@@ -120,11 +127,11 @@ public class Voice
 			return;
 
 		if (env != null) {
-			envPlayer.update(deltaTime);
+			envPlayer.update();
 
 			if (envPlayer.isDone()) {
-				reset();
-				return; // done
+				state = VoiceState.DONE;
+				return;
 			}
 		}
 
@@ -136,12 +143,12 @@ public class Voice
 		float dryAmt = (float) Math.cos(dryAngle);
 		float wetAmt = (float) Math.sin(dryAngle);
 
-		float resampleRatio = pitch * ((float) ins.sampleRate / outputRate);
+		float resampleRatio = pitch * ((float) ins.sampleRate / AudioEngine.OUTPUT_RATE);
 		resampleRatio = Math.min(resampleRatio, 1.99996f);
 
 		float envVolume = (env != null) ? envPlayer.getEnvelopeVolume() : 1.0f;
 
-		for (int i = 0; i < numSamples; i++) {
+		for (int i = 0; i < AudioEngine.FRAME_SAMPLES; i++) {
 			int i0 = (int) readPos;
 			int i1 = i0 + 1;
 
@@ -163,7 +170,8 @@ public class Voice
 			}
 
 			if (i1 >= ins.samples.size()) {
-				reset(); // reached end of non-looping sample
+				// reached end of non-looping sample
+				state = VoiceState.DONE;
 				return;
 			}
 

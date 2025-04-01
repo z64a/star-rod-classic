@@ -1,6 +1,6 @@
 package game.sound.engine;
 
-import static game.sound.BankEditor.BankKey.*;
+import static game.sound.BankModder.BankKey.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;

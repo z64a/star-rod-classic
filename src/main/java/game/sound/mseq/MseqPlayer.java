@@ -1,10 +1,10 @@
 package game.sound.mseq;
 
-import game.sound.BankEditor.SoundBank;
-import game.sound.BankEditor.SoundBank.BankQueryResult;
 import game.sound.engine.AudioEngine;
 import game.sound.engine.Envelope.EnvelopePair;
 import game.sound.engine.Instrument;
+import game.sound.engine.SoundBank;
+import game.sound.engine.SoundBank.BankQueryResult;
 import game.sound.engine.Voice;
 import game.sound.mseq.Mseq.DelayCommand;
 import game.sound.mseq.Mseq.EndLoopCommand;
@@ -19,6 +19,8 @@ import game.sound.mseq.Mseq.SetTuneCommand;
 import game.sound.mseq.Mseq.SetVolCommand;
 import game.sound.mseq.Mseq.StartLoopCommand;
 import game.sound.mseq.Mseq.StopSoundCommand;
+import game.sound.mseq.Mseq.TrackSetting;
+import util.Logger;
 
 public class MseqPlayer
 {
@@ -29,7 +31,9 @@ public class MseqPlayer
 		PLAYING,
 		PAUSED,
 		DONE
-	};
+	}
+
+	private static boolean debugCommands = false;
 
 	private final AudioEngine engine;
 	private final SoundBank bank;
@@ -41,47 +45,43 @@ public class MseqPlayer
 	private int delayTime;
 
 	private MseqTrack[] tracks;
-	private VoiceRef[] refs;
+	private MseqVoice[] voices;
 
 	// loop state
 	private int[] loopPositions;
 	private int[] loopIterations;
 
-	public static class VoiceRef
+	public static class MseqVoice extends Voice
 	{
-		Voice voice;
-		MseqTrack track;
-		int tuneID;
+		public final MseqTrack track;
+		public final int tuneID;
 
-		int volume;
-		int detune;
+		public float baseVolume;
+		public int baseDetune;
 
-		public void updateVoiceVolume()
+		public MseqVoice(MseqTrack track, int tuneID)
 		{
-			if (voice != null && track != null)
-				voice.setVolume((volume / 127.0f) * track.volumeLerp.current);
+			this.track = track;
+			this.tuneID = tuneID;
 		}
 
-		public void updateVoicePitch()
+		public void updateVolume()
 		{
-			if (voice != null && track != null && track.index != Mseq.DRUM_TRACK)
-				voice.setPitch(AudioEngine.detuneToPitchRatio(detune + (track.tuneLerp.current >> 0x10)));
+			setVolume(baseVolume * track.volumeLerp.current);
+		}
+
+		public void updatePitch()
+		{
+			if (track.index != Mseq.DRUM_TRACK)
+				setPitch(AudioEngine.detuneToPitchRatio(baseDetune + Math.round(track.tuneLerp.current)));
 		}
 	}
 
-	public static class VolumeLerp
+	public static class LerpState
 	{
 		float current = 1.0f;
 		float goal = 1.0f;
 		float step;
-		float time;
-	}
-
-	public static class TuneLerp
-	{
-		int current;
-		int goal;
-		int step;
 		int time;
 	}
 
@@ -92,22 +92,22 @@ public class MseqPlayer
 		public Instrument instrument;
 		public EnvelopePair envelope;
 
-		public VolumeLerp volumeLerp = new VolumeLerp();
-		public TuneLerp tuneLerp = new TuneLerp();
+		public LerpState volumeLerp = new LerpState();
+		public LerpState tuneLerp = new LerpState();
 
 		public int pan;
 		public int reverb;
 		public boolean isResumable;
 
-		public MseqTrack(AudioEngine engine, int index)
+		public MseqTrack(int index)
 		{
 			this.index = index;
 		}
 
 		public void reset()
 		{
-			volumeLerp = new VolumeLerp();
-			tuneLerp = new TuneLerp();
+			volumeLerp = new LerpState();
+			tuneLerp = new LerpState();
 
 			volumeLerp.current = 1.0f;
 			tuneLerp.current = 0;
@@ -123,43 +123,99 @@ public class MseqPlayer
 		this.engine = engine;
 		this.bank = bank;
 
-		tracks = new MseqTrack[Mseq.NUM_TRACKS];
-		for (int i = 0; i < Mseq.NUM_TRACKS; i++) {
-			tracks[i] = new MseqTrack(engine, i);
+		engine.addClient(this::frame);
+	}
+
+	public boolean getPaused()
+	{
+		return state == PlayerState.PAUSED;
+	}
+
+	public void setPaused(boolean pause)
+	{
+		boolean changed = false;
+
+		if (state == PlayerState.PLAYING && pause) {
+			state = PlayerState.PAUSED;
+			changed = true;
+		}
+		else if (state == PlayerState.PAUSED && !pause) {
+			state = PlayerState.PLAYING;
+			changed = true;
 		}
 
-		refs = new VoiceRef[NUM_VOICES];
-		for (int i = 0; i < NUM_VOICES; i++) {
-			refs[i] = new VoiceRef();
-			refs[i].voice = new Voice();
-			engine.addVoice(refs[i].voice);
+		if (changed) {
+			for (MseqVoice voice : voices) {
+				if (voice != null) {
+					voice.setPaused(pause);
+				}
+			}
 		}
-
-		// loop state
-		loopPositions = new int[2];
-		loopIterations = new int[2];
 	}
 
 	public void setMseq(Mseq mseq)
 	{
+		if (this.mseq != null) {
+			// kill any voices from previous MSEQ
+			for (int i = 0; i < voices.length; i++) {
+				MseqVoice voice = voices[i];
+				if (voice != null) {
+					voice.kill();
+				}
+			}
+		}
+
 		this.mseq = mseq;
+
+		tracks = new MseqTrack[Mseq.NUM_TRACKS];
+		for (int i = 0; i < Mseq.NUM_TRACKS; i++) {
+			tracks[i] = new MseqTrack(i);
+		}
+
+		voices = new MseqVoice[NUM_VOICES];
+
+		// loop state
+		loopPositions = new int[2];
+		loopIterations = new int[2];
 
 		curPos = 0;
 		delayTime = 0;
-
-		loopPositions[0] = 0;
-		loopPositions[1] = 0;
-		loopIterations[0] = 0;
-		loopIterations[1] = 0;
 
 		for (int i = 0; i < tracks.length; i++) {
 			tracks[i].reset();
 		}
 
+		for (TrackSetting settings : mseq.trackSettings) {
+
+			MseqTrack track = tracks[settings.track];
+			if (settings.type == 0) {
+				track.tuneLerp.time = settings.time;
+				track.tuneLerp.goal = settings.goal;
+				track.tuneLerp.step = ((float) settings.delta) / settings.time;
+			}
+			else {
+				track.volumeLerp.time = settings.time;
+				track.volumeLerp.goal = settings.goal / Mseq.MAX_VOL_16;
+				track.volumeLerp.step = (settings.delta / Mseq.MAX_VOL_16) / settings.time;
+			}
+		}
+
 		state = PlayerState.PLAYING;
 	}
 
-	public void update()
+	int updateCounter = 2;
+	int updateInverval = 2;
+
+	private void frame()
+	{
+		updateCounter--;
+		if (updateCounter <= 0) {
+			updateCounter += updateInverval;
+			update();
+		}
+	}
+
+	private void update()
 	{
 		if (mseq == null)
 			return;
@@ -167,12 +223,11 @@ public class MseqPlayer
 		if (state != PlayerState.PLAYING)
 			return;
 
-		// free up voices which have finished playing/releasing
-		for (VoiceRef ref : refs) {
-			if (ref.track != null && ref.voice.isReady()) {
-				ref.track = null;
-				ref.tuneID = 0;
-			}
+		// clear voices which have finished playing/releasing
+		for (int i = 0; i < voices.length; i++) {
+			MseqVoice voice = voices[i];
+			if (voice != null && voice.isDone())
+				voices[i] = null;
 		}
 
 		// update fade in lerps
@@ -195,11 +250,13 @@ public class MseqPlayer
 		}
 
 		// update client params for voices
-		for (VoiceRef ref : refs) {
-			if (ref.track != null) {
-				ref.updateVoiceVolume();
-				ref.updateVoicePitch();
-			}
+		for (int i = 0; i < voices.length; i++) {
+			MseqVoice voice = voices[i];
+			if (voice == null)
+				continue;
+
+			voice.updateVolume();
+			voice.updatePitch();
 		}
 
 		if (delayTime > 0)
@@ -218,94 +275,128 @@ public class MseqPlayer
 			// could have a method in the command classes, but id rather have them only store state
 			// and keep all the playback related code in this class
 			if (abs instanceof DelayCommand cmd) {
-				System.out.println("    Delay " + cmd.duration);
+				logCommand("    Delay " + cmd.duration);
+
 				delayTime = cmd.duration;
 			}
 			else if (abs instanceof StopSoundCommand cmd) {
-				System.out.printf("[%X] Stop Sound %X%n", cmd.track, cmd.pitch);
-				for (VoiceRef ref : refs) {
-					if (ref.track == tracks[cmd.track]) {
-						if (ref.tuneID == cmd.pitch) {
-							ref.voice.release();
+				logCommand("[%X] Stop Sound %X", cmd.track, cmd.pitch);
+
+				for (int i = 0; i < voices.length; i++) {
+					MseqVoice voice = voices[i];
+					if (voice == null)
+						continue;
+
+					if (voice.track == tracks[cmd.track]) {
+						if (voice.tuneID == cmd.pitch) {
+							voice.release();
 						}
 					}
 				}
 			}
 			else if (abs instanceof PlaySoundCommand cmd) {
-				System.out.printf("[%X] Play Sound %X%n", cmd.track, cmd.pitch);
-				VoiceRef ref = null;
+				logCommand("[%X] Play Sound %X @ %X (detune = %d)", cmd.track, cmd.pitch, cmd.volume,
+					((cmd.pitch & 0x7F) * 100) - tracks[cmd.track].instrument.keyBase);
+
+				int index = -1;
 
 				// find unassigned voice ref
-				for (VoiceRef curRef : refs) {
-					if (curRef.track == null) {
-						ref = curRef;
+				for (int i = 0; i < voices.length; i++) {
+					if (voices[i] == null) {
+						index = i;
 						break;
 					}
 				}
 
 				// try stealing the first voice -- an odd choice, but OK
-				if (ref == null) {
-					ref = refs[0];
-					ref.voice.reset();
+				if (index == -1) {
+					index = 0;
+					voices[0].kill();
+					voices[0] = null;
 				}
 
-				if (ref != null) {
-					ref.track = tracks[cmd.track];
-					Instrument ins = ref.track.instrument;
-					EnvelopePair envelope = ref.track.envelope;
+				if (index != -1) {
+					MseqTrack track = tracks[cmd.track];
 
-					ref.tuneID = cmd.pitch;
-					ref.volume = cmd.volume;
-					ref.detune = ((cmd.pitch & 0x7F) * 100) - ins.keyBase;
-					ref.voice.setInstrument(ins);
-					ref.voice.setEnvelope(envelope);
-					ref.voice.reverb = ref.track.reverb;
+					if (track.instrument != null) {
+						MseqVoice voice = new MseqVoice(track, cmd.pitch);
+						voices[index] = voice;
+						engine.addVoice(voice);
 
-					ref.updateVoiceVolume();
-					ref.updateVoicePitch();
+						Instrument ins = track.instrument;
+						EnvelopePair envelope = track.envelope;
 
-					ref.voice.play();
+						voice.baseVolume = cmd.volume / Mseq.MAX_VOL_8;
+						voice.baseDetune = ((cmd.pitch & 0x7F) * 100) - ins.keyBase;
+						voice.setInstrument(ins);
+						voice.setEnvelope(envelope);
+						voice.setReverb(track.reverb);
+
+						voice.updateVolume();
+						voice.updatePitch();
+
+						voice.play();
+					}
+					else {
+						Logger.logfWarning("[%X] Play Sound: Instrument is null!", cmd.track);
+					}
 				}
 			}
 			else if (abs instanceof PlayDrumCommand cmd) {
 				//TODO
 			}
 			else if (abs instanceof SetVolCommand cmd) {
-				System.out.printf("[%X] Set Volume: %X%n", cmd.track, cmd.volume);
-				MseqTrack track = tracks[cmd.track];
-				track.volumeLerp.current = (cmd.volume / Mseq.MAX_VOLUME);
+				logCommand("[%X] Set Volume: %X", cmd.track, cmd.volume);
 
-				for (VoiceRef ref : refs) {
-					if (ref.track == track) {
-						ref.updateVoiceVolume();
+				MseqTrack track = tracks[cmd.track];
+				track.volumeLerp.current = cmd.volume / Mseq.MAX_VOL_8;
+
+				for (int i = 0; i < voices.length; i++) {
+					MseqVoice voice = voices[i];
+					if (voice == null)
+						continue;
+
+					if (voice.track == track) {
+						voice.updateVolume();
 					}
 				}
 			}
 			else if (abs instanceof SetTuneCommand cmd) {
-				System.out.printf("[%X] Set Tune: %X%n", cmd.track, cmd.value);
-				MseqTrack track = tracks[cmd.track];
-				track.tuneLerp.current = cmd.value;
+				logCommand("[%X] Set Tune: %X", cmd.track, cmd.value);
 
-				for (VoiceRef ref : refs) {
-					if (ref.track == track) {
-						ref.updateVoicePitch();
+				MseqTrack track = tracks[cmd.track];
+				track.tuneLerp.current = (short) cmd.value;
+
+				for (int i = 0; i < voices.length; i++) {
+					MseqVoice voice = voices[i];
+					if (voice == null)
+						continue;
+
+					if (voice.track == track) {
+						voice.updatePitch();
 					}
 				}
 			}
 			else if (abs instanceof SetPanCommand cmd) {
-				System.out.printf("[%X] SetPan %X%n", cmd.track, cmd.pan);
+				logCommand("[%X] SetPan %X", cmd.track, cmd.pan);
+
 				if (cmd.track != Mseq.DRUM_TRACK) {
 					MseqTrack track = tracks[cmd.track];
 
-					for (VoiceRef ref : refs) {
-						if (ref.track == track) {
-							ref.voice.setPan(cmd.pan);
+					for (int i = 0; i < voices.length; i++) {
+						MseqVoice voice = voices[i];
+						if (voice == null)
+							continue;
+
+						if (voice.track == track) {
+							voice.setPan(cmd.pan);
 						}
 					}
 				}
 			}
 			else if (abs instanceof SetInstrumentCommand cmd) {
-				System.out.printf("[%X] Set Instrument: %2X %2X%n", cmd.track, cmd.bank, cmd.patch);
+				logCommand("[%X] Set Instrument: %2X %2X", cmd.track, cmd.bank, cmd.patch);
+
 				MseqTrack track = tracks[cmd.track];
 				BankQueryResult res = bank.getInstrument(cmd.bank, cmd.patch);
 				if (res == null) {
@@ -318,19 +409,25 @@ public class MseqPlayer
 				}
 			}
 			else if (abs instanceof SetReverbCommand cmd) {
-				System.out.printf("[%X] Set Reverb: %X%n", cmd.track, cmd.reverb);
+				logCommand("[%X] Set Reverb: %X", cmd.track, cmd.reverb);
+
 				MseqTrack track = tracks[cmd.track];
 				track.reverb = cmd.reverb;
 			}
 			else if (abs instanceof SetResumableCommand cmd) {
-				System.out.printf("[%X] Set Resumable: %b%n", cmd.track, cmd.resumable);
+				logCommand("[%X] Set Resumable: %b", cmd.track, cmd.resumable);
+
 				MseqTrack track = tracks[cmd.track];
 				track.isResumable = cmd.resumable;
 			}
 			else if (abs instanceof StartLoopCommand cmd) {
+				logCommand("--- Start Loop %X", cmd.loopID & 1);
+
 				loopPositions[cmd.loopID & 1] = curPos + 1;
 			}
 			else if (abs instanceof EndLoopCommand cmd) {
+				logCommand("--- End Loop %X (%d/%d)", cmd.loopID & 1, loopIterations[cmd.loopID & 1], cmd.count);
+
 				int loopID = cmd.loopID & 1;
 				int startPos = loopPositions[loopID];
 
@@ -354,6 +451,14 @@ public class MseqPlayer
 					}
 				}
 			}
+		}
+	}
+
+	private static void logCommand(String string, Object ... args)
+	{
+		if (debugCommands) {
+			System.out.printf(string, args);
+			System.out.println();
 		}
 	}
 }

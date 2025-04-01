@@ -30,11 +30,11 @@ public class EffectBus
 		fxR.setPreset(preset);
 	}
 
-	public void renderInto(float[] wetL, float[] wetR, int numSamples)
+	public void renderInto(float[] wetL, float[] wetR)
 	{
 		if (preset != EffectPreset.NONE) {
-			fxL.process(wetL, numSamples);
-			fxR.process(wetR, numSamples);
+			fxL.process(wetL);
+			fxR.process(wetR);
 		}
 	}
 
@@ -65,25 +65,25 @@ public class EffectBus
 			}
 		}
 
-		public void process(float[] wetSamples, int numSamples)
+		public void process(float[] wetSamples)
 		{
 			// write input into delay buffer
-			for (int i = 0; i < numSamples; i++) {
+			for (int i = 0; i < AudioEngine.FRAME_SAMPLES; i++) {
 				int pos = (bufferPos + i) % bufferSize;
 				delayBuffer[pos] = wetSamples[i];
 			}
 
 			// clear wet output
-			Arrays.fill(wetSamples, 0, numSamples, 0.0f);
+			Arrays.fill(wetSamples, 0, AudioEngine.FRAME_SAMPLES, 0.0f);
 
 			for (EffectTap tap : taps) {
 				if (tap.resampler != null) {
 					// can't access delayBuffer[outputOffset] directly; we need interpolated sample
-					int delayOffset = tap.resampler.getSampleCount(numSamples);
+					int delayOffset = tap.resampler.getSampleCount(AudioEngine.FRAME_SAMPLES);
 					int rsStart = bufferPos - (tap.outputOffset - delayOffset);
 					int inStart = bufferPos - tap.inputOffset;
 
-					for (int i = 0; i < numSamples; i++) {
+					for (int i = 0; i < AudioEngine.FRAME_SAMPLES; i++) {
 						int inPos = (bufferSize + inStart + i) % bufferSize;
 						float fracIndex = tap.resampler.rsdelta + i;
 						float tapOut = getInterpolatedSample(delayBuffer, bufferSize, rsStart + fracIndex);
@@ -107,7 +107,7 @@ public class EffectBus
 					int outStart = bufferPos - tap.outputOffset;
 					int inStart = bufferPos - tap.inputOffset;
 
-					for (int i = 0; i < numSamples; i++) {
+					for (int i = 0; i < AudioEngine.FRAME_SAMPLES; i++) {
 						int inPos = (bufferSize + inStart + i) % bufferSize;
 						int outPos = (bufferSize + outStart + i) % bufferSize;
 
@@ -129,7 +129,7 @@ public class EffectBus
 			}
 
 			// advance circular buffer position
-			bufferPos = (bufferPos + numSamples) % bufferSize;
+			bufferPos = (bufferPos + AudioEngine.FRAME_SAMPLES) % bufferSize;
 		}
 	}
 

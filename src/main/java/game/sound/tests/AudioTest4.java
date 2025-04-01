@@ -10,8 +10,8 @@ import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
 
 import app.Environment;
-import game.sound.BankEditor.SoundBank;
 import game.sound.engine.Instrument;
+import game.sound.engine.SoundBank;
 import util.Logger;
 
 public class AudioTest4
