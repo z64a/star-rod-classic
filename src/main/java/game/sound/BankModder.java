@@ -1,14 +1,13 @@
 package game.sound;
 
 import static app.Directories.*;
-import static game.sound.BankEditor.BankKey.*;
+import static game.sound.BankModder.BankKey.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.TreeMap;
 
 import org.apache.commons.io.FileUtils;
@@ -18,9 +17,7 @@ import org.w3c.dom.Element;
 import app.Environment;
 import app.StarRodException;
 import app.input.IOUtils;
-import game.sound.AudioModder.BankEntry;
 import game.sound.engine.Envelope;
-import game.sound.engine.Envelope.EnvelopePair;
 import game.sound.engine.Instrument;
 import util.DynamicByteBuffer;
 import util.Logger;
@@ -29,13 +26,8 @@ import util.xml.XmlWrapper.XmlReader;
 import util.xml.XmlWrapper.XmlTag;
 import util.xml.XmlWrapper.XmlWriter;
 
-public class BankEditor
+public class BankModder
 {
-	//TODO crash at 800531D8 -- call to snd_load_BK_headers / au_load_BK_headers
-	// 80055008 for B6
-
-	public static final String EXT_BANK = ".bk";
-
 	public enum BankKey implements XmlKey
 	{
 		// @formatter:off
@@ -89,106 +81,6 @@ public class BankEditor
 		}
 	}
 
-	private static final EnvelopePair DEFAULT_ENVELOPE = new EnvelopePair(
-		new int[] { 61, 127, 0xFF, 0 },
-		new int[] { 52, 0, 0xFF, 0 }
-	);
-
-	public static class SoundBank
-	{
-		private HashMap<Integer, Bank> bankMap;
-
-		public SoundBank() throws IOException
-		{
-			List<BankEntry> bankList = AudioModder.getBankEntries();
-			bankMap = new HashMap<>();
-
-			for (BankEntry e : bankList) {
-				String bankName = FilenameUtils.getBaseName(e.name);
-
-				File bankDir = MOD_AUDIO_BANK.getFile(bankName);
-				if (!bankDir.exists() || !bankDir.isDirectory())
-					throw new StarRodException("Could not find directory for bank " + bankName);
-
-				File xmlFile = new File(bankDir, FN_SOUND_BANK);
-				if (!xmlFile.exists())
-					throw new StarRodException("Could not find %s for sound bank %s", xmlFile.getName(), bankName);
-
-				Bank bank = new Bank(bankName, xmlFile);
-
-				int key = (e.group & 0xF) << 4 | (e.index & 0xF);
-
-				if (bankMap.containsKey(key))
-					throw new StarRodException("Duplicate key for sound bank, group %X with index %X", e.group, e.index);
-
-				bankMap.put(key, bank);
-
-				int i = 0;
-				for (Instrument ins : bank.instruments) {
-					ins.load(bankDir);
-					System.out.printf("INS: %X %X --> %4s %X%n", e.group, e.index, bank.name, i++);
-				}
-			}
-		}
-
-		public record BankQueryResult(Instrument instrument, EnvelopePair envelope)
-		{}
-
-		public BankQueryResult getInstrument(int group, int index)
-		{
-			// see: au_get_instrument
-			switch (group >> 4) {
-				case 0:
-				case 7:
-					// aux
-					return null;
-				case 1:
-					group = 2;
-					break;
-				case 2:
-					// default instrument
-					return null;
-				case 3:
-				case 4:
-				case 5:
-				case 6:
-					group = group >> 4;
-					// no remapping
-					break;
-				default:
-					// invalid group
-					return null;
-			}
-
-			// have to split bank index from instrument index
-			int bankIndex = (index >> 4) & 0xF;
-			int insIndex = index & 0xF;
-
-			int key = (group & 0xF) << 4 | (bankIndex & 0xF);
-
-			Bank bank = bankMap.get(key);
-			if (bank == null) {
-				Logger.logfError("Could not find a bank with group %X and index %X", group, bankIndex);
-				return null;
-			}
-
-			if (bank.instruments.size() <= insIndex) {
-				Logger.logfError("Bank %s has no instrument with index %X", bank.name, insIndex);
-				return null;
-			}
-
-			Instrument ins = bank.instruments.get(insIndex);
-			EnvelopePair env = DEFAULT_ENVELOPE;
-
-			int envIndex = group & 3;
-			if (envIndex < ins.envelope.count()) {
-				env = ins.envelope.get(envIndex);
-			}
-
-			return new BankQueryResult(ins, env);
-		}
-	}
-
 	public static void dumpBank(File binFile) throws IOException
 	{
 		Bank bank = new Bank(binFile);
@@ -212,12 +104,12 @@ public class BankEditor
 		bank.build(bankDir, outFile);
 	}
 
-	private static class Bank
+	public static class Bank
 	{
-		final String name;
+		public final String name;
 
-		final ArrayList<Instrument> instruments = new ArrayList<>();
-		final ArrayList<Envelope> envelopes = new ArrayList<>();
+		public final ArrayList<Instrument> instruments = new ArrayList<>();
+		public final ArrayList<Envelope> envelopes = new ArrayList<>();
 
 		public Bank(File binFile) throws IOException
 		{

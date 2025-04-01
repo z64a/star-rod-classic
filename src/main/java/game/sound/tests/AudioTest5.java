@@ -6,17 +6,25 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
+import java.util.Collection;
 
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSlider;
-import javax.swing.SwingUtilities;
+import javax.swing.ListSelectionModel;
+import javax.swing.ScrollPaneConstants;
 
 import app.Environment;
-import game.sound.BankEditor.SoundBank;
+import app.input.IOUtils;
+import common.FrameLimiter;
 import game.sound.engine.AudioEngine;
 import game.sound.engine.Instrument;
+import game.sound.engine.SoundBank;
 import game.sound.engine.Voice;
 import game.sound.mseq.Mseq;
 import game.sound.mseq.MseqPlayer;
@@ -25,69 +33,18 @@ import net.miginfocom.swing.MigLayout;
 public class AudioTest5
 {
 	private static final int TARGET_FPS = 60; // PM audio thread
-	private static final long FRAME_TIME_MS = 1000 / TARGET_FPS;
+
+	private final Object threadLock = new Object();
 
 	public static void main(String[] args) throws Exception
 	{
 		Environment.initialize();
-
-		AudioTest5 test = new AudioTest5();
-
-		SwingUtilities.invokeLater(() -> {
-			JFrame frame = new JFrame("Audio Test");
-			frame.setSize(400, 200);
-			frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-			frame.addWindowListener(new WindowAdapter() {
-				@Override
-				public void windowClosing(WindowEvent e)
-				{
-					test.running = false;
-					test.engine.shutdown();
-					frame.dispose();
-					Environment.exit();
-				}
-			});
-
-			frame.setLayout(new MigLayout("fill, ins 16"));
-
-			JButton playButton = new JButton("Play Sound");
-			playButton.addActionListener((e) -> {
-				test.testVoice.reset();
-				test.testVoice.play();
-			});
-
-			JSlider masterVolumeSlider = new JSlider(0, 256, test.engine.getMasterVolume());
-			masterVolumeSlider.setPaintTicks(true);
-			masterVolumeSlider.setMajorTickSpacing(64);
-			masterVolumeSlider.setMinorTickSpacing(16);
-			masterVolumeSlider.addChangeListener((e) -> {
-				test.engine.setMasterVolume(masterVolumeSlider.getValue());
-			});
-
-			frame.add(playButton);
-			frame.add(masterVolumeSlider);
-
-			frame.pack();
-			frame.setLocationRelativeTo(null);
-			frame.setVisible(true);
-
-			new Thread(() -> {
-				try {
-					test.run();
-				}
-				catch (Exception e) {
-					e.printStackTrace();
-				}
-			}).start();
-		});
+		new AudioTest5();
 	}
 
 	private AudioEngine engine;
 	private SoundBank bank;
 	private MseqPlayer player;
-
-	private Instrument testInstrument;
-	private Voice testVoice;
 
 	private volatile boolean running = true;
 
@@ -97,36 +54,115 @@ public class AudioTest5
 		bank = new SoundBank();
 		player = new MseqPlayer(engine, bank);
 
-		testInstrument = bank.getInstrument(0x30, 0).instrument();
+		// required for radio songs, just keep this always loaded
+		bank.installAuxBank("SPC3", 2);
 
-		testVoice = new Voice();
-		testVoice.setInstrument(testInstrument);
-		engine.addVoice(testVoice);
+		Instrument testInstrument = bank.getInstrument(0x30, 0).instrument();
 
-		Mseq mseq = Mseq.load(MOD_AUDIO_MSEQ.getFile("DB_501.xml"));
-		//Mseq mseq = Mseq.load(MOD_AUDIO_MSEQ.getFile("DC_502.xml"));
-		player.setMseq(mseq);
+		Collection<File> mseqFiles = IOUtils.getFilesWithExtension(MOD_AUDIO_MSEQ, "xml", false);
+
+		JFrame frame = new JFrame("Audio Test");
+		frame.setSize(400, 200);
+		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		frame.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e)
+			{
+				running = false;
+				engine.shutdown();
+				frame.dispose();
+				Environment.exit();
+			}
+		});
+
+		frame.setLayout(new MigLayout("fill, ins 16"));
+
+		JButton playButton = new JButton("Play Sound");
+		playButton.addActionListener((e) -> {
+			Voice testVoice = engine.getVoice();
+			testVoice.setInstrument(testInstrument);
+			testVoice.play();
+
+			engine.addVoice(testVoice);
+		});
+
+		JSlider masterVolumeSlider = new JSlider(0, 256, engine.getMasterVolume());
+		masterVolumeSlider.setPaintTicks(true);
+		masterVolumeSlider.setMajorTickSpacing(64);
+		masterVolumeSlider.setMinorTickSpacing(16);
+		masterVolumeSlider.addChangeListener((e) -> {
+			engine.setMasterVolume(masterVolumeSlider.getValue());
+		});
+
+		DefaultListModel<File> filesModel = new DefaultListModel<>();
+		filesModel.addAll(mseqFiles);
+
+		JList<File> mseqFileList = new JList<>();
+		mseqFileList.setModel(filesModel);
+		mseqFileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+		JScrollPane fileListScroll = new JScrollPane(mseqFileList);
+		fileListScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		fileListScroll.setWheelScrollingEnabled(true);
+
+		mseqFileList.addListSelectionListener((evt) -> {
+			if (evt.getValueIsAdjusting())
+				return;
+
+			File selected = mseqFileList.getSelectedValue();
+
+			Mseq mseq = Mseq.load(selected);
+
+			synchronized (threadLock) {
+				player.setMseq(mseq);
+			}
+		});
+
+		JButton pauseButton = new JButton("Pause");
+		pauseButton.addActionListener((evt) -> {
+			synchronized (threadLock) {
+				boolean paused = player.getPaused();
+				player.setPaused(!paused);
+				pauseButton.setText(player.getPaused() ? "Play" : "Pause");
+			}
+		});
+
+		frame.add(playButton);
+		frame.add(masterVolumeSlider, "wrap");
+		frame.add(mseqFileList, "span, wrap");
+		frame.add(pauseButton);
+
+		frame.pack();
+		frame.setLocationRelativeTo(null);
+		frame.setVisible(true);
+
+		new Thread(() -> {
+			try {
+				run();
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+			}
+		}).start();
 	}
 
 	public void run() throws InterruptedException
 	{
-		long prevTime = System.nanoTime();
-		double time = 0.0f;
-		double deltaTime = FRAME_TIME_MS / 1e6;
+		double deltaTime = 1.0 / TARGET_FPS;
+
+		FrameLimiter limiter = new FrameLimiter();
 
 		while (running) {
-			long curTime = System.nanoTime();
-			deltaTime = (curTime - prevTime) / 1e9;
-			prevTime = curTime;
-			time += deltaTime;
+			long t0 = System.nanoTime();
 
-			player.update();
+			synchronized (threadLock) {
+				//	player.update(); // <--- framerate dependent!
+				engine.renderFrame(deltaTime);
+			}
 
-			engine.renderFrame(deltaTime);
+			limiter.sync(TARGET_FPS);
 
-			long sleep = FRAME_TIME_MS - (long) (deltaTime / 1e6);
-			if (sleep > 0)
-				Thread.sleep(sleep);
+			deltaTime = (System.nanoTime() - t0) / 1e9;
 		}
 	}
 

@@ -15,13 +15,16 @@ public class AudioEngine
 	public static final int FRAME_SAMPLES = 184;
 
 	private static final int NUM_CHANNELS = 2; // stereo
-	private static final int FRAME_BYTES = FRAME_SAMPLES * NUM_CHANNELS * Short.BYTES;
+
+	private static final int BYTES_PER_SAMPLE = NUM_CHANNELS * Short.BYTES;
 
 	private int overflowSamples = 0;
 
 	private final SourceDataLine line;
 	private final EffectBus effectBus;
 	private final List<Voice> voices;
+
+	private final List<Runnable> clients;
 
 	private float[] dryBufferL;
 	private float[] dryBufferR;
@@ -40,6 +43,7 @@ public class AudioEngine
 	{
 		effectBus = new EffectBus();
 		voices = new ArrayList<>();
+		clients = new ArrayList<>();
 
 		AudioFormat format = new AudioFormat(OUTPUT_RATE, Short.SIZE, NUM_CHANNELS, true, false);
 		line = AudioSystem.getSourceDataLine(format);
@@ -55,7 +59,24 @@ public class AudioEngine
 		mixedBufferL = new float[FRAME_SAMPLES];
 		mixedBufferR = new float[FRAME_SAMPLES];
 
-		outBuffer = new byte[FRAME_SAMPLES * Short.BYTES * NUM_CHANNELS];
+		outBuffer = new byte[FRAME_SAMPLES * BYTES_PER_SAMPLE];
+	}
+
+	public void shutdown()
+	{
+		line.drain();
+		line.stop();
+		line.close();
+	}
+
+	public void addClient(Runnable client)
+	{
+		clients.add(client);
+	}
+
+	public void removeClient(Runnable client)
+	{
+		clients.remove(client);
 	}
 
 	public void addVoice(Voice voice)
@@ -63,9 +84,11 @@ public class AudioEngine
 		voices.add(voice);
 	}
 
-	public void removeVoice(Voice voice)
+	public Voice getVoice()
 	{
-		voices.remove(voice);
+		Voice voice = new Voice();
+		voices.add(voice);
+		return voice;
 	}
 
 	public void setMasterVolume(int volume)
@@ -86,12 +109,25 @@ public class AudioEngine
 		int processed = 0;
 
 		if (overflowSamples > 0) {
-			writeSamples(line, mixedBufferL, mixedBufferR, outBuffer, FRAME_SAMPLES - overflowSamples, FRAME_SAMPLES);
+			int startPos = FRAME_SAMPLES - overflowSamples; // where the last frame left off and overflow began
+			writeSamples(line, mixedBufferL, mixedBufferR, outBuffer, startPos, FRAME_SAMPLES);
 			processed += overflowSamples;
 			overflowSamples = 0;
 		}
 
+		if (line.getBufferSize() - line.available() >= 2 * totalSamples * BYTES_PER_SAMPLE) {
+			// buffer already contains two frames of data, skip rendering
+			return;
+		}
+
+		// remove any voices which have finished playing
+		voices.removeIf(voice -> voice.isDone());
+
 		while (processed < totalSamples) {
+			for (Runnable client : clients) {
+				client.run();
+			}
+
 			// clear buffers
 			Arrays.fill(dryBufferL, 0, FRAME_SAMPLES, 0.0f);
 			Arrays.fill(dryBufferR, 0, FRAME_SAMPLES, 0.0f);
@@ -101,10 +137,10 @@ public class AudioEngine
 
 			// mix voices
 			for (Voice v : voices)
-				v.renderInto(dryBufferL, dryBufferR, wetBufferL, wetBufferR, FRAME_SAMPLES, OUTPUT_RATE, deltaTime);
+				v.renderInto(dryBufferL, dryBufferR, wetBufferL, wetBufferR);
 
 			// process effects
-			effectBus.renderInto(wetBufferL, wetBufferR, FRAME_SAMPLES);
+			effectBus.renderInto(wetBufferL, wetBufferR);
 
 			// final mixdown for output samples
 			for (int i = 0; i < FRAME_SAMPLES; i++) {
@@ -142,7 +178,7 @@ public class AudioEngine
 			outBuffer[4 * i + 3] = (byte) (right >> 8);
 		}
 
-		line.write(outBuffer, 0, sampleCount * NUM_CHANNELS * Short.BYTES);
+		line.write(outBuffer, 0, sampleCount * BYTES_PER_SAMPLE);
 	}
 
 	// clamp and convert to PCM
@@ -150,13 +186,6 @@ public class AudioEngine
 	{
 		sample = Math.max(-1.0f, Math.min(1.0f, sample)); // hard clip
 		return (short) (sample * Short.MAX_VALUE);
-	}
-
-	public void shutdown()
-	{
-		line.drain();
-		line.stop();
-		line.close();
 	}
 
 	public static float detuneToPitchRatio(int detune)

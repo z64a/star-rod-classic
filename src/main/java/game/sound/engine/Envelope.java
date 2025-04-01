@@ -1,6 +1,6 @@
 package game.sound.engine;
 
-import static game.sound.BankEditor.BankKey.*;
+import static game.sound.BankModder.BankKey.*;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -232,6 +232,11 @@ public class Envelope implements XmlSerializable
 			phase = EnvelopePhase.INIT;
 		}
 
+		public void reset()
+		{
+			phase = EnvelopePhase.INIT;
+		}
+
 		public boolean isDone()
 		{
 			return phase == EnvelopePhase.DONE;
@@ -309,7 +314,7 @@ public class Envelope implements XmlSerializable
 			delta = (duration != 0) ? (float) (target - initial) / duration : 0.0f;
 		}
 
-		public void update(double deltaTime)
+		public void update()
 		{
 			EnvelopeInterval interval;
 
@@ -322,7 +327,7 @@ public class Envelope implements XmlSerializable
 					return;
 
 				case PRESS:
-					timeLeft -= Math.round(deltaTime * 1e6); // convert to microsecond
+					timeLeft -= AUDIO_FRAME_USEC;
 					if (timeLeft > 0)
 						return;
 
@@ -336,7 +341,7 @@ public class Envelope implements XmlSerializable
 					break;
 
 				case RELEASE:
-					timeLeft -= Math.round(deltaTime * 1e6); // convert to microsecond
+					timeLeft -= AUDIO_FRAME_USEC;
 					if (timeLeft > 0)
 						return;
 

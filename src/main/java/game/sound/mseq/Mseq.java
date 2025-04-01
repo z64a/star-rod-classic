@@ -36,7 +36,8 @@ public class Mseq implements XmlSerializable
 
 	public static final int NUM_TRACKS = 10;
 	public static final int DRUM_TRACK = 9;
-	public static final float MAX_VOLUME = 127.0f;
+	public static final float MAX_VOL_8 = 127.0f; // 0x7F
+	public static final float MAX_VOL_16 = 32767.0f; // 0x7FFF
 
 	private static final int MSEQ_CMD_80_STOP_SOUND = 0x8;
 	private static final int MSEQ_CMD_90_PLAY_SOUND = 0x9;
@@ -275,8 +276,8 @@ public class Mseq implements XmlSerializable
 		public int track;
 		public int type;
 		public int time;
-		public int delta;
-		public int goal;
+		public short delta;
+		public short goal;
 
 		public TrackSetting()
 		{} // for fromXML
@@ -286,8 +287,8 @@ public class Mseq implements XmlSerializable
 			track = bb.get() & 0xFF;
 			type = bb.get() & 0xFF;
 			time = bb.getShort() & 0xFFFF;
-			delta = bb.getShort() & 0xFFFF;
-			goal = bb.getShort() & 0xFFFF;
+			delta = bb.getShort();
+			goal = bb.getShort();
 		}
 
 		public void build(DynamicByteBuffer dbb)
@@ -305,8 +306,8 @@ public class Mseq implements XmlSerializable
 			track = xmr.readHex(elem, ATTR_TRACK);
 			type = xmr.readHex(elem, ATTR_TYPE);
 			time = xmr.readHex(elem, ATTR_TIME);
-			delta = xmr.readHex(elem, ATTR_DELTA);
-			goal = xmr.readHex(elem, ATTR_GOAL);
+			delta = (short) xmr.readHex(elem, ATTR_DELTA);
+			goal = (short) xmr.readHex(elem, ATTR_GOAL);
 		}
 
 		@Override
@@ -781,7 +782,7 @@ public class Mseq implements XmlSerializable
 		public void fromXML(XmlReader xmr, Element elem)
 		{
 			track = xmr.readHex(elem, ATTR_TRACK);
-			value = xmr.readHex(elem, ATTR_TUNE);
+			value = (short) xmr.readHex(elem, ATTR_TUNE);
 		}
 
 		@Override
