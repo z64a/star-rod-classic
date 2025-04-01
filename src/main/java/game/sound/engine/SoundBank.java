@@ -1,10 +1,10 @@
 package game.sound.engine;
 
-import static app.Directories.FN_SOUND_BANK;
-import static app.Directories.MOD_AUDIO_BANK;
+import static app.Directories.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -14,6 +14,8 @@ import app.StarRodException;
 import game.sound.AudioModder;
 import game.sound.AudioModder.BankEntry;
 import game.sound.BankModder.Bank;
+import game.sound.DrumModder;
+import game.sound.DrumModder.Drum;
 import game.sound.engine.Envelope.EnvelopePair;
 import util.Logger;
 
@@ -26,6 +28,7 @@ public class SoundBank
 
 	private HashMap<String, Bank> bankNameMap;
 	private HashMap<Integer, Bank> bankRefMap;
+	private ArrayList<Drum> drumList;
 
 	public SoundBank() throws IOException
 	{
@@ -69,6 +72,8 @@ public class SoundBank
 			for (Instrument ins : bank.instruments)
 				System.out.printf("INS: %X %X --> %4s %X%n", e.group, e.index, bank.name, i++);
 		}
+
+		drumList = DrumModder.load(MOD_AUDIO.getFile(FN_AUDIO_DRUMS));
 	}
 
 	public boolean installAuxBank(String bankName, int index)
@@ -85,10 +90,10 @@ public class SoundBank
 		return true;
 	}
 
-	public record BankQueryResult(Instrument instrument, EnvelopePair envelope)
+	public record InstrumentQueryResult(Instrument instrument, EnvelopePair envelope)
 	{}
 
-	public BankQueryResult getInstrument(int groupEnv, int index)
+	public InstrumentQueryResult getInstrument(int groupEnv, int index)
 	{
 		int groupIndex = groupEnv >> 4;
 		int envIndex = groupEnv & 3;
@@ -140,6 +145,27 @@ public class SoundBank
 		if (envIndex < ins.envelope.count())
 			env = ins.envelope.get(envIndex);
 
-		return new BankQueryResult(ins, env);
+		return new InstrumentQueryResult(ins, env);
+	}
+
+	public record DrumQueryResult(Drum drum, Instrument instrument, EnvelopePair envelope)
+	{}
+
+	public DrumQueryResult getDrum(int drumID)
+	{
+		if (drumID < 0 || drumID >= drumList.size()) {
+			Logger.logfError("Drum ID is out of range: %X", drumID);
+			return null;
+		}
+
+		Drum drum = drumList.get(drumID);
+
+		InstrumentQueryResult ins = getInstrument(drum.bank, drum.patch);
+		if (ins == null) {
+			Logger.logfError("Failed to find instrument for drum %X", drumID);
+			return null;
+		}
+
+		return new DrumQueryResult(drum, ins.instrument, ins.envelope);
 	}
 }

@@ -46,6 +46,9 @@ public class AudioTest5
 	private SoundBank bank;
 	private MseqPlayer player;
 
+	private boolean ignoreSliderUpdate = false;
+	private JSlider timeSlider;
+
 	private volatile boolean running = true;
 
 	private AudioTest5() throws Exception
@@ -94,6 +97,16 @@ public class AudioTest5
 			engine.setMasterVolume(masterVolumeSlider.getValue());
 		});
 
+		timeSlider = new JSlider(0, 1, 0);
+		//timeSlider.setPaintTicks(true);
+		timeSlider.addChangeListener((e) -> {
+			if (!ignoreSliderUpdate) {
+				synchronized (threadLock) {
+					player.seekTime(timeSlider.getValue());
+				}
+			}
+		});
+
 		DefaultListModel<File> filesModel = new DefaultListModel<>();
 		filesModel.addAll(mseqFiles);
 
@@ -112,8 +125,11 @@ public class AudioTest5
 			File selected = mseqFileList.getSelectedValue();
 
 			Mseq mseq = Mseq.load(selected);
+			mseq.calculateTiming();
 
 			synchronized (threadLock) {
+				timeSlider.setMaximum(mseq.duration);
+				timeSlider.setValue(0);
 				player.setMseq(mseq);
 			}
 		});
@@ -128,9 +144,10 @@ public class AudioTest5
 		});
 
 		frame.add(playButton);
-		frame.add(masterVolumeSlider, "wrap");
+		frame.add(masterVolumeSlider, "grow, wrap");
 		frame.add(mseqFileList, "span, wrap");
 		frame.add(pauseButton);
+		frame.add(timeSlider, "grow");
 
 		frame.pack();
 		frame.setLocationRelativeTo(null);
@@ -156,9 +173,12 @@ public class AudioTest5
 			long t0 = System.nanoTime();
 
 			synchronized (threadLock) {
-				//	player.update(); // <--- framerate dependent!
 				engine.renderFrame(deltaTime);
 			}
+
+			ignoreSliderUpdate = true;
+			timeSlider.setValue(player.getTime());
+			ignoreSliderUpdate = false;
 
 			limiter.sync(TARGET_FPS);
 
