@@ -281,7 +281,7 @@ public enum Directories
 	public static final String FN_AUDIO_FILES = "Files.xml";
 	public static final String FN_AUDIO_SONGS = "Songs.xml";
 	public static final String FN_AUDIO_BANKS = "Banks.xml";
-	public static final String FN_AUDIO_MSEQS = "MSEQs.xml";
+	public static final String FN_AUDIO_DRUMS = "Drums.xml";
 	public static final String FN_AUDIO_BGMS = "BGMs.xml";
 	public static final String FN_SOUND_BANK = "SoundBank.xml";
 	public static final String EXT_BANK = ".bk";

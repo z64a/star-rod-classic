@@ -31,6 +31,7 @@ public class Mseq implements XmlSerializable
 	public final List<MseqCommand> commands = new ArrayList<>();
 	public String name;
 	public int firstVoiceIdx;
+	public int duration;
 
 	private static boolean matching = true;
 
@@ -130,6 +131,19 @@ public class Mseq implements XmlSerializable
 		}
 
 		Logger.log("All valid :)");
+	}
+
+	public void calculateTiming()
+	{
+		int time = 0;
+		for (MseqCommand cmd : commands) {
+			cmd.time = time;
+
+			if (cmd instanceof DelayCommand delay)
+				time += delay.duration;
+		}
+
+		duration = time;
 	}
 
 	private void decode(File f) throws IOException
@@ -475,6 +489,8 @@ public class Mseq implements XmlSerializable
 
 	public static abstract class MseqCommand implements XmlSerializable
 	{
+		public int time;
+
 		public abstract void build(DynamicByteBuffer dbb);
 	}
 

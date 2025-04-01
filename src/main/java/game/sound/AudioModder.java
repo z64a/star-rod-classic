@@ -322,6 +322,7 @@ public class AudioModder
 		dumpINIT(raf, initOffset, dumpedFilenames);
 
 		BankModder.dumpAll();
+		DrumModder.dump();
 
 		raf.close();
 	}

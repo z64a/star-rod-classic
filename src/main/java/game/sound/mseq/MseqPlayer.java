@@ -1,10 +1,12 @@
 package game.sound.mseq;
 
+import game.sound.DrumModder.Drum;
 import game.sound.engine.AudioEngine;
 import game.sound.engine.Envelope.EnvelopePair;
 import game.sound.engine.Instrument;
 import game.sound.engine.SoundBank;
-import game.sound.engine.SoundBank.BankQueryResult;
+import game.sound.engine.SoundBank.DrumQueryResult;
+import game.sound.engine.SoundBank.InstrumentQueryResult;
 import game.sound.engine.Voice;
 import game.sound.mseq.Mseq.DelayCommand;
 import game.sound.mseq.Mseq.EndLoopCommand;
@@ -43,6 +45,8 @@ public class MseqPlayer
 	private Mseq mseq;
 	private int curPos;
 	private int delayTime;
+
+	private int curTime;
 
 	private MseqTrack[] tracks;
 	private MseqVoice[] voices;
@@ -153,6 +157,62 @@ public class MseqPlayer
 		}
 	}
 
+	public int getTime()
+	{
+		return curTime;
+	}
+
+	public void seekTime(int seekTime)
+	{
+		if (mseq == null || mseq.commands.isEmpty())
+			return;
+
+		if (seekTime < 0 || seekTime > mseq.duration)
+			return;
+
+		if (seekTime > curTime)
+			seek(curTime, seekTime);
+		else if (seekTime < curTime)
+			seek(0, seekTime);
+	}
+
+	private void seek(int startTime, int seekTime)
+	{
+		// kill any active voices
+		for (int i = 0; i < voices.length; i++) {
+			MseqVoice voice = voices[i];
+			if (voice != null) {
+				voice.kill();
+			}
+		}
+
+		tracks = new MseqTrack[Mseq.NUM_TRACKS];
+		for (int i = 0; i < Mseq.NUM_TRACKS; i++) {
+			tracks[i] = new MseqTrack(i);
+		}
+
+		voices = new MseqVoice[NUM_VOICES];
+
+		// loop state
+		loopPositions = new int[2];
+		loopIterations = new int[2];
+
+		for (int i = 0; i < tracks.length; i++) {
+			tracks[i].reset();
+		}
+
+		curPos = 0;
+		curTime = 0;
+		delayTime = 0;
+
+		MseqCommand curCommand = mseq.commands.get(0);
+		while (curPos < mseq.commands.size() && curTime > curCommand.time) {
+			//TODO
+		}
+
+		state = PlayerState.PLAYING;
+	}
+
 	public void setMseq(Mseq mseq)
 	{
 		if (this.mseq != null) {
@@ -166,6 +226,7 @@ public class MseqPlayer
 		}
 
 		this.mseq = mseq;
+		mseq.calculateTiming();
 
 		tracks = new MseqTrack[Mseq.NUM_TRACKS];
 		for (int i = 0; i < Mseq.NUM_TRACKS; i++) {
@@ -179,6 +240,7 @@ public class MseqPlayer
 		loopIterations = new int[2];
 
 		curPos = 0;
+		curTime = 0;
 		delayTime = 0;
 
 		for (int i = 0; i < tracks.length; i++) {
@@ -266,10 +328,12 @@ public class MseqPlayer
 		while (delayTime == 0) {
 			if (mseq.commands.size() == curPos) {
 				state = PlayerState.DONE;
+				curTime = mseq.duration;
 				return;
 			}
 
 			MseqCommand abs = mseq.commands.get(curPos);
+			curTime = abs.time;
 			curPos++;
 
 			// could have a method in the command classes, but id rather have them only store state
@@ -319,14 +383,14 @@ public class MseqPlayer
 					MseqTrack track = tracks[cmd.track];
 
 					if (track.instrument != null) {
+						Instrument ins = track.instrument;
+						EnvelopePair envelope = track.envelope;
+
 						MseqVoice voice = new MseqVoice(track, cmd.pitch);
 						voices[index] = voice;
 						engine.addVoice(voice);
 
-						Instrument ins = track.instrument;
-						EnvelopePair envelope = track.envelope;
-
-						voice.baseVolume = cmd.volume / Mseq.MAX_VOL_8;
+						voice.baseVolume = (cmd.volume & 0x7F) / Mseq.MAX_VOL_8;
 						voice.baseDetune = ((cmd.pitch & 0x7F) * 100) - ins.keyBase;
 						voice.setInstrument(ins);
 						voice.setEnvelope(envelope);
@@ -343,7 +407,35 @@ public class MseqPlayer
 				}
 			}
 			else if (abs instanceof PlayDrumCommand cmd) {
-				//TODO
+				logCommand("[%X] Play Drum %X @ %X", Mseq.DRUM_TRACK, cmd.drumID, cmd.volume);
+
+				MseqTrack track = tracks[Mseq.DRUM_TRACK];
+				DrumQueryResult res = bank.getDrum(cmd.drumID & 0x7F);
+				if (res == null) {
+					track.instrument = null;
+					track.envelope = null;
+				}
+				else {
+					Drum drum = res.drum();
+					Instrument ins = track.instrument = res.instrument();
+					EnvelopePair envelope = track.envelope = res.envelope();
+
+					MseqVoice voice = new MseqVoice(track, cmd.drumID);
+					voices[Mseq.DRUM_TRACK] = voice;
+					engine.addVoice(voice);
+
+					voice.baseVolume = (drum.volume / Mseq.MAX_VOL_8) * (cmd.volume & 0x7F) / Mseq.MAX_VOL_8;
+					voice.baseDetune = drum.keybase - ins.keyBase;
+					voice.setInstrument(ins);
+					voice.setEnvelope(envelope);
+					voice.setReverb(drum.reverb);
+					voice.setPan(drum.pan);
+
+					voice.updateVolume();
+					voice.updatePitch();
+
+					voice.play();
+				}
 			}
 			else if (abs instanceof SetVolCommand cmd) {
 				logCommand("[%X] Set Volume: %X", cmd.track, cmd.volume);
@@ -398,7 +490,7 @@ public class MseqPlayer
 				logCommand("[%X] Set Instrument: %2X %2X", cmd.track, cmd.bank, cmd.patch);
 
 				MseqTrack track = tracks[cmd.track];
-				BankQueryResult res = bank.getInstrument(cmd.bank, cmd.patch);
+				InstrumentQueryResult res = bank.getInstrument(cmd.bank, cmd.patch);
 				if (res == null) {
 					track.instrument = null;
 					track.envelope = null;
