@@ -32,8 +32,6 @@ import net.miginfocom.swing.MigLayout;
 
 public class AudioTest5
 {
-	private static final int TARGET_FPS = 60; // PM audio thread
-
 	private final Object threadLock = new Object();
 
 	public static void main(String[] args) throws Exception
@@ -50,6 +48,9 @@ public class AudioTest5
 	private JSlider timeSlider;
 
 	private volatile boolean running = true;
+
+	// used when issuing seek commands
+	private volatile int seekTime = -1;
 
 	private AudioTest5() throws Exception
 	{
@@ -101,9 +102,7 @@ public class AudioTest5
 		//timeSlider.setPaintTicks(true);
 		timeSlider.addChangeListener((e) -> {
 			if (!ignoreSliderUpdate) {
-				synchronized (threadLock) {
-					player.seekTime(timeSlider.getValue());
-				}
+				seekTime = timeSlider.getValue();
 			}
 		});
 
@@ -165,7 +164,7 @@ public class AudioTest5
 
 	public void run() throws InterruptedException
 	{
-		double deltaTime = 1.0 / TARGET_FPS;
+		double deltaTime = AudioEngine.FRAME_TIME;
 
 		FrameLimiter limiter = new FrameLimiter();
 
@@ -173,14 +172,20 @@ public class AudioTest5
 			long t0 = System.nanoTime();
 
 			synchronized (threadLock) {
-				engine.renderFrame(deltaTime);
+				if (seekTime >= 0) {
+					player.seekTime(seekTime);
+					seekTime = -1;
+				}
+
+				engine.renderFrame(deltaTime, false);
+
 			}
 
 			ignoreSliderUpdate = true;
 			timeSlider.setValue(player.getTime());
 			ignoreSliderUpdate = false;
 
-			limiter.sync(TARGET_FPS);
+			limiter.sync(AudioEngine.TARGET_FPS);
 
 			deltaTime = (System.nanoTime() - t0) / 1e9;
 		}

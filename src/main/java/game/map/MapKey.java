@@ -74,6 +74,7 @@ public enum MapKey implements XmlKey
 
 	TAG_MARKER_GRID		("Grid"),
 	ATTR_MARKER_GRID	("grid"), //TODO deprecated
+	ATTR_MARKER_GRID_INDEX	("index"),
 	ATTR_MARKER_GRID_OCC	("gridContent"),
 	ATTR_MARKER_GRID_GRAV	("blockGravity"),
 

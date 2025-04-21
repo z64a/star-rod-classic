@@ -137,7 +137,7 @@ public class Mseq implements XmlSerializable
 	{
 		int time = 0;
 		for (MseqCommand cmd : commands) {
-			cmd.time = time;
+			cmd.startTime = time;
 
 			if (cmd instanceof DelayCommand delay)
 				time += delay.duration;
@@ -489,15 +489,14 @@ public class Mseq implements XmlSerializable
 
 	public static abstract class MseqCommand implements XmlSerializable
 	{
-		public int time;
+		public int startTime;
+		public int duration = 0;
 
 		public abstract void build(DynamicByteBuffer dbb);
 	}
 
 	public static class DelayCommand extends MseqCommand
 	{
-		public int duration;
-
 		public DelayCommand()
 		{} // for fromXML
 

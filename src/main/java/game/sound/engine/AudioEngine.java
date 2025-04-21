@@ -11,6 +11,9 @@ import javax.sound.sampled.SourceDataLine;
 
 public class AudioEngine
 {
+	public static final int TARGET_FPS = 60; // PM audio thread
+	public static final double FRAME_TIME = 1.0 / TARGET_FPS;
+
 	public static final int OUTPUT_RATE = 32000;
 	public static final int FRAME_SAMPLES = 184;
 
@@ -24,7 +27,7 @@ public class AudioEngine
 	private final EffectBus effectBus;
 	private final List<Voice> voices;
 
-	private final List<Runnable> clients;
+	private final List<AudioClient> clients;
 
 	private float[] dryBufferL;
 	private float[] dryBufferR;
@@ -62,6 +65,12 @@ public class AudioEngine
 		outBuffer = new byte[FRAME_SAMPLES * BYTES_PER_SAMPLE];
 	}
 
+	public void flush()
+	{
+		line.flush();
+		overflowSamples = 0;
+	}
+
 	public void shutdown()
 	{
 		line.drain();
@@ -69,12 +78,12 @@ public class AudioEngine
 		line.close();
 	}
 
-	public void addClient(Runnable client)
+	public void addClient(AudioClient client)
 	{
 		clients.add(client);
 	}
 
-	public void removeClient(Runnable client)
+	public void removeClient(AudioClient client)
 	{
 		clients.remove(client);
 	}
@@ -101,7 +110,17 @@ public class AudioEngine
 		return masterVolume;
 	}
 
-	public void renderFrame(double deltaTime)
+	private static final byte[] DUMMY_FRAME = new byte[BYTES_PER_SAMPLE * FRAME_SAMPLES];
+
+	public void padLine(double time)
+	{
+		int reqFrames = (int) Math.ceil((time * OUTPUT_RATE) / FRAME_SAMPLES);
+
+		for (int i = 0; i < reqFrames; i++)
+			line.write(DUMMY_FRAME, 0, BYTES_PER_SAMPLE * FRAME_SAMPLES);
+	}
+
+	public void renderFrame(double deltaTime, boolean fastForward)
 	{
 		float masterVolumeRatio = (float) (masterVolume / 256.0);
 
@@ -110,12 +129,16 @@ public class AudioEngine
 
 		if (overflowSamples > 0) {
 			int startPos = FRAME_SAMPLES - overflowSamples; // where the last frame left off and overflow began
-			writeSamples(line, mixedBufferL, mixedBufferR, outBuffer, startPos, FRAME_SAMPLES);
+			if (!fastForward)
+				writeSamples(line, mixedBufferL, mixedBufferR, outBuffer, startPos, FRAME_SAMPLES);
 			processed += overflowSamples;
 			overflowSamples = 0;
 		}
 
-		if (line.getBufferSize() - line.available() >= 2 * totalSamples * BYTES_PER_SAMPLE) {
+		// how many bytes are currently sitting in the data line
+		int lineBytesQueued = line.getBufferSize() - line.available();
+
+		if (!fastForward && lineBytesQueued >= 2 * totalSamples * BYTES_PER_SAMPLE) {
 			// buffer already contains two frames of data, skip rendering
 			return;
 		}
@@ -124,8 +147,8 @@ public class AudioEngine
 		voices.removeIf(voice -> voice.isDone());
 
 		while (processed < totalSamples) {
-			for (Runnable client : clients) {
-				client.run();
+			for (AudioClient client : clients) {
+				client.nextFrame(fastForward);
 			}
 
 			// clear buffers
@@ -161,7 +184,8 @@ public class AudioEngine
 				writeSamples = FRAME_SAMPLES;
 			}
 
-			writeSamples(line, mixedBufferL, mixedBufferR, outBuffer, 0, writeSamples);
+			if (!fastForward)
+				writeSamples(line, mixedBufferL, mixedBufferR, outBuffer, 0, writeSamples);
 		}
 	}
 

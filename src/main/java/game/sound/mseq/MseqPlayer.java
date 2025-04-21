@@ -1,6 +1,7 @@
 package game.sound.mseq;
 
 import game.sound.DrumModder.Drum;
+import game.sound.engine.AudioClient;
 import game.sound.engine.AudioEngine;
 import game.sound.engine.Envelope.EnvelopePair;
 import game.sound.engine.Instrument;
@@ -24,7 +25,7 @@ import game.sound.mseq.Mseq.StopSoundCommand;
 import game.sound.mseq.Mseq.TrackSetting;
 import util.Logger;
 
-public class MseqPlayer
+public class MseqPlayer implements AudioClient
 {
 	private static final int NUM_VOICES = 16;
 
@@ -47,6 +48,7 @@ public class MseqPlayer
 	private int delayTime;
 
 	private int curTime;
+	private int curDuration;
 
 	private MseqTrack[] tracks;
 	private MseqVoice[] voices;
@@ -54,6 +56,10 @@ public class MseqPlayer
 	// loop state
 	private int[] loopPositions;
 	private int[] loopIterations;
+
+	// these values cause the player to only update/tick on every other audio frame
+	private int updateCounter = 2;
+	private static final int updateInverval = 2;
 
 	public static class MseqVoice extends Voice
 	{
@@ -127,7 +133,7 @@ public class MseqPlayer
 		this.engine = engine;
 		this.bank = bank;
 
-		engine.addClient(this::frame);
+		engine.addClient(this);
 	}
 
 	public boolean getPaused()
@@ -159,7 +165,7 @@ public class MseqPlayer
 
 	public int getTime()
 	{
-		return curTime;
+		return curTime + (curDuration - delayTime);
 	}
 
 	public void seekTime(int seekTime)
@@ -167,50 +173,46 @@ public class MseqPlayer
 		if (mseq == null || mseq.commands.isEmpty())
 			return;
 
-		if (seekTime < 0 || seekTime > mseq.duration)
+		if (seekTime < 0 || seekTime >= mseq.duration)
 			return;
 
-		if (seekTime > curTime)
-			seek(curTime, seekTime);
-		else if (seekTime < curTime)
-			seek(0, seekTime);
-	}
+		if (seekTime == curTime)
+			return;
 
-	private void seek(int startTime, int seekTime)
-	{
-		// kill any active voices
-		for (int i = 0; i < voices.length; i++) {
-			MseqVoice voice = voices[i];
-			if (voice != null) {
-				voice.kill();
+		boolean wasPaused = (state == PlayerState.PAUSED);
+
+		// hard reset playback to the very start
+		setMseq(this.mseq);
+
+		// don't let the data line run dry while we work -- create 50ms of blank audio
+		engine.padLine(0.050);
+
+		// silently fast forward through everything until seek time
+		long t0 = System.nanoTime();
+		while (getTime() < seekTime && state != PlayerState.DONE) {
+			engine.renderFrame(AudioEngine.FRAME_TIME, true);
+		}
+		long t1 = System.nanoTime();
+		// System.out.println("Seek took " + (t1 - t0) / 1e6 + " ms");
+
+		// resume audible playback (or not)
+		if (wasPaused) {
+			state = PlayerState.PAUSED;
+			for (MseqVoice voice : voices) {
+				if (voice != null) {
+					voice.setPaused(true);
+				}
 			}
 		}
-
-		tracks = new MseqTrack[Mseq.NUM_TRACKS];
-		for (int i = 0; i < Mseq.NUM_TRACKS; i++) {
-			tracks[i] = new MseqTrack(i);
+		else {
+			state = PlayerState.PLAYING;
 		}
 
-		voices = new MseqVoice[NUM_VOICES];
+		// flush any queued output or overflow samples
+		engine.flush();
 
-		// loop state
-		loopPositions = new int[2];
-		loopIterations = new int[2];
-
-		for (int i = 0; i < tracks.length; i++) {
-			tracks[i].reset();
-		}
-
-		curPos = 0;
-		curTime = 0;
-		delayTime = 0;
-
-		MseqCommand curCommand = mseq.commands.get(0);
-		while (curPos < mseq.commands.size() && curTime > curCommand.time) {
-			//TODO
-		}
-
-		state = PlayerState.PLAYING;
+		// add just over a frame of blank audio to smooth over the transition to the next frame
+		engine.padLine(0.020);
 	}
 
 	public void setMseq(Mseq mseq)
@@ -241,6 +243,7 @@ public class MseqPlayer
 
 		curPos = 0;
 		curTime = 0;
+		curDuration = 0;
 		delayTime = 0;
 
 		for (int i = 0; i < tracks.length; i++) {
@@ -248,7 +251,6 @@ public class MseqPlayer
 		}
 
 		for (TrackSetting settings : mseq.trackSettings) {
-
 			MseqTrack track = tracks[settings.track];
 			if (settings.type == 0) {
 				track.tuneLerp.time = settings.time;
@@ -262,22 +264,21 @@ public class MseqPlayer
 			}
 		}
 
+		engine.flush();
 		state = PlayerState.PLAYING;
 	}
 
-	int updateCounter = 2;
-	int updateInverval = 2;
-
-	private void frame()
+	@Override
+	public void nextFrame(boolean fastForward)
 	{
 		updateCounter--;
 		if (updateCounter <= 0) {
 			updateCounter += updateInverval;
-			update();
+			update(fastForward);
 		}
 	}
 
-	private void update()
+	private void update(boolean fastForward)
 	{
 		if (mseq == null)
 			return;
@@ -329,11 +330,13 @@ public class MseqPlayer
 			if (mseq.commands.size() == curPos) {
 				state = PlayerState.DONE;
 				curTime = mseq.duration;
+				curDuration = 0;
 				return;
 			}
 
 			MseqCommand abs = mseq.commands.get(curPos);
-			curTime = abs.time;
+			curTime = abs.startTime;
+			curDuration = abs.duration;
 			curPos++;
 
 			// could have a method in the command classes, but id rather have them only store state
@@ -522,6 +525,11 @@ public class MseqPlayer
 
 				int loopID = cmd.loopID & 1;
 				int startPos = loopPositions[loopID];
+
+				if (fastForward) {
+					loopIterations[loopID] = 0;
+					continue;
+				}
 
 				if (cmd.count == 0) {
 					// infinite loop, jump to loop start

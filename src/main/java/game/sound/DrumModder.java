@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.w3c.dom.Element;
 
 import app.Environment;
@@ -28,6 +29,8 @@ public class DrumModder
 	{
 		Environment.initialize();
 		dump();
+		FileUtils.copyFile(DUMP_AUDIO.getFile(FN_AUDIO_DRUMS), MOD_AUDIO.getFile(FN_AUDIO_DRUMS));
+		build();
 		Environment.exit();
 	}
 

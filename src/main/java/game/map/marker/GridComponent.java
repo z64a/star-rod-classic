@@ -92,6 +92,7 @@ public class GridComponent extends BaseMarkerComponent
 	@Override
 	public void toBinary(ObjectOutput out) throws IOException
 	{
+		out.writeInt(gridIndex.get());
 		out.writeInt(gridSizeX.get());
 		out.writeInt(gridSizeZ.get());
 		out.writeInt(gridSpacing.get());
@@ -109,6 +110,7 @@ public class GridComponent extends BaseMarkerComponent
 	@Override
 	public void fromBinary(ObjectInput in) throws IOException, ClassNotFoundException
 	{
+		gridIndex.set(in.readInt());
 		gridSizeX.set(in.readInt());
 		gridSizeZ.set(in.readInt());
 		gridSpacing.set(in.readInt());
@@ -126,6 +128,7 @@ public class GridComponent extends BaseMarkerComponent
 	public void toXML(XmlWriter xmw)
 	{
 		XmlTag compTag = xmw.createTag(TAG_MARKER_GRID, true);
+		xmw.addInt(compTag, ATTR_MARKER_GRID_INDEX, gridIndex.get());
 		xmw.addIntArray(compTag, ATTR_MARKER_GRID, gridSizeX.get(), gridSizeZ.get(), gridSpacing.get());
 
 		int[] gridContent = new int[gridOccupants.size() * 3];
@@ -152,6 +155,9 @@ public class GridComponent extends BaseMarkerComponent
 			gridElem = markerElem;
 		else
 			gridElem = xmr.getUniqueRequiredTag(markerElem, TAG_MARKER_GRID);
+
+		if (xmr.hasAttribute(gridElem, ATTR_MARKER_GRID_INDEX)) // optional to allow loading old versions
+			gridIndex.set(xmr.readInt(gridElem, ATTR_MARKER_GRID_INDEX));
 
 		int[] grid = xmr.readIntArray(gridElem, ATTR_MARKER_GRID, 3);
 		gridSizeX.set(grid[0]);
