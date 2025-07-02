@@ -2,14 +2,17 @@ package util;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Stack;
 
 public class DynamicByteBuffer
 {
 	private ByteBuffer buffer;
+	private Stack<Integer> positionStack;
 
 	public DynamicByteBuffer(int initialCapacity)
 	{
 		buffer = ByteBuffer.allocateDirect(initialCapacity);
+		positionStack = new Stack<>();
 	}
 
 	public DynamicByteBuffer()
@@ -115,6 +118,16 @@ public class DynamicByteBuffer
 		}
 
 		buffer.position(newPosition);
+	}
+
+	public void pushPosition()
+	{
+		positionStack.push(position());
+	}
+
+	public void popPosition()
+	{
+		position(positionStack.pop());
 	}
 
 	public void skip(int numBytes)

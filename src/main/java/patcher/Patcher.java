@@ -53,7 +53,7 @@ import game.shared.encoder.GlobalPatchManager;
 import game.shared.struct.script.ScriptVariable;
 import game.sound.AudioModder;
 import game.sound.BankModder;
-import game.sound.DrumModder;
+import game.sound.DrumsModder;
 import game.sprite.SpriteLoader.SpriteSet;
 import game.sprite.SpritePatcher;
 import game.string.MessageBoxes;
@@ -401,7 +401,7 @@ public class Patcher implements IGlobalDatabase
 		if (cfg.getBoolean(Options.BuildSoundBanks)) {
 			Logger.log("Building sound banks...", Priority.MILESTONE);
 			BankModder.buildAll();
-			DrumModder.build();
+			DrumsModder.build();
 			recordTime("Sound Banks Built");
 		}
 

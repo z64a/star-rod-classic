@@ -15,6 +15,7 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import org.apache.commons.io.FilenameUtils;
 import org.w3c.dom.Element;
 
 import app.StarRodException;
@@ -121,6 +122,8 @@ public class Instrument implements XmlSerializable
 	{
 		xmr.requiresAttribute(insElem, ATTR_SRC);
 		mainFilename = xmr.getAttribute(insElem, ATTR_SRC);
+
+		name = FilenameUtils.getBaseName(mainFilename);
 
 		if (xmr.hasAttribute(insElem, ATTR_LOOP)) {
 			loopFilename = xmr.getAttribute(insElem, ATTR_LOOP);

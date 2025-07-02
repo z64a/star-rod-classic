@@ -854,7 +854,7 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 			exportFileChooser.setCurrentDirectory(file.getParentFile());
 		super.incrementDialogsOpen();
 		if (exportFileChooser.prompt() == ChooseDialogResult.APPROVE)
-			chosen = importFileChooser.getSelectedFile();
+			chosen = exportFileChooser.getSelectedFile();
 		super.decrementDialogsOpen();
 
 		return chosen;
@@ -1174,7 +1174,7 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 			else
 				image.draw(mousePixelX, mousePixelY, pickedPixel);
 		}
-
+		
 		if(mouseManager.holdingRMB && mousePixelValid)
 			image.deselect(mousePixelX, mousePixelY);
 			*/

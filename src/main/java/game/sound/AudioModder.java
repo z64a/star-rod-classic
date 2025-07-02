@@ -322,7 +322,8 @@ public class AudioModder
 		dumpINIT(raf, initOffset, dumpedFilenames);
 
 		BankModder.dumpAll();
-		DrumModder.dump();
+		InstrumentsModder.dump();
+		DrumsModder.dump();
 
 		raf.close();
 	}
@@ -485,33 +486,33 @@ public class AudioModder
 		rp.write("STAR ROD".getBytes());
 		rp.writeInt(0);
 		rp.writeInt(0);
-
+		
 		int sbnSize = 8 * fileList.size();
 		sbnSize = (sbnSize + 0xF) & 0xFFFFFFF0;
 		sbnSize += 0x40;
-
+		
 		rp.writeInt(0x40);
 		rp.writeInt(fileList.size());
 		rp.writeInt(sbnSize);	// seems odd but okay
 		rp.writeInt(sbnSize);	// seems odd but okay
-
+		
 		rp.writeInt(0);
 		rp.writeInt(sbnSize);	// init file offset, we put it first
 		rp.writeInt(0);
 		rp.writeInt(0);
-
+		
 		rp.writeInt(0);
 		rp.writeInt(0);
 		rp.writeInt(0);
 		rp.writeInt(0);
-
+		
 		// write placeholder SBN table
 		for(int i = 0; i < fileList.size(); i++)
 		{
 			rp.writeInt(0);
 			rp.writeInt(0);
 		}
-
+		
 		rp.padOut(16);
 		*/
 

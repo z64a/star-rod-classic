@@ -59,9 +59,9 @@ public class AnalyzeBGM
 			byte unk_11 = bb.get();
 			assert (unk_11 == 0);
 			byte unk_12 = bb.get();
-			assert (unk_11 == 0);
+			assert (unk_12 == 0);
 			byte unk_13 = bb.get();
-			assert (unk_11 == 0);
+			assert (unk_13 == 0);
 			short[] segmentOffsets = new short[4];
 			segmentOffsets[0] = bb.getShort();
 			segmentOffsets[1] = bb.getShort();
@@ -254,8 +254,16 @@ public class AnalyzeBGM
 				int offset = (trackInfo >> 0x10) & 0xFFFF;
 				int polyphonicIndex = (trackInfo >> 13) & 0x7;
 				int parentIndex = (trackInfo >> 9) & 0xF;
-				int unkFlag = (trackInfo >> 8) & 1; // 100
+				int disabledFlag = (trackInfo >> 8) & 1; // 100
 				int isDrumTrack = (trackInfo >> 7) & 1;
+
+				assert (disabledFlag == 0);
+				assert (polyphonicIndex == 0
+					|| polyphonicIndex == 1
+					|| polyphonicIndex == 2
+					|| polyphonicIndex == 5
+					|| polyphonicIndex == 6
+					|| polyphonicIndex == 7) : polyphonicIndex;
 
 				bb.position(filePos + offset);
 
@@ -280,6 +288,8 @@ public class AnalyzeBGM
 							length = ((length & 0x3F) << 8) + (bb.get() & 0xFF) + 0xC0;
 						}
 						System.out.printf("Note: %d, %d, %d%n", pitch, velocity, length);
+
+						assert (i != 0); // track 0 never contains notes
 					}
 					else if (op < 0xE0) {
 						throw new StarRodException("Unknown track command: %02X", op);

@@ -1,6 +1,6 @@
 package game.sound.mseq;
 
-import game.sound.DrumModder.Drum;
+import game.sound.DrumPreset;
 import game.sound.engine.AudioClient;
 import game.sound.engine.AudioEngine;
 import game.sound.engine.Envelope.EnvelopePair;
@@ -419,7 +419,7 @@ public class MseqPlayer implements AudioClient
 					track.envelope = null;
 				}
 				else {
-					Drum drum = res.drum();
+					DrumPreset drum = res.drum();
 					Instrument ins = track.instrument = res.instrument();
 					EnvelopePair envelope = track.envelope = res.envelope();
 

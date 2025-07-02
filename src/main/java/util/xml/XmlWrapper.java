@@ -126,6 +126,14 @@ public class XmlWrapper
 			return Arrays.asList(tokens);
 		}
 
+		public boolean readBoolean(Element elem, XmlKey key, boolean defaultValue)
+		{
+			if (!hasAttribute(elem, key))
+				return defaultValue;
+			else
+				return readBoolean(elem, key);
+		}
+
 		public boolean readBoolean(Element elem, XmlKey key)
 		{
 			String value = getAttribute(elem, key);
@@ -138,6 +146,14 @@ public class XmlWrapper
 				complain("Invalid boolean value for " + key + ": " + value);
 
 			return false;
+		}
+
+		public int readInt(Element elem, XmlKey key, int defaultValue)
+		{
+			if (!hasAttribute(elem, key))
+				return defaultValue;
+			else
+				return readInt(elem, key);
 		}
 
 		public int readInt(Element elem, XmlKey key)
@@ -154,6 +170,14 @@ public class XmlWrapper
 			return v;
 		}
 
+		public int readHex(Element elem, XmlKey key, int defaultValue)
+		{
+			if (!hasAttribute(elem, key))
+				return defaultValue;
+			else
+				return readHex(elem, key);
+		}
+
 		public int readHex(Element elem, XmlKey key)
 		{
 			String value = getAttribute(elem, key);
@@ -168,6 +192,14 @@ public class XmlWrapper
 			return v;
 		}
 
+		public float readFloat(Element elem, XmlKey key, float defaultValue)
+		{
+			if (!hasAttribute(elem, key))
+				return defaultValue;
+			else
+				return readFloat(elem, key);
+		}
+
 		public float readFloat(Element elem, XmlKey key)
 		{
 			String value = getAttribute(elem, key);
@@ -180,6 +212,14 @@ public class XmlWrapper
 				complain("Invalid float value for " + key + ": " + value);
 			}
 			return v;
+		}
+
+		public double readFloat(Element elem, XmlKey key, double defaultValue)
+		{
+			if (!hasAttribute(elem, key))
+				return defaultValue;
+			else
+				return readDouble(elem, key);
 		}
 
 		public double readDouble(Element elem, XmlKey key)

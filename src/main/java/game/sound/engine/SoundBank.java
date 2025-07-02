@@ -14,8 +14,10 @@ import app.StarRodException;
 import game.sound.AudioModder;
 import game.sound.AudioModder.BankEntry;
 import game.sound.BankModder.Bank;
-import game.sound.DrumModder;
-import game.sound.DrumModder.Drum;
+import game.sound.DrumPreset;
+import game.sound.DrumsModder;
+import game.sound.InstrumentPreset;
+import game.sound.InstrumentsModder;
 import game.sound.engine.Envelope.EnvelopePair;
 import util.Logger;
 
@@ -28,7 +30,9 @@ public class SoundBank
 
 	private HashMap<String, Bank> bankNameMap;
 	private HashMap<Integer, Bank> bankRefMap;
-	private ArrayList<Drum> drumList;
+
+	private ArrayList<InstrumentPreset> instrumentList;
+	private ArrayList<DrumPreset> drumList;
 
 	public SoundBank() throws IOException
 	{
@@ -73,7 +77,8 @@ public class SoundBank
 				System.out.printf("INS: %X %X --> %4s %X%n", e.group, e.index, bank.name, i++);
 		}
 
-		drumList = DrumModder.load(MOD_AUDIO.getFile(FN_AUDIO_DRUMS));
+		instrumentList = InstrumentsModder.load(MOD_AUDIO.getFile(FN_AUDIO_PRESETS));
+		drumList = DrumsModder.load(MOD_AUDIO.getFile(FN_AUDIO_DRUMS));
 	}
 
 	public boolean installAuxBank(String bankName, int index)
@@ -148,7 +153,7 @@ public class SoundBank
 		return new InstrumentQueryResult(ins, env);
 	}
 
-	public record DrumQueryResult(Drum drum, Instrument instrument, EnvelopePair envelope)
+	public record DrumQueryResult(DrumPreset drum, Instrument instrument, EnvelopePair envelope)
 	{}
 
 	public DrumQueryResult getDrum(int drumID)
@@ -158,7 +163,7 @@ public class SoundBank
 			return null;
 		}
 
-		Drum drum = drumList.get(drumID);
+		DrumPreset drum = drumList.get(drumID);
 
 		InstrumentQueryResult ins = getInstrument(drum.bank, drum.patch);
 		if (ins == null) {

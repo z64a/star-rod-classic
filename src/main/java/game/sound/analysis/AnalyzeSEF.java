@@ -5,23 +5,43 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import app.Directories;
 import app.Environment;
 import app.Resource;
 import app.Resource.ResourceType;
-import app.StarRodException;
 import app.input.IOUtils;
+import util.Logger;
 
 public class AnalyzeSEF
 {
+	private static final int SEF_RAM = 0x801E2B10; // unused
+	private static final String TAB = "\t";
+
 	public static void main(String[] args) throws IOException
 	{
 		Environment.initialize();
 		new AnalyzeSEF();
 		Environment.exit();
 	}
+
+	// section sizes:
+	// SoundList0  0x300 bytes --> 4 bytes per 0xC0 sound IDs
+	// SoundList1  0x300 bytes --> 4 bytes per 0xC0 sound IDs
+	// SoundList2  0x300 bytes --> 4 bytes per 0xC0 sound IDs
+	// SoundList3  0x300 bytes --> 4 bytes per 0xC0 sound IDs
+	// SoundList4  0x100 bytes --> 4 bytes per 0x40 sound IDs
+	// SoundList5  0x100 bytes --> 4 bytes per 0x40 sound IDs
+	// SoundList6  0x100 bytes --> 4 bytes per 0x40 sound IDs
+	// SoundList7  0x100 bytes --> 4 bytes per 0x40 sound IDs
+	// SoundList2000  0x500 bytes --> 4 bytes per max of 0x140 sound IDs
+
+	// these sections fill in the order of 0, 4, 1, 5, 2, 6, 3, 7
+
+	// engine has maximum of 0x140 sounds in section 2000,
+	// only IDs up to 0x12E are used however
 
 	private AnalyzeSEF() throws IOException
 	{
@@ -37,7 +57,7 @@ public class AnalyzeSEF
 	{
 		ByteBuffer bb;
 		ArrayList<SEFPart> parts;
-		HashMap<Integer, SEFPart> partMap;
+		TreeMap<Integer, SEFPart> partMap;
 
 		int[] sections = new int[8];
 		int section2000;
@@ -46,7 +66,7 @@ public class AnalyzeSEF
 		{
 			this.bb = bb;
 			parts = new ArrayList<>();
-			partMap = new HashMap<>();
+			partMap = new TreeMap<>();
 
 			addPart(new SEFPart(0, 0x22, "Header"));
 
@@ -67,26 +87,25 @@ public class AnalyzeSEF
 			}
 			System.out.printf("%d : %X - %X = %X%n", 7, sections[7], section2000, section2000 - sections[7]);
 
-			for (int i = 0; i < 8; i++)
-				addPart(new SEFPart(sections[i], -1, String.format("SoundList%X", i)));
-			addPart(new SEFPart(section2000, -1, "SoundList2000"));
+			for (int i = 0; i < 8; i++) {
+				int len = i < 4 ? 0x300 : 0x100;
+				addPart(new SEFPart(sections[i], sections[i] + len, String.format("SoundList%X", i)));
+			}
+			addPart(new SEFPart(section2000, section2000 + 0x500, "SoundList2000"));
 
 			decodeIDs();
 
 			int last = 0;
 			Collections.sort(parts);
 			for (SEFPart part : parts) {
+				if (last != part.start)
+					System.out.printf("%-5X %-5X (%X) --- GAP ---%n", last, part.start, part.start - last);
 				System.out.println(part);
 
 				// assert(last == -1 || last == part.start);
 				last = part.end;
 			}
 			System.out.printf("FILE END: %X%n", bb.capacity());
-			System.out.println();
-
-			addPart(new SoundSeq(0x628, -1, "Test"));
-			((SoundSeq) partMap.get(0x628)).print(bb);
-			// ((SoundSeq)partMap.get(0x3240)).print(bb);
 		}
 
 		private void addPart(SEFPart part)
@@ -102,56 +121,193 @@ public class AnalyzeSEF
 			return partMap.get(offset);
 		}
 
+		private boolean isCovered(int offset)
+		{
+			Entry<Integer, SEFPart> e = partMap.floorEntry(offset);
+			if (e == null)
+				return false;
+
+			SEFPart p = e.getValue();
+			return (offset >= p.start && offset < p.end);
+		}
+
 		private void decodeIDs()
 		{
 			for (String s : Resource.getText(ResourceType.Basic, "sfx.txt")) {
 				String[] line = s.split("\\s+");
 				String name = line[1];
 				int id = (int) Long.parseLong(line[0], 16);
+				int offset, section, index;
 
 				if ((id & 0x2000) != 0) {
+					section = 9;
+					index = id & 0x1FF;
+					offset = section2000 + index * 4;
 
+					// each entry is just sound bytecode
+					System.out.printf("%04X --> %X-%02X --> %s%n", id, section, index, name);
+					readSound(bb, offset, name);
 				}
 				else {
-					int section;
-					int index = (id - 1) & 0xFF;
+					index = (id - 1) & 0xFF;
 
-					int offset;
 					if (index < 0xC0) {
 						section = (id >> 8) & 0x3;
 						offset = sections[section] + index * 4; // 8004BC40
+
+						bb.position(offset);
+						int data = bb.getShort();
+						int info = bb.getShort();
+
+						int playerID = (info & 7); // bits 0-2
+						// bits 3-4 unused
+						int polyphonyMode = (info & 0x60) >> 5; // bits 5-6
+						int useSpecificPlayerMode = (info & 0x80) >> 7; // bit 7
+						int priority = (info & 0x300) >> 8; // bits 8-9
+						// bit 10 unused
+						int exclusiveID = (info & 0x1800) >> 11; // bits 11-12
+						// bits 13-15 unused
+
+						if (polyphonyMode != 0) {
+
+							System.out.printf("%04X --> %X-%02X --> %s%n", id, section, index, name);
+
+							int numSounds = 2 << (polyphonyMode - 1);
+							for (int i = 0; i < numSounds; i++) {
+								System.out.println("POLY #" + (i + 1));
+
+								bb.position(data + 4 * i);
+								int poly = bb.getShort();
+
+								readSound(bb, poly, name);
+							}
+						}
+						else {
+							System.out.printf("%04X --> %X-%02X --> %s%n", id, section, index, name);
+							readSound(bb, data, name);
+						}
+
 					}
 					else {
 						index -= 0xC0;
 						section = 4 + (((id - 1) >> 8) & 0x3);
 						offset = sections[section] + index * 4; // 8004bb94
+
+						// each entry is just sound bytecode
+						System.out.printf("%04X --> %X-%02X --> %s%n", id, section, index, name);
+						readSound(bb, offset, name);
 					}
 
+					/*
 					bb.position(offset);
-					int data = bb.getShort();
-					int flags = bb.getShort();
-
-					// read at 8004c6a4
-
-					addPart(new SoundSeq(data, -1, name));
-
-					bb.position(data);
-					int bank = bb.get() & 0xFF;
-					int ins = bb.get() & 0xFF;
-					int volume = bb.get() & 0xFF;
-					int pan = bb.get() & 0xFF;
-					int reverb = bb.get() & 0xFF;
-					int A1 = bb.get() & 0xFF;
-
-					System.out.printf("%04X  %X-%02X --> %4X %4X (%02X %02X : %02X %02X %02X : %02X ) %s%n",
-						id, section, index, offset, data,
-						bank, ins, volume, pan, reverb, A1, name);
+					if (oneshot) {
+					
+						int b1 = bb.get() & 0xFF;
+						int bank = bb.get() & 0xFF;
+						int patch = bb.get() & 0xFF;
+						int b4 = bb.get() & 0xFF;
+					
+						int mode = b1 & 3;
+						int paramFlags = b1 & ~3;
+					
+						// use param flags to make certain params ignore api func settings
+						// SFX_PARAM_FLAG_VOLUME        = 04
+						// SFX_PARAM_FLAG_PAN           = 08
+						// SFX_PARAM_FLAG_PITCH         = 10
+						// SFX_PARAM_FLAG_FIXED_REVERB  = 20
+					
+						assert (mode == 2);
+					
+						int randVol = (b4 >> 1) | 3; // bottom 3 bits are irrelevant, maps to a range 3 to 127
+						int randPitch = b4 & 7;
+					
+						System.out.printf("%04X  %X-%02X --> %4X (%02X %02X : %02X %02X %02X ) %s%n",
+							id, section, index, offset,
+							bank, patch, randVol, randPitch, paramFlags, name);
+					}
+					else {
+						int data = bb.getShort();
+						int info = bb.getShort();
+					
+						int playerID = (info & 7); // bits 0-2
+						// bits 3-4 unused
+						int polyphonyMode = (info & 0x60) >> 5; // bits 5-6
+						int useSpecificPlayerMode = (info & 0x80) >> 7; // bit 7
+						int priority = (info & 0x300) >> 8; // bits 8-9
+						// bit 10 unused
+						int exclusiveID = (info & 0x1800) >> 11; // bits 11-12
+						// bits 13-15 unused
+					
+						readSound(bb, data, name, id, section, index);
+					}
+					*/
 				}
 			}
 		}
-	}
 
-	private static final int SEF_RAM = 0x801E2B10;
+		private void readSound(ByteBuffer bb, int start, String name)
+		{
+			bb.position(start);
+
+			int b1 = bb.get() & 0xFF;
+			int mode = b1 & 3;
+			int paramFlags = b1 & ~3;
+
+			// use param flags to make certain params ignore api func settings
+			// SFX_PARAM_FLAG_VOLUME        = 04
+			// SFX_PARAM_FLAG_PAN           = 08
+			// SFX_PARAM_FLAG_PITCH         = 10
+			// SFX_PARAM_FLAG_FIXED_REVERB  = 20
+
+			if (mode == 0) { // SFX_PARAM_MODE_BASIC
+				System.out.printf("BASIC @ %X%n", start);
+
+				int bank = bb.get() & 0xFF;
+				int patch = bb.get() & 0xFF;
+				int volume = bb.get() & 0xFF;
+				int pan = bb.get() & 0xFF;
+				int reverb = bb.get() & 0xFF;
+
+				int tuneLerp = 100 * (bb.get() & 0x7F); // semitones --> cents
+				int randPitch = (bb.get() & 0xF) << 3;
+
+				System.out.printf(TAB + "SetInstrument(%X, %X)%n", bank, patch);
+				System.out.printf(TAB + "SetVolume(%d)%n", volume);
+				System.out.printf(TAB + "SetPan(%d)%n", pan);
+				System.out.printf(TAB + "SetReverb(%d)%n", reverb);
+				System.out.printf(TAB + "TuneLerp(%d)%n", tuneLerp);
+				System.out.printf(TAB + "RandPitch(%d)%n", randPitch);
+			}
+			else if (mode == 1) { // SFX_PARAM_MODE_SEQUENCE
+				System.out.printf("SEQUENCE @ %X%n", start);
+				new SoundEntry(this, bb, start, name);
+			}
+			else if (mode == 2) { // SFX_PARAM_MODE_COMPACT
+				System.out.printf("COMPACT @ %X%n", start);
+
+				int bank = bb.get() & 0xFF;
+				int patch = bb.get() & 0xFF;
+				int b4 = bb.get() & 0xFF;
+
+				int volume = (b4 >> 1) | 3; // bottom 3 bits are irrelevant, maps to a range 3 to 127
+				int randPitch = b4 & 7;
+
+				System.out.printf(TAB + "SetInstrument(%X, %X)%n", bank, patch);
+				System.out.printf(TAB + "SetVolume(%d)%n", volume);
+				System.out.printf(TAB + "SetPan(%d)%n", 64); // forced
+				System.out.printf(TAB + "SetReverb(%d)%n", 0); // forced
+				System.out.printf(TAB + "TuneLerp(%d)%n", 48); // forced (plus 0x80 flag)
+				System.out.printf(TAB + "RandPitch(%d)%n", randPitch);
+
+				System.out.println();
+			}
+			else {
+				Logger.logError("Invalid mode: " + mode);
+			}
+
+			System.out.println();
+		}
+	}
 
 	private static class SEFPart implements Comparable<SEFPart>
 	{
@@ -198,40 +354,35 @@ public class AnalyzeSEF
 		{
 			super(start, end, "Seq:" + name);
 		}
+	}
 
-		public void print(ByteBuffer bb)
+	private static class SoundEntry
+	{
+		public SoundEntry(SoundArchive sef, ByteBuffer bb, int start, String name)
 		{
 			bb.position(start);
 
-			/*
-			 * System.out.println("Init:"); System.out.printf("SetInstrument(%X, %X)%n", bb.get() & 0xFF, bb.get() & 0xFF);
-			 * System.out.printf("SetVolume(%X)%n", bb.get() & 0xFF); System.out.printf("SetPan(%X)%n", bb.get() & 0xFF);
-			 * System.out.printf("SetReverb(%X)%n", bb.get() & 0xFF); System.out.printf("????(%X, %X)%n", bb.get() & 0xFF, bb.get()
-			 * & 0xFF); // System.out.printf("????(%X)%n", bb.get() & 0xFF);
-			 */
+			int b1 = bb.get() & 0xFF;
+			int mode = b1 & 3;
+			int paramFlags = b1 & ~3;
 
-			/*
-			 * Commands: PLAY[5900`, 47`, 120`] DELAY: 80` PitchSweep(225`, AE) DELAY: 225` (long) EndLoop() VolumeRamp(150`, F)
-			 * PitchSweep(150`, AC) DELAY: 150` (long) END
-			 */
-
-			System.out.println("Commands:");
 			while (true) {
 				int op = bb.get() & 0xFF;
 				if (op == 0) {
-					System.out.print("END");
+					System.out.print(TAB + "END");
+					sef.addPart(new SoundSeq(start, bb.position(), name));
 					break;
 				}
 
 				if (op < 0x78) {
-					System.out.printf("DELAY: %d`%n", op);
+					System.out.printf(TAB + "DELAY: %d`%n", op);
 					continue;
 				}
 
 				if (op < 0x80) {
 					int arg = bb.get() & 0xFF;
 					int delay = (op & 7) * 256 + arg + 0x78; // 0x78 = 120
-					System.out.printf("DELAY: %d` (long)%n", delay);
+					System.out.printf(TAB + "DELAY: %d` (long)%n", delay);
 					continue;
 				}
 
@@ -247,90 +398,103 @@ public class AnalyzeSEF
 						int lenExt = bb.get() & 0xFF;
 						playLen = ((playLen & 0x3F) << 8) + 0xC0 + lenExt;
 					}
-					System.out.printf("PLAY[%d`, %d`, %d`]%n", tuneLerp, velocity, playLen);
+					System.out.printf(TAB + "PLAY[%d`, %d`, %d`]%n", tuneLerp, velocity, playLen);
 
 					continue;
 				}
 
 				if (op < 0xE0) {
-					throw new StarRodException("Invalid byte in stream: %2X", op);
+					//TODO throw new StarRodException("Invalid byte in stream: %2X", op);
+
+					Logger.logfError("Invalid byte in stream: %2X", op);
+					continue;
 				}
 
 				// CmdHandlers
 				switch (op - 0xE0) {
 					case 0x00: // SetVolume
-						System.out.printf("SetVolume(%X)%n", bb.get() & 0xFF);
+						System.out.printf(TAB + "SetVolume(%X)%n", bb.get() & 0xFF);
 						break;
 					case 0x01: // SetPan
-						System.out.printf("SetPan(%X)%n", bb.get() & 0xFF);
+						System.out.printf(TAB + "SetPan(%X)%n", bb.get() & 0xFF);
 						break;
 					case 0x02: // SetInstrument
-						System.out.printf("SetInstrument(%X, %X)%n", bb.get() & 0xFF, bb.get() & 0xFF);
+						System.out.printf(TAB + "SetInstrument(%X, %X)%n", bb.get() & 0xFF, bb.get() & 0xFF);
 						break;
 					case 0x03: // SetReverb
-						System.out.printf("SetReverb(%X)%n", bb.get() & 0xFF);
+						System.out.printf(TAB + "SetReverb(%X)%n", bb.get() & 0xFF);
 						break;
 					case 0x04: // SetEnvelope
-						System.out.printf("SetEnvelope(%X)%n", bb.get() & 0xFF);
+						System.out.printf(TAB + "SetEnvelope(%X)%n", bb.get() & 0xFF);
 						break;
 					case 0x05: // CoarseTune
-						System.out.printf("CoarseTune(%X)%n", bb.get() & 0xFF);
+						System.out.printf(TAB + "CoarseTune(%X)%n", bb.get() & 0xFF);
 						break;
 					case 0x06: // FineTune
-						System.out.printf("FineTune(%X)%n", bb.get() & 0xFF);
+						System.out.printf(TAB + "FineTune(%X)%n", bb.get() & 0xFF);
 						break;
 					case 0x07: // WaitForEnd
-						System.out.printf("WaitForEnd()%n");
+						System.out.printf(TAB + "WaitForEnd()%n");
 						break;
 					case 0x08: // PitchSweep
-						System.out.printf("PitchSweep(%d`, %X)%n", bb.getShort() & 0xFFFF, bb.get() & 0xFF);
+						System.out.printf(TAB + "PitchSweep(%d`, %X)%n", bb.getShort() & 0xFFFF, bb.get() & 0xFF);
 						break;
 					case 0x09: // StartLoop
-						System.out.printf("StartLoop(%X)%n", bb.get() & 0xFF);
+						System.out.printf(TAB + "StartLoop(%X)%n", bb.get() & 0xFF);
 						break;
 					case 0x0A: // EndLoop
-						System.out.printf("EndLoop()%n");
+						System.out.printf(TAB + "EndLoop()%n");
 						break;
 					case 0x0B: // WaitForRelease
-						System.out.printf("WaitForRelease()%n");
+						System.out.printf(TAB + "WaitForRelease()%n");
 						break;
 					case 0x0C: // SetCurrentVolume
-						System.out.printf("SetCurrentVolume(%X)%n", bb.get() & 0xFF);
+						System.out.printf(TAB + "SetCurrentVolume(%X)%n", bb.get() & 0xFF);
 						break;
 					case 0x0D: // VolumeRamp
-						System.out.printf("VolumeRamp(%d`, %X)%n", bb.getShort() & 0xFFFF, bb.get() & 0xFF);
+						System.out.printf(TAB + "VolumeRamp(%d`, %X)%n", bb.getShort() & 0xFFFF, bb.get() & 0xFF);
 						break;
 					case 0x0E: // SetAlternativeSound
-						System.out.printf("SetAlternativeSound(%X, %X)%n", bb.get() & 0xFF, bb.getShort() & 0xFFFF);
+						System.out.printf(TAB + "SetAlternativeSound(%X, %X)%n", bb.get() & 0xFF, bb.getShort() & 0xFFFF);
 						break;
 					case 0x0F: // Stop
-						System.out.printf("Stop()%n");
+						System.out.printf(TAB + "Stop()%n");
 						break;
 					case 0x10: // Jump
-						System.out.printf("Jump(%X)%n", bb.getShort() & 0xFFFF);
+						int dest = bb.getShort() & 0xFFFF;
+						System.out.printf(TAB + "Jump(%X)%n", dest);
+						sef.addPart(new SoundSeq(start, bb.position(), name));
+
+						if (sef.isCovered(dest)) {
+							return;
+						}
+
+						start = dest;
+						bb.position(start);
 						break;
 					case 0x11: // Restart
-						System.out.printf("Jump()%n");
+						//	bb.position(start);
+						System.out.printf(TAB + "Restart()%n");
 						break;
 					case 0x12: // NOP
 						break;
 					case 0x13: // SetRandomPitch
-						System.out.printf("SetRandomPitch(%X)%n", bb.get() & 0xFF);
+						System.out.printf(TAB + "SetRandomPitch(%X)%n", bb.get() & 0xFF);
 						break;
 					case 0x14: // SetRandomVelocity
-						System.out.printf("SetRandomVelocity(%X)%n", bb.get() & 0xFF);
+						System.out.printf(TAB + "SetRandomVelocity(%X)%n", bb.get() & 0xFF);
 						break;
 					case 0x15: // SetUnkA3
-						System.out.printf("SetUnkA3(%X)%n", bb.get() & 0xFF);
+						System.out.printf(TAB + "SetUnkA3(%X)%n", bb.get() & 0xFF);
 						break;
 					case 0x16: // SetEnvelopePress
-						System.out.printf("SetEnvelopePress(%X)%n", bb.getShort() & 0xFFFF);
+						System.out.printf(TAB + "SetEnvelopePress(%X)%n", bb.getShort() & 0xFFFF);
 						break;
 					case 0x17: // PlaySound
-						System.out.printf("PlaySound(%X, %X)%n", bb.getShort() & 0xFFFF, bb.getShort() & 0xFFFF);
+						System.out.printf(TAB + "PlaySound(%X, %X)%n", bb.getShort() & 0xFFFF, bb.getShort() & 0xFFFF);
 						break;
 					case 0x18: // SetAlternativeVolume
-						System.out.printf("SetAlternativeVolume(%X)%n", bb.get() & 0xFF);
+						System.out.printf(TAB + "SetAlternativeVolume(%X)%n", bb.get() & 0xFF);
 						break;
 				}
 			}
