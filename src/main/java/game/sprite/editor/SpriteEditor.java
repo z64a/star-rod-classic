@@ -539,17 +539,19 @@ public class SpriteEditor extends BaseEditor
 
 		refreshAnimList();
 
-		if (sprite.palettes.size() > 0) {
-			paletteComboBox.setModel(new ListAdapterComboboxModel<>(sprite.palettes));
-			paletteComboBox.setSelectedIndex(0);
-			paletteComboBox.setEnabled(true);
-		}
-		else {
-			// this is not expected to be a valid state...
-			animOverridePalette = null;
-			paletteComboBox.setModel(new ListAdapterComboboxModel<>(new DefaultListModel<SpritePalette>()));
-			paletteComboBox.setEnabled(false);
-		}
+		SwingUtilities.invokeLater(() -> {
+			if (!sprite.palettes.isEmpty()) {
+				paletteComboBox.setModel(new ListAdapterComboboxModel<>(sprite.palettes));
+				paletteComboBox.setSelectedIndex(0);
+				paletteComboBox.setEnabled(true);
+			}
+			else {
+				// this is not expected to be a valid state...
+				animOverridePalette = null;
+				paletteComboBox.setModel(new ListAdapterComboboxModel<>(new DefaultListModel<SpritePalette>()));
+				paletteComboBox.setEnabled(false);
+			}
+		});
 
 		return true;
 	}
