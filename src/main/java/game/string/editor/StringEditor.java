@@ -336,24 +336,26 @@ public class StringEditor extends BaseEditor
 		ignoreDocumentFormatChanges = true;
 		String text = getInputText();
 
-		// clear formatting
-		inputDocument.setCharacterAttributes(0, text.length(), attrDefault, true);
+		SwingUtilities.invokeLater(() -> {
+			// clear formatting
+			inputDocument.setCharacterAttributes(0, text.length(), attrDefault, true);
 
-		// highlight current page
-		if (printer.currentPage != null)
-			inputDocument.setCharacterAttributes(printer.currentPage.srcStart,
-				printer.currentPage.srcEnd - printer.currentPage.srcStart,
-				attrCurrent, false);
+			// highlight current page
+			if (printer.currentPage != null)
+				inputDocument.setCharacterAttributes(printer.currentPage.srcStart,
+						printer.currentPage.srcEnd - printer.currentPage.srcStart,
+						attrCurrent, false);
 
-		// highlight errors
-		for (Sequence seq : printer.sequences) {
-			if (seq.hasError())
-				inputDocument.setCharacterAttributes(seq.srcStart, seq.srcLen, attrError, false);
-			else if (seq.tag)
-				inputDocument.setCharacterAttributes(seq.srcStart, seq.srcLen, attrTag, false);
-		}
+			// highlight errors
+			for (Sequence seq : printer.sequences) {
+				if (seq.hasError())
+					inputDocument.setCharacterAttributes(seq.srcStart, seq.srcLen, attrError, false);
+				else if (seq.tag)
+					inputDocument.setCharacterAttributes(seq.srcStart, seq.srcLen, attrTag, false);
+			}
 
-		ignoreDocumentFormatChanges = false;
+			ignoreDocumentFormatChanges = false;
+		});
 	}
 
 	private void handleInput(double deltaTime)
