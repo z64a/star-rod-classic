@@ -620,8 +620,14 @@ public class StringRenderer
 					int spriteID = printer.getAnimSprite();
 					int rasterID = printer.getAnimRaster();
 
-					Sprite npc = spriteLoader.getSprite(SpriteSet.Npc, spriteID);
-					if (npc != null && !npc.areTexturesLoaded())
+                    Sprite npc;
+                    try {
+                        npc = spriteLoader.getSprite(SpriteSet.Npc, spriteID);
+                    } catch (SpriteLoader.SpriteLoadingException e) {
+                        npc = null;
+                    }
+
+                    if (npc != null && !npc.areTexturesLoaded())
 						npc.loadTextures();
 
 					if (npc != null && npc.rasters.getSize() > rasterID) {

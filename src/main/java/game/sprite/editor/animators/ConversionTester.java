@@ -12,8 +12,7 @@ import game.sprite.SpriteLoader.SpriteSet;
 
 public abstract class ConversionTester
 {
-	public static void main(String[] args)
-	{
+	public static void main(String[] args) throws SpriteLoader.SpriteLoadingException {
 		Environment.initialize();
 
 		SpriteLoader loader = new SpriteLoader();

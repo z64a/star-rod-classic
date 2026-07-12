@@ -118,7 +118,7 @@ public class SpritePatcher
 				cacheFile = new File(Directories.MOD_SPR_PLR_CACHE + "cache.bin");
 				break;
 			default:
-				throw new InvalidInputException("Invalid sprite set: %s");
+				throw new InvalidInputException("Invalid sprite set: " + set);
 		}
 
 		HashMap<String, SpriteIndex> cache = readCache(cacheFile);
@@ -142,8 +142,13 @@ public class SpritePatcher
 				continue;
 			}
 
-			Sprite sprite = spriteLoader.getSprite(set, data.id, true);
-			sprite.recalculateIndices();
+            Sprite sprite;
+            try {
+                sprite = spriteLoader.getSprite(set, data.id, true);
+            } catch (SpriteLoader.SpriteLoadingException e) {
+                throw new IOException(e);
+            }
+            sprite.recalculateIndices();
 
 			String spriteName = sprite.toString().replaceAll("\\s+", "");
 			addSpriteName(spriteNameMap, setName, spriteName, data.id);
@@ -362,10 +367,14 @@ public class SpritePatcher
 
 		// load player sprites, get lists of the rasters
 		for (int i = 1; i <= highestID; i++) {
-			Sprite spr = spriteLoader.getSprite(SpriteSet.Player, i);
-			playerSprites.add(spr);
-			numPlayerSprites++;
-			numPlayerSpriteRasters += spr.rasters.size();
+            try {
+                Sprite spr = spriteLoader.getSprite(SpriteSet.Player, i);
+				playerSprites.add(spr);
+				numPlayerSprites++;
+				numPlayerSpriteRasters += spr.rasters.size();
+			} catch (SpriteLoader.SpriteLoadingException e) {
+				throw new IOException(e);
+			}
 		}
 	}
 
@@ -647,8 +656,12 @@ public class SpritePatcher
 			File out = new File(MOD_SPR_NPC_TEMP + spriteSheetIDName);
 			Logger.log(String.format("Writing NPC sprite %02X of %02X...", i, highestID), Priority.MILESTONE);
 
-			Sprite spr = spriteLoader.getSprite(SpriteSet.Npc, i);
-			writeBinaryNpc(spr, out);
+            try {
+                Sprite spr = spriteLoader.getSprite(SpriteSet.Npc, i);
+				writeBinaryNpc(spr, out);
+			} catch (SpriteLoader.SpriteLoadingException e) {
+				throw new IOException(e);
+			}
 
 			CacheResult result = cache.get(out);
 			byte[] encoded = result.data;

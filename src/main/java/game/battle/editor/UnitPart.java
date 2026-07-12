@@ -42,12 +42,13 @@ public class UnitPart
 		if (sprite != null)
 			sprite.unloadTextures();
 
-		sprite = spriteLoader.getSprite(SpriteSet.Npc, spriteID);
-
-		if (sprite != null) {
+        try {
+            sprite = spriteLoader.getSprite(SpriteSet.Npc, spriteID);
 			sprite.prepareForEditor();
 			sprite.loadTextures();
-		}
+        } catch (SpriteLoader.SpriteLoadingException e) {
+            sprite = null;
+        }
 	}
 
 	public void setIdle(boolean idle)
