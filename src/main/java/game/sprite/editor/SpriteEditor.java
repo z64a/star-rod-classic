@@ -283,8 +283,14 @@ public class SpriteEditor extends BaseEditor
 	{
 		TextureManager.bindEditorTextures();
 
-		Sprite referenceSprite = spriteLoader.getSprite(SpriteSet.Player, 1);
-		if (referenceSprite != null) {
+        Sprite referenceSprite;
+        try {
+            referenceSprite = spriteLoader.getSprite(SpriteSet.Player, 1);
+        } catch (SpriteLoader.SpriteLoadingException e) {
+            referenceSprite = null;
+        }
+
+        if (referenceSprite != null) {
 			referenceTile = referenceSprite.rasters.get(0).img;
 			referenceTile.glLoad(GL_REPEAT, GL_REPEAT, false);
 
@@ -504,13 +510,14 @@ public class SpriteEditor extends BaseEditor
 			return true;
 		}
 
-		sprite = spriteLoader.getSprite(spriteSet, id, forceReload);
-
-		if (sprite == null) {
+        try {
+            sprite = spriteLoader.getSprite(spriteSet, id, forceReload);
+        } catch (SpriteLoader.SpriteLoadingException e) {
+            sprite = null;
 			setAnimation(null);
 			editorModeTabs.setVisible(false);
 			return false;
-		}
+        }
 
 		if (!editorModeTabs.isVisible())
 			editorModeTabs.setVisible(true);

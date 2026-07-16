@@ -339,18 +339,22 @@ public class BattleEditor extends BaseEditor
 		loadTextures();
 		ShadowRenderer.init();
 
-		playerSprite = spriteLoader.getSprite(SpriteSet.Player, 1);
-		//	playerSprite.enableStencilBuffer = true;
-		playerSprite.prepareForEditor();
-		playerSprite.loadTextures();
+        try {
+            playerSprite = spriteLoader.getSprite(SpriteSet.Player, 1);
+            //	playerSprite.enableStencilBuffer = true;
+            playerSprite.prepareForEditor();
+            playerSprite.loadTextures();
 
-		for (PartnerActor partner : PartnerActor.values()) {
-			partner.sprite = spriteLoader.getSprite(SpriteSet.Npc, partner.spriteID);
-			partner.sprite.prepareForEditor();
-			partner.sprite.loadTextures();
-		}
+            for (PartnerActor partner : PartnerActor.values()) {
+                partner.sprite = spriteLoader.getSprite(SpriteSet.Npc, partner.spriteID);
+                partner.sprite.prepareForEditor();
+                partner.sprite.loadTextures();
+            }
+        } catch (SpriteLoader.SpriteLoadingException e) {
+            throw new RuntimeException(e);
+        }
 
-		glEnable(GL_STENCIL_TEST);
+        glEnable(GL_STENCIL_TEST);
 		glClearStencil(0);
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 

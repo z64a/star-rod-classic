@@ -714,12 +714,13 @@ public class NpcComponent extends BaseMarkerComponent
 		if (previewSprite != null)
 			previewSprite.unloadTextures();
 
-		previewSprite = spriteLoader.getSprite(SpriteSet.Npc, getSpriteID());
-
-		if (previewSprite != null) {
+        try {
+            previewSprite = spriteLoader.getSprite(SpriteSet.Npc, getSpriteID());
 			previewSprite.prepareForEditor();
 			previewSprite.loadTextures();
-		}
+        } catch (SpriteLoader.SpriteLoadingException e) {
+            previewSprite = null;
+        }
 
 		parentMarker.updateListeners(MarkerInfoPanel.tag_SetSprite);
 	}

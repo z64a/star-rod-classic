@@ -66,6 +66,12 @@ public class SpriteLoader
 		Player, Npc
 	}
 
+	public static class SpriteLoadingException extends Exception {
+		public SpriteLoadingException(String message, Throwable cause) {
+			super(message, cause);
+		}
+	}
+
 	private static boolean loaded = false;
 
 	private static TreeMap<Integer, SpriteMetadata> playerSpriteData = null;
@@ -134,13 +140,11 @@ public class SpriteLoader
 		return spriteMap.values();
 	}
 
-	public Sprite getSprite(SpriteSet set, int id)
-	{
+	public Sprite getSprite(SpriteSet set, int id) throws SpriteLoadingException {
 		return getSprite(set, id, false);
 	}
 
-	public Sprite getSprite(SpriteSet set, int id, boolean forceReload)
-	{
+	public Sprite getSprite(SpriteSet set, int id, boolean forceReload) throws SpriteLoadingException {
 		if (!loaded)
 			throw new IllegalStateException("getSprite invoked before initializing SpriteLoader!");
 
@@ -153,8 +157,7 @@ public class SpriteLoader
 		throw new IllegalArgumentException("Unknown sprite set: " + set);
 	}
 
-	private Sprite getNpcSprite(int id, boolean forceReload)
-	{
+	private Sprite getNpcSprite(int id, boolean forceReload) throws SpriteLoadingException {
 		if (!forceReload && npcSpriteCache.containsKey(id))
 			return npcSpriteCache.get(id);
 
@@ -163,7 +166,7 @@ public class SpriteLoader
 
 		SpriteMetadata md = npcSpriteData.get(id);
 		File xmlFile = md.xml;
-		Sprite npcSprite = null;
+		Sprite npcSprite;
 
 		try {
 			npcSprite = Sprite.read(xmlFile, SpriteSet.Npc);
@@ -172,16 +175,14 @@ public class SpriteLoader
 		}
 		catch (Throwable e) {
 			Logger.logWarning("Error while loading NPC sprite! " + e.getMessage());
-			e.printStackTrace();
-			return null;
 			//			npcSpriteData.remove(id); // file is invalid
+			throw new SpriteLoadingException("Error while loading NPC sprite '" + md.name + "'! ", e);
 		}
 
 		return npcSprite;
 	}
 
-	private Sprite getPlayerSprite(int id, boolean forceReload)
-	{
+	private Sprite getPlayerSprite(int id, boolean forceReload) throws SpriteLoadingException {
 		if (!forceReload && playerSpriteCache.containsKey(id))
 			return playerSpriteCache.get(id);
 
@@ -199,8 +200,8 @@ public class SpriteLoader
 		}
 		catch (Throwable e) {
 			Logger.logWarning("Error while loading player sprite " + md.id + "! " + e.getMessage());
-			e.printStackTrace();
 			playerSpriteData.remove(id); // file is invalid
+			throw new SpriteLoadingException("Error while loading player sprite '" + md.name + "'! ", e);
 		}
 
 		return playerSprite;
