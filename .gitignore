@@ -22,7 +22,16 @@ replay_pid*
 *.backup
 *.log
 
-# Local experiments
+# Keep shared encoding, compiler, formatter, and cleanup settings.
+!/.settings/org.eclipse.core.resources.prefs
+!/.settings/org.eclipse.jdt.core.prefs
+!/.settings/org.eclipse.jdt.ui.prefs
+
+# VS Code: keep the shared workspace settings only
+/.vscode/*
+!/.vscode/settings.json
+
+# Local source experiments
 /src/main/java/analysis/
 /src/main/java/compiler/
 
