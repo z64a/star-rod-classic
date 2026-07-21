@@ -2,10 +2,13 @@ package game.sound.bgm;
 
 import java.util.ArrayList;
 
+import game.sound.bgm.Track.Note;
 import game.sound.bgm.Track.TrackCommand;
 import util.DynamicByteBuffer;
+import util.xml.XmlWrapper.XmlTag;
+import util.xml.XmlWrapper.XmlWriter;
 
-public class CommandStream extends ArrayList<TrackCommand>
+public class CommandStream
 {
 	public static enum StreamType
 	{
@@ -21,29 +24,62 @@ public class CommandStream extends ArrayList<TrackCommand>
 	public transient int filePos;
 	public transient int fileLen;
 
+	public ArrayList<TrackCommand> all = new ArrayList<>();
+
+	public ArrayList<TrackCommand> properties = new ArrayList<>();
+	public ArrayList<TrackCommand> notes = new ArrayList<>();
+
+	public ArrayList<TrackCommand> trackPan = new ArrayList<>();
+	public ArrayList<TrackCommand> trackVol = new ArrayList<>();
+	public ArrayList<TrackCommand> trackDetune = new ArrayList<>();
+
+	public ArrayList<TrackCommand> insPan = new ArrayList<>();
+	public ArrayList<TrackCommand> insVol = new ArrayList<>();
+	public ArrayList<TrackCommand> insDetune = new ArrayList<>();
+
 	public CommandStream(StreamType type)
 	{
 		this.type = type;
+	}
+
+	public void toXML(XmlWriter xmw, XmlTag tag)
+	{
+		xmw.openTag(tag);
+		for (TrackCommand cmd : all) {
+			cmd.toXML(xmw);
+		}
+		xmw.closeTag(tag);
+	}
+
+	public void split()
+	{
+		properties.clear();
+		notes.clear();
+		trackPan.clear();
+		trackVol.clear();
+		trackDetune.clear();
+		insPan.clear();
+		insVol.clear();
+		insDetune.clear();
+
+		for (TrackCommand cmd : all) {
+			if (cmd instanceof Note note) {
+
+			}
+		}
+	}
+
+	public void collect()
+	{
+		all.clear();
+
 	}
 
 	public void build(DynamicByteBuffer dbb, boolean terminate)
 	{
 		filePos = dbb.position();
 
-		/*
-		int time = 0;
-		for (TrackCommand cmd : this) {
-			if (time < cmd.time) {
-				addDelay(dbb, cmd.time - time);
-			}
-			cmd.build(dbb);
-		}
-		if (time < duration) {
-			addDelay(dbb, duration - time);
-		}
-		*/
-
-		for (TrackCommand cmd : this) {
+		for (TrackCommand cmd : all) {
 			cmd.build(dbb);
 		}
 

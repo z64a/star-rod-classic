@@ -38,9 +38,12 @@ public class Track implements XmlSerializable
 		NOTE,
 		CALL,
 		PROPERTY,
-		DETUNE_CURVE,
-		VOLUME_CURVE,
-		PAN_CURVE
+		INS_DETUNE,
+		INS_VOLUME,
+		INS_PAN,
+		TRACK_DETUNE,
+		TRACK_VOLUME,
+		TRACK_PAN,
 	}
 
 	private static final int SPECIAL_OPCODE = 0xFF;
@@ -94,7 +97,7 @@ public class Track implements XmlSerializable
 
 	public boolean hasBranch()
 	{
-		for (TrackCommand cmd : commands) {
+		for (TrackCommand cmd : commands.all) {
 			if (cmd instanceof Branch) {
 				return true;
 			}
@@ -232,7 +235,7 @@ public class Track implements XmlSerializable
 
 			if (op < 0x78) {
 				int delay = op;
-				commands.add(new Delay(reader, delay));
+				commands.all.add(new Delay(reader, delay));
 
 				if (debugPrint)
 					System.out.printf(CMD_FMT + "Delay ~ %d%n", reader.getCommandPos(), reader.getTime(), delay);
@@ -241,7 +244,7 @@ public class Track implements XmlSerializable
 			}
 			else if (op < 0x80) {
 				int delay = ((op & 7) << 8) + reader.getU8() + 0x78;
-				commands.add(new Delay(reader, delay));
+				commands.all.add(new Delay(reader, delay));
 
 				if (debugPrint)
 					System.out.printf(CMD_FMT + "Delay ~ %d%n", reader.getCommandPos(), reader.getTime(), delay);
@@ -255,7 +258,7 @@ public class Track implements XmlSerializable
 				if (length >= 0xC0) {
 					length = ((length & 0x3F) << 8) + reader.getU8() + 0xC0;
 				}
-				commands.add(new Note(reader, pitch, velocity, length));
+				commands.all.add(new Note(reader, pitch, velocity, length));
 
 				int curTime = reader.getTime();
 
@@ -280,105 +283,105 @@ public class Track implements XmlSerializable
 			else {
 				switch (op) {
 					case SetMasterTempo.OPCODE:
-						commands.add(new SetMasterTempo(reader));
+						commands.all.add(new SetMasterTempo(reader));
 						break;
 					case SetMasterVolume.OPCODE:
-						commands.add(new SetMasterVolume(reader));
+						commands.all.add(new SetMasterVolume(reader));
 						break;
 					case SetMasterDetune.OPCODE:
-						commands.add(new SetMasterDetune(reader));
+						commands.all.add(new SetMasterDetune(reader));
 						break;
 					case SetBusEffect.OPCODE:
-						commands.add(new SetBusEffect(reader));
+						commands.all.add(new SetBusEffect(reader));
 						break;
 					case MasterTempoLerp.OPCODE:
-						commands.add(new MasterTempoLerp(reader));
+						commands.all.add(new MasterTempoLerp(reader));
 						break;
 					case MasterVolumeLerp.OPCODE:
-						commands.add(new MasterVolumeLerp(reader));
+						commands.all.add(new MasterVolumeLerp(reader));
 						break;
 					case SetMasterEffect.OPCODE:
-						commands.add(new SetMasterEffect(reader));
+						commands.all.add(new SetMasterEffect(reader));
 						break;
 					case OverridePatch.OPCODE:
-						commands.add(new OverridePatch(reader));
+						commands.all.add(new OverridePatch(reader));
 						break;
 					case InstrumentVolume.OPCODE:
-						commands.add(new InstrumentVolume(reader));
+						commands.all.add(new InstrumentVolume(reader));
 						break;
 					case InstrumentPan.OPCODE:
-						commands.add(new InstrumentPan(reader));
+						commands.all.add(new InstrumentPan(reader));
 						break;
 					case InstrumentReverb.OPCODE:
-						commands.add(new InstrumentReverb(reader));
+						commands.all.add(new InstrumentReverb(reader));
 						break;
 					case TrackVolume.OPCODE:
-						commands.add(new TrackVolume(reader));
+						commands.all.add(new TrackVolume(reader));
 						break;
 					case InstrumentCoarseTune.OPCODE:
-						commands.add(new InstrumentCoarseTune(reader));
+						commands.all.add(new InstrumentCoarseTune(reader));
 						break;
 					case InstrumentFineTune.OPCODE:
-						commands.add(new InstrumentFineTune(reader));
+						commands.all.add(new InstrumentFineTune(reader));
 						break;
 					case TrackDetune.OPCODE:
-						commands.add(new TrackDetune(reader));
+						commands.all.add(new TrackDetune(reader));
 						break;
 					case TrackTremolo.OPCODE:
-						commands.add(new TrackTremolo(reader));
+						commands.all.add(new TrackTremolo(reader));
 						break;
 					case TrackTremoloRate.OPCODE:
-						commands.add(new TrackTremoloRate(reader));
+						commands.all.add(new TrackTremoloRate(reader));
 						break;
 					case TrackTremoloDepth.OPCODE:
-						commands.add(new TrackTremoloDepth(reader));
+						commands.all.add(new TrackTremoloDepth(reader));
 						break;
 					case TrackTremoloStop.OPCODE:
-						commands.add(new TrackTremoloStop(reader));
+						commands.all.add(new TrackTremoloStop(reader));
 						break;
 					case RandomPan.OPCODE:
-						commands.add(new RandomPan(reader));
+						commands.all.add(new RandomPan(reader));
 						break;
 					case UseInstrument.OPCODE:
-						commands.add(new UseInstrument(reader));
+						commands.all.add(new UseInstrument(reader));
 						break;
 					case InstrumentVolumeLerp.OPCODE:
-						commands.add(new InstrumentVolumeLerp(reader));
+						commands.all.add(new InstrumentVolumeLerp(reader));
 						break;
 					case ReverbType.OPCODE:
-						commands.add(new ReverbType(reader));
+						commands.all.add(new ReverbType(reader));
 						break;
 					case Branch.OPCODE:
 						assert (commands.type == StreamType.TRACK);
-						commands.add(new Branch(reader));
+						commands.all.add(new Branch(reader));
 						break;
 					case EventTrigger.OPCODE:
-						commands.add(new EventTrigger(reader));
+						commands.all.add(new EventTrigger(reader));
 						break;
 					case Detour.OPCODE:
 						assert (commands.type == StreamType.TRACK);
-						commands.add(new Detour(reader));
+						commands.all.add(new Detour(reader));
 						break;
 					case SPECIAL_OPCODE:
 						int type = reader.getU8();
 						switch (type) {
 							case SetStereoDelay.SUBOP:
-								commands.add(new SetStereoDelay(reader));
+								commands.all.add(new SetStereoDelay(reader));
 								break;
 							case SeekCustomEnv.SUBOP:
-								commands.add(new SeekCustomEnv(reader));
+								commands.all.add(new SeekCustomEnv(reader));
 								break;
 							case WriteCustomEnv.SUBOP:
-								commands.add(new WriteCustomEnv(reader));
+								commands.all.add(new WriteCustomEnv(reader));
 								break;
 							case UseCustomEnv.SUBOP:
-								commands.add(new UseCustomEnv(reader));
+								commands.all.add(new UseCustomEnv(reader));
 								break;
 							case TriggerSound.SUBOP:
-								commands.add(new TriggerSound(reader));
+								commands.all.add(new TriggerSound(reader));
 								break;
 							case ProxMixOverride.SUBOP:
-								commands.add(new ProxMixOverride(reader));
+								commands.all.add(new ProxMixOverride(reader));
 								break;
 							default:
 								throw new StarRodException("Unknown special command type: %02X", type);
@@ -406,6 +409,11 @@ public class Track implements XmlSerializable
 		}
 	}
 
+	public void beforeBuild()
+	{
+		commands.collect();
+	}
+
 	public void build(DynamicByteBuffer dbb)
 	{
 		commands.build(dbb, true);
@@ -417,7 +425,7 @@ public class Track implements XmlSerializable
 
 	public void updateRefs(DynamicByteBuffer dbb)
 	{
-		for (TrackCommand cmd : commands) {
+		for (TrackCommand cmd : commands.all) {
 			cmd.update(dbb);
 		}
 	}
@@ -481,11 +489,7 @@ public class Track implements XmlSerializable
 		xmw.openTag(tag);
 
 		XmlTag commandsTag = xmw.createTag(TAG_COMMANDS, false);
-		xmw.openTag(commandsTag);
-		for (TrackCommand cmd : commands) {
-			cmd.toXML(xmw);
-		}
-		xmw.closeTag(commandsTag);
+		commands.toXML(xmw, commandsTag);
 
 		if (detours.size() > 0) {
 			XmlTag listTag = xmw.createTag(TAG_DETOUR_LIST, false);
@@ -520,25 +524,30 @@ public class Track implements XmlSerializable
 				if (cmd instanceof Delay delay) {
 					time += delay.ticks;
 					//TODO do not include delay commands in live, editable command stream
-					commands.add(cmd); //TODO remove
+					commands.all.add(cmd); //TODO remove
 				}
 				else if (cmd instanceof Detour detour) {
 					detour.detour = track.detourLookup.get(detour.serialID);
 					time += detour.detour.commands.duration;
-					commands.add(cmd);
+					commands.all.add(cmd);
 				}
 				else if (cmd instanceof Branch branch) {
 					branch.branch = track.branchLookup.get(branch.serialID);
 					time += track.phrase.song.branchMeasure;
-					commands.add(cmd);
+					commands.all.add(cmd);
 				}
 				else {
-					commands.add(cmd);
+					commands.all.add(cmd);
 				}
 			}
 		}
 
 		commands.duration = time;
+	}
+
+	public void retime(long tick)
+	{
+
 	}
 
 	private static TrackCommand makeCommand(XmlReader xmr, Element elem, Track track)
@@ -631,11 +640,7 @@ public class Track implements XmlSerializable
 			xmw.openTag(tag);
 
 			XmlTag commandsTag = xmw.createTag(TAG_COMMANDS, false);
-			xmw.openTag(commandsTag);
-			for (TrackCommand cmd : commands) {
-				cmd.toXML(xmw);
-			}
-			xmw.closeTag(commandsTag);
+			commands.toXML(xmw, commandsTag);
 
 			xmw.closeTag(tag);
 		}
@@ -702,11 +707,8 @@ public class Track implements XmlSerializable
 				xmw.addInt(optionTag, ATTR_INDEX, i);
 				if (options[i].isDrum)
 					xmw.addBoolean(optionTag, ATTR_IS_DRUM, options[i].isDrum);
-				xmw.openTag(optionTag);
-				for (TrackCommand cmd : options[i]) {
-					cmd.toXML(xmw);
-				}
-				xmw.closeTag(optionTag);
+
+				options[i].toXML(xmw, optionTag);
 			}
 
 			xmw.closeTag(branchTag);

@@ -1,44 +1,33 @@
-# Compiled class files
+# Java and JVM artifacts
 *.class
-
-# VM crash logs
 hs_err_pid*
 replay_pid*
 
-# eclipse builds
+# Gradle and generated build output
+/.gradle/
 /bin/
-
-# gradle files
-.gradle
 /build/
+/build-dev/
+/build-user/
+/target/
+
+# Local Star Rod data and runtime output
+/backups/
+/cfg/
+/database/include/
+/docs/
+/logs/
+/temp/
+/yay0/
+*.backup
+*.log
 
 # Local experiments
 /src/main/java/analysis/
 /src/main/java/compiler/
 
-# Temporary Star Rod runtime files
-database/include/**
-logs/**
-
-# Old lists TODO cleanup
-/build/**
-/build-dev/**
-/build-user/**
-/target/**
-/bin/**
-
-/temp/**
-/docs/**
-/yay0/**
-
-/cfg/**
-/logs/**
-/backups/**
-*.backup
-*.log
-/target/
+# Locally generated Maven project
 pom.xml
-/build-dev/
 
 # Eclipse settings
 .settings/*
@@ -46,6 +35,11 @@ pom.xml
 !.settings/org.eclipse.jdt.core.prefs
 !.settings/org.eclipse.jdt.ui.prefs
 
-# Vscode settings
-.vscode/*
-!.vscode/settings.json
+# Portable Eclipse encoding, compiler, formatter, and cleanup rules
+!/.settings/org.eclipse.core.resources.prefs
+!/.settings/org.eclipse.jdt.core.prefs
+!/.settings/org.eclipse.jdt.ui.prefs
+
+# Shared VS Code settings
+/.vscode/*
+!/.vscode/settings.json

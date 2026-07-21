@@ -65,9 +65,6 @@ dependencies {
     implementation("org.lwjgl:lwjgl-tinyfd")
     implementation("org.lwjgl:lwjgl-assimp")
 
-    // A release contains only the native libraries for the platform it runs on.
-    // This avoids collisions between identically named x64 and ARM libraries in
-    // the fat JAR and keeps each download substantially smaller.
     runtimeOnly("org.lwjgl:lwjgl::$lwjglNatives")
     runtimeOnly("org.lwjgl:lwjgl-opengl::$lwjglNatives")
     runtimeOnly("org.lwjgl:lwjgl-glfw::$lwjglNatives")

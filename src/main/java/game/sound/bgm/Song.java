@@ -183,6 +183,11 @@ public class Song implements XmlSerializable
 			}
 		}
 
+		// perform setup work to create and assign timing for output command stream
+		for (Phrase p : phrases) {
+			p.beforeBuild();
+		}
+
 		// phrase tables and non-branching tracks go next
 		for (Phrase p : phrases) {
 			p.build(dbb);

@@ -76,6 +76,13 @@ public class Phrase implements XmlSerializable
 		}
 	}
 
+	public void beforeBuild()
+	{
+		for (Track track : tracks) {
+			track.beforeBuild();
+		}
+	}
+
 	public void build(DynamicByteBuffer dbb)
 	{
 		dbb.align(4);
