@@ -3565,11 +3565,13 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 	{
 		runInContext(() -> {
 			glReadBuffer(GL_FRONT);
-			int width = perspectiveView.maxX - perspectiveView.minX;
-			int height = perspectiveView.maxY - perspectiveView.minY;
+			int minX = RenderState.toFramebufferX(perspectiveView.minX);
+			int minY = RenderState.toFramebufferY(perspectiveView.minY);
+			int width = RenderState.toFramebufferX(perspectiveView.maxX) - minX;
+			int height = RenderState.toFramebufferY(perspectiveView.maxY) - minY;
 			int bpp = 4;
 			ByteBuffer buffer = BufferUtils.createByteBuffer(width * height * bpp);
-			glReadPixels(perspectiveView.minX, perspectiveView.minY, width, height,
+			glReadPixels(minX, minY, width, height,
 				GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer);
 
 			BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);

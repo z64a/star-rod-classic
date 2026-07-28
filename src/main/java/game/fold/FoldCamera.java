@@ -244,7 +244,8 @@ public class FoldCamera extends BaseCamera
 
 		if (useDepth) {
 			// this is the expensive part, reading z from the depth buffer
-			glReadPixels(mouseX, mouseY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, winZ);
+			glReadPixels(RenderState.toFramebufferX(mouseX), RenderState.toFramebufferY(mouseY),
+				1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, winZ);
 		}
 		else {
 			winZ.put(0);
@@ -252,7 +253,8 @@ public class FoldCamera extends BaseCamera
 		}
 
 		IntBuffer stencilValue = BufferUtils.createIntBuffer(1);
-		glReadPixels(mouseX, mouseY, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_INT, stencilValue);
+		glReadPixels(RenderState.toFramebufferX(mouseX), RenderState.toFramebufferY(mouseY),
+			1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_INT, stencilValue);
 
 		FloatBuffer position = BufferUtils.createFloatBuffer(3);
 		GLUtils.gluUnProject(winX, winY, winZ.get(), viewMatrix.toFloatBuffer(), projMatrix.toFloatBuffer(), viewport, position);

@@ -121,7 +121,8 @@ public abstract class BaseCamera
 
 		IntBuffer stencilValue = BufferUtils.createIntBuffer(1);
 		if (readStencil)
-			glReadPixels(mouseX, mouseY, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_INT, stencilValue);
+			glReadPixels(RenderState.toFramebufferX(mouseX), RenderState.toFramebufferY(mouseY),
+				1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_INT, stencilValue);
 
 		FloatBuffer position = BufferUtils.createFloatBuffer(3);
 		GLUtils.gluUnProject(winX, winY, winZ, viewMatrix.toFloatBuffer(), projMatrix.toFloatBuffer(), viewport, position);

@@ -5,6 +5,9 @@ import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.glUseProgram;
+import static org.lwjgl.opengl.GL30.GL_DRAW_FRAMEBUFFER;
+import static org.lwjgl.opengl.GL30.GL_FRAMEBUFFER;
+import static org.lwjgl.opengl.GL30.glBindFramebuffer;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.opengl.GL31.GL_UNIFORM_BUFFER;
 
@@ -28,6 +31,7 @@ public abstract class RenderState
 	{
 		rec = new StateRecord();
 		stack = new Stack<>();
+		drawFramebuffer = 0;
 
 		glEnable(GL_POINT_SMOOTH);
 		glHint(GL_POINT_SMOOTH, GL_NICEST);
@@ -390,18 +394,64 @@ public abstract class RenderState
 	// --------------------------------------------------------------------------
 	// save viewport size -- do NOT cache this
 
+	private static double defaultFramebufferScaleX = 1.0;
+	private static double defaultFramebufferScaleY = 1.0;
+	private static int drawFramebuffer;
+
+	public static void setDefaultFramebufferScale(double scaleX, double scaleY)
+	{
+		defaultFramebufferScaleX = validScale(scaleX) ? scaleX : 1.0;
+		defaultFramebufferScaleY = validScale(scaleY) ? scaleY : 1.0;
+	}
+
+	private static boolean validScale(double scale)
+	{
+		return Double.isFinite(scale) && scale > 0.0;
+	}
+
+	public static int toFramebufferX(int logicalX)
+	{
+		return (int) Math.round(logicalX * defaultFramebufferScaleX);
+	}
+
+	public static int toFramebufferY(int logicalY)
+	{
+		return (int) Math.round(logicalY * defaultFramebufferScaleY);
+	}
+
+	public static void bindFramebuffer(int target, int framebuffer)
+	{
+		glBindFramebuffer(target, framebuffer);
+
+		// Viewports need HiDPI scaling only when drawing to the on-screen surface.
+		if (target == GL_FRAMEBUFFER || target == GL_DRAW_FRAMEBUFFER)
+			drawFramebuffer = framebuffer;
+	}
+
 	public static void setViewport(int minX, int minY, int sizeX, int sizeY)
 	{
-		glViewport(minX, minY, sizeX, sizeY);
-		glScissor(minX, minY, sizeX, sizeY);
+		int viewportMinX = minX;
+		int viewportMinY = minY;
+		int viewportSizeX = sizeX;
+		int viewportSizeY = sizeY;
+
+		if (drawFramebuffer == 0) {
+			viewportMinX = toFramebufferX(minX);
+			viewportMinY = toFramebufferY(minY);
+			viewportSizeX = toFramebufferX(minX + sizeX) - viewportMinX;
+			viewportSizeY = toFramebufferY(minY + sizeY) - viewportMinY;
+		}
+
+		glViewport(viewportMinX, viewportMinY, viewportSizeX, viewportSizeY);
+		glScissor(viewportMinX, viewportMinY, viewportSizeX, viewportSizeY);
 		rec.glViewSizeX = sizeX;
 		rec.glViewSizeY = sizeY;
 
 		IntBuffer ib = BufferUtils.createIntBuffer(4);
-		ib.put(minX);
-		ib.put(minY);
-		ib.put(sizeX);
-		ib.put(sizeY);
+		ib.put(viewportMinX);
+		ib.put(viewportMinY);
+		ib.put(viewportSizeX);
+		ib.put(viewportSizeY);
 		ib.rewind();
 
 		glBindBuffer(GL_UNIFORM_BUFFER, matrixUBO);

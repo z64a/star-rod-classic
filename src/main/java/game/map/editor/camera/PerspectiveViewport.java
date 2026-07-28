@@ -139,7 +139,7 @@ public class PerspectiveViewport extends MapEditViewport
 				profiler.record("post-proc");
 		}
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		RenderState.bindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// set viewport to final position and clear
 		RenderState.setViewport(minX, minY, sizeX, sizeY);
@@ -149,14 +149,15 @@ public class PerspectiveViewport extends MapEditViewport
 		// render final viewport
 		PostProcessFX.NONE.apply(0, sceneBuffer, null, prevBuffer, opts.time);
 
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, sceneBuffer.getFrameBuffer());
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		RenderState.bindFramebuffer(GL_READ_FRAMEBUFFER, sceneBuffer.getFrameBuffer());
+		RenderState.bindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 		glBlitFramebuffer(minX, minY, minX + sizeX, minY + sizeY,
-			minX, minY, minX + sizeX, minY + sizeY,
+			RenderState.toFramebufferX(minX), RenderState.toFramebufferY(minY),
+			RenderState.toFramebufferX(minX + sizeX), RenderState.toFramebufferY(minY + sizeY),
 			GL_DEPTH_BUFFER_BIT,
 			GL_NEAREST);
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		RenderState.bindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		if (doPerspProfiling)
 			profiler.print();
