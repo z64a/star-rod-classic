@@ -141,6 +141,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 
 	private OpenFileChooser importFileChooser;
 	private SaveFileChooser exportFileChooser;
+	private JColorChooser colorChooser;
 
 	public OpenFileChooser texFileChooser;
 	public OpenFileChooser bgFileChooser;
@@ -237,6 +238,9 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 
 		texFileChooser = new OpenFileChooser(texDir, "Select Texture Archive", "Texture Archives", "txa");
 		bgFileChooser = new OpenFileChooser(bgDir, "Select Background Image", "Images", "png");
+
+		colorChooser = new JColorChooser();
+		colorChooser.setPreviewPanel(new JPanel());
 
 		commandMap = new HashMap<>();
 		for (GuiCommand cmd : GuiCommand.values())
@@ -1253,7 +1257,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 				break;
 
 			case SHOW_CHOOSE_COLOR_DIALOG:
-				prompt_ChooseColor();
+				prompt_ChoosePaintColor();
 				break;
 
 			case SELECT_OBJECTS:
@@ -1665,13 +1669,28 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		}
 	}
 
-	private void prompt_ChooseColor()
+	public Color prompt_ChooseColor(String title, Color initialColor)
 	{
-		openDialogCount.increment();
-		Color c = null;
-		c = JColorChooser.showDialog(this, "Choose Color", c);
-		openDialogCount.decrement();
+		colorChooser.setColor(initialColor);
 
+		int result = SwingUtils.getOptionDialog()
+			.setParent(this)
+			.setCounter(openDialogCount)
+			.setTitle(title)
+			.setMessage(colorChooser)
+			.setMessageType(JOptionPane.PLAIN_MESSAGE)
+			.setOptionsType(JOptionPane.OK_CANCEL_OPTION)
+			.choose();
+
+		if (result == JOptionPane.OK_OPTION)
+			return colorChooser.getColor();
+		else
+			return null;
+	}
+
+	private void prompt_ChoosePaintColor()
+	{
+		Color c = prompt_ChooseColor("Choose Color", PaintManager.getSelectedColor());
 		if (c != null) {
 			PaintManager.setSelectedColor(c);
 			PaintManager.pushSelectedColor();
