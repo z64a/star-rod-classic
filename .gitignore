@@ -42,7 +42,6 @@ pom.xml
 
 # Eclipse settings
 .settings/*
-!.settings/org.eclipse.buildship.core.prefs
 !.settings/org.eclipse.core.resources.prefs
 !.settings/org.eclipse.jdt.core.prefs
 !.settings/org.eclipse.jdt.ui.prefs

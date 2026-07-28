@@ -7,7 +7,8 @@
 
 A suite of tools for modding and editing assets from the US version of Paper Mario (N64). This repository contains the legacy version of Star Rod, prior to its integration with the decomp project. For the updated tools with decomp support, visit the [Star Rod](https://github.com/z64a/star-rod) repository.
 
-Star Rod Classic supports Windows, Linux, and macOS.
+Star Rod Classic supports Windows, Linux, and macOS. Release downloads include
+a stripped-down Java runtime, so users do not need to install Java separately.
 
 **[Download Star Rod][download]**
 
@@ -35,4 +36,7 @@ https://github.com/z64a/star-rod/blob/110ea7d6268f98a2bf565880572203bd066a9c1f/s
 
 ### Creating a release locally
 
-Use the _release_ - _createReleaseZip_ task in Gradle.
+Use the _release_ - _createReleaseZip_ task in Gradle. It creates a
+self-contained archive for the operating system and CPU architecture running
+the build. Building all supported platforms therefore requires one build on
+each platform; Java runtimes and LWJGL native libraries are platform-specific.
