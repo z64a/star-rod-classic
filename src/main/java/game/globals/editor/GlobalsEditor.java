@@ -205,6 +205,7 @@ public class GlobalsEditor
 					case JOptionPane.NO_OPTION:
 						break;
 					case JOptionPane.CANCEL_OPTION:
+					case JOptionPane.CLOSED_OPTION:
 						return;
 				}
 

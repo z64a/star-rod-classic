@@ -438,6 +438,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 			case JOptionPane.NO_OPTION:
 				break;
 			case JOptionPane.CANCEL_OPTION:
+			case JOptionPane.CLOSED_OPTION:
 				closeRequested = false;
 				return false;
 		}
@@ -461,6 +462,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 			case JOptionPane.NO_OPTION:
 				break;
 			case JOptionPane.CANCEL_OPTION:
+			case JOptionPane.CLOSED_OPTION:
 				closeRequested = false;
 				return false;
 		}

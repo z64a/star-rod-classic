@@ -20,6 +20,7 @@ import renderer.shaders.components.UniformFloatVector;
 public abstract class BaseShader
 {
 	protected static final String VS_VERT = "vert.glsl";
+	protected static final String VS_LINE = "vert_line.glsl";
 	protected static final String VS_POINT = "vert_point.glsl";
 
 	protected static final String FS_LINE = "frag_line.glsl";

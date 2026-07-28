@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2026-08-XX
+
+### Added
+- Releases include a packaged runtime, users no longer need to install Java
+
+### Fixed
+- Viewport scaling in various editors now correctly accounts for HiDPI
+- Lines render via shaders instead of relying on the deprecated GL_LINES
+
+## Changed
+- Hitting escape during a "Save and Quit?" dialog now cancels the dialog rather than exiting without saving
+
 ## [0.5.9] - 2025-02-07
 
 ### Added

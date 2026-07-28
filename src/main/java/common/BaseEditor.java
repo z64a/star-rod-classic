@@ -511,6 +511,7 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 			case JOptionPane.NO_OPTION:
 				break;
 			case JOptionPane.CANCEL_OPTION:
+			case JOptionPane.CLOSED_OPTION:
 				closeRequested = false;
 				return false;
 		}

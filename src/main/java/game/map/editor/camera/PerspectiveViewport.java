@@ -284,7 +284,7 @@ public class PerspectiveViewport extends MapEditViewport
 		DeferredLineRenderer.render();
 
 		if (editor.showAxes)
-			renderer.drawAxes(2.0f);
+			renderer.drawAxes(1.5f);
 
 		if (opts.screenFade != 0.0f)
 			renderFade(0.0f, 0.0f, 0.0f, opts.screenFade);

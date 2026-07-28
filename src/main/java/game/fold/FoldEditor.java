@@ -31,9 +31,7 @@ import game.texture.Tile;
 import net.miginfocom.swing.MigLayout;
 import renderer.buffers.LineRenderQueue;
 import renderer.buffers.PointRenderQueue;
-import renderer.buffers.TriangleRenderQueue;
 import renderer.shaders.RenderState;
-import renderer.shaders.RenderState.PolygonMode;
 import renderer.shaders.ShaderManager;
 import renderer.shaders.scene.BasicSolidShader;
 import renderer.shaders.scene.BasicTexturedShader;
@@ -222,21 +220,18 @@ public class FoldEditor extends BaseEditor
 
 		PointRenderQueue.render(true);
 
-		RenderState.setPolygonMode(PolygonMode.LINE);
-		//		RenderState.setColor(preview.color.x, preview.color.y, preview.color.z);
-
 		for (FoldTriangle tri : anim.triangles) {
 			FoldVertex vi = anim.frames[i][tri.i];
 			FoldVertex vj = anim.frames[i][tri.j];
 			FoldVertex vk = anim.frames[i][tri.k];
-			TriangleRenderQueue.addTriangle(
-				TriangleRenderQueue.addVertex().setPosition(vi.x, vi.y, vi.z).getIndex(),
-				TriangleRenderQueue.addVertex().setPosition(vj.x, vj.y, vj.z).getIndex(),
-				TriangleRenderQueue.addVertex().setPosition(vk.x, vk.y, vk.z).getIndex());
+			int a = LineRenderQueue.addVertex().setPosition(vi.x, vi.y, vi.z).getIndex();
+			int b = LineRenderQueue.addVertex().setPosition(vj.x, vj.y, vj.z).getIndex();
+			int c = LineRenderQueue.addVertex().setPosition(vk.x, vk.y, vk.z).getIndex();
+			LineRenderQueue.addLineLoop(a, b, c);
 		}
 
 		LineShader shader = ShaderManager.use(LineShader.class);
-		TriangleRenderQueue.render(shader, true);
+		LineRenderQueue.render(shader, true);
 
 		TransformMatrix projMatrix = TransformMatrix.identity();
 		projMatrix.ortho(12.0f, 308.0f, 208.0f, 12.0f, -1.0f, 1.0f);
@@ -247,7 +242,6 @@ public class FoldEditor extends BaseEditor
 		float canvasScaleY = 200.0f / camera.glViewSizeY;
 
 		RenderState.setDepthWrite(false);
-		RenderState.setPolygonMode(PolygonMode.FILL);
 		BasicSolidShader shaderd = ShaderManager.use(BasicSolidShader.class);
 
 		int leftX = 28;

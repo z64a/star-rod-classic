@@ -3,6 +3,7 @@ package common;
 import java.awt.AWTException;
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.GraphicsDevice;
 import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.PointerInfo;
@@ -41,6 +42,8 @@ public class MouseInput implements MouseListener, MouseWheelListener
 	private int frameDW = 0;
 
 	private Robot robot;
+	private GraphicsDevice robotDevice;
+	private Point grabPositionOnScreen;
 	private boolean grabbed;
 
 	private boolean[] holding = new boolean[4];
@@ -195,22 +198,46 @@ public class MouseInput implements MouseListener, MouseWheelListener
 			new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB),
 			new Point(),
 			null);
-		try {
-			robot = new Robot();
-		}
-		catch (AWTException e) {
-			robot = null;
-			Logger.printStackTrace(e);
-		}
-
 		comp.addMouseListener(this);
 		comp.addMouseWheelListener(this);
 	}
 
 	public void setGrabbed(boolean value)
 	{
+		if (grabbed == value)
+			return;
+
 		grabbed = value;
+		if (grabbed)
+			beginGrab();
+		else
+			grabPositionOnScreen = null;
+
 		comp.setCursor(grabbed ? hiddenCursor : Cursor.getDefaultCursor());
+	}
+
+	private void beginGrab()
+	{
+		PointerInfo pointerInfo = MouseInfo.getPointerInfo();
+		if (pointerInfo == null) {
+			grabPositionOnScreen = null;
+			return;
+		}
+
+		grabPositionOnScreen = pointerInfo.getLocation();
+		GraphicsDevice pointerDevice = pointerInfo.getDevice();
+		if (robot != null && robotDevice == pointerDevice)
+			return;
+
+		try {
+			robot = new Robot(pointerDevice);
+			robotDevice = pointerDevice;
+		}
+		catch (AWTException e) {
+			robot = null;
+			robotDevice = null;
+			Logger.printStackTrace(e);
+		}
 	}
 
 	public boolean isGrabbed()
@@ -226,7 +253,7 @@ public class MouseInput implements MouseListener, MouseWheelListener
 		if (pointerInfo == null)
 			return;
 
-		Point curPos = MouseInfo.getPointerInfo().getLocation();
+		Point curPos = pointerInfo.getLocation();
 		SwingUtilities.convertPointFromScreen(curPos, comp);
 
 		boolean hadLocation = hasLocation;
@@ -239,9 +266,8 @@ public class MouseInput implements MouseListener, MouseWheelListener
 			frameDX = (hadLocation && hasLocation) ? posX - lastPosX : 0;
 			frameDY = (hadLocation && hasLocation) ? lastPosY - posY : 0; // sense is reversed
 
-			if (hadLocation && grabbed && robot != null) {
-				Point loc = comp.getLocationOnScreen();
-				robot.mouseMove(loc.x + lastPosX, loc.y + lastPosY);
+			if (hadLocation && grabbed && robot != null && grabPositionOnScreen != null) {
+				robot.mouseMove(grabPositionOnScreen.x, grabPositionOnScreen.y);
 			}
 			else {
 				lastPosX = posX;
@@ -258,7 +284,7 @@ public class MouseInput implements MouseListener, MouseWheelListener
 			lastPosX = posX;
 			lastPosY = posY;
 
-			grabbed = false;
+			setGrabbed(false);
 		}
 
 		if (grabbed) {

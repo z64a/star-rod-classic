@@ -10,6 +10,7 @@ import static org.lwjgl.opengl.GL30.GL_FRAMEBUFFER;
 import static org.lwjgl.opengl.GL30.glBindFramebuffer;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
 import static org.lwjgl.opengl.GL31.GL_UNIFORM_BUFFER;
+import static org.lwjgl.opengl.GL32.GL_PROGRAM_POINT_SIZE;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -33,14 +34,7 @@ public abstract class RenderState
 		stack = new Stack<>();
 		drawFramebuffer = 0;
 
-		glEnable(GL_POINT_SMOOTH);
-		glHint(GL_POINT_SMOOTH, GL_NICEST);
-
-		glEnable(GL_LINE_SMOOTH);
-		glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-
-		//	glEnable(GL_POLYGON_SMOOTH);
-		//	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+		glEnable(GL_PROGRAM_POINT_SIZE);
 
 		glActiveTexture(GL_TEXTURE0);
 		glEnable(GL_TEXTURE_2D);
@@ -72,7 +66,7 @@ public abstract class RenderState
 		private int glViewSizeY = 256;
 
 		private Color4f glColor = new Color4f();
-		private float glLineWidth = 1.0f;
+		private float lineWidth = 1.0f;
 		private float glPointSize = 1.0f;
 
 		private int glVertexArray;
@@ -96,7 +90,7 @@ public abstract class RenderState
 			glViewSizeY = other.glViewSizeY;
 
 			glColor = new Color4f(other.glColor);
-			glLineWidth = other.glLineWidth;
+			lineWidth = other.lineWidth;
 			glPointSize = other.glPointSize;
 
 			glVertexArray = other.glVertexArray;
@@ -147,7 +141,7 @@ public abstract class RenderState
 		// skip viewport
 
 		setColor(oldRec.glColor.r, oldRec.glColor.g, oldRec.glColor.b, oldRec.glColor.a);
-		setLineWidth(oldRec.glLineWidth);
+		setLineWidth(oldRec.lineWidth);
 		setPointSize(oldRec.glPointSize);
 
 		setVAO(oldRec.glVertexArray);
@@ -206,22 +200,31 @@ public abstract class RenderState
 
 	public static final void initLineWidth()
 	{
-		rec.glLineWidth = 1.0f;
-		glLineWidth(rec.glLineWidth);
+		rec.lineWidth = 1.0f;
 	}
 
 	public static final void setLineWidth(float width)
 	{
-		if (width == rec.glLineWidth)
+		float clampedWidth = Math.max(0.0f, width);
+		if (clampedWidth == rec.lineWidth)
 			return;
 
-		rec.glLineWidth = width;
-		glLineWidth(rec.glLineWidth);
+		rec.lineWidth = clampedWidth;
 	}
 
 	public static final float getLineWidth()
 	{
-		return rec.glLineWidth;
+		return rec.lineWidth;
+	}
+
+	/** Returns the requested line width in pixels of the current render target. */
+	public static final float getLineWidthPixels()
+	{
+		if (drawFramebuffer != 0)
+			return rec.lineWidth;
+
+		double scale = (defaultFramebufferScaleX + defaultFramebufferScaleY) * 0.5;
+		return (float) (rec.lineWidth * scale);
 	}
 
 	// --------------------------------------------------------------------------
@@ -230,7 +233,6 @@ public abstract class RenderState
 	public static final void initPointSize()
 	{
 		rec.glPointSize = 1.0f;
-		glPointSize(rec.glPointSize);
 	}
 
 	public static final void setPointSize(float size)
@@ -239,7 +241,6 @@ public abstract class RenderState
 			return;
 
 		rec.glPointSize = size;
-		glPointSize(rec.glPointSize);
 	}
 
 	public static final float getPointSize()
@@ -498,6 +499,11 @@ public abstract class RenderState
 			rec.glPolygonMode = mode;
 			glPolygonMode(GL_FRONT_AND_BACK, mode.value);
 		}
+	}
+
+	public static final PolygonMode getPolygonMode()
+	{
+		return rec.glPolygonMode;
 	}
 
 	// --------------------------------------------------------------------------
