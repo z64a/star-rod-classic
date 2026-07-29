@@ -81,7 +81,7 @@ public class AudioTest5
 
 		frame.setLayout(new MigLayout("fill, ins 16"));
 
-		JButton playButton = new JButton("Play Sound");
+		JButton playButton = new JButton("Test Instrument");
 		playButton.addActionListener((e) -> {
 			Voice testVoice = engine.getVoice();
 			testVoice.setInstrument(testInstrument);
@@ -112,6 +112,7 @@ public class AudioTest5
 		JList<File> mseqFileList = new JList<>();
 		mseqFileList.setModel(filesModel);
 		mseqFileList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		mseqFileList.setVisibleRowCount(12);
 
 		JScrollPane fileListScroll = new JScrollPane(mseqFileList);
 		fileListScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -144,7 +145,7 @@ public class AudioTest5
 
 		frame.add(playButton);
 		frame.add(masterVolumeSlider, "grow, wrap");
-		frame.add(mseqFileList, "span, wrap");
+		frame.add(fileListScroll, "span, grow, push, wrap");
 		frame.add(pauseButton);
 		frame.add(timeSlider, "grow");
 

@@ -10,6 +10,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import app.StarRodException;
+import game.sound.SoundBankCatalog;
 import game.sound.bgm.CommandStream.StreamType;
 import game.sound.bgm.Song.BGMPart;
 import util.DynamicByteBuffer;
@@ -1170,6 +1171,8 @@ public class Track implements XmlSerializable
 
 		public int bank;
 		public int patch;
+		public String wav;
+		public int envelope;
 
 		private OverridePatch(Track track)
 		{
@@ -1183,6 +1186,13 @@ public class Track implements XmlSerializable
 			bank = reader.getU8();
 			patch = reader.getU8();
 
+			SoundBankCatalog catalog = track.phrase.song.getSoundBankCatalog();
+			if (catalog != null) {
+				SoundBankCatalog.WavReference reference = catalog.getWav(bank, patch);
+				wav = reference.wav;
+				envelope = reference.envelope;
+			}
+
 			if (debugPrint)
 				System.out.printf(CMD_FMT + "Override Patch ~ %2X-%2X%n", streamPos, time, bank, patch);
 		}
@@ -1190,22 +1200,34 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			bank = xmr.readHex(elem, ATTR_BANK);
-			patch = xmr.readHex(elem, ATTR_PATCH);
+			xmr.requiresAttribute(elem, ATTR_WAV);
+			wav = xmr.getAttribute(elem, ATTR_WAV);
+			if (xmr.hasAttribute(elem, ATTR_ENVELOPE))
+				envelope = xmr.readHex(elem, ATTR_ENVELOPE);
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_CMD_OVERRIDE_PATCH, true);
-			xmw.addHex(tag, ATTR_BANK, bank);
-			xmw.addHex(tag, ATTR_PATCH, patch);
+			xmw.addAttribute(tag, ATTR_WAV, wav);
+			if (envelope != 0)
+				xmw.addHex(tag, ATTR_ENVELOPE, envelope);
 			xmw.printTag(tag);
 		}
 
 		@Override
 		public void build(DynamicByteBuffer dbb)
 		{
+			if (wav != null) {
+				SoundBankCatalog catalog = track.phrase.song.getSoundBankCatalog();
+				if (catalog == null)
+					throw new StarRodException("A sound bank catalog is required to build OverridePatch");
+				SoundBankCatalog.InstrumentAddress address = catalog.getAddress(wav, envelope);
+				bank = address.bank;
+				patch = address.patch;
+			}
+
 			dbb.putByte(OPCODE);
 			dbb.putByte(bank);
 			dbb.putByte(patch);

@@ -9,10 +9,6 @@ import game.sound.engine.EnvelopeCommand;
 
 public final class SfxArchive
 {
-	public static final int DEFAULT_MAX_BINARY_SIZE = 0x5200;
-
-	public String name = "DAT1";
-	public int maxBinarySize = DEFAULT_MAX_BINARY_SIZE;
 	public final Map<Integer, Sound> sounds = new TreeMap<>();
 	public final List<Envelope> envelopes = new ArrayList<>();
 
@@ -20,7 +16,6 @@ public final class SfxArchive
 	{
 		public final int id;
 		public String name;
-		public boolean generatedName;
 		public final List<String> aliases = new ArrayList<>();
 		public Routing routing;
 		public final List<Track> tracks = new ArrayList<>();

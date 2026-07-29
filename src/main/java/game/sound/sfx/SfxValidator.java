@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import game.sound.engine.EnvelopeCommand;
-import game.sound.engine.EnvelopeOp;
 import game.sound.sfx.SfxArchive.Allocation;
 import game.sound.sfx.SfxArchive.Command;
 import game.sound.sfx.SfxArchive.Definition;
@@ -18,7 +17,6 @@ import game.sound.sfx.SfxArchive.Envelope;
 import game.sound.sfx.SfxArchive.Label;
 import game.sound.sfx.SfxArchive.Node;
 import game.sound.sfx.SfxArchive.OneShot;
-import game.sound.sfx.SfxArchive.Op;
 import game.sound.sfx.SfxArchive.Routing;
 import game.sound.sfx.SfxArchive.Sequence;
 import game.sound.sfx.SfxArchive.Sound;
@@ -28,20 +26,13 @@ import game.sound.sfx.SfxArchive.Track;
 public final class SfxValidator
 {
 	private static final Pattern IDENTIFIER = Pattern.compile("[A-Za-z_][A-Za-z0-9_.-]*");
-	private static final int MAX_FILE_SIZE_WITH_16_BIT_OFFSETS = 0x10000;
 	private static final int ENVELOPE_INTERVAL_COUNT = 95;
 
-	/**
-	 * Validates an archive and returns non-fatal diagnostics.
-	 *
-	 * @throws SfxFormatException if one or more errors are found
-	 */
 	public static List<String> validate(SfxArchive archive)
 	{
 		return new Validation(archive, null).run();
 	}
 
-	/** Validates semantic data and requires the supplied ID/name authority. */
 	public static List<String> validate(SfxArchive archive, SfxNames authoritativeNames)
 	{
 		if (authoritativeNames == null)
@@ -49,23 +40,20 @@ public final class SfxValidator
 		return new Validation(archive, authoritativeNames).run();
 	}
 
-	/** Returns whether an ID uses a pointer/routing entry in the normal tables. */
 	public static boolean isPointerBackedID(int id)
 	{
-		if (id < 0x0001 || id > 0x0400)
+		if (id < 0x0001 || id > 0x03FF)
 			return false;
 
 		int index = id & 0xFF;
 		return index >= 0x01 && index <= 0xC0;
 	}
 
-	/** Returns whether an ID's four-byte table slot contains the effect itself. */
 	public static boolean isDirectID(int id)
 	{
 		return SfxNames.isRawSoundID(id) && !isPointerBackedID(id);
 	}
 
-	/** Tests exact representability by the engine's four-byte COMPACT mode. */
 	public static boolean isCompactRepresentable(OneShot oneShot)
 	{
 		return oneShot != null
@@ -104,7 +92,6 @@ public final class SfxValidator
 			if (archive == null)
 				throw new SfxFormatException("SFX archive is null");
 
-			validateArchiveProperties();
 			validateEnvelopes();
 			validateSounds();
 
@@ -116,28 +103,6 @@ public final class SfxValidator
 			}
 
 			return List.copyOf(warnings);
-		}
-
-		private void validateArchiveProperties()
-		{
-			if (archive.name == null || archive.name.length() != 4) {
-				error("Archive name must contain exactly four ASCII characters");
-			}
-			else {
-				for (int i = 0; i < archive.name.length(); i++) {
-					char c = archive.name.charAt(i);
-					if (c < 0x20 || c > 0x7E) {
-						error("Archive name must contain exactly four printable ASCII characters");
-						break;
-					}
-				}
-			}
-
-			if (!inRange(archive.maxBinarySize, 0x22, MAX_FILE_SIZE_WITH_16_BIT_OFFSETS))
-				error("maxBinarySize must be between 0022 and 10000");
-			else if (archive.maxBinarySize > SfxArchive.DEFAULT_MAX_BINARY_SIZE)
-				warn(String.format("maxBinarySize %04X exceeds the vanilla DAT1 allocation of %04X",
-					archive.maxBinarySize, SfxArchive.DEFAULT_MAX_BINARY_SIZE));
 		}
 
 		private void validateEnvelopes()
@@ -235,8 +200,10 @@ public final class SfxValidator
 					error(String.format("Sound map key %04X disagrees with its sound ID %04X", mapID, sound.id));
 				if (!ids.add(sound.id))
 					error(String.format("Sound ID %04X is defined more than once", sound.id));
-				if (!SfxNames.isRawSoundID(sound.id))
-					error(String.format("Sound ID %04X is outside 0001-0400 and 2001-2140", sound.id));
+				if (sound.id == 0x0400)
+					error("Sound ID 0400 is an unaddressable table slot reserved by SOUND_ID_TRIGGER_CHANGE_SOUND");
+				else if (!SfxNames.isRawSoundID(sound.id))
+					error(String.format("Sound ID %04X is outside 0001-03FF and 2001-2140", sound.id));
 
 				validateIdentifier(sound.name, context + " primary name");
 				registerSoundName(names, sound.name, sound.id, "primary name");
@@ -260,8 +227,6 @@ public final class SfxValidator
 			List<String> expected = authoritativeNames.get(sound.id);
 			if (expected.isEmpty() || authoritativeNames.hasGeneratedName(sound.id)) {
 				String expectedName = authoritativeNames.preferredName(sound.id);
-				if (!sound.generatedName)
-					error(context + " must be marked as using a generated name");
 				if (!expectedName.equals(sound.name))
 					error(context + " must use generated name " + expectedName);
 				if (!sound.aliases.isEmpty())
@@ -269,13 +234,11 @@ public final class SfxValidator
 				return;
 			}
 
-			if (sound.generatedName)
-				error(context + " is marked generated even though DX names this ID " + expected.get(0));
 			if (!expected.get(0).equals(sound.name))
-				error(context + " must use authoritative DX primary name " + expected.get(0));
+				error(context + " must use authoritative primary name " + expected.get(0));
 			List<String> expectedAliases = expected.subList(1, expected.size());
 			if (!expectedAliases.equals(sound.aliases))
-				error(context + " must use authoritative DX aliases " + expectedAliases);
+				error(context + " must use authoritative aliases " + expectedAliases);
 		}
 
 		private void registerSoundName(Map<String, Integer> names, String name, int id, String kind)

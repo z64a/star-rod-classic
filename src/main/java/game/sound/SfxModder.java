@@ -24,7 +24,7 @@ public final class SfxModder
 	public record DumpSummary(int sounds, int effectFiles, int envelopes, List<String> warnings)
 	{}
 
-	public record BuildSummary(int size, int maxSize, List<String> warnings)
+	public record BuildSummary(int size, List<String> warnings)
 	{}
 
 	public static DumpSummary dump(Path inputSef, Path outputDirectory) throws IOException
@@ -32,13 +32,25 @@ public final class SfxModder
 		return dump(inputSef, outputDirectory, SfxNames.loadBundled());
 	}
 
+	public static DumpSummary dump(Path inputSef, Path outputDirectory,
+		SoundBankCatalog catalog) throws IOException
+	{
+		return dump(inputSef, outputDirectory, SfxNames.loadBundled(), catalog);
+	}
+
 	public static DumpSummary dump(Path inputSef, Path outputDirectory, SfxNames names) throws IOException
+	{
+		return dump(inputSef, outputDirectory, names, catalogFor(outputDirectory));
+	}
+
+	public static DumpSummary dump(Path inputSef, Path outputDirectory, SfxNames names,
+		SoundBankCatalog catalog) throws IOException
 	{
 		byte[] bytes = Files.readAllBytes(inputSef);
 		SfxBinary.DecodeResult decoded = SfxBinary.decode(bytes, names);
 		SfxArchive archive = decoded.archive();
 		List<String> validationWarnings = SfxValidator.validate(archive, names);
-		SfxXml.write(archive, outputDirectory);
+		SfxXml.write(archive, outputDirectory, catalog);
 
 		List<String> warnings = new ArrayList<>(decoded.warnings());
 		warnings.addAll(validationWarnings);
@@ -53,13 +65,26 @@ public final class SfxModder
 		return build(archiveXml, outputSef, SfxNames.loadBundled());
 	}
 
+	public static BuildSummary build(Path archiveXml, Path outputSef,
+		SoundBankCatalog catalog) throws IOException
+	{
+		return build(archiveXml, outputSef, SfxNames.loadBundled(), catalog);
+	}
+
 	public static BuildSummary build(Path archiveXml, Path outputSef, SfxNames names) throws IOException
 	{
-		SfxArchive archive = SfxXml.read(archiveXml);
+		return build(archiveXml, outputSef, names,
+			catalogFor(archiveXml.toAbsolutePath().normalize().getParent()));
+	}
+
+	public static BuildSummary build(Path archiveXml, Path outputSef, SfxNames names,
+		SoundBankCatalog catalog) throws IOException
+	{
+		SfxArchive archive = SfxXml.read(archiveXml, catalog);
 		List<String> warnings = SfxValidator.validate(archive, names);
 		byte[] bytes = SfxBinary.encode(archive);
 		writeAtomically(outputSef, bytes);
-		return new BuildSummary(bytes.length, archive.maxBinarySize, warnings);
+		return new BuildSummary(bytes.length, warnings);
 	}
 
 	public static List<String> lint(Path archiveXml) throws IOException
@@ -69,7 +94,15 @@ public final class SfxModder
 
 	public static List<String> lint(Path archiveXml, SfxNames names)
 	{
-		return SfxValidator.validate(SfxXml.read(archiveXml), names);
+		return SfxValidator.validate(SfxXml.read(archiveXml,
+			catalogFor(archiveXml.toAbsolutePath().normalize().getParent())), names);
+	}
+
+	private static SoundBankCatalog catalogFor(Path audioDirectory)
+	{
+		Path directory = audioDirectory.toAbsolutePath().normalize();
+		return new SoundBankCatalog(
+			directory.resolve("bank").toFile(), directory.resolve("Banks.xml").toFile());
 	}
 
 	private static void writeAtomically(Path output, byte[] bytes) throws IOException
@@ -126,7 +159,7 @@ public final class SfxModder
 	private static void runDump(String[] args) throws IOException
 	{
 		if (args.length != 3 && args.length != 4)
-			throw new IllegalArgumentException("dump requires: input.sef output-directory [names.txt|enums.h]");
+			throw new IllegalArgumentException("dump requires: input.sef audio-directory [names.txt]");
 		SfxNames names = args.length == 4 ? SfxNames.load(Path.of(args[3])) : SfxNames.loadBundled();
 		DumpSummary summary = dump(Path.of(args[1]), Path.of(args[2]), names);
 		Logger.logf("Dumped %d sounds (%d effect files, %d envelopes).",
@@ -137,17 +170,17 @@ public final class SfxModder
 	private static void runBuild(String[] args) throws IOException
 	{
 		if (args.length != 3 && args.length != 4)
-			throw new IllegalArgumentException("build requires: archive.xml output.sef [names.txt|enums.h]");
+			throw new IllegalArgumentException("build requires: SoundEffects.xml output.sef [names.txt]");
 		SfxNames names = args.length == 4 ? SfxNames.load(Path.of(args[3])) : SfxNames.loadBundled();
 		BuildSummary summary = build(Path.of(args[1]), Path.of(args[2]), names);
-		Logger.logf("Built SEF: 0x%X / 0x%X bytes.", summary.size(), summary.maxSize());
+		Logger.logf("Built SEF: 0x%X bytes.", summary.size());
 		printWarnings(summary.warnings());
 	}
 
 	private static void runLint(String[] args) throws IOException
 	{
 		if (args.length != 2 && args.length != 3)
-			throw new IllegalArgumentException("lint requires: archive.xml [names.txt|enums.h]");
+			throw new IllegalArgumentException("lint requires: SoundEffects.xml [names.txt]");
 		SfxNames names = args.length == 3 ? SfxNames.load(Path.of(args[2])) : SfxNames.loadBundled();
 		List<String> warnings = lint(Path.of(args[1]), names);
 		Logger.log("SFX assets are valid.");
@@ -163,8 +196,8 @@ public final class SfxModder
 	private static void printUsage()
 	{
 		Logger.log("Usage:");
-		Logger.log("  SfxModder dump  input.sef output-directory [names.txt|enums.h]");
-		Logger.log("  SfxModder build archive.xml output.sef [names.txt|enums.h]");
-		Logger.log("  SfxModder lint  archive.xml [names.txt|enums.h]");
+		Logger.log("  SfxModder dump  input.sef audio-directory [names.txt]");
+		Logger.log("  SfxModder build SoundEffects.xml output.sef [names.txt]");
+		Logger.log("  SfxModder lint  SoundEffects.xml [names.txt]");
 	}
 }

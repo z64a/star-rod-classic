@@ -17,6 +17,7 @@ import org.w3c.dom.Node;
 
 import app.Environment;
 import app.input.IOUtils;
+import game.sound.SoundBankCatalog;
 import util.DynamicByteBuffer;
 import util.Logger;
 import util.xml.XmlKey;
@@ -32,6 +33,7 @@ public class Mseq implements XmlSerializable
 	public String name;
 	public int firstVoiceIdx;
 	public int duration;
+	private SoundBankCatalog soundBankCatalog;
 
 	private static boolean matching = true;
 
@@ -67,11 +69,13 @@ public class Mseq implements XmlSerializable
 
 	public static void dumpAll() throws IOException
 	{
+		SoundBankCatalog catalog = SoundBankCatalog.loadDump().withAuxiliaryBank(2, "SPC3.bk");
 		Collection<File> files = IOUtils.getFilesWithExtension(DUMP_AUDIO_RAW, "mseq", false);
 		for (File f : files) {
 			Logger.log("Extracting " + f.getName());
 
 			Mseq mseq = new Mseq();
+			mseq.soundBankCatalog = catalog;
 			mseq.decode(f);
 
 			String name = FilenameUtils.getBaseName(f.getName());
@@ -95,11 +99,13 @@ public class Mseq implements XmlSerializable
 
 	public static void buildAll() throws IOException
 	{
+		SoundBankCatalog catalog = SoundBankCatalog.loadMod().withAuxiliaryBank(2, "SPC3.bk");
 		Collection<File> files = IOUtils.getFilesWithExtension(MOD_AUDIO_MSEQ, "xml", false);
 		for (File f : files) {
 			Logger.log("Building " + f.getName());
 
 			Mseq mseq = new Mseq();
+			mseq.soundBankCatalog = catalog;
 
 			XmlReader xmr = new XmlReader(f);
 			mseq.fromXML(xmr, xmr.getRootElement());
@@ -227,7 +233,9 @@ public class Mseq implements XmlSerializable
 						break;
 					case MSEQ_CMD_C0_SET_INSTRUMENT: // (bank, patch)
 						int patch = bb.get() & 0xFF;
-						commands.add(new SetInstrumentCommand(track, arg, patch));
+						SetInstrumentCommand command = new SetInstrumentCommand(track, arg, patch);
+						command.setWav(soundBankCatalog);
+						commands.add(command);
 						break;
 					case MSEQ_CMD_E0_TUNING: // (coarse, fine)
 						int fine = bb.get() & 0xFF;
@@ -244,8 +252,11 @@ public class Mseq implements XmlSerializable
 
 		dbb.position(0x18);
 
-		for (MseqCommand cmd : commands)
+		for (MseqCommand cmd : commands) {
+			if (cmd instanceof SetInstrumentCommand setInstrument)
+				setInstrument.resolveWav(soundBankCatalog);
 			cmd.build(dbb);
+		}
 		dbb.putByte(0); // end
 
 		int endOffset = dbb.position();
@@ -260,8 +271,6 @@ public class Mseq implements XmlSerializable
 
 			endOffset = dbb.position();
 		}
-
-		dbb.align(16);
 
 		// write header
 		dbb.position(0);
@@ -369,8 +378,8 @@ public class Mseq implements XmlSerializable
 		ATTR_PAN            ("pan"),
 		ATTR_REVERB         ("reverb"),
 		ATTR_DRUM           ("drum"),
-		ATTR_BANK           ("bank"),
-		ATTR_PATCH          ("patch"),
+		ATTR_WAV            ("wav"),
+		ATTR_ENVELOPE       ("envelope"),
 		ATTR_DURATION       ("duration"),
 		ATTR_LOOP_ID        ("loopID"),
 		ATTR_LOOP_COUNT     ("count"),
@@ -394,9 +403,14 @@ public class Mseq implements XmlSerializable
 	public static Mseq load(File xmlFile)
 	{
 		Mseq mseq = new Mseq();
+		mseq.soundBankCatalog = SoundBankCatalog.loadMod().withAuxiliaryBank(2, "SPC3.bk");
 
 		XmlReader xmr = new XmlReader(xmlFile);
 		mseq.fromXML(xmr, xmr.getRootElement());
+		for (MseqCommand command : mseq.commands) {
+			if (command instanceof SetInstrumentCommand setInstrument)
+				setInstrument.resolveWav(mseq.soundBankCatalog);
+		}
 
 		return mseq;
 	}
@@ -542,8 +556,8 @@ public class Mseq implements XmlSerializable
 		public int track;
 		public int bank;
 		public int patch;
-
-		//TODO by name?
+		public String wav;
+		public int envelope;
 
 		public SetInstrumentCommand()
 		{} // for fromXML
@@ -555,12 +569,28 @@ public class Mseq implements XmlSerializable
 			this.patch = patch;
 		}
 
+		public void setWav(SoundBankCatalog catalog)
+		{
+			SoundBankCatalog.WavReference reference = catalog.getWav(bank, patch);
+			wav = reference.wav;
+			envelope = reference.envelope;
+		}
+
+		public void resolveWav(SoundBankCatalog catalog)
+		{
+			SoundBankCatalog.InstrumentAddress address = catalog.getAddress(wav, envelope);
+			bank = address.bank;
+			patch = address.patch;
+		}
+
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
 			track = xmr.readHex(elem, ATTR_TRACK);
-			bank = xmr.readHex(elem, ATTR_BANK);
-			patch = xmr.readHex(elem, ATTR_PATCH);
+			xmr.requiresAttribute(elem, ATTR_WAV);
+			wav = xmr.getAttribute(elem, ATTR_WAV);
+			if (xmr.hasAttribute(elem, ATTR_ENVELOPE))
+				envelope = xmr.readHex(elem, ATTR_ENVELOPE);
 		}
 
 		@Override
@@ -568,8 +598,9 @@ public class Mseq implements XmlSerializable
 		{
 			XmlTag tag = xmw.createTag(TAG_SET_INSTRUMENT, true);
 			xmw.addHex(tag, ATTR_TRACK, track);
-			xmw.addHex(tag, ATTR_BANK, bank);
-			xmw.addHex(tag, ATTR_PATCH, patch);
+			xmw.addAttribute(tag, ATTR_WAV, wav);
+			if (envelope != 0)
+				xmw.addHex(tag, ATTR_ENVELOPE, envelope);
 			xmw.printTag(tag);
 		}
 

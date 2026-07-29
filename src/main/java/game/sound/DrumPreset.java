@@ -20,8 +20,8 @@ public class DrumPreset implements XmlSerializable
 		// @formatter:off
 		TAG_LIST		("Drums"),
 		TAG_DRUM		("Drum"),
-		ATTR_BANK			("bank"),
-		ATTR_PATCH			("patch"),
+		ATTR_WAV			("wav"),
+		ATTR_ENVELOPE		("envelope"),
 		ATTR_KEY_BASE		("keyBase"),
 		ATTR_VOLUME			("volume"),
 		ATTR_PAN			("pan"),
@@ -48,6 +48,8 @@ public class DrumPreset implements XmlSerializable
 
 	public int bank;
 	public int patch;
+	public String wav;
+	public int envelope;
 	public int keybase;
 	public int volume;
 	public int pan;
@@ -98,14 +100,28 @@ public class DrumPreset implements XmlSerializable
 		dbb.putByte(0); // pad
 	}
 
+	public void setWav(SoundBankCatalog catalog)
+	{
+		SoundBankCatalog.WavReference reference = catalog.getWav(bank, patch);
+		wav = reference.wav;
+		envelope = reference.envelope;
+	}
+
+	public void resolveWav(SoundBankCatalog catalog)
+	{
+		SoundBankCatalog.InstrumentAddress address = catalog.getAddress(wav, envelope);
+		bank = address.bank;
+		patch = address.patch;
+	}
+
 	@Override
 	public void fromXML(XmlReader xmr, Element insElem)
 	{
-		xmr.requiresAttribute(insElem, ATTR_BANK);
-		bank = xmr.readHex(insElem, ATTR_BANK);
+		xmr.requiresAttribute(insElem, ATTR_WAV);
+		wav = xmr.getAttribute(insElem, ATTR_WAV);
 
-		xmr.requiresAttribute(insElem, ATTR_PATCH);
-		patch = xmr.readHex(insElem, ATTR_PATCH);
+		if (xmr.hasAttribute(insElem, ATTR_ENVELOPE))
+			envelope = xmr.readHex(insElem, ATTR_ENVELOPE);
 
 		xmr.requiresAttribute(insElem, ATTR_KEY_BASE);
 		keybase = xmr.readInt(insElem, ATTR_KEY_BASE);
@@ -137,8 +153,9 @@ public class DrumPreset implements XmlSerializable
 	{
 		XmlTag tag = xmw.createTag(TAG_DRUM, true);
 
-		xmw.addHex(tag, ATTR_BANK, bank);
-		xmw.addHex(tag, ATTR_PATCH, patch);
+		xmw.addAttribute(tag, ATTR_WAV, wav);
+		if (envelope != 0)
+			xmw.addHex(tag, ATTR_ENVELOPE, envelope);
 
 		xmw.addInt(tag, ATTR_KEY_BASE, keybase);
 		xmw.addInt(tag, ATTR_VOLUME, volume);

@@ -37,6 +37,9 @@ public class InstrumentsModder
 	public static void dump() throws IOException
 	{
 		List<InstrumentPreset> instruments = decode(DUMP_AUDIO_RAW.getFile(FN_BIN));
+		SoundBankCatalog catalog = SoundBankCatalog.loadDump();
+		for (InstrumentPreset instrument : instruments)
+			instrument.setWav(catalog);
 		save(instruments, DUMP_AUDIO.getFile(FN_AUDIO_PRESETS));
 		Logger.log("Dumped presets from SET1");
 	}
@@ -44,6 +47,9 @@ public class InstrumentsModder
 	public static void build() throws IOException
 	{
 		ArrayList<InstrumentPreset> instruments = load(MOD_AUDIO.getFile(FN_AUDIO_PRESETS));
+		SoundBankCatalog catalog = SoundBankCatalog.loadMod();
+		for (InstrumentPreset instrument : instruments)
+			instrument.resolveWav(catalog);
 		encode(instruments, MOD_AUDIO_BUILD.getFile(FN_BIN));
 		Logger.log("Built SET1 from presets");
 	}
@@ -110,6 +116,14 @@ public class InstrumentsModder
 			instruments.add(new InstrumentPreset(xmr, insElem));
 		}
 
+		return instruments;
+	}
+
+	public static ArrayList<InstrumentPreset> load(File xmlFile, SoundBankCatalog catalog) throws IOException
+	{
+		ArrayList<InstrumentPreset> instruments = load(xmlFile);
+		for (InstrumentPreset instrument : instruments)
+			instrument.resolveWav(catalog);
 		return instruments;
 	}
 }

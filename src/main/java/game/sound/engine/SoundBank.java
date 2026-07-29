@@ -18,6 +18,7 @@ import game.sound.DrumPreset;
 import game.sound.DrumsModder;
 import game.sound.InstrumentPreset;
 import game.sound.InstrumentsModder;
+import game.sound.SoundBankCatalog;
 import game.sound.engine.Envelope.EnvelopePair;
 import util.Logger;
 
@@ -77,8 +78,9 @@ public class SoundBank
 				System.out.printf("INS: %X %X --> %4s %X%n", e.group, e.index, bank.name, i++);
 		}
 
-		instrumentList = InstrumentsModder.load(MOD_AUDIO.getFile(FN_AUDIO_PRESETS));
-		drumList = DrumsModder.load(MOD_AUDIO.getFile(FN_AUDIO_DRUMS));
+		SoundBankCatalog catalog = SoundBankCatalog.loadMod();
+		instrumentList = InstrumentsModder.load(MOD_AUDIO.getFile(FN_AUDIO_PRESETS), catalog);
+		drumList = DrumsModder.load(MOD_AUDIO.getFile(FN_AUDIO_DRUMS), catalog);
 	}
 
 	public boolean installAuxBank(String bankName, int index)

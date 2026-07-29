@@ -5,7 +5,6 @@ import util.xml.XmlKey;
 enum SfxXmlKey implements XmlKey
 {
 	// @formatter:off
-	TAG_ARCHIVE                    ("SoundEffectArchive"),
 	TAG_SOUNDS                     ("Sounds"),
 	TAG_SOUND                      ("Sound"),
 	TAG_ALIAS                      ("Alias"),
@@ -51,11 +50,7 @@ enum SfxXmlKey implements XmlKey
 	TAG_SET_ALTERNATIVE_VOLUME     ("SetAlternativeVolume"),
 
 	ATTR_NAME                      ("name"),
-	ATTR_MAX_BINARY_SIZE           ("maxBinarySize"),
-	ATTR_ENVELOPES                 ("envelopes"),
-	ATTR_SHARED                    ("shared"),
 	ATTR_ID                        ("id"),
-	ATTR_NAME_SOURCE               ("nameSource"),
 	ATTR_SRC                       ("src"),
 	ATTR_EMPTY                     ("empty"),
 	ATTR_ALLOCATION                ("allocation"),
@@ -64,8 +59,8 @@ enum SfxXmlKey implements XmlKey
 	ATTR_PRIORITY                  ("priority"),
 	ATTR_EXCLUSIVE_GROUP           ("exclusiveGroup"),
 	ATTR_SLOT                      ("slot"),
-	ATTR_BANK                      ("bank"),
-	ATTR_PATCH                     ("patch"),
+	ATTR_WAV                       ("wav"),
+	ATTR_ENVELOPE                  ("envelope"),
 	ATTR_VOLUME                    ("volume"),
 	ATTR_PAN                       ("pan"),
 	ATTR_REVERB                    ("reverb"),

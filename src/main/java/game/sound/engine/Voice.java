@@ -126,13 +126,15 @@ public class Voice
 		if (ins == null)
 			return;
 
-		if (env != null) {
-			envPlayer.update();
+		float envVolumeStart = 1.0f;
+		float envVolumeEnd = 1.0f;
+		boolean envelopeDone = false;
 
-			if (envPlayer.isDone()) {
-				state = VoiceState.DONE;
-				return;
-			}
+		if (env != null) {
+			envVolumeStart = envPlayer.getEnvelopeVolume();
+			envPlayer.update();
+			envVolumeEnd = envPlayer.getEnvelopeVolume();
+			envelopeDone = envPlayer.isDone();
 		}
 
 		float panAngle = (float) ((pan / 127.0) * (Math.PI / 2));
@@ -145,8 +147,6 @@ public class Voice
 
 		float resampleRatio = pitch * ((float) ins.sampleRate / AudioEngine.OUTPUT_RATE);
 		resampleRatio = Math.min(resampleRatio, 1.99996f);
-
-		float envVolume = (env != null) ? envPlayer.getEnvelopeVolume() : 1.0f;
 
 		for (int i = 0; i < AudioEngine.FRAME_SAMPLES; i++) {
 			int i0 = (int) readPos;
@@ -181,6 +181,8 @@ public class Voice
 			float s1 = (float) ins.samples.get(i1) / Short.MAX_VALUE;
 			float sample = (1 - frac) * s0 + frac * s1;
 
+			float envelopeTime = (i + 1.0f) / AudioEngine.FRAME_SAMPLES;
+			float envVolume = envVolumeStart + envelopeTime * (envVolumeEnd - envVolumeStart);
 			float scaled = sample * volume * envVolume;
 
 			dryBufferL[i] += scaled * panL * dryAmt;
@@ -191,5 +193,8 @@ public class Voice
 
 			readPos += resampleRatio;
 		}
+
+		if (envelopeDone)
+			state = VoiceState.DONE;
 	}
 }

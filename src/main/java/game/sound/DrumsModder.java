@@ -37,6 +37,9 @@ public class DrumsModder
 	public static void dump() throws IOException
 	{
 		List<DrumPreset> drums = decode(DUMP_AUDIO_RAW.getFile(FN_BIN));
+		SoundBankCatalog catalog = SoundBankCatalog.loadDump();
+		for (DrumPreset drum : drums)
+			drum.setWav(catalog);
 		save(drums, DUMP_AUDIO.getFile(FN_AUDIO_DRUMS));
 		Logger.log("Dumped drums from SET1");
 	}
@@ -44,6 +47,9 @@ public class DrumsModder
 	public static void build() throws IOException
 	{
 		ArrayList<DrumPreset> drums = load(MOD_AUDIO.getFile(FN_AUDIO_DRUMS));
+		SoundBankCatalog catalog = SoundBankCatalog.loadMod();
+		for (DrumPreset drum : drums)
+			drum.resolveWav(catalog);
 		encode(drums, MOD_AUDIO_BUILD.getFile(FN_BIN));
 		Logger.log("Built SET1 from drums");
 	}
@@ -112,6 +118,14 @@ public class DrumsModder
 			drums.add(new DrumPreset(xmr, drumElem));
 		}
 
+		return drums;
+	}
+
+	public static ArrayList<DrumPreset> load(File xmlFile, SoundBankCatalog catalog) throws IOException
+	{
+		ArrayList<DrumPreset> drums = load(xmlFile);
+		for (DrumPreset drum : drums)
+			drum.resolveWav(catalog);
 		return drums;
 	}
 }

@@ -82,8 +82,10 @@ public class MseqPlayer implements AudioClient
 
 		public void updatePitch()
 		{
+			int detune = baseDetune;
 			if (track.index != Mseq.DRUM_TRACK)
-				setPitch(AudioEngine.detuneToPitchRatio(baseDetune + Math.round(track.tuneLerp.current)));
+				detune += Math.round(track.tuneLerp.current);
+			setPitch(AudioEngine.detuneToPitchRatio(detune));
 		}
 	}
 
@@ -397,6 +399,7 @@ public class MseqPlayer implements AudioClient
 						voice.baseDetune = ((cmd.pitch & 0x7F) * 100) - ins.keyBase;
 						voice.setInstrument(ins);
 						voice.setEnvelope(envelope);
+						voice.setPan(track.pan);
 						voice.setReverb(track.reverb);
 
 						voice.updateVolume();
@@ -475,9 +478,10 @@ public class MseqPlayer implements AudioClient
 			else if (abs instanceof SetPanCommand cmd) {
 				logCommand("[%X] SetPan %X", cmd.track, cmd.pan);
 
-				if (cmd.track != Mseq.DRUM_TRACK) {
-					MseqTrack track = tracks[cmd.track];
+				MseqTrack track = tracks[cmd.track];
+				track.pan = cmd.pan;
 
+				if (cmd.track != Mseq.DRUM_TRACK) {
 					for (int i = 0; i < voices.length; i++) {
 						MseqVoice voice = voices[i];
 						if (voice == null)
@@ -518,7 +522,7 @@ public class MseqPlayer implements AudioClient
 			else if (abs instanceof StartLoopCommand cmd) {
 				logCommand("--- Start Loop %X", cmd.loopID & 1);
 
-				loopPositions[cmd.loopID & 1] = curPos + 1;
+				loopPositions[cmd.loopID & 1] = curPos;
 			}
 			else if (abs instanceof EndLoopCommand cmd) {
 				logCommand("--- End Loop %X (%d/%d)", cmd.loopID & 1, loopIterations[cmd.loopID & 1], cmd.count);

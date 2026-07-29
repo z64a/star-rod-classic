@@ -120,13 +120,13 @@ public class Instrument implements XmlSerializable
 	@Override
 	public void fromXML(XmlReader xmr, Element insElem)
 	{
-		xmr.requiresAttribute(insElem, ATTR_SRC);
-		mainFilename = xmr.getAttribute(insElem, ATTR_SRC);
+		xmr.requiresAttribute(insElem, ATTR_WAV);
+		mainFilename = xmr.getAttribute(insElem, ATTR_WAV) + EXT_WAV;
 
 		name = FilenameUtils.getBaseName(mainFilename);
 
 		if (xmr.hasAttribute(insElem, ATTR_LOOP)) {
-			loopFilename = xmr.getAttribute(insElem, ATTR_LOOP);
+			loopFilename = xmr.getAttribute(insElem, ATTR_LOOP) + EXT_WAV;
 			hasLoop = true;
 
 			if (xmr.hasAttribute(insElem, ATTR_LOOP_COUNT)) {
@@ -156,9 +156,9 @@ public class Instrument implements XmlSerializable
 	{
 		XmlTag tag = xmw.createTag(TAG_INSTRUMENT, true);
 
-		xmw.addAttribute(tag, ATTR_SRC, mainFilename);
+		xmw.addAttribute(tag, ATTR_WAV, FilenameUtils.removeExtension(mainFilename));
 		if (hasLoop) {
-			xmw.addAttribute(tag, ATTR_LOOP, loopFilename);
+			xmw.addAttribute(tag, ATTR_LOOP, FilenameUtils.removeExtension(loopFilename));
 			if (loopCount != LOOP_FOREVER)
 				xmw.addInt(tag, ATTR_LOOP_COUNT, loopCount);
 		}

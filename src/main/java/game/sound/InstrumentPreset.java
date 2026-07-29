@@ -21,8 +21,8 @@ public class InstrumentPreset implements XmlSerializable
 		TAG_LIST		("Instruments"),
 		TAG_INSTRUMENT	("Instrument"),
 
-		ATTR_BANK			("bank"),
-		ATTR_PATCH			("patch"),
+		ATTR_WAV			("wav"),
+		ATTR_ENVELOPE		("envelope"),
 		ATTR_VOLUME			("volume"),
 		ATTR_PAN			("pan"),
 		ATTR_REVERB			("reverb"),
@@ -46,6 +46,8 @@ public class InstrumentPreset implements XmlSerializable
 
 	public int bank;
 	public int patch;
+	public String wav;
+	public int envelope;
 	public int volume;
 	public int pan;
 	public int reverb;
@@ -84,14 +86,28 @@ public class InstrumentPreset implements XmlSerializable
 		dbb.putByte(0); // pad
 	}
 
+	public void setWav(SoundBankCatalog catalog)
+	{
+		SoundBankCatalog.WavReference reference = catalog.getWav(bank, patch);
+		wav = reference.wav;
+		envelope = reference.envelope;
+	}
+
+	public void resolveWav(SoundBankCatalog catalog)
+	{
+		SoundBankCatalog.InstrumentAddress address = catalog.getAddress(wav, envelope);
+		bank = address.bank;
+		patch = address.patch;
+	}
+
 	@Override
 	public void fromXML(XmlReader xmr, Element elem)
 	{
-		xmr.requiresAttribute(elem, ATTR_BANK);
-		bank = xmr.readHex(elem, ATTR_BANK);
+		xmr.requiresAttribute(elem, ATTR_WAV);
+		wav = xmr.getAttribute(elem, ATTR_WAV);
 
-		xmr.requiresAttribute(elem, ATTR_PATCH);
-		patch = xmr.readHex(elem, ATTR_PATCH);
+		if (xmr.hasAttribute(elem, ATTR_ENVELOPE))
+			envelope = xmr.readHex(elem, ATTR_ENVELOPE);
 
 		xmr.requiresAttribute(elem, ATTR_VOLUME);
 		volume = xmr.readInt(elem, ATTR_VOLUME);
@@ -114,8 +130,9 @@ public class InstrumentPreset implements XmlSerializable
 	{
 		XmlTag tag = xmw.createTag(TAG_INSTRUMENT, true);
 
-		xmw.addHex(tag, ATTR_BANK, bank);
-		xmw.addHex(tag, ATTR_PATCH, patch);
+		xmw.addAttribute(tag, ATTR_WAV, wav);
+		if (envelope != 0)
+			xmw.addHex(tag, ATTR_ENVELOPE, envelope);
 		xmw.addInt(tag, ATTR_VOLUME, volume);
 		xmw.addInt(tag, ATTR_PAN, pan);
 		xmw.addInt(tag, ATTR_REVERB, reverb);

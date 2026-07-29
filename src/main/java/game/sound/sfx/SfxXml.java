@@ -23,7 +23,9 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
+import app.StarRodException;
 import app.input.InputFileException;
+import game.sound.SoundBankCatalog;
 import game.sound.engine.EnvelopeCommand;
 import game.sound.engine.EnvelopeOp;
 import game.sound.engine.EnvelopeTimes;
@@ -48,6 +50,9 @@ import util.xml.XmlWrapper.XmlWriter;
 
 public final class SfxXml
 {
+	public static final String FN_SOUND_EFFECTS = "SoundEffects.xml";
+	public static final String FN_SOUND_ENVELOPES = "SoundEnvelopes.xml";
+
 	private static final Pattern IDENTIFIER = Pattern.compile("[A-Za-z_][A-Za-z0-9_.-]*");
 	private static final Pattern SOUND_ID = Pattern.compile("[0-9A-F]{4}");
 
@@ -56,47 +61,36 @@ public final class SfxXml
 	private SfxXml()
 	{}
 
-	public static SfxArchive read(Path archiveXml)
+	public static SfxArchive read(Path archiveXml, SoundBankCatalog catalog)
 	{
 		try {
-			return readArchive(archiveXml);
+			return readArchive(archiveXml, catalog);
 		}
 		catch (InputFileException e) {
 			throw new SfxFormatException(e.getOrigin() + ": " + e.getMessage(), e);
 		}
 	}
 
-	private static SfxArchive readArchive(Path archiveXml)
+	private static SfxArchive readArchive(Path archiveXml, SoundBankCatalog catalog)
 	{
 		Path manifest = requireInputFile(archiveXml, "SFX archive manifest");
 		Path assetRoot = manifest.getParent();
 		XmlReader reader = parseDocument(manifest);
-		Element root = requireRoot(reader, manifest, TAG_ARCHIVE);
-
-		checkAttributes(manifest, root, ATTR_NAME, ATTR_MAX_BINARY_SIZE, ATTR_ENVELOPES, ATTR_SHARED);
-		if (reader.hasAttribute(root, ATTR_SHARED))
-			throw error(manifest, root, "shared.xml is not supported by the prototype");
+		Element root = requireRoot(reader, manifest, TAG_SOUNDS);
+		checkAttributes(manifest, root);
 
 		SfxArchive archive = new SfxArchive();
-		reader.requiresAttribute(root, ATTR_NAME);
-		archive.name = reader.getAttribute(root, ATTR_NAME);
-		if (archive.name.length() != 4 || !isAscii(archive.name))
-			throw error(manifest, root, "name must contain exactly four printable ASCII characters");
-		archive.maxBinarySize = readRangedHex(reader, manifest, root, ATTR_MAX_BINARY_SIZE, 0x22, 0x10000, false);
-
-		Element soundsElement = uniqueRequiredChild(manifest, root, TAG_SOUNDS);
-		checkAttributes(manifest, soundsElement);
-		for (Element child : childElements(manifest, soundsElement)) {
+		for (Element child : childElements(manifest, root)) {
 			if (!child.getTagName().equals(TAG_SOUND.toString()))
-				throw unknownElement(manifest, soundsElement, child);
-			Sound sound = readSound(reader, manifest, assetRoot, child);
+				throw unknownElement(manifest, root, child);
+			Sound sound = readSound(reader, manifest, assetRoot, child, catalog);
 			if (archive.sounds.putIfAbsent(sound.id, sound) != null)
 				throw error(manifest, child, String.format("duplicate sound ID %04X", sound.id));
 		}
 
-		if (reader.hasAttribute(root, ATTR_ENVELOPES)) {
-			String relative = reader.getAttribute(root, ATTR_ENVELOPES);
-			Path envelopeXml = resolveInput(assetRoot, relative, manifest, root, ATTR_ENVELOPES);
+		Path envelopeXml = assetRoot.resolve(FN_SOUND_ENVELOPES);
+		if (Files.isRegularFile(envelopeXml)) {
+			checkExactPathCase(assetRoot, FN_SOUND_ENVELOPES, manifest, root);
 			readEnvelopes(archive, envelopeXml);
 		}
 
@@ -105,14 +99,14 @@ public final class SfxXml
 		return archive;
 	}
 
-	public static void write(SfxArchive archive, Path assetDirectory)
+	public static void write(SfxArchive archive, Path audioDirectory, SoundBankCatalog catalog)
 	{
-		if (assetDirectory == null)
-			throw new IllegalArgumentException("assetDirectory is null");
-		writeArchive(archive, assetDirectory.resolve("archive.xml"));
+		if (audioDirectory == null)
+			throw new IllegalArgumentException("audioDirectory is null");
+		writeArchive(archive, audioDirectory.resolve(FN_SOUND_EFFECTS), catalog);
 	}
 
-	public static void writeArchive(SfxArchive archive, Path archiveXml)
+	public static void writeArchive(SfxArchive archive, Path archiveXml, SoundBankCatalog catalog)
 	{
 		if (archive == null)
 			throw new IllegalArgumentException("archive is null");
@@ -132,14 +126,17 @@ public final class SfxXml
 			for (Map.Entry<Sound, String> entry : effectSources.entrySet()) {
 				Path output = resolveOutput(assetRoot, entry.getValue(), manifest);
 				Files.createDirectories(output.getParent());
-				writeEffectXml(output, entry.getKey());
+				writeEffectXml(output, entry.getKey(), catalog);
 			}
 			deleteStaleEffectFiles(assetRoot, effectSources.values());
 
+			Path envelopeXml = assetRoot.resolve(FN_SOUND_ENVELOPES);
 			if (!archive.envelopes.isEmpty())
-				writeEnvelopesXml(assetRoot.resolve("envelopes.xml"), archive);
+				writeEnvelopesXml(envelopeXml, archive);
+			else
+				Files.deleteIfExists(envelopeXml);
 
-			writeArchiveXml(manifest, archive, effectSources);
+			writeArchiveXml(manifest, archive, effectSources, catalog);
 		}
 		catch (IOException e) {
 			throw new SfxFormatException("Could not write SFX assets under " + assetRoot + ": " + e.getMessage(), e);
@@ -166,9 +163,10 @@ public final class SfxXml
 		}
 	}
 
-	private static Sound readSound(XmlReader reader, Path manifest, Path assetRoot, Element element)
+	private static Sound readSound(XmlReader reader, Path manifest, Path assetRoot, Element element,
+		SoundBankCatalog catalog)
 	{
-		checkAttributes(manifest, element, ATTR_ID, ATTR_NAME, ATTR_NAME_SOURCE, ATTR_SRC, ATTR_EMPTY);
+		checkAttributes(manifest, element, ATTR_ID, ATTR_NAME, ATTR_SRC, ATTR_EMPTY);
 		reader.requiresAttribute(element, ATTR_ID);
 		String idText = reader.getAttribute(element, ATTR_ID);
 		if (!SOUND_ID.matcher(idText).matches())
@@ -179,13 +177,6 @@ public final class SfxXml
 
 		String name = readIdentifier(reader, manifest, element, ATTR_NAME, true);
 		Sound sound = new Sound(id, name);
-		if (reader.hasAttribute(element, ATTR_NAME_SOURCE)) {
-			String source = reader.getAttribute(element, ATTR_NAME_SOURCE);
-			if (source.equals("generated"))
-				sound.generatedName = true;
-			else if (!source.equals("dx"))
-				throw error(manifest, element, "nameSource must be 'dx' or 'generated'");
-		}
 
 		Element routingElement = null;
 		Element oneShotElement = null;
@@ -222,10 +213,10 @@ public final class SfxXml
 		if (hasSource) {
 			sound.source = reader.getAttribute(element, ATTR_SRC);
 			Path effectXml = resolveInput(assetRoot, sound.source, manifest, element, ATTR_SRC);
-			readEffect(sound, effectXml);
+			readEffect(sound, effectXml, catalog);
 		}
 		else if (oneShotElement != null) {
-			sound.tracks.add(new Track(0, readOneShot(reader, manifest, oneShotElement)));
+			sound.tracks.add(new Track(0, readOneShot(reader, manifest, oneShotElement, catalog)));
 		}
 
 		if (routingElement != null)
@@ -235,7 +226,7 @@ public final class SfxXml
 		return sound;
 	}
 
-	private static void readEffect(Sound sound, Path effectXml)
+	private static void readEffect(Sound sound, Path effectXml, SoundBankCatalog catalog)
 	{
 		XmlReader reader = parseDocument(effectXml);
 		Element root = requireRoot(reader, effectXml, TAG_EFFECT);
@@ -256,26 +247,27 @@ public final class SfxXml
 					spawnedElement = child;
 					break;
 				case TAG_ROUTING:
-					throw error(effectXml, child, "logical sound routing belongs in archive.xml, not the effect file");
+					throw error(effectXml, child, "logical sound routing belongs in SoundEffects.xml, not the effect file");
 				default:
 					throw unknownElement(effectXml, root, child);
 			}
 		}
 		if (tracksElement == null)
 			throw error(effectXml, root, "SoundEffect is missing required Tracks element");
-		sound.tracks.addAll(readTracks(reader, effectXml, tracksElement));
+		sound.tracks.addAll(readTracks(reader, effectXml, tracksElement, catalog));
 
 		if (spawnedElement != null) {
 			checkAttributes(effectXml, spawnedElement);
 			for (Element child : childElements(effectXml, spawnedElement)) {
 				if (!child.getTagName().equals(TAG_SPAWNED_EFFECT.toString()))
 					throw unknownElement(effectXml, spawnedElement, child);
-				sound.spawnedEffects.add(readSpawnedEffect(reader, effectXml, child));
+				sound.spawnedEffects.add(readSpawnedEffect(reader, effectXml, child, catalog));
 			}
 		}
 	}
 
-	private static SpawnedEffect readSpawnedEffect(XmlReader reader, Path source, Element element)
+	private static SpawnedEffect readSpawnedEffect(XmlReader reader, Path source, Element element,
+		SoundBankCatalog catalog)
 	{
 		checkAttributes(source, element, ATTR_NAME);
 		SpawnedEffect spawned = new SpawnedEffect(readIdentifier(reader, source, element, ATTR_NAME, true));
@@ -299,26 +291,28 @@ public final class SfxXml
 		}
 		if (tracksElement == null || routingElement == null)
 			throw error(source, element, "SpawnedEffect requires exactly one Routing and one Tracks element");
-		spawned.tracks.addAll(readTracks(reader, source, tracksElement));
+		spawned.tracks.addAll(readTracks(reader, source, tracksElement, catalog));
 		spawned.routing = readRouting(reader, source, routingElement, spawned.tracks.size());
 		validateTrackRouting(spawned.tracks, spawned.routing, source, element);
 		return spawned;
 	}
 
-	private static List<Track> readTracks(XmlReader reader, Path source, Element element)
+	private static List<Track> readTracks(XmlReader reader, Path source, Element element,
+		SoundBankCatalog catalog)
 	{
 		checkAttributes(source, element);
 		List<Track> tracks = new ArrayList<>();
 		for (Element child : childElements(source, element)) {
 			if (!child.getTagName().equals(TAG_TRACK.toString()))
 				throw unknownElement(source, element, child);
-			tracks.add(readTrack(reader, source, child));
+			tracks.add(readTrack(reader, source, child, catalog));
 		}
 		validateTrackSlots(tracks, source, element);
 		return tracks;
 	}
 
-	private static Track readTrack(XmlReader reader, Path source, Element element)
+	private static Track readTrack(XmlReader reader, Path source, Element element,
+		SoundBankCatalog catalog)
 	{
 		checkAttributes(source, element, ATTR_SLOT, ATTR_PLAYER, ATTR_PRIORITY, ATTR_EMPTY);
 		int slot = readRangedInt(reader, source, element, ATTR_SLOT, 0, 7, false);
@@ -344,14 +338,14 @@ public final class SfxXml
 			Element child = children.get(0);
 			switch (tagKey(source, element, child)) {
 				case TAG_ONE_SHOT:
-					definition = readOneShot(reader, source, child);
+					definition = readOneShot(reader, source, child, catalog);
 					break;
 				case TAG_SEQUENCE:
-					definition = readSequence(reader, source, child);
+					definition = readSequence(reader, source, child, catalog);
 					break;
 				case TAG_SHARED_SEQUENCE:
 					throw error(source, child,
-						"shared.xml and SharedSequence are not supported by the prototype");
+						"Shared.xml and SharedSequence are not supported by the prototype");
 				default:
 					throw unknownElement(source, element, child);
 			}
@@ -363,15 +357,17 @@ public final class SfxXml
 		return track;
 	}
 
-	private static OneShot readOneShot(XmlReader reader, Path source, Element element)
+	private static OneShot readOneShot(XmlReader reader, Path source, Element element,
+		SoundBankCatalog catalog)
 	{
 		checkAttributes(source, element,
-			ATTR_BANK, ATTR_PATCH, ATTR_VOLUME, ATTR_PAN, ATTR_REVERB, ATTR_PITCH, ATTR_RANDOM_PITCH,
+			ATTR_WAV, ATTR_ENVELOPE, ATTR_VOLUME, ATTR_PAN, ATTR_REVERB, ATTR_PITCH, ATTR_RANDOM_PITCH,
 			ATTR_LOCK_VOLUME, ATTR_LOCK_PAN, ATTR_LOCK_PITCH, ATTR_LOCK_REVERB);
 		requireNoChildren(source, element);
 		OneShot oneShot = new OneShot();
-		oneShot.bank = readHexByte(reader, source, element, ATTR_BANK, false);
-		oneShot.patch = readHexByte(reader, source, element, ATTR_PATCH, false);
+		SoundBankCatalog.InstrumentAddress address = readWavAddress(reader, source, element, catalog);
+		oneShot.bank = address.bank;
+		oneShot.patch = address.patch;
 		oneShot.volume = readRangedInt(reader, source, element, ATTR_VOLUME, 0, 255, false);
 		oneShot.pan = readRangedInt(reader, source, element, ATTR_PAN, 0, 255, true, 64);
 		oneShot.reverb = readRangedInt(reader, source, element, ATTR_REVERB, 0, 255, true, 0);
@@ -386,7 +382,8 @@ public final class SfxXml
 		return oneShot;
 	}
 
-	private static Sequence readSequence(XmlReader reader, Path source, Element element)
+	private static Sequence readSequence(XmlReader reader, Path source, Element element,
+		SoundBankCatalog catalog)
 	{
 		checkAttributes(source, element,
 			ATTR_ENTRY, ATTR_LOCK_VOLUME, ATTR_LOCK_PAN, ATTR_LOCK_PITCH, ATTR_LOCK_REVERB);
@@ -408,7 +405,7 @@ public final class SfxXml
 				sequence.nodes.add(new Label(name));
 			}
 			else {
-				sequence.nodes.add(readCommand(reader, source, child));
+				sequence.nodes.add(readCommand(reader, source, child, catalog));
 			}
 		}
 
@@ -424,7 +421,8 @@ public final class SfxXml
 		return sequence;
 	}
 
-	private static Command readCommand(XmlReader reader, Path source, Element element)
+	private static Command readCommand(XmlReader reader, Path source, Element element,
+		SoundBankCatalog catalog)
 	{
 		SfxXmlKey tag = SfxXmlKey.forTag(element.getTagName());
 		if (tag == null)
@@ -449,11 +447,11 @@ public final class SfxXml
 				return new Command(Op.SET_PAN,
 					decimalAttribute(reader, source, element, ATTR_VALUE, 0, 255));
 			case TAG_SET_INSTRUMENT:
-				checkAttributes(source, element, ATTR_BANK, ATTR_PATCH);
+				checkAttributes(source, element, ATTR_WAV, ATTR_ENVELOPE);
 				requireNoChildren(source, element);
-				return new Command(Op.SET_INSTRUMENT,
-					readHexByte(reader, source, element, ATTR_BANK, false),
-					readHexByte(reader, source, element, ATTR_PATCH, false));
+				SoundBankCatalog.InstrumentAddress instrument =
+					readWavAddress(reader, source, element, catalog);
+				return new Command(Op.SET_INSTRUMENT, instrument.bank, instrument.patch);
 			case TAG_SET_REVERB:
 				return new Command(Op.SET_REVERB,
 					decimalAttribute(reader, source, element, ATTR_VALUE, 0, 255));
@@ -538,7 +536,7 @@ public final class SfxXml
 					decimalAttribute(reader, source, element, ATTR_VALUE, 0, 255));
 			case TAG_SHARED_SEQUENCE:
 				throw error(source, element,
-					"shared.xml and SharedSequence are not supported by the prototype");
+					"Shared.xml and SharedSequence are not supported by the prototype");
 			default:
 				throw error(source, element, "unknown sequence command element: " + element.getTagName());
 		}
@@ -620,11 +618,6 @@ public final class SfxXml
 
 	private static void validateArchive(SfxArchive archive, Path source)
 	{
-		if (archive.name == null || archive.name.length() != 4 || !isAscii(archive.name))
-			throw modelError(source, "archive name must contain exactly four printable ASCII characters");
-		if (archive.maxBinarySize < 0x22 || archive.maxBinarySize > 0x10000)
-			throw modelError(source, "maxBinarySize must be between 22 and 10000");
-
 		Set<String> allSoundNames = new HashSet<>();
 		Set<String> sources = new HashSet<>();
 		for (Map.Entry<Integer, Sound> mapEntry : archive.sounds.entrySet()) {
@@ -993,13 +986,14 @@ public final class SfxXml
 				continue;
 			String relative = sound.source;
 			if (relative == null || relative.isBlank())
-				relative = String.format("effects/%04X_%s.xml", sound.id, sound.name);
+				relative = String.format("sfx/%04X_%s.xml", sound.id, sound.name);
 			validateRelativePath(relative, manifest, null, ATTR_SRC);
 			if (!relative.endsWith(".xml"))
 				throw modelError(manifest, "effect source must end with lowercase .xml: " + relative);
 			String key = relative.toLowerCase(Locale.ROOT);
 			String manifestRelative = assetRoot.relativize(manifest).toString().replace('\\', '/');
-			if (key.equals(manifestRelative.toLowerCase(Locale.ROOT)) || key.equals("envelopes.xml"))
+			if (key.equals(manifestRelative.toLowerCase(Locale.ROOT))
+				|| key.equals(FN_SOUND_ENVELOPES.toLowerCase(Locale.ROOT)))
 				throw modelError(manifest, "effect source uses a reserved output path: " + relative);
 			if (!used.add(key))
 				throw modelError(manifest, "effect source path is reused: " + relative);
@@ -1011,7 +1005,7 @@ public final class SfxXml
 
 	private static void rejectOrphanEffects(Path assetRoot, SfxArchive archive, Path manifest)
 	{
-		Path effectsDirectory = assetRoot.resolve("effects");
+		Path effectsDirectory = assetRoot.resolve("sfx");
 		if (!Files.isDirectory(effectsDirectory))
 			return;
 
@@ -1030,7 +1024,7 @@ public final class SfxXml
 				.orElse(null);
 			if (orphan != null) {
 				String relative = assetRoot.relativize(orphan).toString().replace('\\', '/');
-				throw modelError(manifest, "orphan effect file is not referenced by archive.xml: " + relative);
+				throw modelError(manifest, "orphan effect file is not referenced by SoundEffects.xml: " + relative);
 			}
 		}
 		catch (IOException e) {
@@ -1041,7 +1035,7 @@ public final class SfxXml
 	private static void deleteStaleEffectFiles(Path assetRoot, Iterable<String> effectSources)
 		throws IOException
 	{
-		Path effectsDirectory = assetRoot.resolve("effects");
+		Path effectsDirectory = assetRoot.resolve("sfx");
 		if (!Files.isDirectory(effectsDirectory))
 			return;
 		if (Files.isSymbolicLink(effectsDirectory))
@@ -1063,36 +1057,27 @@ public final class SfxXml
 			Files.delete(path);
 	}
 
-	private static void writeArchiveXml(Path output, SfxArchive archive, Map<Sound, String> effectSources)
+	private static void writeArchiveXml(Path output, SfxArchive archive, Map<Sound, String> effectSources,
+		SoundBankCatalog catalog)
 		throws IOException
 	{
 		try (XmlWriter writer = new XmlWriter(output.toFile())) {
-			Map<SfxXmlKey, String> rootAttributes = attributes(
-				ATTR_NAME, archive.name,
-				ATTR_MAX_BINARY_SIZE, Integer.toHexString(archive.maxBinarySize).toUpperCase(Locale.ROOT));
-			if (!archive.envelopes.isEmpty())
-				rootAttributes.put(ATTR_ENVELOPES, "envelopes.xml");
-			XmlTag rootTag = openTag(writer, TAG_ARCHIVE, rootAttributes);
-			XmlTag soundsTag = openTag(writer, TAG_SOUNDS, Map.of());
+			XmlTag rootTag = openTag(writer, TAG_SOUNDS, Map.of());
 
 			List<Sound> sounds = new ArrayList<>(archive.sounds.values());
 			sounds.sort(Comparator.comparingInt(sound -> sound.id));
-			for (int index = 0; index < sounds.size(); index++) {
-				Sound sound = sounds.get(index);
+			for (Sound sound : sounds) {
 				Map<SfxXmlKey, String> soundAttributes = attributes(
 					ATTR_ID, String.format("%04X", sound.id), ATTR_NAME, sound.name);
-				if (sound.generatedName)
-					soundAttributes.put(ATTR_NAME_SOURCE, "generated");
+				if (sound.isEmpty())
+					soundAttributes.put(ATTR_EMPTY, "true");
 
 				if (sound.isEmpty() && sound.aliases.isEmpty()) {
-					soundAttributes.put(ATTR_EMPTY, "true");
 					printTag(writer, TAG_SOUND, soundAttributes);
 				}
 				else {
 					String effectSource = effectSources.get(sound);
-					if (sound.isEmpty())
-						soundAttributes.put(ATTR_EMPTY, "true");
-					else if (effectSource != null)
+					if (!sound.isEmpty() && effectSource != null)
 						soundAttributes.put(ATTR_SRC, effectSource);
 					XmlTag soundTag = openTag(writer, TAG_SOUND, soundAttributes);
 					for (String alias : sound.aliases)
@@ -1100,22 +1085,21 @@ public final class SfxXml
 					if (!sound.isEmpty() && sound.routing != null)
 						writeRouting(writer, sound.routing, sound.tracks.size());
 					if (!sound.isEmpty() && effectSource == null)
-						writeOneShot(writer, (OneShot) sound.tracks.get(0).definition);
+						writeOneShot(writer, (OneShot) sound.tracks.get(0).definition, catalog);
 					writer.closeTag(soundTag);
 				}
 			}
 
-			writer.closeTag(soundsTag);
 			writer.closeTag(rootTag);
 			writer.saveOrThrow();
 		}
 	}
 
-	private static void writeEffectXml(Path output, Sound sound) throws IOException
+	private static void writeEffectXml(Path output, Sound sound, SoundBankCatalog catalog) throws IOException
 	{
 		try (XmlWriter writer = new XmlWriter(output.toFile())) {
 			XmlTag rootTag = openTag(writer, TAG_EFFECT, Map.of());
-			writeTracks(writer, sound.tracks);
+			writeTracks(writer, sound.tracks, catalog);
 
 			if (!sound.spawnedEffects.isEmpty()) {
 				XmlTag spawnedEffectsTag = openTag(writer, TAG_SPAWNED_EFFECTS, Map.of());
@@ -1124,7 +1108,7 @@ public final class SfxXml
 					XmlTag spawnedTag = openTag(writer, TAG_SPAWNED_EFFECT,
 						attributes(ATTR_NAME, spawned.name));
 					writeRouting(writer, spawned.routing, spawned.tracks.size());
-					writeTracks(writer, spawned.tracks);
+					writeTracks(writer, spawned.tracks, catalog);
 					writer.closeTag(spawnedTag);
 				}
 				writer.closeTag(spawnedEffectsTag);
@@ -1166,7 +1150,7 @@ public final class SfxXml
 		printTag(writer, TAG_ROUTING, attributes);
 	}
 
-	private static void writeTracks(XmlWriter writer, List<Track> tracks)
+	private static void writeTracks(XmlWriter writer, List<Track> tracks, SoundBankCatalog catalog)
 	{
 		XmlTag tracksTag = openTag(writer, TAG_TRACKS, Map.of());
 		List<Track> ordered = new ArrayList<>(tracks);
@@ -1186,21 +1170,19 @@ public final class SfxXml
 			else {
 				XmlTag trackTag = openTag(writer, TAG_TRACK, trackAttributes);
 				if (track.definition instanceof OneShot oneShot)
-					writeOneShot(writer, oneShot);
+					writeOneShot(writer, oneShot, catalog);
 				else
-					writeSequence(writer, (Sequence) track.definition);
+					writeSequence(writer, (Sequence) track.definition, catalog);
 				writer.closeTag(trackTag);
 			}
 		}
 		writer.closeTag(tracksTag);
 	}
 
-	private static void writeOneShot(XmlWriter writer, OneShot oneShot)
+	private static void writeOneShot(XmlWriter writer, OneShot oneShot, SoundBankCatalog catalog)
 	{
-		Map<SfxXmlKey, String> attributes = attributes(
-			ATTR_BANK, String.format("%02X", oneShot.bank),
-			ATTR_PATCH, String.format("%02X", oneShot.patch),
-			ATTR_VOLUME, Integer.toString(oneShot.volume));
+		Map<SfxXmlKey, String> attributes = wavAttributes(catalog, oneShot.bank, oneShot.patch);
+		attributes.put(ATTR_VOLUME, Integer.toString(oneShot.volume));
 		putNonDefault(attributes, ATTR_PAN, oneShot.pan, 64);
 		putNonDefault(attributes, ATTR_REVERB, oneShot.reverb, 0);
 		putNonDefault(attributes, ATTR_PITCH, oneShot.pitch, 48);
@@ -1212,7 +1194,7 @@ public final class SfxXml
 		printTag(writer, TAG_ONE_SHOT, attributes);
 	}
 
-	private static void writeSequence(XmlWriter writer, Sequence sequence)
+	private static void writeSequence(XmlWriter writer, Sequence sequence, SoundBankCatalog catalog)
 	{
 		Map<SfxXmlKey, String> attributes = attributes(ATTR_ENTRY, sequence.entry);
 		putTrue(attributes, ATTR_LOCK_VOLUME, sequence.lockVolume);
@@ -1224,12 +1206,12 @@ public final class SfxXml
 			if (node instanceof Label label)
 				printTag(writer, TAG_LABEL, attributes(ATTR_NAME, label.name()));
 			else
-				writeCommand(writer, (Command) node);
+				writeCommand(writer, (Command) node, catalog);
 		}
 		writer.closeTag(sequenceTag);
 	}
 
-	private static void writeCommand(XmlWriter writer, Command command)
+	private static void writeCommand(XmlWriter writer, Command command, SoundBankCatalog catalog)
 	{
 		switch (command.op) {
 			case END:
@@ -1250,8 +1232,7 @@ public final class SfxXml
 				printTag(writer, TAG_SET_PAN, attributes(ATTR_VALUE, Integer.toString(command.a)));
 				break;
 			case SET_INSTRUMENT:
-				printTag(writer, TAG_SET_INSTRUMENT, attributes(
-					ATTR_BANK, String.format("%02X", command.a), ATTR_PATCH, String.format("%02X", command.b)));
+				printTag(writer, TAG_SET_INSTRUMENT, wavAttributes(catalog, command.a, command.b));
 				break;
 			case SET_REVERB:
 				printTag(writer, TAG_SET_REVERB, attributes(ATTR_VALUE, Integer.toString(command.a)));
@@ -1420,7 +1401,7 @@ public final class SfxXml
 		reader.requiresAttribute(element, name);
 		String value = reader.getAttribute(element, name);
 		if (value.startsWith("shared:"))
-			throw error(source, element, "shared.xml references are not supported by the prototype: " + value);
+			throw error(source, element, "Shared.xml references are not supported by the prototype: " + value);
 		if (localOnly)
 			localReferenceName(source, element, value);
 		return value;
@@ -1445,6 +1426,20 @@ public final class SfxXml
 				throw error(source, element, name + " must be exactly two uppercase hexadecimal digits");
 		}
 		return readRangedHex(reader, source, element, name, 0, 255, optional);
+	}
+
+	private static SoundBankCatalog.InstrumentAddress readWavAddress(XmlReader reader,
+		Path source, Element element, SoundBankCatalog catalog)
+	{
+		reader.requiresAttribute(element, ATTR_WAV);
+		String wav = reader.getAttribute(element, ATTR_WAV);
+		int envelope = readRangedHex(reader, source, element, ATTR_ENVELOPE, 0, 3, true);
+		try {
+			return catalog.getAddress(wav, envelope);
+		}
+		catch (StarRodException e) {
+			throw error(source, element, e.getMessage());
+		}
 	}
 
 	private static int readRangedHex(XmlReader reader, Path source, Element element,
@@ -1575,16 +1570,7 @@ public final class SfxXml
 
 	private static boolean isPointerBacked(int soundID)
 	{
-		return soundID >= 0x0001 && soundID <= 0x0400 && ((soundID - 1) & 0xFF) < 0xC0;
-	}
-
-	private static boolean isAscii(String value)
-	{
-		for (int i = 0; i < value.length(); i++) {
-			if (value.charAt(i) < 0x20 || value.charAt(i) > 0x7E)
-				return false;
-		}
-		return true;
+		return soundID >= 0x0001 && soundID <= 0x03FF && ((soundID - 1) & 0xFF) < 0xC0;
 	}
 
 	private static boolean inRange(int value, int min, int max)
@@ -1649,6 +1635,21 @@ public final class SfxXml
 			attributes.put(key, value);
 		}
 		return attributes;
+	}
+
+	private static Map<SfxXmlKey, String> wavAttributes(SoundBankCatalog catalog,
+		int bank, int patch)
+	{
+		try {
+			SoundBankCatalog.WavReference reference = catalog.getWav(bank, patch);
+			Map<SfxXmlKey, String> attributes = attributes(ATTR_WAV, reference.wav);
+			if (reference.envelope != 0)
+				attributes.put(ATTR_ENVELOPE, Integer.toHexString(reference.envelope).toUpperCase(Locale.ROOT));
+			return attributes;
+		}
+		catch (StarRodException e) {
+			throw new SfxFormatException(e.getMessage(), e);
+		}
 	}
 
 	private static void putNonDefault(Map<SfxXmlKey, String> attributes, SfxXmlKey name,

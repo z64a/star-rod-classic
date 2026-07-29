@@ -22,7 +22,10 @@ import app.input.IOUtils;
 import app.input.InputFileException;
 import game.shared.ProjectDatabase;
 import game.shared.ProjectDatabase.ConstEnum;
+import game.sound.bgm.SongModder;
+import game.sound.mseq.Mseq;
 import game.sound.sfx.SfxFormatException;
+import game.sound.sfx.SfxXml;
 import patcher.Patcher;
 import patcher.RomPatcher;
 import util.Logger;
@@ -43,7 +46,7 @@ public class AudioModder
 	private static final int TABLE_BASE = 0xF00000;
 	private static final int AUDIO_DATA_END = 0x1942C40;
 	private static final String FN_SFX_BINARY = "DAT1.sef";
-	private static final String FN_SFX_ARCHIVE = "archive.xml";
+	private static final String FN_SFX_ARCHIVE = SfxXml.FN_SOUND_EFFECTS;
 
 	private static class FileEntry
 	{
@@ -323,18 +326,21 @@ public class AudioModder
 
 		int initOffset = dumpSBN(raf, dumpedFilenames);
 		dumpINIT(raf, initOffset, dumpedFilenames);
+		BankModder.dumpAll();
+		SoundBankCatalog soundBankCatalog = SoundBankCatalog.loadDump();
 
 		File sfxBinary = DUMP_AUDIO_RAW.getFile(FN_SFX_BINARY);
 		if (sfxBinary.exists()) {
 			SfxModder.DumpSummary summary = SfxModder.dump(
-				sfxBinary.toPath(), DUMP_AUDIO_SFX.toFile().toPath());
+				sfxBinary.toPath(), DUMP_AUDIO.toFile().toPath(), soundBankCatalog);
 			Logger.logf("Dumped %d DAT1 sound rows to %d editable SFX files.",
 				summary.sounds(), summary.effectFiles());
 			for (String warning : summary.warnings())
 				Logger.logWarning(warning);
 		}
 
-		BankModder.dumpAll();
+		SongModder.dumpAll();
+		Mseq.dumpAll();
 		InstrumentsModder.dump();
 		DrumsModder.dump();
 
@@ -688,12 +694,14 @@ public class AudioModder
 		List<SongEntry> songList;
 		List<BankEntry> bankList;
 
-		File sfxArchive = MOD_AUDIO_SFX.getFile(FN_SFX_ARCHIVE);
+		File sfxArchive = MOD_AUDIO.getFile(FN_SFX_ARCHIVE);
 		if (sfxArchive.exists()) {
 			File output = MOD_AUDIO_BUILD.getFile(FN_SFX_BINARY);
 			try {
-				SfxModder.BuildSummary summary = SfxModder.build(sfxArchive.toPath(), output.toPath());
-				Logger.logf("Built SFX archive: %X / %X bytes.", summary.size(), summary.maxSize());
+				SoundBankCatalog soundBankCatalog = SoundBankCatalog.loadMod();
+				SfxModder.BuildSummary summary = SfxModder.build(
+					sfxArchive.toPath(), output.toPath(), soundBankCatalog);
+				Logger.logf("Built SFX archive: %X bytes.", summary.size());
 				for (String warning : summary.warnings())
 					Logger.logWarning(warning);
 			}

@@ -22,7 +22,7 @@ public class Envelope implements XmlSerializable
 	public static final int ENV_CMD_START_LOOP = 0xFC;
 	public static final int ENV_CMD_END_LOOP = 0xFB;
 
-	public static final int ENV_VOL_MAX = 127;
+	public static final int ENV_VOL_UNITY = 0x80;
 
 	// duration of a single audio frame sent to the RSP in microseconds
 	// = (AUDIO_SAMPLES / HARDWARE_OUTPUT_RATE), expressed in microseconds
@@ -245,8 +245,8 @@ public class Envelope implements XmlSerializable
 
 		private float delta = 0f;
 
-		private int scale = ENV_VOL_MAX;
-		private int relativeStart = ENV_VOL_MAX;
+		private int scale = ENV_VOL_UNITY;
+		private int relativeStart = ENV_VOL_UNITY;
 
 		private boolean isRelativeRelease = false;
 
@@ -277,7 +277,7 @@ public class Envelope implements XmlSerializable
 			loopStartPos = -1;
 			loopCounter = 0;
 
-			scale = ENV_VOL_MAX;
+			scale = ENV_VOL_UNITY;
 
 			EnvelopeInterval interval = step();
 			if (interval == null) {
@@ -294,7 +294,7 @@ public class Envelope implements XmlSerializable
 
 			delta = (duration != 0) ? (float) (target - initial) / duration : 0.0f;
 
-			relativeStart = ENV_VOL_MAX;
+			relativeStart = ENV_VOL_UNITY;
 			isRelativeRelease = false;
 		}
 
@@ -334,7 +334,7 @@ public class Envelope implements XmlSerializable
 				relativeStart = initial;
 			}
 			else {
-				relativeStart = ENV_VOL_MAX;
+				relativeStart = ENV_VOL_UNITY;
 			}
 
 			delta = (duration != 0) ? (float) (target - initial) / duration : 0.0f;
@@ -397,26 +397,15 @@ public class Envelope implements XmlSerializable
 				int cmd = cmdList[cmdPos++];
 				int arg = cmdList[cmdPos++];
 
-				if ((byte) cmd >= 0) {
-					target = arg & 0x7F;
-					duration = getTime(cmd);
-					timeLeft = duration;
-					delta = (target - initial) / (float) duration;
-
-					// handle relative flag (same as sign bit)
-					if ((byte) arg < 0) {
-						isRelativeRelease = true;
-						relativeStart = initial;
-					}
+				if ((byte) cmd >= 0)
 					return new EnvelopeInterval(cmd, arg);
-				}
 
 				switch (cmd & 0xFF) {
 					case ENV_CMD_SET_SCALE:
-						scale = arg;
+						scale = Math.min(arg, ENV_VOL_UNITY);
 						break;
 					case ENV_CMD_ADD_SCALE:
-						scale = Math.max(0, Math.min(ENV_VOL_MAX, scale + (byte) arg));
+						scale = Math.max(0, Math.min(ENV_VOL_UNITY, scale + (byte) arg));
 						break;
 					case ENV_CMD_START_LOOP:
 						loopCounter = arg;
@@ -441,17 +430,17 @@ public class Envelope implements XmlSerializable
 		public float getEnvelopeVolume()
 		{
 			int current;
-			if (timeLeft >= 0)
+			if (timeLeft > 0)
 				current = initial + Math.round(delta * (duration - timeLeft));
 			else
 				current = target;
 
-			float volume = (float) current / ENV_VOL_MAX;
+			float volume = (float) current / ENV_VOL_UNITY;
 
-			volume *= (float) scale / ENV_VOL_MAX;
+			volume *= (float) scale / ENV_VOL_UNITY;
 
-			if (phase == EnvelopePhase.RELEASE && isRelativeRelease) {
-				volume *= (float) relativeStart / ENV_VOL_MAX;
+			if (isRelativeRelease) {
+				volume *= (float) relativeStart / ENV_VOL_UNITY;
 			}
 
 			return volume;

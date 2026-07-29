@@ -14,9 +14,11 @@ import java.util.List;
 
 import org.w3c.dom.Element;
 
+import app.StarRodException;
 import app.input.IOUtils;
 import game.sound.DrumPreset;
 import game.sound.InstrumentPreset;
+import game.sound.SoundBankCatalog;
 import game.sound.bgm.Composition.CompCommand;
 import game.sound.bgm.Track.TrackBranch;
 import util.DynamicByteBuffer;
@@ -54,6 +56,7 @@ public class Song implements XmlSerializable
 
 	private ArrayList<InstrumentPreset> instruments = new ArrayList<>();
 	private ArrayList<DrumPreset> drums = new ArrayList<>();
+	private SoundBankCatalog soundBankCatalog;
 
 	private transient int emptyBranchOffset;
 	private transient int emptyBranchLength;
@@ -69,7 +72,13 @@ public class Song implements XmlSerializable
 
 	public Song(File bgmFile) throws IOException
 	{
+		this(bgmFile, null);
+	}
+
+	public Song(File bgmFile, SoundBankCatalog soundBankCatalog) throws IOException
+	{
 		this();
+		this.soundBankCatalog = soundBankCatalog;
 
 		ByteBuffer bb = IOUtils.getDirectBuffer(bgmFile);
 
@@ -118,6 +127,8 @@ public class Song implements XmlSerializable
 				addPart(new BGMPart(bb.position(), bb.position() + 0xC, String.format("Drum %X", i)));
 
 				DrumPreset drum = new DrumPreset(bb);
+				if (soundBankCatalog != null)
+					drum.setWav(soundBankCatalog);
 				drums.add(drum);
 			}
 		}
@@ -128,6 +139,8 @@ public class Song implements XmlSerializable
 				addPart(new BGMPart(bb.position(), bb.position() + 0x8, String.format("Instrument %X", i)));
 
 				InstrumentPreset ins = new InstrumentPreset(bb);
+				if (soundBankCatalog != null)
+					ins.setWav(soundBankCatalog);
 				instruments.add(ins);
 			}
 		}
@@ -156,6 +169,19 @@ public class Song implements XmlSerializable
 
 	public void build(File outFile) throws IOException
 	{
+		for (DrumPreset drum : drums) {
+			if (drum.wav != null) {
+				requireSoundBankCatalog();
+				drum.resolveWav(soundBankCatalog);
+			}
+		}
+		for (InstrumentPreset instrument : instruments) {
+			if (instrument.wav != null) {
+				requireSoundBankCatalog();
+				instrument.resolveWav(soundBankCatalog);
+			}
+		}
+
 		reindex();
 
 		DynamicByteBuffer dbb = new DynamicByteBuffer();
@@ -201,9 +227,8 @@ public class Song implements XmlSerializable
 		// actual branch jump tables and command streams for each option
 		buildBranches(dbb);
 
-		// align end of file
+		// record end of file
 		int endOffset = dbb.position();
-		dbb.align(16);
 
 		for (int i = 0; i < NUM_COMPOSITIONS; i++) {
 			compositions[i].updateRefs(dbb);
@@ -449,6 +474,22 @@ public class Song implements XmlSerializable
 			parts.add(part);
 			partMap.put(part.start, part);
 		}
+	}
+
+	SoundBankCatalog getSoundBankCatalog()
+	{
+		return soundBankCatalog;
+	}
+
+	public void setSoundBankCatalog(SoundBankCatalog soundBankCatalog)
+	{
+		this.soundBankCatalog = soundBankCatalog;
+	}
+
+	private void requireSoundBankCatalog()
+	{
+		if (soundBankCatalog == null)
+			throw new StarRodException("A sound bank catalog is required to build BGM sound references");
 	}
 
 	public BGMPart getPart(int offset)

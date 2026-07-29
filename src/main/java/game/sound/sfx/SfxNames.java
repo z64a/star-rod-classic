@@ -17,7 +17,6 @@ import java.util.regex.Pattern;
 public final class SfxNames
 {
 	private static final Pattern TABLE_ROW = Pattern.compile("^\\s*([0-9A-Fa-f]+)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*$");
-	private static final Pattern ENUM_ROW = Pattern.compile("^\\s*([A-Z_][A-Z0-9_]*)\\s*=\\s*([^,]+),");
 
 	private final Map<Integer, List<String>> names = new LinkedHashMap<>();
 
@@ -47,39 +46,33 @@ public final class SfxNames
 	{
 		List<String> idNames = get(id);
 		return hasAuthoritativeName(id)
-			|| idNames.size() == 1 && emptyName(id).equals(idNames.get(0));
+			|| idNames.size() == 1 && unusedName(id).equals(idNames.get(0));
 	}
 
 	public String preferredName(int id)
 	{
 		List<String> idNames = get(id);
-		return idNames.isEmpty() ? placeholder(id) : idNames.get(0);
+		return idNames.isEmpty() ? nameMissing(id) : idNames.get(0);
 	}
 
-	public static String placeholder(int id)
+	public static String nameMissing(int id)
 	{
-		return String.format("SOUND_UNK_%04X", id);
-	}
-
-	public static String emptyName(int id)
-	{
-		return String.format("SOUND_EMPTY_%04X", id);
+		return String.format("Unk_%04X", id);
 	}
 
 	public static String unusedName(int id)
 	{
-		return String.format("SOUND_UNUSED_%04X", id);
+		return String.format("Unused_%04X", id);
 	}
 
 	public static String invalidName(int id)
 	{
-		return String.format("SOUND_INVALID_%04X", id);
+		return String.format("Invalid_%04X", id);
 	}
 
 	private static boolean isGeneratedName(int id, String name)
 	{
-		return placeholder(id).equals(name)
-			|| emptyName(id).equals(name)
+		return nameMissing(id).equals(name)
 			|| unusedName(id).equals(name)
 			|| invalidName(id).equals(name);
 	}
@@ -103,10 +96,7 @@ public final class SfxNames
 
 	public static SfxNames load(Path path) throws IOException
 	{
-		List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
-		if (lines.stream().anyMatch(line -> line.contains("enum SoundIDs")))
-			return readCEnum(lines);
-		return readTable(lines);
+		return readTable(Files.readAllLines(path, StandardCharsets.UTF_8));
 	}
 
 	private static SfxNames readTable(BufferedReader reader) throws IOException
@@ -128,49 +118,8 @@ public final class SfxNames
 		return result;
 	}
 
-	private static SfxNames readCEnum(List<String> lines)
-	{
-		SfxNames result = new SfxNames();
-		Map<String, Integer> values = new LinkedHashMap<>();
-		values.put("SOUND_ID_UNK", 0x2000);
-		boolean inEnum = false;
-
-		for (String line : lines) {
-			if (!inEnum) {
-				inEnum = line.contains("enum SoundIDs");
-				continue;
-			}
-			if (line.contains("};"))
-				break;
-
-			Matcher matcher = ENUM_ROW.matcher(line);
-			if (!matcher.find())
-				continue;
-
-			String name = matcher.group(1);
-			int value = 0;
-			boolean valid = true;
-			for (String token : matcher.group(2).trim().split("\\|")) {
-				token = token.trim();
-				Integer known = values.get(token);
-				try {
-					value |= known != null ? known : Integer.decode(token);
-				}
-				catch (NumberFormatException e) {
-					valid = false;
-					break;
-				}
-			}
-			if (valid) {
-				values.put(name, value);
-				result.add(value, name);
-			}
-		}
-		return result;
-	}
-
 	public static boolean isRawSoundID(int id)
 	{
-		return (id >= 0x0001 && id <= 0x0400) || (id >= 0x2001 && id <= 0x2140);
+		return (id >= 0x0001 && id <= 0x03FF) || (id >= 0x2001 && id <= 0x2140);
 	}
 }

@@ -39,7 +39,7 @@ public class BankModder
 		TAG_ENV_CMDS	("Commands"),
 		TAG_PRESS		("Press"),
 		TAG_RELEASE		("Release"),
-		ATTR_SRC		("src"),
+		ATTR_WAV		("wav"),
 		ATTR_LOOP		("loop"),
 		ATTR_LOOP_COUNT	("loopCount"),
 		ATTR_ENV_NAME	("envName"),
@@ -71,8 +71,9 @@ public class BankModder
 
 	public static void dumpAll() throws IOException
 	{
+		SampleNames sampleNames = SampleNames.loadBundled();
 		for (File binFile : IOUtils.getFilesWithExtension(DUMP_AUDIO_RAW, new String[] { "bk" }, true))
-			dumpBank(binFile);
+			new Bank(binFile, sampleNames).dump();
 	}
 
 	public static void buildAll() throws IOException
@@ -114,6 +115,11 @@ public class BankModder
 
 		public Bank(File binFile) throws IOException
 		{
+			this(binFile, SampleNames.loadBundled());
+		}
+
+		private Bank(File binFile, SampleNames sampleNames) throws IOException
+		{
 			this.name = FilenameUtils.getBaseName(binFile.getName());
 			ByteBuffer bb = IOUtils.getDirectBuffer(binFile);
 
@@ -131,8 +137,11 @@ public class BankModder
 
 			// read instruments
 			for (int i = 0; i < instrumentCount; i++) {
-				String insName = String.format("%s_%02X", name, i);
+				String rawName = String.format("%s_%02X", name, i);
+				String insName = sampleNames.get(rawName);
 				Instrument ins = new Instrument(bb, instrumentOffsets[i], insName);
+				if (ins.hasLoop)
+					ins.loopFilename = sampleNames.get(rawName + "_Loop") + ".wav";
 				instruments.add(ins);
 
 				if (!envMap.containsKey(ins.envelopeOffset))

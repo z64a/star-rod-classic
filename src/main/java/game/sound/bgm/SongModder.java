@@ -12,6 +12,7 @@ import org.apache.commons.io.FilenameUtils;
 import app.Directories;
 import app.Environment;
 import app.input.IOUtils;
+import game.sound.SoundBankCatalog;
 import util.Logger;
 import util.xml.XmlWrapper.XmlReader;
 import util.xml.XmlWrapper.XmlWriter;
@@ -32,10 +33,13 @@ public abstract class SongModder
 
 	public static void dumpAll() throws IOException
 	{
+		SoundBankCatalog catalog = SoundBankCatalog.loadDump();
 		Collection<File> files = IOUtils.getFilesWithExtension(Directories.DUMP_AUDIO_RAW, "bgm", false);
 		for (File f : files) {
 			Logger.log("Extracting " + f.getName());
-			Song song = new Song(f);
+			SoundBankCatalog songCatalog = catalog.withSongBanks(
+				DUMP_AUDIO.getFile(FN_AUDIO_SONGS), f.getName());
+			Song song = new Song(f, songCatalog);
 
 			String name = FilenameUtils.getBaseName(f.getName());
 
@@ -58,11 +62,15 @@ public abstract class SongModder
 
 	public static void buildAll() throws IOException
 	{
+		SoundBankCatalog catalog = SoundBankCatalog.loadMod();
 		Collection<File> files = IOUtils.getFilesWithExtension(MOD_AUDIO_BGM, "xml", false);
 		for (File f : files) {
 			Logger.log("Building " + f.getName());
 
+			SoundBankCatalog songCatalog = catalog.withSongBanks(
+				MOD_AUDIO.getFile(FN_AUDIO_SONGS), FilenameUtils.getBaseName(f.getName()) + ".bgm");
 			Song song = new Song();
+			song.setSoundBankCatalog(songCatalog);
 
 			XmlReader xmr = new XmlReader(f);
 			song.fromXML(xmr, xmr.getRootElement());

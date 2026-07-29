@@ -11,6 +11,7 @@ public final class EnvelopeProgram
 	public static final int CMD_SET_SCALE = 0xFE;
 	public static final int CMD_END = 0xFF;
 	public static final int MAX_VOLUME = 127;
+	public static final int MAX_SCALE = 128;
 
 	private EnvelopeProgram()
 	{}
@@ -68,7 +69,7 @@ public final class EnvelopeProgram
 			case CMD_ADD_SCALE:
 				return new EnvelopeCommand(EnvelopeOp.ADD_SCALE, (byte) arg);
 			case CMD_SET_SCALE:
-				return new EnvelopeCommand(EnvelopeOp.SET_SCALE, Math.min(arg, MAX_VOLUME));
+				return new EnvelopeCommand(EnvelopeOp.SET_SCALE, Math.min(arg, MAX_SCALE));
 			case CMD_END:
 				return new EnvelopeCommand(EnvelopeOp.END);
 			default:
@@ -147,7 +148,7 @@ public final class EnvelopeProgram
 					requireRange(command.value, 0, MAX_VOLUME, "Point value");
 					break;
 				case SET_SCALE:
-					requireRange(command.value, 0, MAX_VOLUME, "SetScale value");
+					requireRange(command.value, 0, MAX_SCALE, "SetScale value");
 					break;
 				case ADD_SCALE:
 					requireRange(command.value, -128, 127, "AddScale value");

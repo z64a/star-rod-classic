@@ -90,7 +90,7 @@ public final class EnvelopeXml
 				case TAG_SET_SCALE:
 					checkAttributes(reader, element, Key.ATTR_VALUE);
 					command = new EnvelopeCommand(EnvelopeOp.SET_SCALE,
-						readInt(reader, element, Key.ATTR_VALUE, 0, EnvelopeProgram.MAX_VOLUME));
+						readInt(reader, element, Key.ATTR_VALUE, 0, EnvelopeProgram.MAX_SCALE));
 					break;
 				case TAG_ADD_SCALE:
 					checkAttributes(reader, element, Key.ATTR_VALUE);

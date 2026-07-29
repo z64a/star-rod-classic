@@ -88,8 +88,8 @@ public enum SongKey implements XmlKey
 	ATTR_TICKS			("ticks"),
 	ATTR_USE_GLOBAL		("global"),
 
-	ATTR_BANK           ("bank"),
-	ATTR_PATCH          ("patch"),
+	ATTR_WAV            ("wav"),
+	ATTR_ENVELOPE       ("envelope"),
 
 	ATTR_EFFECT_TYPE	("effectType"),
 

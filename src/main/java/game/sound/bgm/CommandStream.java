@@ -71,8 +71,7 @@ public class CommandStream
 
 	public void collect()
 	{
-		all.clear();
-
+		// TODO rebuild the command stream from the editor representation.
 	}
 
 	public void build(DynamicByteBuffer dbb, boolean terminate)

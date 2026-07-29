@@ -105,9 +105,9 @@ public final class SfxBinary
 
 		private DecodeResult decode()
 		{
-			archive.name = new String(data, 8, 4, StandardCharsets.US_ASCII).trim();
-			if (archive.name.isEmpty())
-				archive.name = "DAT1";
+			String archiveName = new String(data, 8, 4, StandardCharsets.US_ASCII);
+			if (!archiveName.equals("DAT1"))
+				throw new SfxFormatException("Expected DAT1 SEF archive name, found " + archiveName);
 
 			for (int i = 0; i < sections.length; i++)
 				sections[i] = u16(0x10 + i * 2);
@@ -131,7 +131,7 @@ public final class SfxBinary
 			if (hasExtraSection)
 				decodeExtraSection();
 
-			// Retain intentional named empties, but not generated unused/invalid slots.
+			// Retain named empty and available unused slots, but not malformed slots.
 			for (Map.Entry<Integer, List<String>> entry : names.entries()) {
 				if (!archive.sounds.containsKey(entry.getKey()) && names.shouldMaterializeEmpty(entry.getKey()))
 					archive.sounds.put(entry.getKey(), makeSound(entry.getKey()));
@@ -139,7 +139,7 @@ public final class SfxBinary
 
 			for (Sound sound : archive.sounds.values()) {
 				if (!sound.isEmpty() && !sound.canInlineOneShot())
-					sound.source = String.format("effects/%04X_%s.xml", sound.id, sound.name);
+					sound.source = String.format("sfx/%04X_%s.xml", sound.id, sound.name);
 			}
 
 			return new DecodeResult(archive, List.copyOf(warnings));
@@ -219,6 +219,12 @@ public final class SfxBinary
 
 		private void decodeDirectSlot(int id, int offset)
 		{
+			if (id == 0x0400) {
+				if (u16(offset) != 0)
+					warnings.add("Unaddressable table slot 0400 is populated and was ignored");
+				return;
+			}
+
 			// This is the same presence test used by the player.  Bytes 2-3 are
 			// ignored when the first halfword is zero.
 			boolean populated = u16(offset) != 0;
@@ -244,13 +250,11 @@ public final class SfxBinary
 			List<String> idNames = names.get(id);
 			Sound sound;
 			if (idNames.isEmpty()) {
-				sound = new Sound(id, SfxNames.placeholder(id));
-				sound.generatedName = true;
+				sound = new Sound(id, SfxNames.nameMissing(id));
 			}
 			else {
 				sound = new Sound(id, idNames.get(0));
 				sound.aliases.addAll(idNames.subList(1, idNames.size()));
-				sound.generatedName = names.hasGeneratedName(id);
 			}
 			return sound;
 		}
@@ -890,7 +894,6 @@ public final class SfxBinary
 		private final ByteStore output = new ByteStore();
 		private final int[] sections = new int[8];
 		private int extraSection;
-		private int fixedEnd;
 
 		private final Map<String, Envelope> envelopesByName = new LinkedHashMap<>();
 		private final Map<Envelope, Integer> envelopeOffsets = new IdentityHashMap<>();
@@ -904,13 +907,6 @@ public final class SfxBinary
 		private final List<EffectScope> scopes = new ArrayList<>();
 		private final Map<String, Integer> polyTableOffsets = new LinkedHashMap<>();
 		private int nextSpawnID;
-		private int envelopeBytes;
-		private int oneShotBytes;
-		private int regionBytes;
-		private int regionSourceBytes;
-		private int spawnTableBytes;
-		private int soundTableBytes;
-		private int suffixSavings;
 
 		Encoder(SfxArchive archive)
 		{
@@ -929,14 +925,6 @@ public final class SfxBinary
 			patchRegionRelocations();
 			writeHeader();
 
-			if (output.size() > archive.maxBinarySize)
-				throw new SfxFormatException(String.format(
-					"Canonical SEF is 0x%X bytes, exceeding maxBinarySize 0x%X by 0x%X "
-						+ "(fixed=0x%X envelopes=0x%X oneShots=0x%X regions=0x%X/0x%X "
-						+ "spawnTables=0x%X soundTables=0x%X)",
-					output.size(), archive.maxBinarySize, output.size() - archive.maxBinarySize,
-					fixedEnd, envelopeBytes, oneShotBytes, regionBytes, regionSourceBytes,
-					spawnTableBytes, soundTableBytes));
 			if (output.size() > 0x10000)
 				throw new SfxFormatException("SEF offsets exceed the 16-bit file-relative address space");
 			return output.toByteArray();
@@ -953,8 +941,7 @@ public final class SfxBinary
 			}
 			extraSection = cursor;
 			cursor += EXTRA_SECTION_SIZE;
-			fixedEnd = cursor;
-			output.ensureSize(fixedEnd);
+			output.ensureSize(cursor);
 		}
 
 		private void indexObjects()
@@ -1002,7 +989,6 @@ public final class SfxBinary
 
 		private void allocateEnvelopes()
 		{
-			int start = output.size();
 			Map<String, Integer> interned = new LinkedHashMap<>();
 			for (Envelope envelope : archive.envelopes) {
 				byte[] bytes = encodeEnvelope(envelope);
@@ -1014,12 +1000,10 @@ public final class SfxBinary
 				}
 				envelopeOffsets.put(envelope, offset);
 			}
-			envelopeBytes = output.size() - start;
 		}
 
 		private void allocateOneShots()
 		{
-			int start = output.size();
 			Map<String, Integer> interned = new LinkedHashMap<>();
 			for (Definition definition : definitionOrder) {
 				if (!(definition instanceof OneShot oneShot) || !pointerDefinitions.contains(definition))
@@ -1033,17 +1017,14 @@ public final class SfxBinary
 				}
 				definitionOffsets.put(definition, offset);
 			}
-			oneShotBytes = output.size() - start;
 		}
 
 		private void compileAndAllocateRegions()
 		{
 			resolveRegionReferences();
 			markAlternativeRestartRisks();
-			regionSourceBytes = regions.stream().mapToInt(region -> region.bytes.length).sum();
 			if (regions.isEmpty())
 				return;
-			int start = output.size();
 
 			int[] groups = refineGroups();
 			internSafeSuffixes(groups);
@@ -1063,7 +1044,6 @@ public final class SfxBinary
 
 			for (Map.Entry<Sequence, SequenceLink> entry : sequenceLinks.entrySet())
 				definitionOffsets.put(entry.getKey(), entry.getValue().entry.outputOffset);
-			regionBytes = output.size() - start;
 		}
 
 		private int[] refineGroups()
@@ -1148,7 +1128,6 @@ public final class SfxBinary
 					transformed.add(occurrence.region);
 					replacements.add(new SuffixReplacement(
 						occurrence.region, occurrence.position, canonical.region, canonical.position));
-					suffixSavings += occurrence.length - 3;
 				}
 			}
 
@@ -1210,7 +1189,6 @@ public final class SfxBinary
 
 		private void allocateSpawns()
 		{
-			int start = output.size();
 			for (SpawnLink link : spawnOrder) {
 				SpawnedEffect spawned = link.spawned;
 				if (spawned.tracks.size() == 1) {
@@ -1221,12 +1199,10 @@ public final class SfxBinary
 				}
 				link.info = routingInfo(spawned.routing, spawned.tracks.size());
 			}
-			spawnTableBytes = output.size() - start;
 		}
 
 		private void writeSoundTables()
 		{
-			int start = output.size();
 			for (Sound sound : archive.sounds.values()) {
 				TableSlot slot = tableSlot(sound.id);
 				if (slot == null)
@@ -1255,7 +1231,6 @@ public final class SfxBinary
 				output.writeU16(slot.offset, dataOffset);
 				output.writeU16(slot.offset + 2, routingInfo(sound.routing, sound.tracks.size()));
 			}
-			soundTableBytes = output.size() - start;
 		}
 
 		private int allocatePolyTable(List<Track> tracks, Routing routing)
@@ -1326,12 +1301,7 @@ public final class SfxBinary
 		{
 			output.writeBytes(0, "SEF ".getBytes(StandardCharsets.US_ASCII));
 			output.writeU32(4, output.size());
-			byte[] name = new byte[] { ' ', ' ', ' ', ' ' };
-			byte[] encoded = archive.name.getBytes(StandardCharsets.US_ASCII);
-			if (encoded.length > 4)
-				throw new SfxFormatException("SEF archive name must fit in four ASCII bytes: " + archive.name);
-			System.arraycopy(encoded, 0, name, 0, encoded.length);
-			output.writeBytes(8, name);
+			output.writeBytes(8, "DAT1".getBytes(StandardCharsets.US_ASCII));
 			output.writeByte(0x0E, 1);
 			for (int i = 0; i < sections.length; i++)
 				output.writeU16(0x10 + i * 2, sections[i]);
@@ -1569,7 +1539,7 @@ public final class SfxBinary
 			if (ref == null || ref.isBlank())
 				throw new SfxFormatException("Missing local label reference");
 			if (ref.startsWith("shared:"))
-				throw new SfxFormatException("shared.xml is not implemented by this prototype: " + ref);
+				throw new SfxFormatException("Shared.xml is not implemented by this prototype: " + ref);
 			return ref.startsWith("local:") ? ref.substring("local:".length()) : ref;
 		}
 
@@ -1706,7 +1676,7 @@ public final class SfxBinary
 		{
 			if (id >= 0x2001 && id <= 0x2140)
 				return new TableSlot(extraSection + (id - 0x2001) * 4, true);
-			if (id < 1 || id > 0x400)
+			if (id < 1 || id > 0x3FF)
 				return null;
 			int group = (id - 1) >>> 8;
 			int index = (id - 1) & 0xFF;
