@@ -620,7 +620,7 @@ public class Model extends MapObject
 	{
 		PickHit nearestHit = new PickHit(ray, Float.MAX_VALUE);
 		if (!hasMesh.get())
-			return null;
+			return nearestHit;
 
 		if (!PickRay.intersects(ray, AABB))
 			return nearestHit;

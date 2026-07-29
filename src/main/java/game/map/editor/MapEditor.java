@@ -2515,12 +2515,18 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 	private void handleShortcutPress(EditorShortcut key, boolean fromGui)
 	{
 		switch (key) {
-			case UNDO:
-				commandManager.action_Undo();
+			case UNDO: {
+				Selection<?> selection = getSelectionForCurrentMode();
+				if (selection == null || !selection.transforming())
+					commandManager.action_Undo();
 				break;
-			case REDO:
-				commandManager.action_Redo();
+			}
+			case REDO: {
+				Selection<?> selection = getSelectionForCurrentMode();
+				if (selection == null || !selection.transforming())
+					commandManager.action_Redo();
 				break;
+			}
 			case SELECT_ALL:
 				selectAll();
 				break;
