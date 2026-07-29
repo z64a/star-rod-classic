@@ -2,7 +2,6 @@ package game.sound.sfx;
 
 import util.xml.XmlKey;
 
-/** Element and attribute vocabulary for the semantic SFX XML format. */
 enum SfxXmlKey implements XmlKey
 {
 	// @formatter:off
@@ -22,9 +21,6 @@ enum SfxXmlKey implements XmlKey
 	TAG_SPAWNED_EFFECT             ("SpawnedEffect"),
 	TAG_ENVELOPES                  ("Envelopes"),
 	TAG_ENVELOPE                   ("Envelope"),
-	TAG_POINT                      ("Point"),
-	TAG_SET_SCALE                  ("SetScale"),
-	TAG_ADD_SCALE                  ("AddScale"),
 	TAG_START_LOOP                 ("StartLoop"),
 	TAG_END_LOOP                   ("EndLoop"),
 	TAG_END                        ("End"),
@@ -91,8 +87,7 @@ enum SfxXmlKey implements XmlKey
 	ATTR_TYPE                      ("type"),
 	ATTR_TARGET                    ("target"),
 	ATTR_AMOUNT                    ("amount"),
-	ATTR_REF                       ("ref"),
-	ATTR_DURATION                  ("duration");
+	ATTR_REF                       ("ref");
 	// @formatter:on
 
 	private final String key;

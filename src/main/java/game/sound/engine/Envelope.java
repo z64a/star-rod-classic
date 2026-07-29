@@ -102,11 +102,22 @@ public class Envelope implements XmlSerializable
 		List<Element> scriptElems = xmr.getTags(elem, TAG_ENV_CMDS);
 
 		for (Element scriptElem : scriptElems) {
-			xmr.requiresAttribute(scriptElem, ATTR_PRESS);
-			int[] press = xmr.readHexArray(scriptElem, ATTR_PRESS);
+			Element pressElem = xmr.getUniqueRequiredTag(scriptElem, TAG_PRESS);
+			Element releaseElem = xmr.getUniqueRequiredTag(scriptElem, TAG_RELEASE);
+			List<EnvelopeCommand> pressCommands = EnvelopeXml.readCommands(xmr, pressElem);
+			List<EnvelopeCommand> releaseCommands = EnvelopeXml.readCommands(xmr, releaseElem);
+			boolean relativeRelease = xmr.readBoolean(releaseElem, ATTR_RELATIVE, false);
 
-			xmr.requiresAttribute(scriptElem, ATTR_RELEASE);
-			int[] release = xmr.readHexArray(scriptElem, ATTR_RELEASE);
+			int[] press;
+			int[] release;
+			try {
+				press = EnvelopeProgram.encode(pressCommands, false);
+				release = EnvelopeProgram.encodeRelease(releaseCommands, relativeRelease);
+			}
+			catch (IllegalArgumentException e) {
+				xmr.complain(e.getMessage());
+				return;
+			}
 
 			scripts.add(new EnvelopePair(press, release));
 		}
@@ -121,10 +132,25 @@ public class Envelope implements XmlSerializable
 		xmw.openTag(tag);
 
 		for (EnvelopePair script : scripts) {
-			XmlTag scriptTag = xmw.createTag(TAG_ENV_CMDS, true);
-			xmw.addHexArray(scriptTag, ATTR_PRESS, script.press);
-			xmw.addHexArray(scriptTag, ATTR_RELEASE, script.release);
-			xmw.printTag(scriptTag);
+			EnvelopeProgram.Decoded press = EnvelopeProgram.decode(script.press, false);
+			EnvelopeProgram.Decoded release = EnvelopeProgram.decode(script.release, true);
+
+			XmlTag scriptTag = xmw.createTag(TAG_ENV_CMDS, false);
+			xmw.openTag(scriptTag);
+
+			XmlTag pressTag = xmw.createTag(TAG_PRESS, false);
+			xmw.openTag(pressTag);
+			EnvelopeXml.writeCommands(xmw, press.commands);
+			xmw.closeTag(pressTag);
+
+			XmlTag releaseTag = xmw.createTag(TAG_RELEASE, false);
+			if (release.relativeRelease)
+				xmw.addBoolean(releaseTag, ATTR_RELATIVE, true);
+			xmw.openTag(releaseTag);
+			EnvelopeXml.writeCommands(xmw, release.commands);
+			xmw.closeTag(releaseTag);
+
+			xmw.closeTag(scriptTag);
 		}
 
 		xmw.closeTag(tag);
@@ -434,27 +460,14 @@ public class Envelope implements XmlSerializable
 
 	private static int getTime(int index)
 	{
-		if (index < ENVELOPE_TIMES.length)
-			return ENVELOPE_TIMES[index] * AUDIO_FRAME_USEC;
+		if (index >= 0 && index < EnvelopeTimes.COUNT)
+			return EnvelopeTimes.framesForIndex(index) * AUDIO_FRAME_USEC;
 		else
 			return 0;
 	}
 
 	// @formatter:off
-	public static final int[] ENVELOPE_TIMES = {
-			10434,  9565,  8695,  7826,  6956,  6086,  5217,  4782,
-			 4347,  3913,  3478,  3304,  3130,  2956,  2782,  2608,
-			 2434,  2260,  2086,  1913,  1739,  1565,  1391,  1217,
-			 1043,   869,   782,   695,   608,   521,   478,   434,
-			  391,   347,   330,   313,   295,   278,   260,   243,
-			  226,   208,   191,   173,   165,   156,   147,   139,
-			  130,   121,   113,   104,    95,    86,    78,    69,
-			   65,    60,    56,    52,    50,    48,    46,    45,
-			   43,    41,    40,    38,    36,    34,    33,    31,
-			   29,    27,    26,    24,    22,    20,    19,    17,
-			   16,    14,    12,    11,    10,     9,     8,     7,
-			    6,     5,     4,     3,     2,     1,     0
-	};
+	public static final int[] ENVELOPE_TIMES = EnvelopeTimes.frameCounts();
 
 	public static final String[] ENVELOPE_NAMES = {
 			"60 seconds", "55 seconds", "50 seconds", "45 seconds",
@@ -566,7 +579,7 @@ public class Envelope implements XmlSerializable
 		TIME_100MS   (79,    17, "0.1 seconds"),
 		TIME_16UNITS (80,    16, "16 frames"),
 		TIME_14UNITS (81,    14, "14 frames"),
-		TIME_12UNITS (81,    12, "12 frames"),
+		TIME_12UNITS (82,    12, "12 frames"),
 		TIME_11UNITS (83,    11, "11 frames"),
 		TIME_10UNITS (84,    10, "10 frames"),
 		TIME_9UNITS  (85,     9, "9 frames"),

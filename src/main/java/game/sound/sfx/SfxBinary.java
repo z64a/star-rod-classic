@@ -22,13 +22,14 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.TreeMap;
 
+import game.sound.engine.EnvelopeCommand;
+import game.sound.engine.EnvelopeOp;
+import game.sound.engine.EnvelopeProgram;
 import game.sound.sfx.SfxArchive.Allocation;
 import game.sound.sfx.SfxArchive.Command;
 import game.sound.sfx.SfxArchive.Definition;
 import game.sound.sfx.SfxArchive.Empty;
 import game.sound.sfx.SfxArchive.Envelope;
-import game.sound.sfx.SfxArchive.EnvelopeCommand;
-import game.sound.sfx.SfxArchive.EnvelopeOp;
 import game.sound.sfx.SfxArchive.Label;
 import game.sound.sfx.SfxArchive.Node;
 import game.sound.sfx.SfxArchive.OneShot;
@@ -39,7 +40,6 @@ import game.sound.sfx.SfxArchive.Sound;
 import game.sound.sfx.SfxArchive.SpawnedEffect;
 import game.sound.sfx.SfxArchive.Track;
 
-/** Decoder and canonical linker for the DAT1 SEF format. */
 public final class SfxBinary
 {
 	private static final int HEADER_SIZE = 0x22;
@@ -728,25 +728,16 @@ public final class SfxBinary
 				int op = u8(pc);
 				int arg = u8(pc + 1);
 				pc += 2;
-				if (op <= 94) {
-					EnvelopeCommand command = new EnvelopeCommand(EnvelopeOp.POINT, arg & 0x7F);
-					command.durationIndex = op;
-					candidate.commands.add(command);
+				EnvelopeCommand command;
+				try {
+					command = EnvelopeProgram.decodeCommand(op, arg);
 				}
-				else if (op == 0xFB)
-					candidate.commands.add(new EnvelopeCommand(EnvelopeOp.END_LOOP));
-				else if (op == 0xFC)
-					candidate.commands.add(new EnvelopeCommand(EnvelopeOp.START_LOOP, arg));
-				else if (op == 0xFD)
-					candidate.commands.add(new EnvelopeCommand(EnvelopeOp.ADD_SCALE, (byte) arg));
-				else if (op == 0xFE)
-					candidate.commands.add(new EnvelopeCommand(EnvelopeOp.SET_SCALE, arg));
-				else if (op == 0xFF) {
-					candidate.commands.add(new EnvelopeCommand(EnvelopeOp.END));
+				catch (IllegalArgumentException e) {
+					throw new SfxFormatException(String.format("%s at 0x%04X", e.getMessage(), pc - 2));
+				}
+				candidate.commands.add(command);
+				if (command.op == EnvelopeOp.END)
 					break;
-				}
-				else
-					throw new SfxFormatException(String.format("Invalid envelope opcode %02X at 0x%04X", op, pc - 2));
 			}
 			if (candidate.commands.isEmpty()
 				|| candidate.commands.get(candidate.commands.size() - 1).op != EnvelopeOp.END)
@@ -756,7 +747,7 @@ public final class SfxBinary
 			Envelope envelope = envelopesByContent.get(key);
 			if (envelope == null) {
 				envelope = candidate;
-				envelope.name = "envelope" + (archive.envelopes.size() + 1);
+				envelope.name = String.format("envelope%02d", archive.envelopes.size() + 1);
 				archive.envelopes.add(envelope);
 				envelopesByContent.put(key, envelope);
 			}
@@ -1659,29 +1650,9 @@ public final class SfxBinary
 		private byte[] encodeEnvelope(Envelope envelope)
 		{
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
-			for (EnvelopeCommand command : envelope.commands) {
-				switch (command.op) {
-					case POINT:
-						out.write(command.durationIndex);
-						out.write(command.value);
-						break;
-					case SET_SCALE:
-						writeByteCommand(out, 0xFE, command.value);
-						break;
-					case ADD_SCALE:
-						writeByteCommand(out, 0xFD, command.value);
-						break;
-					case START_LOOP:
-						writeByteCommand(out, 0xFC, command.value);
-						break;
-					case END_LOOP:
-						writeByteCommand(out, 0xFB, 0);
-						break;
-					case END:
-						writeByteCommand(out, 0xFF, 0);
-						break;
-				}
-			}
+			int[] bytes = EnvelopeProgram.encode(envelope.commands, false);
+			for (int value : bytes)
+				out.write(value);
 			return out.toByteArray();
 		}
 

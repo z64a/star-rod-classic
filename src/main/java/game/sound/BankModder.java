@@ -37,14 +37,15 @@ public class BankModder
 		TAG_ENV_LIST	("Envelopes"),
 		TAG_ENVELOPE	("Envelope"),
 		TAG_ENV_CMDS	("Commands"),
+		TAG_PRESS		("Press"),
+		TAG_RELEASE		("Release"),
 		ATTR_SRC		("src"),
 		ATTR_LOOP		("loop"),
 		ATTR_LOOP_COUNT	("loopCount"),
 		ATTR_ENV_NAME	("envName"),
 		ATTR_KEY_BASE	("keyBase"),
 		ATTR_NUM_PRED	("numPred"),
-		ATTR_PRESS		("press"),
-		ATTR_RELEASE	("release");
+		ATTR_RELATIVE	("relative");
 		// @formatter:on
 
 		private final String key;

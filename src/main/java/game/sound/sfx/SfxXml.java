@@ -24,13 +24,15 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
 import app.input.InputFileException;
+import game.sound.engine.EnvelopeCommand;
+import game.sound.engine.EnvelopeOp;
+import game.sound.engine.EnvelopeTimes;
+import game.sound.engine.EnvelopeXml;
 import game.sound.sfx.SfxArchive.Allocation;
 import game.sound.sfx.SfxArchive.Command;
 import game.sound.sfx.SfxArchive.Definition;
 import game.sound.sfx.SfxArchive.Empty;
 import game.sound.sfx.SfxArchive.Envelope;
-import game.sound.sfx.SfxArchive.EnvelopeCommand;
-import game.sound.sfx.SfxArchive.EnvelopeOp;
 import game.sound.sfx.SfxArchive.Label;
 import game.sound.sfx.SfxArchive.OneShot;
 import game.sound.sfx.SfxArchive.Op;
@@ -49,7 +51,7 @@ public final class SfxXml
 	private static final Pattern IDENTIFIER = Pattern.compile("[A-Za-z_][A-Za-z0-9_.-]*");
 	private static final Pattern SOUND_ID = Pattern.compile("[0-9A-F]{4}");
 
-	public static final List<String> ENVELOPE_DURATION_TOKENS = SfxEnvelopeTimes.tokens();
+	public static final List<String> ENVELOPE_DURATION_TOKENS = EnvelopeTimes.tokens();
 
 	private SfxXml()
 	{}
@@ -146,12 +148,22 @@ public final class SfxXml
 
 	public static int envelopeDurationIndex(String token)
 	{
-		return SfxEnvelopeTimes.indexForToken(token);
+		try {
+			return EnvelopeTimes.indexForToken(token);
+		}
+		catch (IllegalArgumentException e) {
+			throw new SfxFormatException(e.getMessage(), e);
+		}
 	}
 
 	public static String envelopeDurationToken(int index)
 	{
-		return SfxEnvelopeTimes.tokenForIndex(index);
+		try {
+			return EnvelopeTimes.tokenForIndex(index);
+		}
+		catch (IllegalArgumentException e) {
+			throw new SfxFormatException(e.getMessage(), e);
+		}
 	}
 
 	private static Sound readSound(XmlReader reader, Path manifest, Path assetRoot, Element element)
@@ -601,78 +613,9 @@ public final class SfxXml
 				throw error(envelopeXml, element, "duplicate envelope name: " + name);
 			Envelope envelope = new Envelope(name);
 
-			for (Element commandElement : childElements(envelopeXml, element)) {
-				EnvelopeCommand command;
-				switch (tagKey(envelopeXml, element, commandElement)) {
-					case TAG_POINT:
-						checkAttributes(envelopeXml, commandElement, ATTR_DURATION, ATTR_VALUE);
-						requireNoChildren(envelopeXml, commandElement);
-						command = new EnvelopeCommand(EnvelopeOp.POINT,
-							readRangedInt(reader, envelopeXml, commandElement, ATTR_VALUE, 0, 127, false));
-						reader.requiresAttribute(commandElement, ATTR_DURATION);
-						String token = reader.getAttribute(commandElement, ATTR_DURATION);
-						try {
-							command.durationIndex = SfxEnvelopeTimes.indexForToken(token);
-						}
-						catch (SfxFormatException e) {
-							throw error(envelopeXml, commandElement, e.getMessage());
-						}
-						break;
-					case TAG_SET_SCALE:
-						command = new EnvelopeCommand(EnvelopeOp.SET_SCALE,
-							envelopeValue(reader, envelopeXml, commandElement, 0, 127));
-						break;
-					case TAG_ADD_SCALE:
-						command = new EnvelopeCommand(EnvelopeOp.ADD_SCALE,
-							envelopeSignedValue(reader, envelopeXml, commandElement, -128, 127));
-						break;
-					case TAG_START_LOOP:
-						command = new EnvelopeCommand(EnvelopeOp.START_LOOP,
-							envelopeCount(reader, envelopeXml, commandElement));
-						break;
-					case TAG_END_LOOP:
-						checkAttributes(envelopeXml, commandElement);
-						requireNoChildren(envelopeXml, commandElement);
-						command = new EnvelopeCommand(EnvelopeOp.END_LOOP);
-						break;
-					case TAG_END:
-						checkAttributes(envelopeXml, commandElement);
-						requireNoChildren(envelopeXml, commandElement);
-						command = new EnvelopeCommand(EnvelopeOp.END);
-						break;
-					default:
-						throw error(envelopeXml, commandElement,
-							"unknown envelope command element: " + commandElement.getTagName());
-				}
-				envelope.commands.add(command);
-			}
-
-			if (envelope.commands.isEmpty()
-				|| envelope.commands.get(envelope.commands.size() - 1).op != EnvelopeOp.END)
-				throw error(envelopeXml, element, "Envelope must end with End");
+			envelope.commands.addAll(EnvelopeXml.readCommands(reader, element));
 			archive.envelopes.add(envelope);
 		}
-	}
-
-	private static int envelopeValue(XmlReader reader, Path source, Element element, int min, int max)
-	{
-		checkAttributes(source, element, ATTR_VALUE);
-		requireNoChildren(source, element);
-		return readRangedInt(reader, source, element, ATTR_VALUE, min, max, false);
-	}
-
-	private static int envelopeSignedValue(XmlReader reader, Path source, Element element, int min, int max)
-	{
-		checkAttributes(source, element, ATTR_VALUE);
-		requireNoChildren(source, element);
-		return readRangedInt(reader, source, element, ATTR_VALUE, min, max, false);
-	}
-
-	private static int envelopeCount(XmlReader reader, Path source, Element element)
-	{
-		checkAttributes(source, element, ATTR_COUNT);
-		requireNoChildren(source, element);
-		return readRangedInt(reader, source, element, ATTR_COUNT, 0, 255, false);
 	}
 
 	private static void validateArchive(SfxArchive archive, Path source)
@@ -1196,39 +1139,9 @@ public final class SfxXml
 	{
 		try (XmlWriter writer = new XmlWriter(output.toFile())) {
 			XmlTag rootTag = openTag(writer, TAG_ENVELOPES, Map.of());
-			List<Envelope> envelopes = new ArrayList<>(archive.envelopes);
-			envelopes.sort(Comparator.comparing(envelope -> envelope.name));
-
-			for (int index = 0; index < envelopes.size(); index++) {
-				Envelope envelope = envelopes.get(index);
+			for (Envelope envelope : archive.envelopes) {
 				XmlTag envelopeTag = openTag(writer, TAG_ENVELOPE, attributes(ATTR_NAME, envelope.name));
-				for (EnvelopeCommand command : envelope.commands) {
-					switch (command.op) {
-						case POINT:
-							printTag(writer, TAG_POINT, attributes(
-								ATTR_DURATION, envelopeDurationToken(command.durationIndex),
-								ATTR_VALUE, Integer.toString(command.value)));
-							break;
-						case SET_SCALE:
-							printTag(writer, TAG_SET_SCALE,
-								attributes(ATTR_VALUE, Integer.toString(command.value)));
-							break;
-						case ADD_SCALE:
-							printTag(writer, TAG_ADD_SCALE,
-								attributes(ATTR_VALUE, Integer.toString(command.value)));
-							break;
-						case START_LOOP:
-							printTag(writer, TAG_START_LOOP,
-								attributes(ATTR_COUNT, Integer.toString(command.value)));
-							break;
-						case END_LOOP:
-							printTag(writer, TAG_END_LOOP, Map.of());
-							break;
-						case END:
-							printTag(writer, TAG_END, Map.of());
-							break;
-					}
-				}
+				EnvelopeXml.writeCommands(writer, envelope.commands);
 				writer.closeTag(envelopeTag);
 			}
 

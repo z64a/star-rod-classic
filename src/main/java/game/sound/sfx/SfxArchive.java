@@ -5,12 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-/**
- * Semantic, layout-independent representation of a Paper Mario SEF archive.
- *
- * Binary offsets, BASIC/COMPACT choices, and pointer sharing deliberately do
- * not appear here.  The same model is used by the XML and binary codecs.
- */
+import game.sound.engine.EnvelopeCommand;
+
 public final class SfxArchive
 {
 	public static final int DEFAULT_MAX_BINARY_SIZE = 0x5200;
@@ -99,7 +95,7 @@ public final class SfxArchive
 		}
 	}
 
-	public sealed interface Definition permits Empty, OneShot, Sequence
+	public interface Definition
 	{}
 
 	public enum Empty implements Definition
@@ -149,7 +145,7 @@ public final class SfxArchive
 		}
 	}
 
-	public sealed interface Node permits Label, Command
+	public interface Node
 	{}
 
 	public record Label(String name) implements Node
@@ -253,31 +249,4 @@ public final class SfxArchive
 		}
 	}
 
-	public static final class EnvelopeCommand
-	{
-		public EnvelopeOp op;
-		public int value;
-		public int durationIndex;
-
-		public EnvelopeCommand(EnvelopeOp op)
-		{
-			this.op = op;
-		}
-
-		public EnvelopeCommand(EnvelopeOp op, int value)
-		{
-			this(op);
-			this.value = value;
-		}
-	}
-
-	public enum EnvelopeOp
-	{
-		POINT,
-		SET_SCALE,
-		ADD_SCALE,
-		START_LOOP,
-		END_LOOP,
-		END
-	}
 }

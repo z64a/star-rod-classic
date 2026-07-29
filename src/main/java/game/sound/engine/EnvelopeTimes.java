@@ -1,13 +1,28 @@
-package game.sound.sfx;
+package game.sound.engine;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public final class SfxEnvelopeTimes
+public final class EnvelopeTimes
 {
 	public static final int COUNT = 95;
+
+	private static final int[] FRAME_COUNTS = {
+		10434, 9565, 8695, 7826, 6956, 6086, 5217, 4782,
+		4347, 3913, 3478, 3304, 3130, 2956, 2782, 2608,
+		2434, 2260, 2086, 1913, 1739, 1565, 1391, 1217,
+		1043, 869, 782, 695, 608, 521, 478, 434,
+		391, 347, 330, 313, 295, 278, 260, 243,
+		226, 208, 191, 173, 165, 156, 147, 139,
+		130, 121, 113, 104, 95, 86, 78, 69,
+		65, 60, 56, 52, 50, 48, 46, 45,
+		43, 41, 40, 38, 36, 34, 33, 31,
+		29, 27, 26, 24, 22, 20, 19, 17,
+		16, 14, 12, 11, 10, 9, 8, 7,
+		6, 5, 4, 3, 2, 1, 0
+	};
 
 	private static final String[] TOKENS = {
 		// 0-29
@@ -33,6 +48,8 @@ public final class SfxEnvelopeTimes
 	private static final Map<String, Integer> TOKEN_INDICES;
 
 	static {
+		if (FRAME_COUNTS.length != COUNT)
+			throw new ExceptionInInitializerError("Expected " + COUNT + " envelope intervals, found " + FRAME_COUNTS.length);
 		if (TOKENS.length != COUNT)
 			throw new ExceptionInInitializerError("Expected " + COUNT + " envelope duration tokens, found " + TOKENS.length);
 
@@ -42,29 +59,41 @@ public final class SfxEnvelopeTimes
 			if (previous != null)
 				throw new ExceptionInInitializerError("Duplicate envelope duration token: " + TOKENS[i]);
 		}
-		// Accept plural spelling while always writing "1unit"
+		// Accept plural spelling while always writing "1unit".
 		indices.put("1units", 93);
 		TOKEN_INDICES = Collections.unmodifiableMap(indices);
 	}
 
-	private SfxEnvelopeTimes()
+	private EnvelopeTimes()
 	{}
+
+	public static int framesForIndex(int index)
+	{
+		if (index < 0 || index >= COUNT)
+			throw new IllegalArgumentException("Envelope duration index must be between 0 and " + (COUNT - 1) + ": " + index);
+		return FRAME_COUNTS[index];
+	}
+
+	public static int[] frameCounts()
+	{
+		return FRAME_COUNTS.clone();
+	}
 
 	public static String tokenForIndex(int index)
 	{
 		if (index < 0 || index >= COUNT)
-			throw new SfxFormatException("Envelope duration index must be between 0 and " + (COUNT - 1) + ": " + index);
+			throw new IllegalArgumentException("Envelope duration index must be between 0 and " + (COUNT - 1) + ": " + index);
 		return TOKENS[index];
 	}
 
 	public static int indexForToken(String token)
 	{
 		if (token == null)
-			throw new SfxFormatException("Envelope duration token cannot be null");
+			throw new IllegalArgumentException("Envelope duration token cannot be null");
 
 		Integer index = TOKEN_INDICES.get(token);
 		if (index == null)
-			throw new SfxFormatException("Unknown envelope duration token: " + token);
+			throw new IllegalArgumentException("Unknown envelope duration token: " + token);
 		return index;
 	}
 

@@ -16,7 +16,6 @@ import game.sound.sfx.SfxValidator;
 import game.sound.sfx.SfxXml;
 import util.Logger;
 
-/** Headless dump/build entry point for editable DAT1 sound effects. */
 public final class SfxModder
 {
 	private SfxModder()

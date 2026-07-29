@@ -8,13 +8,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import game.sound.engine.EnvelopeCommand;
+import game.sound.engine.EnvelopeOp;
 import game.sound.sfx.SfxArchive.Allocation;
 import game.sound.sfx.SfxArchive.Command;
 import game.sound.sfx.SfxArchive.Definition;
 import game.sound.sfx.SfxArchive.Empty;
 import game.sound.sfx.SfxArchive.Envelope;
-import game.sound.sfx.SfxArchive.EnvelopeCommand;
-import game.sound.sfx.SfxArchive.EnvelopeOp;
 import game.sound.sfx.SfxArchive.Label;
 import game.sound.sfx.SfxArchive.Node;
 import game.sound.sfx.SfxArchive.OneShot;
@@ -25,7 +25,6 @@ import game.sound.sfx.SfxArchive.Sound;
 import game.sound.sfx.SfxArchive.SpawnedEffect;
 import game.sound.sfx.SfxArchive.Track;
 
-/** Semantic validation for the layout-independent SFX intermediate model. */
 public final class SfxValidator
 {
 	private static final Pattern IDENTIFIER = Pattern.compile("[A-Za-z_][A-Za-z0-9_.-]*");

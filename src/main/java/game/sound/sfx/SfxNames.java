@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Ordered raw sound names plus generated names for unnamed, unused, and invalid slots. */
 public final class SfxNames
 {
 	private static final Pattern TABLE_ROW = Pattern.compile("^\\s*([0-9A-Fa-f]+)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*$");
