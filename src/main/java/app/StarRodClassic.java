@@ -899,12 +899,12 @@ public class StarRodClassic extends JFrame
 			FileUtils.copyDirectory(DUMP_STARS_SRC.toFile(), MOD_STARS_SRC.toFile());
 
 			Logger.log("Copying texture data...", Priority.MILESTONE);
-			Directories.copyIfEmpty(DUMP_IMG_TEX, MOD_IMG_TEX);
-			Directories.copyIfEmpty(DUMP_IMG_BG, MOD_IMG_BG);
-			Directories.copyIfEmpty(DUMP_IMG_ASSETS, MOD_IMG_ASSETS);
-			Directories.copyIfEmpty(DUMP_IMG_COMP, MOD_IMG_COMP);
-			Directories.copyIfEmpty(DUMP_HUD_SCRIPTS, MOD_HUD_SCRIPTS);
-			Directories.copyIfEmpty(DUMP_ITEM_SCRIPTS, MOD_ITEM_SCRIPTS);
+			Directories.copyAllMissing(DUMP_IMG_TEX, MOD_IMG_TEX);
+			Directories.copyAllMissing(DUMP_IMG_BG, MOD_IMG_BG);
+			Directories.copyAllMissing(DUMP_IMG_ASSETS, MOD_IMG_ASSETS);
+			Directories.copyAllMissing(DUMP_IMG_COMP, MOD_IMG_COMP);
+			Directories.copyAllMissing(DUMP_HUD_SCRIPTS, MOD_HUD_SCRIPTS);
+			Directories.copyAllMissing(DUMP_ITEM_SCRIPTS, MOD_ITEM_SCRIPTS);
 			Directories.copyIfMissing(DUMP_IMG, MOD_IMG, FN_IMAGE_ASSETS);
 			Directories.copyIfMissing(DUMP_IMG, MOD_IMG, FN_ITEM_SCRIPTS);
 			Directories.copyIfMissing(DUMP_IMG, MOD_IMG, FN_HUD_SCRIPTS);
@@ -912,8 +912,8 @@ public class StarRodClassic extends JFrame
 			Logger.log("Copying sprite data...", Priority.MILESTONE);
 			Directories.copyIfMissing(DUMP_SPRITE, MOD_SPRITE, FN_SPRITE_TABLE);
 			Directories.copyIfMissing(DUMP_SPRITE, MOD_SPRITE, FN_SPRITE_SHADING);
-			Directories.copyIfEmpty(DUMP_SPR_NPC_SRC, MOD_SPR_NPC_SRC);
-			Directories.copyIfEmpty(DUMP_SPR_PLR_SRC, MOD_SPR_PLR_SRC);
+			Directories.copyAllMissing(DUMP_SPR_NPC_SRC, MOD_SPR_NPC_SRC);
+			Directories.copyAllMissing(DUMP_SPR_PLR_SRC, MOD_SPR_PLR_SRC);
 
 			Logger.log("Copying audio data...", Priority.MILESTONE);
 			Directories.copyAllMissing(DUMP_AUDIO, MOD_AUDIO);
