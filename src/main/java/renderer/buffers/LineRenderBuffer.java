@@ -1,10 +1,18 @@
 package renderer.buffers;
 
-import static org.lwjgl.opengl.GL11.*;
-import static org.lwjgl.opengl.GL15.*;
+import static org.lwjgl.opengl.GL11.GL_FLOAT;
+import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
+import static org.lwjgl.opengl.GL15.GL_ARRAY_BUFFER;
+import static org.lwjgl.opengl.GL15.GL_STATIC_DRAW;
+import static org.lwjgl.opengl.GL15.GL_STREAM_DRAW;
+import static org.lwjgl.opengl.GL15.glBindBuffer;
+import static org.lwjgl.opengl.GL15.glBufferData;
+import static org.lwjgl.opengl.GL15.glDeleteBuffers;
+import static org.lwjgl.opengl.GL15.glGenBuffers;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
-import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL30.glDeleteVertexArrays;
+import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 import static org.lwjgl.opengl.GL31.glDrawArraysInstanced;
 import static org.lwjgl.opengl.GL33.glVertexAttribDivisor;
 
@@ -74,12 +82,12 @@ final class LineRenderBuffer
 		// Two triangles. X selects the endpoint and Y selects the side.
 		FloatBuffer corners = BufferUtils.createFloatBuffer(12);
 		corners.put(new float[] {
-			-1.0f, -1.0f,
-			 1.0f, -1.0f,
-			 1.0f,  1.0f,
-			-1.0f, -1.0f,
-			 1.0f,  1.0f,
-			-1.0f,  1.0f
+				-1.0f, -1.0f,
+				+1.0f, -1.0f,
+				+1.0f, +1.0f,
+				-1.0f, -1.0f,
+				+1.0f, +1.0f,
+				-1.0f, +1.0f
 		}).flip();
 
 		cornerVbo = glGenBuffers();

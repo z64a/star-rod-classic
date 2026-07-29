@@ -378,7 +378,7 @@ public class CursorObject extends EditorObject
 		double dot = nx*dir.x + nz*dir.z;
 		// okay way:
 		double dot = Vector3f.dot(dir, normalDir);
-		
+
 		pos.x += length * (dir.x - normalDir.x * dot);
 		pos.z += length * (dir.z - normalDir.z * dot);
 		 */

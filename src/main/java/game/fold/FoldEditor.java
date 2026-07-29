@@ -252,19 +252,19 @@ public class FoldEditor extends BaseEditor
 		// left
 		shader.setXYQuadCoords(leftX - 16, 120, leftX + 16, 120 - 16, 0);
 		shader.renderQuad();
-		
+
 		// right
 		shader.setXYQuadCoords(rightX - 16, 120, rightX + 16, 120 - 16, 0);
 		shader.renderQuad();
-		
+
 		// top
 		shader.setXYQuadCoords(160 - 16, topY + 16, 160 + 16, topY, 0);
 		shader.renderQuad();
-		
+
 		// bottom
 		shader.setXYQuadCoords(160 - 16, bottomY, 160 + 16, bottomY - 16, 0);
 		shader.renderQuad();
-		
+
 		*/
 
 		uiText.draw(16, 0, 0, (float) super.getDeltaTime());

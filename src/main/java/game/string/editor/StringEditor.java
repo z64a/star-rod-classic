@@ -345,8 +345,8 @@ public class StringEditor extends BaseEditor
 			// highlight current page
 			if (printer.currentPage != null)
 				inputDocument.setCharacterAttributes(printer.currentPage.srcStart,
-						printer.currentPage.srcEnd - printer.currentPage.srcStart,
-						attrCurrent, false);
+					printer.currentPage.srcEnd - printer.currentPage.srcStart,
+					attrCurrent, false);
 
 			// highlight errors
 			for (Sequence seq : printer.sequences) {
