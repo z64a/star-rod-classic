@@ -15,6 +15,7 @@ layout (std140) uniform Globals {
 };
 
 uniform float u_lineWidth;
+uniform bool u_clipDepth;
 
 out vec4 f_color;
 noperspective out vec2 f_lineCoord;
@@ -73,11 +74,14 @@ void main()
 	// pixel-sized offset when a long line has a projected endpoint far outside
 	// the viewport. The side planes include the line radius so grazing lines
 	// remain visible. Explicit far clipping is needed while depth clamp is on.
-	bool visible = clipLineAgainstPlane(vec4(0.0, 0.0, 1.0, 1.0),
-		clipStart, clipEnd, startColor, endColor, dashStart, dashEnd);
-	if (visible)
-		visible = clipLineAgainstPlane(vec4(0.0, 0.0, -1.0, 1.0),
+	bool visible = true;
+	if (u_clipDepth) {
+		visible = clipLineAgainstPlane(vec4(0.0, 0.0, 1.0, 1.0),
 			clipStart, clipEnd, startColor, endColor, dashStart, dashEnd);
+		if (visible)
+			visible = clipLineAgainstPlane(vec4(0.0, 0.0, -1.0, 1.0),
+				clipStart, clipEnd, startColor, endColor, dashStart, dashEnd);
+	}
 	if (visible)
 		visible = clipLineAgainstPlane(vec4(1.0, 0.0, 0.0, 1.0 + sideMargin.x),
 			clipStart, clipEnd, startColor, endColor, dashStart, dashEnd);

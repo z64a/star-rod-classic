@@ -562,7 +562,12 @@ public class Renderer implements IShutdownListener
 		LineRenderQueue.addLine(MMm, MMM);
 
 		RenderState.enableDepthTest(false);
-		LineRenderQueue.render(true);
+		LineShader shader = ShaderManager.use(LineShader.class);
+		shader.useVertexColor.set(true);
+		shader.dashRatio.set(1.0f);
+		shader.clipDepth.set(false);
+		LineRenderQueue.render(shader, true);
+		shader.clipDepth.set(true);
 		RenderState.enableDepthTest(true);
 	}
 
