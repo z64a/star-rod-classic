@@ -2,12 +2,11 @@ package game.map.editor;
 
 import static app.Directories.*;
 import static game.map.MapKey.*;
-import static game.map.editor.EditorShortcut.*;
+import static game.map.editor.MapInput.*;
 import static org.lwjgl.opengl.GL11.*;
 
 import java.awt.Dimension;
 import java.awt.Graphics2D;
-import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
@@ -54,8 +53,7 @@ import app.input.InvalidInputException;
 import common.FrameLimiter;
 import common.GLEditor;
 import common.KeyboardInput;
-import common.KeyboardInput.KeyInputEvent;
-import common.KeyboardInput.KeyboardInputListener;
+import common.RawKeyboard;
 import common.MouseInput;
 import common.MouseInput.MouseManagerListener;
 import common.Vector3f;
@@ -168,7 +166,7 @@ import util.xml.XmlWrapper.XmlSerializable;
 import util.xml.XmlWrapper.XmlTag;
 import util.xml.XmlWrapper.XmlWriter;
 
-public class MapEditor extends GLEditor implements MouseManagerListener, KeyboardInputListener, KeyEventDispatcher
+public class MapEditor extends GLEditor implements MouseManagerListener
 {
 	public static void main(String[] args) throws IOException
 	{
@@ -426,16 +424,18 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 	/**
 	 * GUI Event Handling Events from the GUI are processed in three ways: (1) General events are submitted as Runnable
 	 * objects to the guiEventQueue via invokeNextFrame(). (2) GuiCommands are forwarded to the guiEventQueue with
-	 * submitGuiCommand(). (3) EditorKeyEvents are submitted to the keyEventQueue via enqueueKeyEvent().
+	 * submitGuiCommand(). (3) Logical editor shortcuts are submitted to the shortcutQueue via enqueueShortcut().
 	 */
 	private LinkedBlockingQueue<Runnable> guiEventQueue;
-	private LinkedBlockingQueue<EditorShortcut> keyEventQueue;
+	private LinkedBlockingQueue<MapInput> shortcutQueue;
 
 	/**
 	 * Loaded Map Data
 	 */
 
 	public final Config editorConfig;
+	public final MapKeyConfig keyConfig;
+	private final File keyBindingsFile;
 
 	public Map map;
 	public Map shapeOverride;
@@ -446,7 +446,8 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 	 * Major Components
 	 */
 
-	public KeyboardInput keyboard;
+	public final RawKeyboard rawKeyboard;
+	public final KeyboardInput keyboard;
 	public MouseInput mouse;
 
 	public SelectionManager selectionManager; // handles object/face/vertex selections
@@ -533,8 +534,11 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 		// read settings from config
 
 		File editorConfigFile = new File(MOD_EDITOR + "/" + FN_MAP_EDITOR_CONFIG);
+		keyBindingsFile = new File(MOD_EDITOR + "/" + FN_MAP_EDITOR_KEY_BINDINGS);
 
 		editorConfig = readEditorConfig(editorConfigFile);
+		keyConfig = new MapKeyConfig();
+		MapKeyBindingsConfig.load(keyBindingsFile, keyConfig);
 		loadRecentMaps();
 
 		crashFile = new File(AssetManager.getMapBuildDir() + "/crash");
@@ -567,10 +571,11 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 		commandManager = new CommandManager(32);
 		drawTriManager = new DrawTrianglesManager(this, drawGeometryPreview);
 
+		rawKeyboard = new RawKeyboard(glCanvas);
+		keyboard = new KeyboardInput(rawKeyboard, keyConfig);
+		keyboard.addListener(MapInput.class, this::inputPressed, this::inputReleased, this::enqueueInput);
 		KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-		manager.addKeyEventDispatcher(this);
-
-		keyboard = new KeyboardInput(glCanvas);
+		manager.addKeyEventDispatcher(keyboard);
 		mouse = new MouseInput(glCanvas);
 		gui = new SwingGUI(this, glCanvas, logFile);
 		Logger.addListener(gui);
@@ -622,6 +627,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			});
 
 			Logger.removeListener(gui);
+			KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(keyboard);
 			gui.destroyGUI();
 
 			editorLog.close();
@@ -691,6 +697,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 		EditableField.setCallbacksEnabled(false);
 		TextureManager.clear();
 		Logger.removeListener(gui);
+		KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(keyboard);
 		glCanvas.disposeCanvas();
 		gui.destroyGUI();
 
@@ -699,6 +706,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 
 		if (editorConfig != null)
 			editorConfig.saveConfigFile();
+		MapKeyBindingsConfig.save(keyBindingsFile, keyConfig);
 
 		for (IShutdownListener s : singletonList)
 			s.shutdown();
@@ -1004,11 +1012,11 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			dummyCameraController = new CameraController();
 			usingTargetCam = false;
 
-			PLAY_IN_EDITOR_TOGGLE.setCheckbox(isPlayInEditorMode);
-			PIE_IGNORE_HIDDEN_COL.setCheckbox(pieIgnoreHiddenColliders);
-			PIE_IGNORE_HIDDEN_ZONE.setCheckbox(pieIgnoreHiddenZones);
-			PIE_SHOW_ACTIVE_CAMERA.setCheckbox(pieDrawCameraInfo);
-			PIE_ENABLE_MAP_EXITS.setCheckbox(pieEnableMapExits);
+			gui.setShortcutCheckbox(PLAY_IN_EDITOR_TOGGLE, isPlayInEditorMode);
+			gui.setShortcutCheckbox(PIE_IGNORE_HIDDEN_COL, pieIgnoreHiddenColliders);
+			gui.setShortcutCheckbox(PIE_IGNORE_HIDDEN_ZONE, pieIgnoreHiddenZones);
+			gui.setShortcutCheckbox(PIE_SHOW_ACTIVE_CAMERA, pieDrawCameraInfo);
+			gui.setShortcutCheckbox(PIE_ENABLE_MAP_EXITS, pieEnableMapExits);
 
 			edgeHighlights = false;
 		}
@@ -1039,26 +1047,26 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			grid = objectGrid;
 			gridEnabled = true;
 			gui.updateGridSize();
-			TOGGLE_GRID.setCheckbox(gridEnabled);
-			TOGGLE_GRID_TYPE.setCheckbox(!objectGrid.binary);
+			gui.setShortcutCheckbox(TOGGLE_GRID, gridEnabled);
+			gui.setShortcutCheckbox(TOGGLE_GRID_TYPE, !objectGrid.binary);
 
 			snapScaleToGrid = false;
-			SNAP_SCALE_GRID.setCheckbox(snapScaleToGrid);
+			gui.setShortcutCheckbox(SNAP_SCALE_GRID, snapScaleToGrid);
 
 			vertexSnap = false;
-			VERTEX_SNAP.setCheckbox(vertexSnap);
+			gui.setShortcutCheckbox(VERTEX_SNAP, vertexSnap);
 			vertexSnapLimit = true;
-			VERTEX_SNAP_LIMIT.setCheckbox(vertexSnapLimit);
+			gui.setShortcutCheckbox(VERTEX_SNAP_LIMIT, vertexSnapLimit);
 
 			snapTranslation = true;
 			snapRotation = true;
 			snapScale = true;
-			SNAP_TRANSLATION.setCheckbox(snapTranslation);
-			SNAP_ROTATION.setCheckbox(snapRotation);
-			SNAP_SCALE.setCheckbox(snapScale);
+			gui.setShortcutCheckbox(SNAP_TRANSLATION, snapTranslation);
+			gui.setShortcutCheckbox(SNAP_ROTATION, snapRotation);
+			gui.setShortcutCheckbox(SNAP_SCALE, snapScale);
 
 			Marker.movePointsWithObject = true;
-			MOVE_MARKER_POINTS.setCheckbox(Marker.movePointsWithObject);
+			gui.setShortcutCheckbox(MOVE_MARKER_POINTS, Marker.movePointsWithObject);
 
 			gui.updateSnapLabel();
 		}
@@ -1081,10 +1089,10 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			showColliders = true;
 			showZones = true;
 			showMarkers = true;
-			SHOW_MODELS.setCheckbox(showModels);
-			SHOW_COLLIDERS.setCheckbox(showColliders);
-			SHOW_ZONES.setCheckbox(showZones);
-			SHOW_MARKERS.setCheckbox(showMarkers);
+			gui.setShortcutCheckbox(SHOW_MODELS, showModels);
+			gui.setShortcutCheckbox(SHOW_COLLIDERS, showColliders);
+			gui.setShortcutCheckbox(SHOW_ZONES, showZones);
+			gui.setShortcutCheckbox(SHOW_MARKERS, showMarkers);
 
 			showBoundingBoxes = false;
 			showNormals = false;
@@ -1092,12 +1100,12 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			showGizmo = true;
 			thumbnailMode = false;
 			useColliderColoring = true;
-			SHOW_AABB.setCheckbox(showBoundingBoxes);
-			SHOW_NORMALS.setCheckbox(showNormals);
-			SHOW_AXES.setCheckbox(showAxes);
-			SHOW_GIZMO.setCheckbox(showGizmo);
-			SHOW_ENTITY_COLLISION.setCheckbox(showEntityCollision);
-			USE_COLLIDER_COLORS.setCheckbox(useColliderColoring);
+			gui.setShortcutCheckbox(SHOW_AABB, showBoundingBoxes);
+			gui.setShortcutCheckbox(SHOW_NORMALS, showNormals);
+			gui.setShortcutCheckbox(SHOW_AXES, showAxes);
+			gui.setShortcutCheckbox(SHOW_GIZMO, showGizmo);
+			gui.setShortcutCheckbox(SHOW_ENTITY_COLLISION, showEntityCollision);
+			gui.setShortcutCheckbox(USE_COLLIDER_COLORS, useColliderColoring);
 
 			useGameAspectRatio = false;
 			useMapBackgroundColor = true;
@@ -1105,12 +1113,12 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			useGeometryFlags = false;
 			useFiltering = false;
 			useTextureLOD = true;
-			USE_GAME_ASPECT_RATIO.setCheckbox(useGameAspectRatio);
-			USE_MAP_CAM_PROPERTIES.setCheckbox(useMapCameraProperties);
-			USE_MAP_BG_COLOR.setCheckbox(useMapBackgroundColor);
-			USE_GEOMETRY_FLAGS.setCheckbox(useGeometryFlags);
-			USE_FILTERING.setCheckbox(useFiltering);
-			USE_TEXTURE_LOD.setCheckbox(useTextureLOD);
+			gui.setShortcutCheckbox(USE_GAME_ASPECT_RATIO, useGameAspectRatio);
+			gui.setShortcutCheckbox(USE_MAP_CAM_PROPERTIES, useMapCameraProperties);
+			gui.setShortcutCheckbox(USE_MAP_BG_COLOR, useMapBackgroundColor);
+			gui.setShortcutCheckbox(USE_GEOMETRY_FLAGS, useGeometryFlags);
+			gui.setShortcutCheckbox(USE_FILTERING, useFiltering);
+			gui.setShortcutCheckbox(USE_TEXTURE_LOD, useTextureLOD);
 		}
 
 		// switch to modify mode, bootstrap if necessary
@@ -1121,7 +1129,8 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 		resetMode.exec();
 
 		guiEventQueue = new LinkedBlockingQueue<>();
-		keyEventQueue = new LinkedBlockingQueue<>();
+		shortcutQueue = new LinkedBlockingQueue<>();
+		keyboard.reset();
 		frameCounter = 0;
 
 		loadPreferences();
@@ -1303,7 +1312,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 		selectionManager.testGizmoMouseover(editorMode, currentRay, activeView);
 
 		// handle input
-		keyboard.update(this, gui.isFocused());
+		rawKeyboard.update(keyboard, gui.isFocused());
 		mouse.update(this, gui.isFocused());
 
 		if (activeView == perspectiveView && cursor3D.isSelected()) {
@@ -1312,8 +1321,8 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 				cursor3D.changeGuide(dw);
 		}
 
-		while (!keyEventQueue.isEmpty())
-			handleShortcutPress(keyEventQueue.poll(), true);
+		while (!shortcutQueue.isEmpty())
+			handleShortcutPress(shortcutQueue.poll(), true);
 
 		updateKeyboardTranslation();
 
@@ -1480,9 +1489,14 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 	 * These methods allow the GUI to submit events to the editor.
 	 */
 
-	public void enqueueKeyEvent(EditorShortcut event)
+	public void enqueueShortcut(MapInput shortcut)
 	{
-		keyEventQueue.add(event);
+		shortcutQueue.add(shortcut);
+	}
+
+	public void enqueueInput(MapInput shortcut)
+	{
+		enqueueShortcut(shortcut);
 	}
 
 	public void doNextFrame(Runnable event)
@@ -1908,7 +1922,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			}
 		}
 
-		//	keyboard.reset(this);
+		//	rawKeyboard.reset(this);
 		//	mouse.reset(this);
 	}
 
@@ -1964,7 +1978,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			case EditUVs:
 				if (activeView == uvEditView) {
 					if (!selectionManager.uvSelection.transforming()) {
-						clickHitLMB = selectionManager.pickUV(map, clickRayLMB, uvEditView, !keyboard.isKeyDown(SCALE_KEY));
+						clickHitLMB = selectionManager.pickUV(map, clickRayLMB, uvEditView, !rawKeyboard.isKeyDown(SCALE_KEY));
 						dragBoxStartPoint = new Vector3f(clickRayLMB.origin);
 					}
 				}
@@ -2049,12 +2063,12 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 	private void startTranslateScale(Selection<?> selection, PickHit clickHit)
 	{
 		if (!selection.transforming()) {
-			if (!selection.isEmpty() && !keyboard.isCtrlDown()) {
+			if (!selection.isEmpty() && !rawKeyboard.isCtrlDown()) {
 				boolean allowClone = (editorMode == EditorMode.Modify);
-				if (allowClone && keyboard.isKeyDown(CLONE_KEY))
+				if (allowClone && rawKeyboard.isKeyDown(CLONE_KEY))
 					selectionManager.cloneSelection();
 
-				rescaling = keyboard.isKeyDown(SCALE_KEY);
+				rescaling = rawKeyboard.isKeyDown(SCALE_KEY);
 
 				if (rescaling)
 					selection.startScale(clickHit.point, false);
@@ -2163,10 +2177,10 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 				selection = selectionManager.currentSelection;
 				if (!selection.isEmpty() && !selection.transforming()) {
 					boolean allowClone = (editorMode == EditorMode.Modify);
-					if (allowClone && keyboard.isKeyDown(CLONE_KEY))
+					if (allowClone && rawKeyboard.isKeyDown(CLONE_KEY))
 						selectionManager.cloneSelection();
 
-					rescaling = keyboard.isKeyDown(SCALE_KEY);
+					rescaling = rawKeyboard.isKeyDown(SCALE_KEY);
 
 					if (rescaling)
 						selection.startScale(clickHitRMB.point, true);
@@ -2180,7 +2194,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			case EditUVs:
 				selection = selectionManager.uvSelection;
 				if (!selection.isEmpty() && !selection.transforming()) {
-					rescaling = keyboard.isKeyDown(SCALE_KEY);
+					rescaling = rawKeyboard.isKeyDown(SCALE_KEY);
 
 					if (rescaling) {
 						Vector3f mousePosition = new Vector3f(currentRay.origin.x, currentRay.origin.y, 0.0f);
@@ -2255,48 +2269,8 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 		clickHitMMB = null;
 	}
 
-	@Override
-	public boolean dispatchKeyEvent(KeyEvent e)
+	public void inputPressed(MapInput shortcut)
 	{
-		if (e.getID() == KeyEvent.KEY_PRESSED) {
-			switch (e.getKeyCode()) {
-				case KeyEvent.VK_Z:
-					if (e.isControlDown())
-						enqueueKeyEvent(EditorShortcut.UNDO);
-					break;
-				case KeyEvent.VK_Y:
-					if (e.isControlDown())
-						enqueueKeyEvent(EditorShortcut.REDO);
-					break;
-			}
-		}
-		return false;
-	}
-
-	@Override
-	public void keyPress(KeyInputEvent evt)
-	{
-		handleKeyEvent(evt, true);
-	}
-
-	@Override
-	public void keyRelease(KeyInputEvent evt)
-	{
-		handleKeyEvent(evt, false);
-	}
-
-	// map key events to symbolic shortcuts and dispatch them
-	private void handleKeyEvent(KeyInputEvent key, boolean press)
-	{
-		boolean ctrl = keyboard.isCtrlDown();
-		boolean shift = keyboard.isShiftDown();
-
-		if (key.code == KeyEvent.VK_CONTROL || key.code == KeyEvent.VK_SHIFT)
-			return;
-
-		if (ctrl && shift)
-			return;
-
 		// don't allow key events during transformations
 		switch (editorMode) {
 			default:
@@ -2309,20 +2283,12 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 				break;
 		}
 
-		EditorShortcut shortcut = null;
-		if (ctrl)
-			shortcut = EditorShortcut.getCtrl(key.code);
-		else if (shift)
-			shortcut = EditorShortcut.getShift(key.code);
-		else
-			shortcut = EditorShortcut.get(key.code);
+		handleShortcutPress(shortcut, false);
+	}
 
-		if (shortcut != null) {
-			if (press)
-				handleShortcutPress(shortcut, false);
-			else
-				handleShortcutRelease(shortcut);
-		}
+	public void inputReleased(MapInput shortcut)
+	{
+		handleShortcutRelease(shortcut);
 	}
 
 	private Vector3f getNudgeVector(NudgeDirection dir)
@@ -2399,7 +2365,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 		Vector3f translateDir;
 		int keysHeld = 0;
 
-		if (keyboard.isKeyDown(NUDGE_UP.key)) {
+		if (keyboard.isDown(NUDGE_UP)) {
 			if (!selection.transforming()) {
 				startKeyboardTranslation();
 				return;
@@ -2410,7 +2376,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			keysHeld++;
 		}
 
-		if (keyboard.isKeyDown(NUDGE_DOWN.key)) {
+		if (keyboard.isDown(NUDGE_DOWN)) {
 			if (!selection.transforming()) {
 				startKeyboardTranslation();
 				return;
@@ -2421,7 +2387,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			keysHeld++;
 		}
 
-		if (keyboard.isKeyDown(NUDGE_LEFT.key)) {
+		if (keyboard.isDown(NUDGE_LEFT)) {
 			if (!selection.transforming()) {
 				startKeyboardTranslation();
 				return;
@@ -2432,7 +2398,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			keysHeld++;
 		}
 
-		if (keyboard.isKeyDown(NUDGE_RIGHT.key)) {
+		if (keyboard.isDown(NUDGE_RIGHT)) {
 			if (!selection.transforming()) {
 				startKeyboardTranslation();
 				return;
@@ -2443,7 +2409,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			keysHeld++;
 		}
 
-		if (keyboard.isKeyDown(NUDGE_IN.key)) {
+		if (keyboard.isDown(NUDGE_IN)) {
 			if (!selection.transforming()) {
 				startKeyboardTranslation();
 				return;
@@ -2454,7 +2420,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			keysHeld++;
 		}
 
-		if (keyboard.isKeyDown(NUDGE_OUT.key)) {
+		if (keyboard.isDown(NUDGE_OUT)) {
 			if (!selection.transforming()) {
 				startKeyboardTranslation();
 				return;
@@ -2486,7 +2452,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 		selection.updateTranslation(activeView, keyboardTranslateVec, 1, 1, deltaTime); //TODO check rawDx, rawDy
 	}
 
-	private void handleShortcutRelease(EditorShortcut key)
+	private void handleShortcutRelease(MapInput key)
 	{
 		switch (key) {
 			case NUDGE_UP:
@@ -2512,7 +2478,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 		}
 	}
 
-	private void handleShortcutPress(EditorShortcut key, boolean fromGui)
+	private void handleShortcutPress(MapInput key, boolean fromGui)
 	{
 		switch (key) {
 			case UNDO: {
@@ -2650,7 +2616,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 				if (changeMapState != ChangeMapState.NONE) {
 					// cant exit PIE during map transition
 					isPlayInEditorMode = true;
-					key.setCheckbox(isPlayInEditorMode);
+					gui.setShortcutCheckbox(key, isPlayInEditorMode);
 					break;
 				}
 
@@ -2664,7 +2630,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 				}
 
 				if (!fromGui)
-					key.setCheckbox(isPlayInEditorMode);
+					gui.setShortcutCheckbox(key, isPlayInEditorMode);
 
 			}
 				break;
@@ -2677,25 +2643,25 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			case PIE_IGNORE_HIDDEN_COL:
 				pieIgnoreHiddenColliders = !pieIgnoreHiddenColliders;
 				if (!fromGui)
-					key.setCheckbox(pieIgnoreHiddenColliders);
+					gui.setShortcutCheckbox(key, pieIgnoreHiddenColliders);
 				break;
 
 			case PIE_IGNORE_HIDDEN_ZONE:
 				pieIgnoreHiddenZones = !pieIgnoreHiddenZones;
 				if (!fromGui)
-					key.setCheckbox(pieIgnoreHiddenZones);
+					gui.setShortcutCheckbox(key, pieIgnoreHiddenZones);
 				break;
 
 			case PIE_SHOW_ACTIVE_CAMERA:
 				pieDrawCameraInfo = !pieDrawCameraInfo;
 				if (!fromGui)
-					key.setCheckbox(pieDrawCameraInfo);
+					gui.setShortcutCheckbox(key, pieDrawCameraInfo);
 				break;
 
 			case PIE_ENABLE_MAP_EXITS:
 				pieEnableMapExits = !pieEnableMapExits;
 				if (!fromGui)
-					key.setCheckbox(pieEnableMapExits);
+					gui.setShortcutCheckbox(key, pieEnableMapExits);
 				break;
 
 			case OPEN_MODEL_TAB:
@@ -2736,14 +2702,14 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			case TOGGLE_GRID:
 				gridEnabled = !gridEnabled;
 				if (!fromGui)
-					key.setCheckbox(gridEnabled);
+					gui.setShortcutCheckbox(key, gridEnabled);
 				gui.updateGridSize();
 				break;
 
 			case TOGGLE_GRID_TYPE:
 				objectGrid.toggleType();
 				if (!fromGui)
-					key.setCheckbox(!objectGrid.binary);
+					gui.setShortcutCheckbox(key, !objectGrid.binary);
 				gui.post("Using " + (objectGrid.binary ? "binary" : "decimal") + " grid");
 				gui.updateGridSize();
 				break;
@@ -2761,7 +2727,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			case SNAP_TRANSLATION:
 				snapTranslation = !snapTranslation;
 				if (!fromGui)
-					key.setCheckbox(snapTranslation);
+					gui.setShortcutCheckbox(key, snapTranslation);
 				gui.post("Snap translation " + (snapTranslation ? "enabled" : "disabled"));
 				gui.updateSnapLabel();
 				break;
@@ -2769,7 +2735,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			case SNAP_ROTATION:
 				snapRotation = !snapRotation;
 				if (!fromGui)
-					key.setCheckbox(snapRotation);
+					gui.setShortcutCheckbox(key, snapRotation);
 				gui.post("Snap rotation " + (snapRotation ? "enabled" : "disabled"));
 				gui.updateSnapLabel();
 				break;
@@ -2777,7 +2743,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			case SNAP_SCALE:
 				snapScale = !snapScale;
 				if (!fromGui)
-					key.setCheckbox(snapScale);
+					gui.setShortcutCheckbox(key, snapScale);
 				gui.post("Snap scale " + (snapScale ? "enabled" : "disabled"));
 				gui.updateSnapLabel();
 				break;
@@ -2785,7 +2751,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			case SNAP_SCALE_GRID:
 				snapScaleToGrid = !snapScaleToGrid;
 				if (!fromGui)
-					key.setCheckbox(snapScaleToGrid);
+					gui.setShortcutCheckbox(key, snapScaleToGrid);
 				gui.post("Snap scale to grid " + (snapScaleToGrid ? "enabled" : "disabled"));
 				gui.updateSnapLabel();
 				break;
@@ -2793,7 +2759,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			case VERTEX_SNAP:
 				vertexSnap = !vertexSnap;
 				if (!fromGui)
-					key.setCheckbox(vertexSnap);
+					gui.setShortcutCheckbox(key, vertexSnap);
 				gui.post("Snap vertices " + (vertexSnap ? "enabled" : "disabled"));
 				gui.updateSnapLabel();
 				break;
@@ -2801,7 +2767,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			case VERTEX_SNAP_LIMIT:
 				vertexSnapLimit = !vertexSnapLimit;
 				if (!fromGui)
-					key.setCheckbox(vertexSnapLimit);
+					gui.setShortcutCheckbox(key, vertexSnapLimit);
 				gui.post("Snap vertices to " + (vertexSnapLimit ? "like objects" : "all objects"));
 				gui.updateSnapLabel();
 				break;
@@ -2809,81 +2775,94 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			case MOVE_MARKER_POINTS:
 				Marker.movePointsWithObject = !Marker.movePointsWithObject;
 				if (!fromGui)
-					key.setCheckbox(Marker.movePointsWithObject);
+					gui.setShortcutCheckbox(key, Marker.movePointsWithObject);
 				break;
 
 			case SHOW_MODELS: {
-				boolean shouldHide = fromGui ? !key.getCheckBox().isSelected() : showModels;
+				boolean shouldHide = fromGui ? !gui.getShortcutCheckbox(key).isSelected() : showModels;
 				commandManager.executeCommand(
-					new HideObjectTree("Models", map.modelTree, key.getCheckBox(), (b) -> showModels = b, shouldHide));
+					new HideObjectTree("Models", map.modelTree, gui.getShortcutCheckbox(key), (b) -> showModels = b, shouldHide));
 			}
 				break;
 
 			case SHOW_COLLIDERS: {
-				boolean shouldHide = fromGui ? !key.getCheckBox().isSelected() : showColliders;
+				boolean shouldHide = fromGui ? !gui.getShortcutCheckbox(key).isSelected() : showColliders;
 				commandManager.executeCommand(
-					new HideObjectTree("Colliders", map.colliderTree, key.getCheckBox(), (b) -> showColliders = b, shouldHide));
+					new HideObjectTree("Colliders", map.colliderTree, gui.getShortcutCheckbox(key), (b) -> showColliders = b, shouldHide));
 			}
 				break;
 
 			case SHOW_ZONES: {
-				boolean shouldHide = fromGui ? !key.getCheckBox().isSelected() : showZones;
+				boolean shouldHide = fromGui ? !gui.getShortcutCheckbox(key).isSelected() : showZones;
 				commandManager.executeCommand(
-					new HideObjectTree("Zones", map.zoneTree, key.getCheckBox(), (b) -> showZones = b, shouldHide));
+					new HideObjectTree("Zones", map.zoneTree, gui.getShortcutCheckbox(key), (b) -> showZones = b, shouldHide));
 			}
 				break;
 
 			case SHOW_MARKERS: {
-				boolean shouldHide = fromGui ? !key.getCheckBox().isSelected() : showMarkers;
+				boolean shouldHide = fromGui ? !gui.getShortcutCheckbox(key).isSelected() : showMarkers;
 				commandManager.executeCommand(
-					new HideObjectTree("Markers", map.markerTree, key.getCheckBox(), (b) -> showMarkers = b, shouldHide));
+					new HideObjectTree("Markers", map.markerTree, gui.getShortcutCheckbox(key), (b) -> showMarkers = b, shouldHide));
 			}
 				break;
 
 			case SHOW_ONLY_MODELS: {
 				CommandBatch batch = new CommandBatch("Show Only Models");
 				if (!showModels)
-					batch.addCommand(new HideObjectTree("Models", map.modelTree, SHOW_MODELS.getCheckBox(), (b) -> showModels = b, false));
+					batch.addCommand(new HideObjectTree("Models", map.modelTree, gui.getShortcutCheckbox(SHOW_MODELS), (b) -> showModels = b,
+						false));
 				batch.addCommand(
-					new HideObjectTree("Colliders", map.colliderTree, SHOW_COLLIDERS.getCheckBox(), (b) -> showColliders = b, true));
-				batch.addCommand(new HideObjectTree("Zones", map.zoneTree, SHOW_ZONES.getCheckBox(), (b) -> showZones = b, true));
-				batch.addCommand(new HideObjectTree("Markers", map.markerTree, SHOW_MARKERS.getCheckBox(), (b) -> showMarkers = b, true));
+					new HideObjectTree("Colliders", map.colliderTree, gui.getShortcutCheckbox(SHOW_COLLIDERS), (b) -> showColliders = b, true));
+				batch.addCommand(
+					new HideObjectTree("Zones", map.zoneTree, gui.getShortcutCheckbox(SHOW_ZONES), (b) -> showZones = b, true));
+				batch.addCommand(
+					new HideObjectTree("Markers", map.markerTree, gui.getShortcutCheckbox(SHOW_MARKERS), (b) -> showMarkers = b, true));
 				execute(batch);
 			}
 				break;
 
 			case SHOW_ONLY_COLLIDERS: {
 				CommandBatch batch = new CommandBatch("Show Only Colliders");
-				batch.addCommand(new HideObjectTree("Models", map.modelTree, SHOW_MODELS.getCheckBox(), (b) -> showModels = b, true));
+				batch.addCommand(
+					new HideObjectTree("Models", map.modelTree, gui.getShortcutCheckbox(SHOW_MODELS), (b) -> showModels = b, true));
 				if (!showColliders)
 					batch.addCommand(
-						new HideObjectTree("Colliders", map.colliderTree, SHOW_COLLIDERS.getCheckBox(), (b) -> showColliders = b, false));
-				batch.addCommand(new HideObjectTree("Zones", map.zoneTree, SHOW_ZONES.getCheckBox(), (b) -> showZones = b, true));
-				batch.addCommand(new HideObjectTree("Markers", map.markerTree, SHOW_MARKERS.getCheckBox(), (b) -> showMarkers = b, true));
+						new HideObjectTree("Colliders", map.colliderTree, gui.getShortcutCheckbox(SHOW_COLLIDERS), (b) -> showColliders = b,
+							false));
+				batch.addCommand(
+					new HideObjectTree("Zones", map.zoneTree, gui.getShortcutCheckbox(SHOW_ZONES), (b) -> showZones = b, true));
+				batch.addCommand(
+					new HideObjectTree("Markers", map.markerTree, gui.getShortcutCheckbox(SHOW_MARKERS), (b) -> showMarkers = b, true));
 				execute(batch);
 			}
 				break;
 
 			case SHOW_ONLY_ZONES: {
 				CommandBatch batch = new CommandBatch("Show Only Zones");
-				batch.addCommand(new HideObjectTree("Models", map.modelTree, SHOW_MODELS.getCheckBox(), (b) -> showModels = b, true));
 				batch.addCommand(
-					new HideObjectTree("Colliders", map.colliderTree, SHOW_COLLIDERS.getCheckBox(), (b) -> showColliders = b, true));
+					new HideObjectTree("Models", map.modelTree, gui.getShortcutCheckbox(SHOW_MODELS), (b) -> showModels = b, true));
+				batch.addCommand(
+					new HideObjectTree("Colliders", map.colliderTree, gui.getShortcutCheckbox(SHOW_COLLIDERS), (b) -> showColliders = b, true));
 				if (!showZones)
-					batch.addCommand(new HideObjectTree("Zones", map.zoneTree, SHOW_ZONES.getCheckBox(), (b) -> showZones = b, false));
-				batch.addCommand(new HideObjectTree("Markers", map.markerTree, SHOW_MARKERS.getCheckBox(), (b) -> showMarkers = b, true));
+					batch.addCommand(
+						new HideObjectTree("Zones", map.zoneTree, gui.getShortcutCheckbox(SHOW_ZONES), (b) -> showZones = b, false));
+				batch.addCommand(
+					new HideObjectTree("Markers", map.markerTree, gui.getShortcutCheckbox(SHOW_MARKERS), (b) -> showMarkers = b, true));
 				execute(batch);
 			}
 				break;
 
 			case SHOW_ONLY_MARKERS: {
 				CommandBatch batch = new CommandBatch("Show Only Markers");
-				batch.addCommand(new HideObjectTree("Models", map.modelTree, SHOW_MODELS.getCheckBox(), (b) -> showModels = b, true));
 				batch.addCommand(
-					new HideObjectTree("Colliders", map.colliderTree, SHOW_COLLIDERS.getCheckBox(), (b) -> showColliders = b, true));
-				batch.addCommand(new HideObjectTree("Zones", map.zoneTree, SHOW_ZONES.getCheckBox(), (b) -> showZones = b, true));
+					new HideObjectTree("Models", map.modelTree, gui.getShortcutCheckbox(SHOW_MODELS), (b) -> showModels = b, true));
+				batch.addCommand(
+					new HideObjectTree("Colliders", map.colliderTree, gui.getShortcutCheckbox(SHOW_COLLIDERS), (b) -> showColliders = b, true));
+				batch.addCommand(
+					new HideObjectTree("Zones", map.zoneTree, gui.getShortcutCheckbox(SHOW_ZONES), (b) -> showZones = b, true));
 				if (!showMarkers)
-					batch.addCommand(new HideObjectTree("Markers", map.markerTree, SHOW_MARKERS.getCheckBox(), (b) -> showMarkers = b, false));
+					batch.addCommand(
+						new HideObjectTree("Markers", map.markerTree, gui.getShortcutCheckbox(SHOW_MARKERS), (b) -> showMarkers = b, false));
 				execute(batch);
 			}
 				break;
@@ -2891,13 +2870,13 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			case SHOW_AABB:
 				showBoundingBoxes = !showBoundingBoxes;
 				if (!fromGui)
-					key.setCheckbox(showBoundingBoxes);
+					gui.setShortcutCheckbox(key, showBoundingBoxes);
 				break;
 
 			case SHOW_NORMALS:
 				showNormals = !showNormals;
 				if (!fromGui)
-					key.setCheckbox(showNormals);
+					gui.setShortcutCheckbox(key, showNormals);
 				break;
 
 			case SHOW_AXES:
@@ -2933,7 +2912,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			case USE_GEOMETRY_FLAGS:
 				useGeometryFlags = !useGeometryFlags;
 				if (!fromGui)
-					key.setCheckbox(useGeometryFlags);
+					gui.setShortcutCheckbox(key, useGeometryFlags);
 				break;
 
 			case USE_FILTERING:
@@ -3022,7 +3001,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 			case DEBUG_TOGGLE_LIGHT_SETS:
 				debugShowLightSets = !debugShowLightSets;
 				if (!fromGui)
-					key.setCheckbox(debugShowLightSets);
+					gui.setShortcutCheckbox(key, debugShowLightSets);
 				SwingUtilities.invokeLater(() -> {
 					gui.setLightSetsVisible(debugShowLightSets);
 				});
@@ -4722,6 +4701,12 @@ public class MapEditor extends GLEditor implements MouseManagerListener, Keyboar
 		showModeInViewport = editorConfig.getBoolean(Options.ShowCurrentMode);
 
 		gui.setScrollSensitivity(editorConfig.getInteger(Options.ScrollSensitivity));
+	}
+
+	public void saveKeyBindings()
+	{
+		MapKeyBindingsConfig.save(keyBindingsFile, keyConfig);
+		keyboard.reset();
 	}
 
 	public String getAuthor()

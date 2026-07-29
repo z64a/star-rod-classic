@@ -10,7 +10,6 @@ import java.awt.Canvas;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -44,7 +43,6 @@ import app.StarRodException;
 import app.SwingUtils;
 import common.BaseEditor;
 import common.BaseEditorSettings;
-import common.KeyboardInput.KeyInputEvent;
 import common.Vector3f;
 import game.battle.ActorTypesEditor;
 import game.battle.ActorTypesEditor.ActorType;
@@ -209,7 +207,8 @@ public class BattleEditor extends BaseEditor
 
 	public BattleEditor()
 	{
-		super(EDITOR_SETTINGS);
+		super(EDITOR_SETTINGS, new BattleKeyConfig());
+		registerKeyboardInputs(BattleInput.class, this::inputPressed);
 
 		camera = new BattleCamera();
 		camera.pitch = 8;
@@ -703,30 +702,12 @@ public class BattleEditor extends BaseEditor
 	private void handleInput(double deltaTime)
 	{
 		camera.handleInput(mouse.getFrameDW(), deltaTime, glCanvasWidth(), glCanvasHeight());
-		if (keyboard.isKeyDown(KeyEvent.VK_SPACE))
-			camera.resetPosition();
 	}
 
-	@Override
-	public void keyPress(KeyInputEvent key)
+	public void inputPressed(BattleInput input)
 	{
-		boolean ctrl = keyboard.isCtrlDown();
-		boolean shift = keyboard.isShiftDown();
-
-		if (key.code == KeyEvent.VK_CONTROL || key.code == KeyEvent.VK_SHIFT)
-			return;
-
-		if (ctrl && shift)
-			return;
-
-		/*
-		SwingUtilities.invokeLater(() -> {
-			handleKey(Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL),
-					Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU),
-					Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT),
-					KeyMapper.toAWT(key));
-		});
-		 */
+		if (input == BattleInput.RESET_CAMERA)
+			camera.resetPosition();
 	}
 
 	@Override

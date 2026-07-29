@@ -3,7 +3,6 @@ package game.map.editor;
 import static app.Directories.*;
 import static java.lang.Math.toRadians;
 
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -216,10 +215,10 @@ public class CursorObject extends EditorObject
 
 	private void getMovementInput(KeyboardInput keyboard, float camYaw, double deltaTime)
 	{
-		boolean moveForward = keyboard.isKeyDown(KeyEvent.VK_W);
-		boolean moveBackward = keyboard.isKeyDown(KeyEvent.VK_S);
-		boolean moveLeft = keyboard.isKeyDown(KeyEvent.VK_A);
-		boolean moveRight = keyboard.isKeyDown(KeyEvent.VK_D);
+		boolean moveForward = keyboard.isDown(MapInput.MOVE_FORWARD);
+		boolean moveBackward = keyboard.isDown(MapInput.MOVE_BACKWARD);
+		boolean moveLeft = keyboard.isDown(MapInput.MOVE_LEFT);
+		boolean moveRight = keyboard.isDown(MapInput.MOVE_RIGHT);
 
 		double dr = 0, df = 0;
 		if (moveForward)
@@ -585,7 +584,7 @@ public class CursorObject extends EditorObject
 		checkLateralCollision(candidates, deltaTime);
 
 		// hover
-		if (checkInput && keyboard.isKeyDown(EditorShortcut.PLAY_IN_EDITOR_HOVER.key)) {
+		if (checkInput && keyboard.isDown(MapInput.PLAY_IN_EDITOR_HOVER)) {
 			previewPos.y += (float) (120.0 * deltaTime);
 			setGravityParams(FALL);
 			fallState = FallState.Fall;

@@ -1,7 +1,6 @@
 package game.map.editor.camera;
 
-import java.awt.event.KeyEvent;
-
+import common.CameraInput;
 import common.KeyboardInput;
 import common.MouseInput;
 import common.MousePixelRead;
@@ -218,13 +217,13 @@ public class OrthographicCamera extends MapEditCamera
 
 		int pv = 0;
 		int ph = 0;
-		if (keyboard.isKeyDown(KeyEvent.VK_W))
+		if (keyboard.isDown(CameraInput.PAN_UP))
 			pv -= 1;
-		if (keyboard.isKeyDown(KeyEvent.VK_S))
+		if (keyboard.isDown(CameraInput.PAN_DOWN))
 			pv += 1;
-		if (keyboard.isKeyDown(KeyEvent.VK_A))
+		if (keyboard.isDown(CameraInput.PAN_LEFT))
 			ph -= 1;
-		if (keyboard.isKeyDown(KeyEvent.VK_D))
+		if (keyboard.isDown(CameraInput.PAN_RIGHT))
 			ph += 1;
 
 		float dv = zv;

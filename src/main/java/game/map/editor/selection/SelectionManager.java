@@ -858,7 +858,7 @@ public class SelectionManager
 
 	private PickHit pickObject(Map map, PickRay pickRay, MapEditViewport pickViewport, boolean modifySelection, boolean modelsOnly)
 	{
-		boolean additive = editor.keyboard.isCtrlDown();
+		boolean additive = editor.rawKeyboard.isCtrlDown();
 		if (!additive && pickViewport.type != ViewType.PERSPECTIVE) {
 			// pick from selection
 			PickHit hitSelection = Map.pickObjectFromSet(pickRay, objectSelection.selectableList);
@@ -898,7 +898,7 @@ public class SelectionManager
 
 			// click nothing
 		}
-		else if (!additive && !editor.keyboard.isShiftDown()) {
+		else if (!additive && !editor.rawKeyboard.isShiftDown()) {
 			removed.addAll(objectSelection.selectableList);
 		}
 
@@ -910,7 +910,7 @@ public class SelectionManager
 
 	private PickHit pickTriangle(Map map, PickRay pickRay, MapEditViewport pickViewport, boolean modifySelection, boolean modelsOnly)
 	{
-		boolean additive = editor.keyboard.isCtrlDown();
+		boolean additive = editor.rawKeyboard.isCtrlDown();
 		if (!additive && pickViewport.type != ViewType.PERSPECTIVE) {
 			// pick from selection
 			PickHit hitSelection = Map.pickTriangleFromList(pickRay, triangleSelection.selectableList);
@@ -950,7 +950,7 @@ public class SelectionManager
 				}
 			}
 		}
-		else if (!additive && !editor.keyboard.isShiftDown()) {
+		else if (!additive && !editor.rawKeyboard.isShiftDown()) {
 			removed.addAll(triangleSelection.selectableList);
 		}
 
@@ -962,7 +962,7 @@ public class SelectionManager
 
 	private PickHit pickVertex(Map map, PickRay pickRay, MapEditViewport pickViewport, boolean modifySelection, boolean modelsOnly)
 	{
-		boolean additive = editor.keyboard.isCtrlDown();
+		boolean additive = editor.rawKeyboard.isCtrlDown();
 		if (!additive && pickViewport.type != ViewType.PERSPECTIVE) {
 			// pick from selection
 			PickHit hitSelection = Map.pickVertexFromList(pickRay, vertexSelection.selectableList);
@@ -997,7 +997,7 @@ public class SelectionManager
 				}
 			}
 		}
-		else if (!additive && !editor.keyboard.isShiftDown()) {
+		else if (!additive && !editor.rawKeyboard.isShiftDown()) {
 			removed.addAll(vertexSelection.selectableList);
 		}
 
@@ -1013,7 +1013,7 @@ public class SelectionManager
 		if (!hitHandle.missed())
 			return hitHandle;
 
-		boolean additive = editor.keyboard.isCtrlDown();
+		boolean additive = editor.rawKeyboard.isCtrlDown();
 		if (!additive && pickViewport.type != ViewType.PERSPECTIVE) {
 			// pick from selection
 			PickHit hitSelection = Map.pickUVFromList(pickRay, uvSelection.selectableList);
@@ -1049,7 +1049,7 @@ public class SelectionManager
 				}
 			}
 		}
-		else if (!additive && !editor.keyboard.isShiftDown()) {
+		else if (!additive && !editor.rawKeyboard.isShiftDown()) {
 			removed.addAll(uvSelection.selectableList);
 		}
 
@@ -1076,7 +1076,7 @@ public class SelectionManager
 		if (!hitHandle.missed())
 			return hitHandle;
 
-		boolean additive = editor.keyboard.isCtrlDown();
+		boolean additive = editor.rawKeyboard.isCtrlDown();
 		if (!additive && pickViewport.type != ViewType.PERSPECTIVE) {
 			// pick from selection
 			PickHit hitSelection = pickPointFromList(pickRay, pointSelection.selectableList);

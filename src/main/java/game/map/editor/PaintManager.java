@@ -69,7 +69,7 @@ public class PaintManager
 
 	public static void update(MapEditor editor, double deltaTime)
 	{
-		if (editor.keyboard.isAltDown()) {
+		if (editor.rawKeyboard.isAltDown()) {
 			int[] out_hsl = new int[3];
 			out_hsl[0] = (int) (hmax * (editor.getFrame() % 60) / 60.0);
 			out_hsl[1] = smax;

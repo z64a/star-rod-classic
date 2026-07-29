@@ -5,7 +5,6 @@ import static org.lwjgl.opengl.GL13.GL_CLAMP_TO_BORDER;
 
 import java.awt.Canvas;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -18,7 +17,6 @@ import javax.swing.JPanel;
 import app.Environment;
 import common.BaseEditor;
 import common.BaseEditorSettings;
-import common.KeyboardInput.KeyInputEvent;
 import game.fold.FoldAnimations.FoldAnim;
 import game.fold.FoldAnimations.FoldTriangle;
 import game.fold.FoldAnimations.FoldVertex;
@@ -93,7 +91,8 @@ public class FoldEditor extends BaseEditor
 
 	public FoldEditor()
 	{
-		super(EDITOR_SETTINGS);
+		super(EDITOR_SETTINGS, new FoldKeyConfig());
+		registerKeyboardInputs(FoldInput.class, this::inputPressed);
 
 		camera = new FoldCamera(
 			0.0f, 1000.0f, 0.3f,
@@ -312,45 +311,29 @@ public class FoldEditor extends BaseEditor
 
 	private void handleInput(double deltaTime)
 	{
-		camera.handleInput(keyboard, mouse, deltaTime, glCanvasWidth(), glCanvasHeight());
-		if (keyboard.isKeyDown(KeyEvent.VK_SPACE))
-			camera.resetPosition();
+		camera.handleInput(mouse, keyboard, deltaTime, glCanvasWidth(), glCanvasHeight());
 	}
 
-	@Override
-	public void keyPress(KeyInputEvent key)
+	public void inputPressed(FoldInput input)
 	{
-		boolean ctrl = keyboard.isCtrlDown();
-		boolean shift = keyboard.isShiftDown();
-
-		if (key.code == KeyEvent.VK_CONTROL || key.code == KeyEvent.VK_SHIFT)
-			return;
-
-		if (ctrl && shift)
-			return;
-
-		if (key.code == KeyEvent.VK_UP) {
-			currentAnimID--;
-			if (currentAnimID < 0)
-				currentAnimID = 0;
-			System.out.println(currentAnimID);
+		switch (input) {
+			case RESET_CAMERA:
+				camera.resetPosition();
+				break;
+			case PREVIOUS_ANIMATION:
+				currentAnimID--;
+				if (currentAnimID < 0)
+					currentAnimID = 0;
+				System.out.println(currentAnimID);
+				break;
+			case NEXT_ANIMATION:
+				currentAnimID++;
+				if (currentAnimID >= foldAnims.size())
+					currentAnimID = foldAnims.size() - 1;
+				System.out.println(currentAnimID);
+				break;
+			default:
 		}
-
-		if (key.code == KeyEvent.VK_DOWN) {
-			currentAnimID++;
-			if (currentAnimID >= foldAnims.size())
-				currentAnimID = foldAnims.size() - 1;
-			System.out.println(currentAnimID);
-		}
-
-		/*
-		SwingUtilities.invokeLater(() -> {
-			handleKey(Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL),
-					Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU),
-					Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT),
-					KeyMapper.toAWT(key));
-		});
-		 */
 	}
 
 	@Override

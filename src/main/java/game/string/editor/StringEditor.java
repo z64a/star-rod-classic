@@ -73,6 +73,7 @@ import app.config.Options;
 import app.config.Options.Scope;
 import common.BaseEditor;
 import common.BaseEditorSettings;
+import common.CameraInput;
 import game.map.editor.ui.dialogs.ChooseDialogResult;
 import game.map.editor.ui.dialogs.OpenFileChooser;
 import game.shared.ProjectDatabase;
@@ -201,7 +202,8 @@ public class StringEditor extends BaseEditor
 
 	public StringEditor()
 	{
-		super(EDITOR_SETTINGS);
+		super(EDITOR_SETTINGS, new StringKeyConfig());
+		registerKeyboardInputs(StringInput.class, this::inputPressed);
 
 		Config cfg = getConfig();
 		if (cfg != null) {
@@ -380,13 +382,13 @@ public class StringEditor extends BaseEditor
 		float vv = 0;
 
 		// scrolling
-		if (keyboard.isKeyDown(KeyEvent.VK_UP))
+		if (keyboard.isDown(CameraInput.PAN_UP))
 			vv -= PAN_SPEED * deltaTime * cameraZoom;
-		if (keyboard.isKeyDown(KeyEvent.VK_DOWN))
+		if (keyboard.isDown(CameraInput.PAN_DOWN))
 			vv += PAN_SPEED * deltaTime * cameraZoom;
-		if (keyboard.isKeyDown(KeyEvent.VK_LEFT))
+		if (keyboard.isDown(CameraInput.PAN_LEFT))
 			vh -= PAN_SPEED * deltaTime * cameraZoom;
-		if (keyboard.isKeyDown(KeyEvent.VK_RIGHT))
+		if (keyboard.isDown(CameraInput.PAN_RIGHT))
 			vh += PAN_SPEED * deltaTime * cameraZoom;
 
 		cameraX += vh;
@@ -404,11 +406,24 @@ public class StringEditor extends BaseEditor
 			cameraY = -maxH;
 
 		// reset camera
-		if (keyboard.isKeyDown(KeyEvent.VK_SPACE)) {
+		if (keyboard.isDown(StringInput.RESET_CAMERA)) {
 			cameraX = DEFAULT_CAMERA_X;
 			cameraY = printer.windowBasePosY + (printer.windowSizeY / 2);
 			cameraZoom = DEFAULT_CAMERA_ZOOM;
 			cameraYaw = 0.0f;
+		}
+	}
+
+	public void inputPressed(StringInput input)
+	{
+		switch (input) {
+			case UNDO:
+				SwingUtilities.invokeLater(() -> undoEDT());
+				break;
+			case REDO:
+				SwingUtilities.invokeLater(() -> redoEDT());
+				break;
+			default:
 		}
 	}
 

@@ -2,7 +2,6 @@ package common;
 
 import static org.lwjgl.opengl.GL11.*;
 
-import java.awt.event.KeyEvent;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
@@ -100,13 +99,13 @@ public final class BasicCamera extends BaseCamera
 
 		int pv = 0;
 		int ph = 0;
-		if (keyboard.isKeyDown(KeyEvent.VK_W))
+		if (keyboard.isDown(CameraInput.PAN_UP))
 			pv -= 1;
-		if (keyboard.isKeyDown(KeyEvent.VK_S))
+		if (keyboard.isDown(CameraInput.PAN_DOWN))
 			pv += 1;
-		if (keyboard.isKeyDown(KeyEvent.VK_A))
+		if (keyboard.isDown(CameraInput.PAN_LEFT))
 			ph -= 1;
-		if (keyboard.isKeyDown(KeyEvent.VK_D))
+		if (keyboard.isDown(CameraInput.PAN_RIGHT))
 			ph += 1;
 
 		float dv = zv;

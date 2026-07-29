@@ -1,9 +1,7 @@
 package game.map.editor.camera;
 
-import java.awt.event.KeyEvent;
-
-import common.KeyboardInput;
 import common.MouseInput;
+import common.KeyboardInput;
 import game.map.BoundingBox;
 import game.map.editor.MapEditor;
 import game.map.marker.Marker;
@@ -45,7 +43,7 @@ public class PerspTargetCamera extends PerspBaseCamera
 	public void handleMovementInput(MouseInput mouse, KeyboardInput keyboard, float deltaTime)
 	{
 		// if we start moving, exit this camera mode
-		if (keyboard.isKeyDown(KeyEvent.VK_SHIFT)) {
+		if (keyboard.isShiftDown()) {
 			MapEditor.instance().clearTargetCamera();
 		}
 	}

@@ -1,6 +1,5 @@
 package game.map.editor;
 
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -215,10 +214,10 @@ public class DrawTrianglesManager
 	public void tick(MapEditViewport activeView)
 	{
 		if (editor.getEditorMode() == EditorMode.Modify) {
-			boolean trisModeKey = editor.keyboard.isKeyDown(KeyEvent.VK_COMMA);
-			boolean edgeModeKey = editor.keyboard.isKeyDown(KeyEvent.VK_SLASH);
-			boolean polyModeKey = editor.keyboard.isKeyDown(KeyEvent.VK_PERIOD);
-			boolean cutModeKey = editor.keyboard.isKeyDown(KeyEvent.VK_BACK_QUOTE);
+			boolean trisModeKey = editor.keyboard.isDown(MapInput.DRAW_CONVEX);
+			boolean edgeModeKey = editor.keyboard.isDown(MapInput.DRAW_WALLS);
+			boolean polyModeKey = editor.keyboard.isDown(MapInput.DRAW_CONCAVE);
+			boolean cutModeKey = editor.keyboard.isDown(MapInput.CUT_GEOMETRY);
 
 			switch (drawMode) {
 				case Inactive: {
