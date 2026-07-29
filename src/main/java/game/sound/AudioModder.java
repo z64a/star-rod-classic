@@ -22,6 +22,7 @@ import app.input.IOUtils;
 import app.input.InputFileException;
 import game.shared.ProjectDatabase;
 import game.shared.ProjectDatabase.ConstEnum;
+import game.sound.sfx.SfxFormatException;
 import patcher.Patcher;
 import patcher.RomPatcher;
 import util.Logger;
@@ -41,6 +42,8 @@ public class AudioModder
 
 	private static final int TABLE_BASE = 0xF00000;
 	private static final int AUDIO_DATA_END = 0x1942C40;
+	private static final String FN_SFX_BINARY = "DAT1.sef";
+	private static final String FN_SFX_ARCHIVE = "archive.xml";
 
 	private static class FileEntry
 	{
@@ -320,6 +323,16 @@ public class AudioModder
 
 		int initOffset = dumpSBN(raf, dumpedFilenames);
 		dumpINIT(raf, initOffset, dumpedFilenames);
+
+		File sfxBinary = DUMP_AUDIO_RAW.getFile(FN_SFX_BINARY);
+		if (sfxBinary.exists()) {
+			SfxModder.DumpSummary summary = SfxModder.dump(
+				sfxBinary.toPath(), DUMP_AUDIO_SFX.toFile().toPath());
+			Logger.logf("Dumped %d DAT1 sound rows to %d editable SFX files.",
+				summary.sounds(), summary.effectFiles());
+			for (String warning : summary.warnings())
+				Logger.logWarning(warning);
+		}
 
 		BankModder.dumpAll();
 		InstrumentsModder.dump();
@@ -674,6 +687,20 @@ public class AudioModder
 		List<FileEntry> fileList;
 		List<SongEntry> songList;
 		List<BankEntry> bankList;
+
+		File sfxArchive = MOD_AUDIO_SFX.getFile(FN_SFX_ARCHIVE);
+		if (sfxArchive.exists()) {
+			File output = MOD_AUDIO_BUILD.getFile(FN_SFX_BINARY);
+			try {
+				SfxModder.BuildSummary summary = SfxModder.build(sfxArchive.toPath(), output.toPath());
+				Logger.logf("Built SFX archive: %X / %X bytes.", summary.size(), summary.maxSize());
+				for (String warning : summary.warnings())
+					Logger.logWarning(warning);
+			}
+			catch (SfxFormatException e) {
+				throw new InputFileException(sfxArchive, e);
+			}
+		}
 
 		fileList = readFileListXML(MOD_AUDIO.getFile(FN_AUDIO_FILES), sbnLookup);
 		songList = readSongListXML(MOD_AUDIO.getFile(FN_AUDIO_SONGS), sbnLookup);

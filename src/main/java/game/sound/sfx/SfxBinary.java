@@ -1,0 +1,2048 @@
+package game.sound.sfx;
+
+import static game.sound.sfx.SfxArchive.Allocation.DYNAMIC;
+import static game.sound.sfx.SfxArchive.Allocation.FIXED;
+
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.HexFormat;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.Set;
+import java.util.TreeMap;
+
+import game.sound.sfx.SfxArchive.Allocation;
+import game.sound.sfx.SfxArchive.Command;
+import game.sound.sfx.SfxArchive.Definition;
+import game.sound.sfx.SfxArchive.Empty;
+import game.sound.sfx.SfxArchive.Envelope;
+import game.sound.sfx.SfxArchive.EnvelopeCommand;
+import game.sound.sfx.SfxArchive.EnvelopeOp;
+import game.sound.sfx.SfxArchive.Label;
+import game.sound.sfx.SfxArchive.Node;
+import game.sound.sfx.SfxArchive.OneShot;
+import game.sound.sfx.SfxArchive.Op;
+import game.sound.sfx.SfxArchive.Routing;
+import game.sound.sfx.SfxArchive.Sequence;
+import game.sound.sfx.SfxArchive.Sound;
+import game.sound.sfx.SfxArchive.SpawnedEffect;
+import game.sound.sfx.SfxArchive.Track;
+
+/** Decoder and canonical linker for the DAT1 SEF format. */
+public final class SfxBinary
+{
+	private static final int HEADER_SIZE = 0x22;
+	private static final int LOW_SECTION_SIZE = 0x300;
+	private static final int HIGH_SECTION_SIZE = 0x100;
+	private static final int EXTRA_SECTION_SIZE = 0x500;
+	private static final int ROUTING_KNOWN_MASK = 0x1BE7;
+
+	private SfxBinary()
+	{}
+
+	public record DecodeResult(SfxArchive archive, List<String> warnings)
+	{}
+
+	public static DecodeResult decode(byte[] input, SfxNames names)
+	{
+		return new Decoder(input, names).decode();
+	}
+
+	public static byte[] encode(SfxArchive archive)
+	{
+		return new Encoder(archive).encode();
+	}
+
+	public static boolean isCompactRepresentable(OneShot oneShot)
+	{
+		return oneShot.pan == 64
+			&& oneShot.reverb == 0
+			&& oneShot.pitch == 48
+			&& oneShot.volume >= 3
+			&& oneShot.volume <= 127
+			&& (oneShot.volume & 3) == 3
+			&& oneShot.randomPitch >= 0
+			&& oneShot.randomPitch <= 56
+			&& (oneShot.randomPitch & 7) == 0;
+	}
+
+	private static final class Decoder
+	{
+		private final byte[] data;
+		private final SfxNames names;
+		private final SfxArchive archive = new SfxArchive();
+		private final List<String> warnings = new ArrayList<>();
+		private final int[] sections = new int[8];
+		private int extraSection;
+		private final Map<Integer, Envelope> envelopesByOffset = new HashMap<>();
+		private final Map<String, Envelope> envelopesByContent = new LinkedHashMap<>();
+
+		private Decoder(byte[] input, SfxNames names)
+		{
+			if (input.length < HEADER_SIZE)
+				throw new SfxFormatException("SEF is shorter than its 0x22-byte header");
+			if (!"SEF ".equals(new String(input, 0, 4, StandardCharsets.US_ASCII)))
+				throw new SfxFormatException("Expected SEF signature");
+
+			int declaredSize = readU32(input, 4);
+			if (declaredSize < HEADER_SIZE || declaredSize > input.length)
+				throw new SfxFormatException(String.format(
+					"Invalid declared SEF size 0x%X for a 0x%X-byte input", declaredSize, input.length));
+			this.data = Arrays.copyOf(input, declaredSize);
+			this.names = Objects.requireNonNull(names);
+		}
+
+		private DecodeResult decode()
+		{
+			archive.name = new String(data, 8, 4, StandardCharsets.US_ASCII).trim();
+			if (archive.name.isEmpty())
+				archive.name = "DAT1";
+
+			for (int i = 0; i < sections.length; i++)
+				sections[i] = u16(0x10 + i * 2);
+			extraSection = u16(0x20);
+
+			for (int i = 0; i < 4; i++)
+				checkRange(sections[i], LOW_SECTION_SIZE, "low sound table " + i);
+			for (int i = 4; i < 8; i++)
+				checkRange(sections[i], HIGH_SECTION_SIZE, "direct sound table " + i);
+			boolean hasExtraSection = (data[0x0E] & 0xFF) == 1;
+			if (hasExtraSection) {
+				if (extraSection == 0)
+					throw new SfxFormatException("SEF declares an extra section but its offset is zero");
+				checkRange(extraSection, EXTRA_SECTION_SIZE, "extra sound table");
+			}
+
+			for (int section = 0; section < 4; section++)
+				decodeLowSection(section);
+			for (int section = 4; section < 8; section++)
+				decodeDirectSection(section);
+			if (hasExtraSection)
+				decodeExtraSection();
+
+			// Retain intentional named empties, but not generated unused/invalid slots.
+			for (Map.Entry<Integer, List<String>> entry : names.entries()) {
+				if (!archive.sounds.containsKey(entry.getKey()) && names.shouldMaterializeEmpty(entry.getKey()))
+					archive.sounds.put(entry.getKey(), makeSound(entry.getKey()));
+			}
+
+			for (Sound sound : archive.sounds.values()) {
+				if (!sound.isEmpty() && !sound.canInlineOneShot())
+					sound.source = String.format("effects/%04X_%s.xml", sound.id, sound.name);
+			}
+
+			return new DecodeResult(archive, List.copyOf(warnings));
+		}
+
+		private void decodeLowSection(int section)
+		{
+			int base = sections[section];
+			for (int index = 0; index < 0xC0; index++) {
+				int id = (section << 8) + index + 1;
+				int entry = base + index * 4;
+				int root = u16(entry);
+				int info = u16(entry + 2);
+				if (root == 0) {
+					if (names.shouldMaterializeEmpty(id))
+						archive.sounds.put(id, makeSound(id));
+					continue;
+				}
+
+				Sound sound = makeSound(id);
+				int polyMode = (info >>> 5) & 3;
+				int trackCount = polyMode == 0 ? 1 : 2 << (polyMode - 1);
+				sound.routing = decodeRouting(info, trackCount, String.format("sound %04X", id));
+				DecodeContext context = new DecodeContext(sound);
+				boolean malformed = false;
+
+				try {
+					if (trackCount == 1) {
+						sound.tracks.add(new Track(0, decodeDefinition(root, context)));
+					}
+					else {
+						checkRange(root, trackCount * 4, String.format("sound %04X polyphony table", id));
+						for (int slot = 0; slot < trackCount; slot++) {
+							int trackRoot = u16(root + slot * 4);
+							int trackInfo = u16(root + slot * 4 + 2);
+							Track track = new Track(slot,
+								trackRoot == 0 ? Empty.INSTANCE : decodeDefinition(trackRoot, context));
+							if (sound.routing.allocation == FIXED && trackRoot != 0) {
+								track.player = trackInfo & 7;
+								track.priority = (trackInfo >>> 8) & 3;
+							}
+							sound.tracks.add(track);
+						}
+					}
+				}
+				catch (SfxFormatException e) {
+					malformed = true;
+					warnings.add(String.format("Sound %04X was made empty: %s", id, e.getMessage()));
+				}
+
+				// Retail 00B5 contains an out-of-range track root and can crash the game.
+				if (malformed) {
+					sound.tracks.clear();
+					sound.spawnedEffects.clear();
+					sound.routing = null;
+					if (!names.shouldMaterializeEmpty(id))
+						continue;
+				}
+				archive.sounds.put(id, sound);
+			}
+		}
+
+		private void decodeDirectSection(int section)
+		{
+			int base = sections[section];
+			for (int index = 0; index < 0x40; index++) {
+				int id = ((section - 4) << 8) + 0xC1 + index;
+				decodeDirectSlot(id, base + index * 4);
+			}
+		}
+
+		private void decodeExtraSection()
+		{
+			for (int index = 0; index < 0x140; index++)
+				decodeDirectSlot(0x2001 + index, extraSection + index * 4);
+		}
+
+		private void decodeDirectSlot(int id, int offset)
+		{
+			// This is the same presence test used by the player.  Bytes 2-3 are
+			// ignored when the first halfword is zero.
+			boolean populated = u16(offset) != 0;
+
+			if (!populated) {
+				if (names.shouldMaterializeEmpty(id))
+					archive.sounds.put(id, makeSound(id));
+				return;
+			}
+
+			Sound sound = makeSound(id);
+			DecodeContext context = new DecodeContext(sound);
+			Definition definition = decodeDefinition(offset, context);
+			if (!(definition instanceof OneShot))
+				warnings.add(String.format(
+					"Direct sound %04X uses a non-COMPACT stream; rebuilding currently rejects it", id));
+			sound.tracks.add(new Track(0, definition));
+			archive.sounds.put(id, sound);
+		}
+
+		private Sound makeSound(int id)
+		{
+			List<String> idNames = names.get(id);
+			Sound sound;
+			if (idNames.isEmpty()) {
+				sound = new Sound(id, SfxNames.placeholder(id));
+				sound.generatedName = true;
+			}
+			else {
+				sound = new Sound(id, idNames.get(0));
+				sound.aliases.addAll(idNames.subList(1, idNames.size()));
+				sound.generatedName = names.hasGeneratedName(id);
+			}
+			return sound;
+		}
+
+		private Routing decodeRouting(int info, int trackCount, String owner)
+		{
+			Allocation allocation = (info & 0x80) != 0 ? DYNAMIC : FIXED;
+			Routing routing = new Routing(allocation);
+			routing.maxPlayer = trackCount > 1 ? 7 : info & 7;
+			routing.player = info & 7;
+			routing.priority = (info >>> 8) & 3;
+			routing.exclusiveGroup = (info >>> 11) & 3;
+			int unknown = info & ~ROUTING_KNOWN_MASK;
+			if (unknown != 0)
+				warnings.add(String.format("%s drops ignored routing bits %04X", owner, unknown));
+			return routing;
+		}
+
+		private Definition decodeDefinition(int offset, DecodeContext context)
+		{
+			checkRange(offset, 1, "sound stream");
+			int flags = u8(offset);
+			int mode = flags & 3;
+			if ((flags & 0xC0) != 0)
+				warnings.add(String.format("Stream at %04X drops unknown flags %02X", offset, flags & 0xC0));
+
+			switch (mode) {
+				case 0:
+					return decodeBasic(offset);
+				case 1:
+					return decodeSequence(offset, context);
+				case 2:
+					return decodeCompact(offset);
+				default:
+					throw new SfxFormatException(String.format("Invalid stream mode at 0x%04X", offset));
+			}
+		}
+
+		private OneShot decodeBasic(int offset)
+		{
+			checkRange(offset, 8, "BASIC stream");
+			OneShot oneShot = new OneShot();
+			applyLocks(oneShot, u8(offset));
+			oneShot.bank = u8(offset + 1);
+			oneShot.patch = u8(offset + 2);
+			oneShot.volume = u8(offset + 3);
+			oneShot.pan = u8(offset + 4);
+			oneShot.reverb = u8(offset + 5);
+			oneShot.pitch = u8(offset + 6) & 0x7F;
+			oneShot.randomPitch = (u8(offset + 7) & 0xF) * 8;
+			return oneShot;
+		}
+
+		private OneShot decodeCompact(int offset)
+		{
+			checkRange(offset, 4, "COMPACT stream");
+			OneShot oneShot = new OneShot();
+			applyLocks(oneShot, u8(offset));
+			oneShot.bank = u8(offset + 1);
+			oneShot.patch = u8(offset + 2);
+			int packed = u8(offset + 3);
+			oneShot.volume = (packed >>> 1) | 3;
+			oneShot.pan = 64;
+			oneShot.reverb = 0;
+			oneShot.pitch = 48;
+			oneShot.randomPitch = (packed & 7) * 8;
+			return oneShot;
+		}
+
+		private void applyLocks(OneShot oneShot, int flags)
+		{
+			oneShot.lockVolume = (flags & 0x04) != 0;
+			oneShot.lockPan = (flags & 0x08) != 0;
+			oneShot.lockPitch = (flags & 0x10) != 0;
+			oneShot.lockReverb = (flags & 0x20) != 0;
+		}
+
+		private Sequence decodeSequence(int root, DecodeContext context)
+		{
+			Sequence sequence = new Sequence();
+			int flags = u8(root);
+			sequence.lockVolume = (flags & 0x04) != 0;
+			sequence.lockPan = (flags & 0x08) != 0;
+			sequence.lockPitch = (flags & 0x10) != 0;
+			sequence.lockReverb = (flags & 0x20) != 0;
+
+			TreeMap<Integer, WireCommand> commands = walkSequence(root + 1);
+			if (!commands.containsKey(root + 1))
+				throw new SfxFormatException(String.format("Sequence at 0x%04X has no entry command", root));
+
+			List<WireRegion> physicalRegions = makePhysicalRegions(commands);
+			Map<Integer, WireRegion> regionAt = new HashMap<>();
+			for (WireRegion region : physicalRegions)
+				for (WireCommand command : region.commands)
+					regionAt.put(command.offset, region);
+
+			WireRegion entryRegion = regionAt.get(root + 1);
+			List<WireRegion> orderedRegions = new ArrayList<>();
+			Set<WireRegion> seen = new LinkedHashSet<>();
+			Queue<WireRegion> pending = new ArrayDeque<>();
+			pending.add(entryRegion);
+			while (!pending.isEmpty()) {
+				WireRegion region = pending.remove();
+				if (!seen.add(region))
+					continue;
+				orderedRegions.add(region);
+				for (WireCommand command : region.commands) {
+					if (command.op == Op.JUMP
+						|| (command.op == Op.SET_ALTERNATIVE && command.alternativeCanTrigger)) {
+						WireRegion target = regionAt.get(command.target);
+						if (target == null)
+							throw new SfxFormatException(String.format(
+								"Sequence target 0x%04X is not a decoded command boundary", command.target));
+						pending.add(target);
+					}
+				}
+			}
+			for (WireRegion region : physicalRegions) {
+				if (seen.add(region))
+					orderedRegions.add(region);
+			}
+
+			Map<Integer, String> labels = new LinkedHashMap<>();
+			labels.put(root + 1, "main");
+			int nextLabel = 1;
+			for (WireRegion region : orderedRegions) {
+				for (WireCommand command : region.commands) {
+					if (command.op == Op.JUMP
+						|| (command.op == Op.SET_ALTERNATIVE && command.alternativeCanTrigger)) {
+						if (!labels.containsKey(command.target))
+							labels.put(command.target, "label" + nextLabel++);
+					}
+				}
+			}
+			for (WireRegion region : orderedRegions) {
+				int start = region.commands.get(0).offset;
+				if (!labels.containsKey(start))
+					labels.put(start, "label" + nextLabel++);
+			}
+
+			for (WireRegion region : orderedRegions) {
+				for (WireCommand wire : region.commands) {
+					String label = labels.get(wire.offset);
+					if (label != null)
+						sequence.nodes.add(new Label(label));
+					sequence.nodes.add(toModelCommand(wire, labels, context));
+				}
+			}
+			return sequence;
+		}
+
+		private TreeMap<Integer, WireCommand> walkSequence(int entry)
+		{
+			TreeMap<Integer, WireCommand> commands = new TreeMap<>();
+			Deque<ExecutionState> pending = new ArrayDeque<>();
+			Set<ExecutionState> visited = new HashSet<>();
+			pending.add(new ExecutionState(entry, -1, -1, 0, -1, -1));
+
+			while (!pending.isEmpty()) {
+				ExecutionState initial = pending.remove();
+				int pc = initial.pc;
+				int saved = initial.saved;
+				int loopStart = initial.loopStart;
+				int loopCount = initial.loopCount;
+				int alternative = initial.alternative;
+				int alternativeSource = initial.alternativeSource;
+
+				while (true) {
+					ExecutionState state = new ExecutionState(
+						pc, saved, loopStart, loopCount, alternative, alternativeSource);
+					if (!visited.add(state))
+						break;
+					if (visited.size() > 200_000)
+						throw new SfxFormatException("Sequence control flow exceeds 200,000 states");
+
+					WireCommand command = decodeWireCommand(pc);
+					addWireCommand(commands, command);
+
+					int next = pc + command.size;
+					if (command.op == Op.END)
+						break;
+					if (command.op == Op.JUMP) {
+						saved = next;
+						pc = command.target;
+						continue;
+					}
+					if (command.op == Op.RESTART) {
+						if (saved < 0) {
+							warnings.add(String.format("Top-level Restart at 0x%04X", pc));
+							break;
+						}
+						pc = saved;
+						continue;
+					}
+					if (command.op == Op.START_LOOP) {
+						loopStart = next;
+						loopCount = command.a;
+						pc = next;
+						continue;
+					}
+					if (command.op == Op.END_LOOP) {
+						if (loopStart < 0) {
+							warnings.add(String.format("EndLoop without StartLoop at 0x%04X", pc));
+							break;
+						}
+						if (loopCount == 0) {
+							pc = loopStart;
+						}
+						else {
+							loopCount--;
+							pc = loopCount == 0 ? next : loopStart;
+						}
+						continue;
+					}
+					if (command.op == Op.SET_ALTERNATIVE) {
+						// The player only consults alternativeDataPos at the start of an
+						// update.  A second SetAlternative before the sequence yields
+						// therefore replaces the first one without ever branching to it.
+						if (command.a >= 1 && command.a <= 3) {
+							alternative = command.target;
+							alternativeSource = command.offset;
+						}
+						else {
+							alternative = -1;
+							alternativeSource = -1;
+						}
+					}
+					if (alternative >= 0 && isSequenceYield(command.op)) {
+						// Taking the alternative clears alternativeDataPos, but leaves the
+						// Jump return position and loop state untouched.  Those values must
+						// be captured here, at the branch target, rather than where EE was read.
+						WireCommand setter = commands.get(alternativeSource);
+						if (setter != null)
+							setter.alternativeCanTrigger = true;
+						pending.add(new ExecutionState(alternative, saved, loopStart, loopCount, -1, -1));
+					}
+					pc = next;
+				}
+			}
+			return commands;
+		}
+
+		private void addWireCommand(TreeMap<Integer, WireCommand> commands, WireCommand command)
+		{
+			Map.Entry<Integer, WireCommand> floor = commands.floorEntry(command.offset);
+			if (floor != null) {
+				WireCommand previous = floor.getValue();
+				if (previous.offset == command.offset) {
+					if (previous.size != command.size || previous.op != command.op)
+						throw new SfxFormatException(String.format(
+							"Conflicting command boundary at 0x%04X", command.offset));
+					return;
+				}
+				if (previous.offset + previous.size > command.offset)
+					throw new SfxFormatException(String.format(
+						"Command at 0x%04X begins inside command at 0x%04X..0x%04X",
+						command.offset, previous.offset, previous.offset + previous.size));
+			}
+
+			Map.Entry<Integer, WireCommand> ceiling = commands.ceilingEntry(command.offset);
+			if (ceiling != null && ceiling.getKey() < command.offset + command.size)
+				throw new SfxFormatException(String.format(
+					"Command at 0x%04X..0x%04X overlaps command boundary at 0x%04X",
+					command.offset, command.offset + command.size, ceiling.getKey()));
+			commands.put(command.offset, command);
+		}
+
+		private boolean isSequenceYield(Op op)
+		{
+			return op == Op.DELAY || op == Op.WAIT_FOR_END || op == Op.WAIT_FOR_RELEASE;
+		}
+
+		private List<WireRegion> makePhysicalRegions(TreeMap<Integer, WireCommand> commands)
+		{
+			List<WireRegion> regions = new ArrayList<>();
+			WireRegion current = null;
+			WireCommand previous = null;
+			for (WireCommand command : commands.values()) {
+				boolean connected = previous != null
+					&& previous.offset + previous.size == command.offset
+					&& previous.op != Op.END
+					&& previous.op != Op.RESTART;
+				if (!connected) {
+					current = new WireRegion();
+					regions.add(current);
+				}
+				current.commands.add(command);
+				previous = command;
+			}
+			return regions;
+		}
+
+		private WireCommand decodeWireCommand(int pc)
+		{
+			checkRange(pc, 1, "sequence command");
+			int opcode = u8(pc);
+			if (opcode == 0)
+				return new WireCommand(pc, 1, Op.END);
+			if (opcode < 0x78)
+				return new WireCommand(pc, 1, Op.DELAY, opcode, 0, 0);
+			if (opcode < 0x80) {
+				checkRange(pc, 2, "long Delay");
+				int ticks = (opcode & 7) * 256 + u8(pc + 1) + 0x78;
+				return new WireCommand(pc, 2, Op.DELAY, ticks, 0, 0);
+			}
+			if (opcode < 0xD8) {
+				checkRange(pc, 3, "Play");
+				int lengthByte = u8(pc + 2);
+				int size = lengthByte >= 0xC0 ? 4 : 3;
+				checkRange(pc, size, "Play");
+				int length = lengthByte < 0xC0
+					? lengthByte
+					: ((lengthByte & 0x3F) << 8) + 0xC0 + u8(pc + 3);
+				return new WireCommand(pc, size, Op.PLAY, opcode & 0x7F, u8(pc + 1) & 0x7F, length);
+			}
+			if (opcode < 0xE0 || opcode > 0xF8)
+				throw new SfxFormatException(String.format("Invalid sequence opcode %02X at 0x%04X", opcode, pc));
+
+			switch (opcode) {
+				case 0xE0:
+					return wire1(pc, Op.SET_VOLUME);
+				case 0xE1:
+					return wire1(pc, Op.SET_PAN);
+				case 0xE2:
+					return wire2(pc, Op.SET_INSTRUMENT);
+				case 0xE3:
+					return wire1(pc, Op.SET_REVERB);
+				case 0xE4:
+					return wire1(pc, Op.SET_ENVELOPE);
+				case 0xE5:
+					checkRange(pc, 2, "CoarseTune");
+					return new WireCommand(pc, 2, Op.COARSE_TUNE, (byte) data[pc + 1], 0, 0);
+				case 0xE6:
+					return wire1(pc, Op.FINE_TUNE);
+				case 0xE7:
+					return new WireCommand(pc, 1, Op.WAIT_FOR_END);
+				case 0xE8:
+					WireCommand wire = wireU16Byte(pc, Op.PITCH_SWEEP);
+					// The player deliberately ignores the wire-format high bit here.
+					wire.b &= 0x7F;
+					return wire;
+				case 0xE9:
+					return wire1(pc, Op.START_LOOP);
+				case 0xEA:
+					return new WireCommand(pc, 1, Op.END_LOOP);
+				case 0xEB:
+					return new WireCommand(pc, 1, Op.WAIT_FOR_RELEASE);
+				case 0xEC:
+					return wire1(pc, Op.SET_CURRENT_VOLUME);
+				case 0xED:
+					return wireU16Byte(pc, Op.VOLUME_RAMP);
+				case 0xEE:
+					checkRange(pc, 4, "SetAlternative");
+					WireCommand alternative = new WireCommand(pc, 4, Op.SET_ALTERNATIVE, u8(pc + 1), 0, 0);
+					alternative.target = u16(pc + 2);
+					return alternative;
+				case 0xEF:
+					return new WireCommand(pc, 1, Op.STOP);
+				case 0xF0:
+					checkRange(pc, 3, "Jump");
+					WireCommand jump = new WireCommand(pc, 3, Op.JUMP);
+					jump.target = u16(pc + 1);
+					return jump;
+				case 0xF1:
+					return new WireCommand(pc, 1, Op.RESTART);
+				case 0xF2:
+					return new WireCommand(pc, 1, Op.NOP);
+				case 0xF3:
+					return wire1(pc, Op.SET_RANDOM_PITCH);
+				case 0xF4:
+					return wire1(pc, Op.SET_RANDOM_VELOCITY);
+				case 0xF5:
+					return wire1(pc, Op.SET_RANDOM_UNUSED);
+				case 0xF6:
+					checkRange(pc, 3, "SetPressEnvelope");
+					WireCommand envelope = new WireCommand(pc, 3, Op.SET_PRESS_ENVELOPE);
+					envelope.target = u16(pc + 1);
+					return envelope;
+				case 0xF7:
+					checkRange(pc, 5, "Spawn");
+					WireCommand spawn = new WireCommand(pc, 5, Op.SPAWN);
+					spawn.target = u16(pc + 1);
+					spawn.a = u16(pc + 3);
+					return spawn;
+				case 0xF8:
+					return wire1(pc, Op.SET_ALTERNATIVE_VOLUME);
+				default:
+					throw new AssertionError();
+			}
+		}
+
+		private WireCommand wire1(int pc, Op op)
+		{
+			checkRange(pc, 2, op.name());
+			return new WireCommand(pc, 2, op, u8(pc + 1), 0, 0);
+		}
+
+		private WireCommand wire2(int pc, Op op)
+		{
+			checkRange(pc, 3, op.name());
+			return new WireCommand(pc, 3, op, u8(pc + 1), u8(pc + 2), 0);
+		}
+
+		private WireCommand wireU16Byte(int pc, Op op)
+		{
+			checkRange(pc, 4, op.name());
+			return new WireCommand(pc, 4, op, u16(pc + 1), u8(pc + 3), 0);
+		}
+
+		private Command toModelCommand(WireCommand wire, Map<Integer, String> labels, DecodeContext context)
+		{
+			switch (wire.op) {
+				case END:
+				case WAIT_FOR_END:
+				case END_LOOP:
+				case WAIT_FOR_RELEASE:
+				case STOP:
+				case RESTART:
+				case NOP:
+					return new Command(wire.op);
+				case DELAY:
+				case SET_VOLUME:
+				case SET_PAN:
+				case SET_REVERB:
+				case SET_ENVELOPE:
+				case COARSE_TUNE:
+				case FINE_TUNE:
+				case START_LOOP:
+				case SET_CURRENT_VOLUME:
+				case SET_RANDOM_PITCH:
+				case SET_RANDOM_VELOCITY:
+				case SET_RANDOM_UNUSED:
+				case SET_ALTERNATIVE_VOLUME:
+					return new Command(wire.op, wire.a);
+				case PLAY:
+					return new Command(wire.op, wire.a, wire.b, wire.c);
+				case SET_INSTRUMENT:
+				case PITCH_SWEEP:
+				case VOLUME_RAMP:
+					return new Command(wire.op, wire.a, wire.b);
+				case SET_ALTERNATIVE:
+					if (!wire.alternativeCanTrigger)
+						return new Command(Op.NOP);
+					Command command = new Command(wire.op, wire.a);
+					command.ref = "local:" + labels.get(wire.target);
+					return command;
+				case JUMP:
+					return Command.reference(wire.op, "local:" + labels.get(wire.target));
+				case SET_PRESS_ENVELOPE:
+					Command envelopeCommand = new Command(wire.op);
+					if (wire.target != 0)
+						envelopeCommand.ref = decodeEnvelope(wire.target).name;
+					return envelopeCommand;
+				case SPAWN:
+					// Custom F7 commands are ignored by the engine when data[0]
+					// (the root pointer) is zero, regardless of routing bits.
+					if (wire.target == 0)
+						return new Command(Op.NOP);
+					return Command.reference(wire.op, decodeSpawn(wire.target, wire.a, context).name);
+				default:
+					throw new AssertionError();
+			}
+		}
+
+		private Envelope decodeEnvelope(int offset)
+		{
+			Envelope known = envelopesByOffset.get(offset);
+			if (known != null)
+				return known;
+
+			Envelope candidate = new Envelope("pending");
+			int pc = offset;
+			for (int count = 0; count < 4096; count++) {
+				checkRange(pc, 2, "custom press envelope");
+				int op = u8(pc);
+				int arg = u8(pc + 1);
+				pc += 2;
+				if (op <= 94) {
+					EnvelopeCommand command = new EnvelopeCommand(EnvelopeOp.POINT, arg & 0x7F);
+					command.durationIndex = op;
+					candidate.commands.add(command);
+				}
+				else if (op == 0xFB)
+					candidate.commands.add(new EnvelopeCommand(EnvelopeOp.END_LOOP));
+				else if (op == 0xFC)
+					candidate.commands.add(new EnvelopeCommand(EnvelopeOp.START_LOOP, arg));
+				else if (op == 0xFD)
+					candidate.commands.add(new EnvelopeCommand(EnvelopeOp.ADD_SCALE, (byte) arg));
+				else if (op == 0xFE)
+					candidate.commands.add(new EnvelopeCommand(EnvelopeOp.SET_SCALE, arg));
+				else if (op == 0xFF) {
+					candidate.commands.add(new EnvelopeCommand(EnvelopeOp.END));
+					break;
+				}
+				else
+					throw new SfxFormatException(String.format("Invalid envelope opcode %02X at 0x%04X", op, pc - 2));
+			}
+			if (candidate.commands.isEmpty()
+				|| candidate.commands.get(candidate.commands.size() - 1).op != EnvelopeOp.END)
+				throw new SfxFormatException(String.format("Unterminated envelope at 0x%04X", offset));
+
+			String key = envelopeKey(candidate);
+			Envelope envelope = envelopesByContent.get(key);
+			if (envelope == null) {
+				envelope = candidate;
+				envelope.name = "envelope" + (archive.envelopes.size() + 1);
+				archive.envelopes.add(envelope);
+				envelopesByContent.put(key, envelope);
+			}
+			envelopesByOffset.put(offset, envelope);
+			return envelope;
+		}
+
+		private SpawnedEffect decodeSpawn(int root, int info, DecodeContext context)
+		{
+			long key = ((long) root << 16) | info;
+			SpawnedEffect known = context.spawns.get(key);
+			if (known != null)
+				return known;
+
+			int polyMode = (info >>> 5) & 3;
+			int trackCount = polyMode == 0 ? 1 : 2 << (polyMode - 1);
+			SpawnedEffect spawned = new SpawnedEffect("spawn" + (context.spawns.size() + 1));
+			spawned.routing = decodeRouting(info, trackCount, "spawned effect " + spawned.name);
+			context.spawns.put(key, spawned);
+			context.sound.spawnedEffects.add(spawned);
+
+			if (trackCount == 1) {
+				spawned.tracks.add(new Track(0, decodeDefinition(root, context)));
+			}
+			else {
+				checkRange(root, trackCount * 4, "spawned polyphony table");
+				for (int slot = 0; slot < trackCount; slot++) {
+					int trackRoot = u16(root + slot * 4);
+					int trackInfo = u16(root + slot * 4 + 2);
+					Track track = new Track(slot,
+						trackRoot == 0 ? Empty.INSTANCE : decodeDefinition(trackRoot, context));
+					if (spawned.routing.allocation == FIXED && trackRoot != 0) {
+						track.player = trackInfo & 7;
+						track.priority = (trackInfo >>> 8) & 3;
+					}
+					spawned.tracks.add(track);
+				}
+			}
+			return spawned;
+		}
+
+		private int u8(int offset)
+		{
+			return data[offset] & 0xFF;
+		}
+
+		private int u16(int offset)
+		{
+			checkRange(offset, 2, "16-bit value");
+			return readU16(data, offset);
+		}
+
+		private void checkRange(int offset, int length, String description)
+		{
+			if (offset < 0 || length < 0 || offset > data.length - length)
+				throw new SfxFormatException(String.format(
+					"%s at 0x%04X..0x%04X lies outside declared file size 0x%04X",
+					description, offset, offset + length, data.length));
+		}
+	}
+
+	private static final class DecodeContext
+	{
+		final Sound sound;
+		final Map<Long, SpawnedEffect> spawns = new LinkedHashMap<>();
+
+		DecodeContext(Sound sound)
+		{
+			this.sound = sound;
+		}
+	}
+
+	private record ExecutionState(
+		int pc,
+		int saved,
+		int loopStart,
+		int loopCount,
+		int alternative,
+		int alternativeSource)
+	{}
+
+	private static final class WireRegion
+	{
+		final List<WireCommand> commands = new ArrayList<>();
+	}
+
+	private static final class WireCommand
+	{
+		final int offset;
+		final int size;
+		final Op op;
+		int a;
+		int b;
+		int c;
+		int target = -1;
+		boolean alternativeCanTrigger;
+
+		WireCommand(int offset, int size, Op op)
+		{
+			this(offset, size, op, 0, 0, 0);
+		}
+
+		WireCommand(int offset, int size, Op op, int a, int b, int c)
+		{
+			this.offset = offset;
+			this.size = size;
+			this.op = op;
+			this.a = a;
+			this.b = b;
+			this.c = c;
+		}
+	}
+
+	private static String envelopeKey(Envelope envelope)
+	{
+		StringBuilder key = new StringBuilder();
+		for (EnvelopeCommand command : envelope.commands)
+			key.append(command.op).append(':').append(command.durationIndex).append(':').append(command.value).append(';');
+		return key.toString();
+	}
+
+	private static int readU16(byte[] data, int offset)
+	{
+		return (data[offset] & 0xFF) << 8 | data[offset + 1] & 0xFF;
+	}
+
+	private static int readU32(byte[] data, int offset)
+	{
+		return (data[offset] & 0xFF) << 24
+			| (data[offset + 1] & 0xFF) << 16
+			| (data[offset + 2] & 0xFF) << 8
+			| data[offset + 3] & 0xFF;
+	}
+
+	// Canonical encoder.  It globally interns one-shots and separable sequence
+	// regions, including private copies of the retail Jump/Restart tails.
+	private static final class Encoder
+	{
+		private final SfxArchive archive;
+		private final ByteStore output = new ByteStore();
+		private final int[] sections = new int[8];
+		private int extraSection;
+		private int fixedEnd;
+
+		private final Map<String, Envelope> envelopesByName = new LinkedHashMap<>();
+		private final Map<Envelope, Integer> envelopeOffsets = new IdentityHashMap<>();
+		private final Map<Definition, Integer> definitionOffsets = new IdentityHashMap<>();
+		private final Set<Definition> pointerDefinitions = java.util.Collections.newSetFromMap(new IdentityHashMap<>());
+		private final List<Definition> definitionOrder = new ArrayList<>();
+		private final Map<Sequence, SequenceLink> sequenceLinks = new IdentityHashMap<>();
+		private final List<CompiledRegion> regions = new ArrayList<>();
+		private final Map<SpawnedEffect, SpawnLink> spawnLinks = new IdentityHashMap<>();
+		private final List<SpawnLink> spawnOrder = new ArrayList<>();
+		private final List<EffectScope> scopes = new ArrayList<>();
+		private final Map<String, Integer> polyTableOffsets = new LinkedHashMap<>();
+		private int nextSpawnID;
+		private int envelopeBytes;
+		private int oneShotBytes;
+		private int regionBytes;
+		private int regionSourceBytes;
+		private int spawnTableBytes;
+		private int soundTableBytes;
+		private int suffixSavings;
+
+		Encoder(SfxArchive archive)
+		{
+			this.archive = Objects.requireNonNull(archive);
+		}
+
+		byte[] encode()
+		{
+			prepareFixedLayout();
+			indexObjects();
+			allocateEnvelopes();
+			allocateOneShots();
+			compileAndAllocateRegions();
+			allocateSpawns();
+			writeSoundTables();
+			patchRegionRelocations();
+			writeHeader();
+
+			if (output.size() > archive.maxBinarySize)
+				throw new SfxFormatException(String.format(
+					"Canonical SEF is 0x%X bytes, exceeding maxBinarySize 0x%X by 0x%X "
+						+ "(fixed=0x%X envelopes=0x%X oneShots=0x%X regions=0x%X/0x%X "
+						+ "spawnTables=0x%X soundTables=0x%X)",
+					output.size(), archive.maxBinarySize, output.size() - archive.maxBinarySize,
+					fixedEnd, envelopeBytes, oneShotBytes, regionBytes, regionSourceBytes,
+					spawnTableBytes, soundTableBytes));
+			if (output.size() > 0x10000)
+				throw new SfxFormatException("SEF offsets exceed the 16-bit file-relative address space");
+			return output.toByteArray();
+		}
+
+		private void prepareFixedLayout()
+		{
+			int cursor = HEADER_SIZE;
+			for (int group = 0; group < 4; group++) {
+				sections[group] = cursor;
+				cursor += LOW_SECTION_SIZE;
+				sections[group + 4] = cursor;
+				cursor += HIGH_SECTION_SIZE;
+			}
+			extraSection = cursor;
+			cursor += EXTRA_SECTION_SIZE;
+			fixedEnd = cursor;
+			output.ensureSize(fixedEnd);
+		}
+
+		private void indexObjects()
+		{
+			for (Envelope envelope : archive.envelopes) {
+				if (envelopesByName.putIfAbsent(envelope.name, envelope) != null)
+					throw new SfxFormatException("Duplicate envelope name: " + envelope.name);
+			}
+
+			for (Sound sound : archive.sounds.values()) {
+				EffectScope scope = new EffectScope(sound);
+				scopes.add(scope);
+				for (SpawnedEffect spawned : sound.spawnedEffects) {
+					if (scope.spawns.putIfAbsent(spawned.name, spawned) != null)
+						throw new SfxFormatException(sound.name + " has duplicate spawned effect " + spawned.name);
+					SpawnLink link = new SpawnLink(spawned, scope, nextSpawnID++);
+					spawnLinks.put(spawned, link);
+					spawnOrder.add(link);
+				}
+
+				boolean pointerBacked = isPointerBacked(sound.id);
+				for (Track track : sound.tracks)
+					registerDefinition(track.definition, scope, pointerBacked);
+				for (SpawnedEffect spawned : sound.spawnedEffects) {
+					for (Track track : spawned.tracks)
+						registerDefinition(track.definition, scope, true);
+				}
+			}
+		}
+
+		private void registerDefinition(Definition definition, EffectScope scope, boolean needsPointer)
+		{
+			if (definition == null || definition == Empty.INSTANCE)
+				return;
+			if (needsPointer)
+				pointerDefinitions.add(definition);
+			if (!definitionOrder.contains(definition))
+				definitionOrder.add(definition);
+			if (definition instanceof Sequence sequence) {
+				if (!needsPointer)
+					throw new SfxFormatException("Direct high/extra sequence trampolines are not supported");
+				sequenceLinks.computeIfAbsent(sequence, ignored -> compileSequence(sequence, scope));
+			}
+		}
+
+		private void allocateEnvelopes()
+		{
+			int start = output.size();
+			Map<String, Integer> interned = new LinkedHashMap<>();
+			for (Envelope envelope : archive.envelopes) {
+				byte[] bytes = encodeEnvelope(envelope);
+				String key = HexFormat.of().formatHex(bytes);
+				Integer offset = interned.get(key);
+				if (offset == null) {
+					offset = output.append(bytes);
+					interned.put(key, offset);
+				}
+				envelopeOffsets.put(envelope, offset);
+			}
+			envelopeBytes = output.size() - start;
+		}
+
+		private void allocateOneShots()
+		{
+			int start = output.size();
+			Map<String, Integer> interned = new LinkedHashMap<>();
+			for (Definition definition : definitionOrder) {
+				if (!(definition instanceof OneShot oneShot) || !pointerDefinitions.contains(definition))
+					continue;
+				byte[] bytes = encodeOneShot(oneShot, false);
+				String key = HexFormat.of().formatHex(bytes);
+				Integer offset = interned.get(key);
+				if (offset == null) {
+					offset = output.append(bytes);
+					interned.put(key, offset);
+				}
+				definitionOffsets.put(definition, offset);
+			}
+			oneShotBytes = output.size() - start;
+		}
+
+		private void compileAndAllocateRegions()
+		{
+			resolveRegionReferences();
+			markAlternativeRestartRisks();
+			regionSourceBytes = regions.stream().mapToInt(region -> region.bytes.length).sum();
+			if (regions.isEmpty())
+				return;
+			int start = output.size();
+
+			int[] groups = refineGroups();
+			internSafeSuffixes(groups);
+			groups = refineGroups();
+
+			int groupCount = Arrays.stream(groups).max().orElse(-1) + 1;
+			int[] groupOffsets = new int[groupCount];
+			Arrays.fill(groupOffsets, -1);
+			for (int i = 0; i < regions.size(); i++) {
+				CompiledRegion region = regions.get(i);
+				region.group = groups[i];
+				if (groupOffsets[region.group] < 0)
+					groupOffsets[region.group] = output.append(region.bytes);
+			}
+			for (CompiledRegion region : regions)
+				region.outputOffset = groupOffsets[region.group];
+
+			for (Map.Entry<Sequence, SequenceLink> entry : sequenceLinks.entrySet())
+				definitionOffsets.put(entry.getKey(), entry.getValue().entry.outputOffset);
+			regionBytes = output.size() - start;
+		}
+
+		private int[] refineGroups()
+		{
+			int[] groups = assignInitialGroups();
+			while (true) {
+				Map<String, Integer> ids = new LinkedHashMap<>();
+				int[] refined = new int[regions.size()];
+				for (int i = 0; i < regions.size(); i++) {
+					CompiledRegion region = regions.get(i);
+					String key = groups[i] + "|" + region.partitionKey(groups);
+					refined[i] = ids.computeIfAbsent(key, ignored -> ids.size());
+				}
+				if (Arrays.equals(groups, refined))
+					return groups;
+				groups = refined;
+			}
+		}
+
+		private int[] assignInitialGroups()
+		{
+			Map<String, Integer> ids = new LinkedHashMap<>();
+			int[] groups = new int[regions.size()];
+			for (int i = 0; i < regions.size(); i++)
+				groups[i] = ids.computeIfAbsent(regions.get(i).partitionKey(null), ignored -> ids.size());
+			return groups;
+		}
+
+		/**
+		 * A fallthrough suffix normally has to remain adjacent to its prefix.
+		 * If it contains no Restart, however, a Jump is equivalent because the
+		 * continuation saved by that new Jump can never be observed.  Interning
+		 * those tails keeps XML definitions private while recovering the compact
+		 * shared graph used by the retail archive.
+		 */
+		private void internSafeSuffixes(int[] groups)
+		{
+			Map<String, List<SuffixOccurrence>> byKey = new LinkedHashMap<>();
+			for (CompiledRegion region : regions) {
+				// SetAlternative is activated asynchronously by the player.  Keep a
+				// sequence private when its delayed branch can observe the continuation
+				// that a synthesized Jump would overwrite.
+				if (region.alternativeRestartRisk)
+					continue;
+				for (int i = region.commandOffsets.size() - 1; i >= 0; i--) {
+					int position = region.commandOffsets.get(i);
+					int length = region.bytes.length - position;
+					if (length <= 5 || position == 0 || !isContinuationIndependent(region, position))
+						continue;
+					String key = region.suffixKey(position, groups);
+					byKey.computeIfAbsent(key, ignored -> new ArrayList<>())
+						.add(new SuffixOccurrence(region, position, length));
+				}
+			}
+
+			List<List<SuffixOccurrence>> candidates = byKey.values().stream()
+				.filter(list -> list.size() > 1)
+				.sorted((a, b) -> Integer.compare(potentialSavings(b), potentialSavings(a)))
+				.toList();
+			Set<CompiledRegion> transformed = new HashSet<>();
+			Map<CompiledRegion, Integer> protectedStarts = new IdentityHashMap<>();
+			List<SuffixReplacement> replacements = new ArrayList<>();
+
+			for (List<SuffixOccurrence> occurrences : candidates) {
+				SuffixOccurrence canonical = null;
+				for (SuffixOccurrence occurrence : occurrences) {
+					if (!transformed.contains(occurrence.region)) {
+						canonical = occurrence;
+						break;
+					}
+				}
+				if (canonical == null)
+					continue;
+				protectedStarts.merge(canonical.region, canonical.position, Math::min);
+				for (SuffixOccurrence occurrence : occurrences) {
+					Integer protectedStart = protectedStarts.get(occurrence.region);
+					if (occurrence == canonical
+						|| groups[occurrence.region.index] == groups[canonical.region.index]
+						|| transformed.contains(occurrence.region)
+						|| (protectedStart != null && occurrence.position <= protectedStart))
+						continue;
+					transformed.add(occurrence.region);
+					replacements.add(new SuffixReplacement(
+						occurrence.region, occurrence.position, canonical.region, canonical.position));
+					suffixSavings += occurrence.length - 3;
+				}
+			}
+
+			for (CompiledRegion region : regions) {
+				for (Relocation relocation : region.relocations) {
+					if (relocation.type != RelocationType.LABEL)
+						continue;
+					for (SuffixReplacement replacement : replacements) {
+						if (relocation.targetRegion == replacement.from
+							&& relocation.targetOffset >= replacement.fromPosition) {
+							relocation.targetRegion = replacement.to;
+							relocation.targetOffset = replacement.toPosition
+								+ relocation.targetOffset - replacement.fromPosition;
+							break;
+						}
+					}
+				}
+			}
+
+			for (SuffixReplacement replacement : replacements)
+				replacement.from.replaceSuffixWithJump(
+					replacement.fromPosition, replacement.to, replacement.toPosition);
+		}
+
+		private boolean isContinuationIndependent(CompiledRegion entryRegion, int entryOffset)
+		{
+			Deque<CommandLocation> pending = new ArrayDeque<>();
+			Set<CommandLocation> visited = new HashSet<>();
+			pending.add(new CommandLocation(entryRegion, entryRegion.commandIndex(entryOffset)));
+
+			while (!pending.isEmpty()) {
+				CommandLocation location = pending.remove();
+				while (location.commandIndex >= 0
+					&& location.commandIndex < location.region.commandOps.size()
+					&& visited.add(location)) {
+					Op op = location.region.commandOps.get(location.commandIndex);
+					int commandOffset = location.region.commandOffsets.get(location.commandIndex);
+					if (op == Op.RESTART)
+						return false;
+					if (op == Op.END || op == Op.JUMP)
+						break;
+					if (op == Op.SET_ALTERNATIVE) {
+						Relocation relocation = location.region.labelRelocationAt(commandOffset + 2);
+						if (relocation == null)
+							return false;
+						pending.add(new CommandLocation(relocation.targetRegion,
+							relocation.targetRegion.commandIndex(relocation.targetOffset)));
+					}
+					location = new CommandLocation(location.region, location.commandIndex + 1);
+				}
+			}
+			return true;
+		}
+
+		private int potentialSavings(List<SuffixOccurrence> occurrences)
+		{
+			return (occurrences.get(0).length - 3) * (occurrences.size() - 1);
+		}
+
+		private void allocateSpawns()
+		{
+			int start = output.size();
+			for (SpawnLink link : spawnOrder) {
+				SpawnedEffect spawned = link.spawned;
+				if (spawned.tracks.size() == 1) {
+					link.dataOffset = definitionOffset(spawned.tracks.get(0).definition);
+				}
+				else {
+					link.dataOffset = allocatePolyTable(spawned.tracks, spawned.routing);
+				}
+				link.info = routingInfo(spawned.routing, spawned.tracks.size());
+			}
+			spawnTableBytes = output.size() - start;
+		}
+
+		private void writeSoundTables()
+		{
+			int start = output.size();
+			for (Sound sound : archive.sounds.values()) {
+				TableSlot slot = tableSlot(sound.id);
+				if (slot == null)
+					throw new SfxFormatException(String.format("Sound ID %04X has no DAT1 table slot", sound.id));
+
+				if (sound.isEmpty())
+					continue;
+				if (slot.direct) {
+					if (sound.tracks.size() != 1 || !(sound.tracks.get(0).definition instanceof OneShot oneShot))
+						throw new SfxFormatException(String.format(
+							"Direct sound %04X must contain exactly one compact-representable OneShot", sound.id));
+					byte[] bytes = encodeOneShot(oneShot, true);
+					output.writeBytes(slot.offset, bytes);
+					continue;
+				}
+
+				if (sound.routing == null)
+					throw new SfxFormatException(String.format("Pointer-backed sound %04X is missing Routing", sound.id));
+				int dataOffset;
+				if (sound.tracks.size() == 1) {
+					dataOffset = definitionOffset(sound.tracks.get(0).definition);
+				}
+				else {
+					dataOffset = allocatePolyTable(sound.tracks, sound.routing);
+				}
+				output.writeU16(slot.offset, dataOffset);
+				output.writeU16(slot.offset + 2, routingInfo(sound.routing, sound.tracks.size()));
+			}
+			soundTableBytes = output.size() - start;
+		}
+
+		private int allocatePolyTable(List<Track> tracks, Routing routing)
+		{
+			byte[] bytes = new byte[tracks.size() * 4];
+			for (int i = 0; i < tracks.size(); i++) {
+				Track track = tracks.get(i);
+				int root = definitionOffset(track.definition);
+				int info = 0;
+				if (root != 0 && routing.allocation == FIXED) {
+					if (track.player == null || track.priority == null)
+						throw new SfxFormatException("Fixed polyphonic track " + track.slot + " needs player and priority");
+					info = track.player | track.priority << 8;
+				}
+				bytes[i * 4] = (byte) (root >>> 8);
+				bytes[i * 4 + 1] = (byte) root;
+				bytes[i * 4 + 2] = (byte) (info >>> 8);
+				bytes[i * 4 + 3] = (byte) info;
+			}
+			String key = HexFormat.of().formatHex(bytes);
+			Integer known = polyTableOffsets.get(key);
+			if (known != null)
+				return known;
+			output.align(2);
+			int offset = output.append(bytes);
+			polyTableOffsets.put(key, offset);
+			return offset;
+		}
+
+		private void patchRegionRelocations()
+		{
+			Set<Integer> patchedGroups = new HashSet<>();
+			for (CompiledRegion region : regions) {
+				if (!patchedGroups.add(region.group))
+					continue;
+				for (Relocation relocation : region.relocations) {
+					int target;
+					switch (relocation.type) {
+						case LABEL:
+							target = relocation.targetRegion.outputOffset + relocation.targetOffset;
+							break;
+						case ENVELOPE:
+							target = requiredOffset(envelopeOffsets.get(relocation.envelope),
+								"Unallocated envelope " + relocation.ref);
+							break;
+						case SPAWN:
+							SpawnLink link = spawnLinks.get(relocation.spawn);
+							if (link == null || link.dataOffset < 0)
+								throw new SfxFormatException("Unallocated spawned effect " + relocation.ref);
+							target = link.dataOffset;
+							break;
+						default:
+							throw new AssertionError();
+					}
+					output.writeU16(region.outputOffset + relocation.position, target);
+				}
+			}
+		}
+
+		private int requiredOffset(Integer offset, String message)
+		{
+			if (offset == null)
+				throw new SfxFormatException(message);
+			return offset;
+		}
+
+		private void writeHeader()
+		{
+			output.writeBytes(0, "SEF ".getBytes(StandardCharsets.US_ASCII));
+			output.writeU32(4, output.size());
+			byte[] name = new byte[] { ' ', ' ', ' ', ' ' };
+			byte[] encoded = archive.name.getBytes(StandardCharsets.US_ASCII);
+			if (encoded.length > 4)
+				throw new SfxFormatException("SEF archive name must fit in four ASCII bytes: " + archive.name);
+			System.arraycopy(encoded, 0, name, 0, encoded.length);
+			output.writeBytes(8, name);
+			output.writeByte(0x0E, 1);
+			for (int i = 0; i < sections.length; i++)
+				output.writeU16(0x10 + i * 2, sections[i]);
+			output.writeU16(0x20, extraSection);
+		}
+
+		private SequenceLink compileSequence(Sequence sequence, EffectScope scope)
+		{
+			SequenceLink link = new SequenceLink(sequence, scope);
+			CompiledRegion current = new CompiledRegion(regions.size());
+			regions.add(current);
+			link.regions.add(current);
+			boolean startNewRegion = false;
+			Op lastOp = null;
+
+			for (Node node : sequence.nodes) {
+				if (startNewRegion) {
+					current = new CompiledRegion(regions.size());
+					regions.add(current);
+					link.regions.add(current);
+					startNewRegion = false;
+				}
+
+				if (node instanceof Label label) {
+					if (link.labels.putIfAbsent(label.name(), new LabelLocation(current, current.builder.size())) != null)
+						throw new SfxFormatException("Duplicate sequence label: " + label.name());
+				}
+				else if (node instanceof Command command) {
+					writeCommand(current, command, scope);
+					lastOp = command.op;
+					startNewRegion = command.op == Op.END || command.op == Op.RESTART;
+				}
+			}
+
+			if (lastOp == null)
+				throw new SfxFormatException("Sequence has no commands");
+			if (lastOp != Op.END && lastOp != Op.RESTART) {
+				current.commandOffsets.add(current.builder.size());
+				current.commandOps.add(Op.END);
+				current.builder.write(0);
+			}
+
+			LabelLocation entry = link.labels.get(sequence.entry);
+			if (entry == null)
+				throw new SfxFormatException("Sequence is missing entry label: " + sequence.entry);
+			if (entry.offset != 0)
+				throw new SfxFormatException("Sequence entry label must begin a separable region: " + sequence.entry);
+			link.entry = entry.region;
+			entry.region.prepend(sequence.flags());
+
+			for (Map.Entry<String, LabelLocation> label : link.labels.entrySet()) {
+				if (label.getValue().region == entry.region)
+					label.setValue(new LabelLocation(entry.region, label.getValue().offset + 1));
+			}
+			for (CompiledRegion region : link.regions)
+				region.finish();
+			return link;
+		}
+
+		private void writeCommand(CompiledRegion region, Command command, EffectScope scope)
+		{
+			ByteArrayOutputStream out = region.builder;
+			region.commandOffsets.add(out.size());
+			region.commandOps.add(command.op);
+			switch (command.op) {
+				case END:
+					out.write(0);
+					break;
+				case DELAY:
+					writeDelay(out, command.a);
+					break;
+				case PLAY:
+					writePlay(out, command.a, command.b, command.c);
+					break;
+				case SET_VOLUME:
+					writeByteCommand(out, 0xE0, command.a);
+					break;
+				case SET_PAN:
+					writeByteCommand(out, 0xE1, command.a);
+					break;
+				case SET_INSTRUMENT:
+					out.write(0xE2);
+					out.write(command.a);
+					out.write(command.b);
+					break;
+				case SET_REVERB:
+					writeByteCommand(out, 0xE3, command.a);
+					break;
+				case SET_ENVELOPE:
+					writeByteCommand(out, 0xE4, command.a);
+					break;
+				case COARSE_TUNE:
+					writeByteCommand(out, 0xE5, command.a);
+					break;
+				case FINE_TUNE:
+					writeByteCommand(out, 0xE6, command.a);
+					break;
+				case WAIT_FOR_END:
+					out.write(0xE7);
+					break;
+				case PITCH_SWEEP:
+					writeU16ByteCommand(out, 0xE8, command.a, command.b);
+					break;
+				case START_LOOP:
+					writeByteCommand(out, 0xE9, command.a);
+					break;
+				case END_LOOP:
+					out.write(0xEA);
+					break;
+				case WAIT_FOR_RELEASE:
+					out.write(0xEB);
+					break;
+				case SET_CURRENT_VOLUME:
+					writeByteCommand(out, 0xEC, command.a);
+					break;
+				case VOLUME_RAMP:
+					writeU16ByteCommand(out, 0xED, command.a, command.b);
+					break;
+				case SET_ALTERNATIVE:
+					out.write(0xEE);
+					out.write(command.a);
+					addRelocation(region, RelocationType.LABEL, command.ref, null, null);
+					break;
+				case STOP:
+					out.write(0xEF);
+					break;
+				case JUMP:
+					out.write(0xF0);
+					addRelocation(region, RelocationType.LABEL, command.ref, null, null);
+					break;
+				case RESTART:
+					out.write(0xF1);
+					break;
+				case NOP:
+					out.write(0xF2);
+					break;
+				case SET_RANDOM_PITCH:
+					writeByteCommand(out, 0xF3, command.a);
+					break;
+				case SET_RANDOM_VELOCITY:
+					writeByteCommand(out, 0xF4, command.a);
+					break;
+				case SET_RANDOM_UNUSED:
+					writeByteCommand(out, 0xF5, command.a);
+					break;
+				case SET_PRESS_ENVELOPE:
+					out.write(0xF6);
+					if (command.ref == null || command.ref.isBlank()) {
+						writeU16(out, 0);
+					}
+					else {
+						Envelope envelope = envelopesByName.get(command.ref);
+						if (envelope == null)
+							throw new SfxFormatException("Unknown envelope reference: " + command.ref);
+						addRelocation(region, RelocationType.ENVELOPE, command.ref, envelope, null);
+					}
+					break;
+				case SPAWN:
+					out.write(0xF7);
+					SpawnedEffect spawned = scope.spawns.get(command.ref);
+					if (spawned == null)
+						throw new SfxFormatException("Unknown spawned effect reference: " + command.ref);
+					addRelocation(region, RelocationType.SPAWN, command.ref, null, spawned);
+					writeU16(out, routingInfo(spawned.routing, spawned.tracks.size()));
+					break;
+				case SET_ALTERNATIVE_VOLUME:
+					writeByteCommand(out, 0xF8, command.a);
+					break;
+			}
+		}
+
+		private void addRelocation(CompiledRegion region, RelocationType type, String ref,
+			Envelope envelope, SpawnedEffect spawned)
+		{
+			int position = region.builder.size();
+			writeU16(region.builder, 0);
+			Relocation relocation = new Relocation(position, type, ref);
+			relocation.envelope = envelope;
+			relocation.spawn = spawned;
+			if (spawned != null) {
+				SpawnLink link = spawnLinks.get(spawned);
+				if (link == null)
+					throw new SfxFormatException("Unindexed spawned effect: " + ref);
+				relocation.spawnStableID = link.stableID;
+			}
+			region.relocations.add(relocation);
+		}
+
+		private void resolveRegionReferences()
+		{
+			for (SequenceLink link : sequenceLinks.values()) {
+				for (CompiledRegion region : link.regions) {
+					for (Relocation relocation : region.relocations) {
+						if (relocation.type != RelocationType.LABEL)
+							continue;
+						String labelName = localReference(relocation.ref);
+						LabelLocation target = link.labels.get(labelName);
+						if (target == null)
+							throw new SfxFormatException("Unknown local sequence label: " + relocation.ref);
+						relocation.targetRegion = target.region;
+						relocation.targetOffset = target.offset;
+					}
+				}
+			}
+		}
+
+		private void markAlternativeRestartRisks()
+		{
+			for (SequenceLink link : sequenceLinks.values()) {
+				boolean risk = false;
+				for (CompiledRegion region : link.regions) {
+					for (int i = 0; i < region.commandOps.size(); i++) {
+						if (region.commandOps.get(i) != Op.SET_ALTERNATIVE)
+							continue;
+						int commandOffset = region.commandOffsets.get(i);
+						Relocation target = region.labelRelocationAt(commandOffset + 2);
+						if (target == null
+							|| !isContinuationIndependent(target.targetRegion, target.targetOffset)) {
+							risk = true;
+							break;
+						}
+					}
+					if (risk)
+						break;
+				}
+				if (risk) {
+					for (CompiledRegion region : link.regions)
+						region.alternativeRestartRisk = true;
+				}
+			}
+		}
+
+		private String localReference(String ref)
+		{
+			if (ref == null || ref.isBlank())
+				throw new SfxFormatException("Missing local label reference");
+			if (ref.startsWith("shared:"))
+				throw new SfxFormatException("shared.xml is not implemented by this prototype: " + ref);
+			return ref.startsWith("local:") ? ref.substring("local:".length()) : ref;
+		}
+
+		private int definitionOffset(Definition definition)
+		{
+			if (definition == null || definition == Empty.INSTANCE)
+				return 0;
+			Integer offset = definitionOffsets.get(definition);
+			if (offset == null)
+				throw new SfxFormatException("Definition was not allocated: " + definition.getClass().getSimpleName());
+			return offset;
+		}
+
+		private int routingInfo(Routing routing, int trackCount)
+		{
+			if (routing == null)
+				throw new SfxFormatException("Effect is missing Routing");
+			int polyMode;
+			switch (trackCount) {
+				case 1:
+					polyMode = 0;
+					break;
+				case 2:
+					polyMode = 1;
+					break;
+				case 4:
+					polyMode = 2;
+					break;
+				case 8:
+					polyMode = 3;
+					break;
+				default:
+					throw new SfxFormatException("Track count must be 1, 2, 4, or 8: " + trackCount);
+			}
+			int info = polyMode << 5;
+			if (routing.allocation == DYNAMIC)
+				info |= 0x80;
+			if (trackCount == 1) {
+				info |= routing.allocation == DYNAMIC ? routing.maxPlayer : routing.player;
+				info |= routing.priority << 8;
+			}
+			else if (routing.allocation == DYNAMIC) {
+				// The engine ignores these bits for dynamic polyphony, but seven is
+				// the canonical semantic value: all eight players are searched.
+				info |= 7;
+				info |= routing.priority << 8;
+			}
+			info |= routing.exclusiveGroup << 11;
+			return info;
+		}
+
+		private byte[] encodeOneShot(OneShot oneShot, boolean direct)
+		{
+			boolean compact = isCompactRepresentable(oneShot);
+			if (direct && !compact)
+				throw new SfxFormatException("Direct high/extra OneShot is not COMPACT-representable");
+			if (compact) {
+				int packed = ((oneShot.volume & 0x7C) << 1) | oneShot.randomPitch / 8;
+				return new byte[] {
+					(byte) (oneShot.flags() | 2),
+					(byte) oneShot.bank,
+					(byte) oneShot.patch,
+					(byte) packed
+				};
+			}
+			return new byte[] {
+				(byte) oneShot.flags(),
+				(byte) oneShot.bank,
+				(byte) oneShot.patch,
+				(byte) oneShot.volume,
+				(byte) oneShot.pan,
+				(byte) oneShot.reverb,
+				(byte) oneShot.pitch,
+				(byte) (oneShot.randomPitch / 8)
+			};
+		}
+
+		private byte[] encodeEnvelope(Envelope envelope)
+		{
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			for (EnvelopeCommand command : envelope.commands) {
+				switch (command.op) {
+					case POINT:
+						out.write(command.durationIndex);
+						out.write(command.value);
+						break;
+					case SET_SCALE:
+						writeByteCommand(out, 0xFE, command.value);
+						break;
+					case ADD_SCALE:
+						writeByteCommand(out, 0xFD, command.value);
+						break;
+					case START_LOOP:
+						writeByteCommand(out, 0xFC, command.value);
+						break;
+					case END_LOOP:
+						writeByteCommand(out, 0xFB, 0);
+						break;
+					case END:
+						writeByteCommand(out, 0xFF, 0);
+						break;
+				}
+			}
+			return out.toByteArray();
+		}
+
+		private void writeDelay(ByteArrayOutputStream out, int ticks)
+		{
+			if (ticks >= 1 && ticks < 0x78) {
+				out.write(ticks);
+				return;
+			}
+			if (ticks < 0x78 || ticks > 2167)
+				throw new SfxFormatException("Delay ticks must be 1..2167: " + ticks);
+			int encoded = ticks - 0x78;
+			out.write(0x78 | encoded >>> 8);
+			out.write(encoded);
+		}
+
+		private void writePlay(ByteArrayOutputStream out, int pitch, int velocity, int length)
+		{
+			out.write(0x80 | pitch);
+			out.write(velocity);
+			if (length < 0xC0) {
+				out.write(length);
+			}
+			else {
+				int encoded = length - 0xC0;
+				out.write(0xC0 | encoded >>> 8);
+				out.write(encoded);
+			}
+		}
+
+		private void writeByteCommand(ByteArrayOutputStream out, int opcode, int value)
+		{
+			out.write(opcode);
+			out.write(value);
+		}
+
+		private void writeU16ByteCommand(ByteArrayOutputStream out, int opcode, int value, int byteValue)
+		{
+			out.write(opcode);
+			writeU16(out, value);
+			out.write(byteValue);
+		}
+
+		private void writeU16(ByteArrayOutputStream out, int value)
+		{
+			out.write(value >>> 8);
+			out.write(value);
+		}
+
+		private TableSlot tableSlot(int id)
+		{
+			if (id >= 0x2001 && id <= 0x2140)
+				return new TableSlot(extraSection + (id - 0x2001) * 4, true);
+			if (id < 1 || id > 0x400)
+				return null;
+			int group = (id - 1) >>> 8;
+			int index = (id - 1) & 0xFF;
+			if (index < 0xC0)
+				return new TableSlot(sections[group] + index * 4, false);
+			return new TableSlot(sections[group + 4] + (index - 0xC0) * 4, true);
+		}
+
+		private boolean isPointerBacked(int id)
+		{
+			TableSlot slot = tableSlot(id);
+			return slot != null && !slot.direct;
+		}
+	}
+
+	private static final class EffectScope
+	{
+		final Sound sound;
+		final Map<String, SpawnedEffect> spawns = new LinkedHashMap<>();
+
+		EffectScope(Sound sound)
+		{
+			this.sound = sound;
+		}
+	}
+
+	private static final class SequenceLink
+	{
+		final Sequence sequence;
+		final EffectScope scope;
+		final List<CompiledRegion> regions = new ArrayList<>();
+		final Map<String, LabelLocation> labels = new LinkedHashMap<>();
+		CompiledRegion entry;
+
+		SequenceLink(Sequence sequence, EffectScope scope)
+		{
+			this.sequence = sequence;
+			this.scope = scope;
+		}
+	}
+
+	private record LabelLocation(CompiledRegion region, int offset)
+	{}
+
+	private enum RelocationType
+	{
+		LABEL,
+		ENVELOPE,
+		SPAWN
+	}
+
+	private static final class Relocation
+	{
+		int position;
+		final RelocationType type;
+		final String ref;
+		CompiledRegion targetRegion;
+		int targetOffset;
+		Envelope envelope;
+		SpawnedEffect spawn;
+		int spawnStableID = -1;
+
+		Relocation(int position, RelocationType type, String ref)
+		{
+			this.position = position;
+			this.type = type;
+			this.ref = ref;
+		}
+	}
+
+	private static final class CompiledRegion
+	{
+		final int index;
+		ByteArrayOutputStream builder = new ByteArrayOutputStream();
+		byte[] bytes;
+		final List<Relocation> relocations = new ArrayList<>();
+		final List<Integer> commandOffsets = new ArrayList<>();
+		final List<Op> commandOps = new ArrayList<>();
+		boolean alternativeRestartRisk;
+		int group = -1;
+		int outputOffset = -1;
+
+		CompiledRegion(int index)
+		{
+			this.index = index;
+		}
+
+		void prepend(int value)
+		{
+			byte[] old = builder.toByteArray();
+			builder = new ByteArrayOutputStream(old.length + 1);
+			builder.write(value);
+			builder.writeBytes(old);
+			for (Relocation relocation : relocations)
+				relocation.position++;
+			for (int i = 0; i < commandOffsets.size(); i++)
+				commandOffsets.set(i, commandOffsets.get(i) + 1);
+		}
+
+		void finish()
+		{
+			bytes = builder.toByteArray();
+		}
+
+		String partitionKey(int[] groups)
+		{
+			StringBuilder key = new StringBuilder(HexFormat.of().formatHex(bytes));
+			for (Relocation relocation : relocations) {
+				key.append('|').append(relocation.position).append(':').append(relocation.type).append(':');
+				switch (relocation.type) {
+					case LABEL:
+						if (relocation.targetRegion == this)
+							key.append('I').append(relocation.targetOffset);
+						else if (groups == null)
+							key.append('X').append(relocation.targetOffset);
+						else
+							key.append('G').append(groups[relocation.targetRegion.index]).append(':').append(relocation.targetOffset);
+						break;
+					case ENVELOPE:
+						key.append('E').append(envelopeKey(relocation.envelope));
+						break;
+					case SPAWN:
+						key.append('S').append(relocation.spawnStableID);
+						break;
+				}
+			}
+			return key.toString();
+		}
+
+		String suffixKey(int start, int[] groups)
+		{
+			StringBuilder key = new StringBuilder(HexFormat.of().formatHex(bytes, start, bytes.length));
+			for (Relocation relocation : relocations) {
+				if (relocation.position < start)
+					continue;
+				key.append('|').append(relocation.position - start).append(':').append(relocation.type).append(':');
+				switch (relocation.type) {
+					case LABEL:
+						if (relocation.targetRegion == this && relocation.targetOffset >= start)
+							key.append('I').append(relocation.targetOffset - start);
+						else
+							key.append('G').append(groups[relocation.targetRegion.index])
+								.append(':').append(relocation.targetOffset);
+						break;
+					case ENVELOPE:
+						key.append('E').append(envelopeKey(relocation.envelope));
+						break;
+					case SPAWN:
+						key.append('S').append(relocation.spawnStableID);
+						break;
+				}
+			}
+			return key.toString();
+		}
+
+		void replaceSuffixWithJump(int start, CompiledRegion target, int targetOffset)
+		{
+			bytes = Arrays.copyOf(bytes, start + 3);
+			bytes[start] = (byte) 0xF0;
+			bytes[start + 1] = 0;
+			bytes[start + 2] = 0;
+			relocations.removeIf(relocation -> relocation.position >= start);
+			Relocation jump = new Relocation(start + 1, RelocationType.LABEL, "<interned-tail>");
+			jump.targetRegion = target;
+			jump.targetOffset = targetOffset;
+			relocations.add(jump);
+
+			for (int i = commandOffsets.size() - 1; i >= 0; i--) {
+				if (commandOffsets.get(i) >= start) {
+					commandOffsets.remove(i);
+					commandOps.remove(i);
+				}
+			}
+			commandOffsets.add(start);
+			commandOps.add(Op.JUMP);
+		}
+
+		int commandIndex(int offset)
+		{
+			return commandOffsets.indexOf(offset);
+		}
+
+		Relocation labelRelocationAt(int position)
+		{
+			for (Relocation relocation : relocations) {
+				if (relocation.type == RelocationType.LABEL && relocation.position == position)
+					return relocation;
+			}
+			return null;
+		}
+	}
+
+	private record SuffixOccurrence(CompiledRegion region, int position, int length)
+	{}
+
+	private record SuffixReplacement(
+		CompiledRegion from, int fromPosition, CompiledRegion to, int toPosition)
+	{}
+
+	private record CommandLocation(CompiledRegion region, int commandIndex)
+	{}
+
+	private static final class SpawnLink
+	{
+		final SpawnedEffect spawned;
+		final EffectScope scope;
+		final int stableID;
+		int dataOffset = -1;
+		int info;
+
+		SpawnLink(SpawnedEffect spawned, EffectScope scope, int stableID)
+		{
+			this.spawned = spawned;
+			this.scope = scope;
+			this.stableID = stableID;
+		}
+	}
+
+	private record TableSlot(int offset, boolean direct)
+	{}
+
+	private static final class ByteStore
+	{
+		private byte[] data = new byte[0x6000];
+		private int size;
+
+		int size()
+		{
+			return size;
+		}
+
+		void ensureSize(int required)
+		{
+			ensureCapacity(required);
+			if (required > size)
+				size = required;
+		}
+
+		int allocate(int length)
+		{
+			int offset = size;
+			ensureSize(size + length);
+			return offset;
+		}
+
+		int append(byte[] bytes)
+		{
+			int offset = allocate(bytes.length);
+			writeBytes(offset, bytes);
+			return offset;
+		}
+
+		void align(int alignment)
+		{
+			int aligned = (size + alignment - 1) / alignment * alignment;
+			ensureSize(aligned);
+		}
+
+		void writeByte(int offset, int value)
+		{
+			checkWrite(offset, 1);
+			data[offset] = (byte) value;
+		}
+
+		void writeU16(int offset, int value)
+		{
+			if (value < 0 || value > 0xFFFF)
+				throw new SfxFormatException(String.format("16-bit relocation overflow: 0x%X", value));
+			checkWrite(offset, 2);
+			data[offset] = (byte) (value >>> 8);
+			data[offset + 1] = (byte) value;
+		}
+
+		void writeU32(int offset, int value)
+		{
+			checkWrite(offset, 4);
+			data[offset] = (byte) (value >>> 24);
+			data[offset + 1] = (byte) (value >>> 16);
+			data[offset + 2] = (byte) (value >>> 8);
+			data[offset + 3] = (byte) value;
+		}
+
+		void writeBytes(int offset, byte[] bytes)
+		{
+			checkWrite(offset, bytes.length);
+			System.arraycopy(bytes, 0, data, offset, bytes.length);
+		}
+
+		byte[] toByteArray()
+		{
+			return Arrays.copyOf(data, size);
+		}
+
+		private void checkWrite(int offset, int length)
+		{
+			if (offset < 0 || length < 0 || offset > size - length)
+				throw new IllegalStateException(String.format("Write outside allocated buffer: %X + %X / %X", offset, length, size));
+		}
+
+		private void ensureCapacity(int required)
+		{
+			if (required <= data.length)
+				return;
+			int capacity = data.length;
+			while (capacity < required)
+				capacity *= 2;
+			data = Arrays.copyOf(data, capacity);
+		}
+	}
+}

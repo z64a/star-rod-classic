@@ -527,7 +527,10 @@ public class XmlWrapper
 					pw.println("<!-- " + comment + " -->");
 			}
 			catch (IOException e) {
-				e.printStackTrace();
+				FileNotFoundException wrapped = new FileNotFoundException(
+					"Could not create temporary XML output for " + xmlFile + ": " + e.getMessage());
+				wrapped.initCause(e);
+				throw wrapped;
 			}
 		}
 
@@ -543,6 +546,18 @@ public class XmlWrapper
 					Logger.printStackTrace(e);
 				}
 			}
+		}
+
+		/** Flushes and copies this writer's UTF-8 output or reports failure. */
+		public void saveOrThrow() throws IOException
+		{
+			if (pw == null)
+				throw new IOException("XML writer is closed");
+			pw.flush();
+			if (pw.checkError())
+				throw new IOException("Could not write temporary XML output for " + file);
+			pw.close();
+			FileUtils.copyFile(temp, file);
 		}
 
 		@Override
