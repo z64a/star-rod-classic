@@ -36,13 +36,6 @@ public class Triangle implements XmlSerializable, Selectable
 
 	public transient int[] ijk = new int[3];
 
-	//TODO
-	public void setVertex(int i, Vertex v)
-	{
-		vert[i] = v;
-		// update half edges ...
-	}
-
 	/**
 	 * For serialization purposes only!
 	 */
@@ -108,7 +101,9 @@ public class Triangle implements XmlSerializable, Selectable
 	 */
 	public Triangle deepCopy()
 	{
-		return new Triangle(vert[0].deepCopy(), vert[1].deepCopy(), vert[2].deepCopy());
+		Triangle copy = new Triangle(vert[0].deepCopy(), vert[1].deepCopy(), vert[2].deepCopy());
+		copy.doubleSided = doubleSided;
+		return copy;
 	}
 
 	public void flipNormal()

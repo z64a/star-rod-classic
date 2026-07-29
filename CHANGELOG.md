@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Viewport scaling in various editors now correctly accounts for HiDPI
 - Lines render via shaders instead of relying on the deprecated GL_LINES
+- Fixed crashes involving the "Cutting Triangles" tool
 
 ## Changed
 - Hitting escape during a "Save and Quit?" dialog now cancels the dialog rather than exiting without saving
