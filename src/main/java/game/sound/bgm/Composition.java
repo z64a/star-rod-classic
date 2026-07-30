@@ -83,7 +83,8 @@ public class Composition implements XmlSerializable
 		}
 
 		song.addPart(new BGMPart(startPos, bb.position(), "Composition " + index));
-		System.out.println();
+		if (Track.debugPrint)
+			System.out.println();
 	}
 
 	public void assignPhrases(HashMap<Integer, Phrase> phraseLookup)

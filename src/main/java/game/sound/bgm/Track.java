@@ -49,7 +49,7 @@ public class Track implements XmlSerializable
 
 	private static final int SPECIAL_OPCODE = 0xFF;
 
-	public static boolean debugPrint = true;
+	public static boolean debugPrint = false;
 	private static final String CMD_FMT = "%5X %5d: ";
 
 	public final Phrase phrase;
@@ -269,7 +269,7 @@ public class Track implements XmlSerializable
 				if (curTime == lastNoteTime) {
 					polyAlloc++;
 
-					if (polyAlloc > reader.track.polyphonicVoiceCount) {
+					if (debugPrint && polyAlloc > reader.track.polyphonicVoiceCount) {
 						System.out.println("POLYPHONY OVERFLOW!");
 					}
 				}

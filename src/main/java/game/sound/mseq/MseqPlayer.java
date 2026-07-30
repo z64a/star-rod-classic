@@ -143,6 +143,17 @@ public class MseqPlayer implements AudioClient
 		return state == PlayerState.PAUSED;
 	}
 
+	public void stop()
+	{
+		if (voices != null) {
+			for (MseqVoice voice : voices) {
+				if (voice != null)
+					voice.kill();
+			}
+		}
+		state = PlayerState.DONE;
+	}
+
 	public void setPaused(boolean pause)
 	{
 		boolean changed = false;
@@ -247,6 +258,7 @@ public class MseqPlayer implements AudioClient
 		curTime = 0;
 		curDuration = 0;
 		delayTime = 0;
+		updateCounter = updateInverval;
 
 		for (int i = 0; i < tracks.length; i++) {
 			tracks[i].reset();

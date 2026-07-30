@@ -115,11 +115,13 @@ public class Song implements XmlSerializable
 		int insOffset = (bb.getShort() & 0xFFFF) << 2;
 		int insCount = bb.getShort() & 0xFFFF;
 
-		System.out.printf("Compositions: %X %X %X %X%n",
-			compOffsets[0], compOffsets[1],
-			compOffsets[2], compOffsets[3]);
-		System.out.printf("Drums: %X (x%d)%n", drumOffset, drumCount);
-		System.out.printf("Instruments: %X (x%d)%n", insOffset, insCount);
+		if (Track.debugPrint) {
+			System.out.printf("Compositions: %X %X %X %X%n",
+				compOffsets[0], compOffsets[1],
+				compOffsets[2], compOffsets[3]);
+			System.out.printf("Drums: %X (x%d)%n", drumOffset, drumCount);
+			System.out.printf("Instruments: %X (x%d)%n", insOffset, insCount);
+		}
 
 		if (drumCount > 0) {
 			assert (drumOffset == bb.position());
@@ -153,18 +155,21 @@ public class Song implements XmlSerializable
 			compositions[i].index = i;
 			compositions[i].enabled = true;
 
-			System.out.println("*************************************************");
-			for (CompCommand cmd : compositions[i].commands) {
-				cmd.print();
+			if (Track.debugPrint) {
+				System.out.println("*************************************************");
+				for (CompCommand cmd : compositions[i].commands)
+					cmd.print();
+				System.out.println("-------------------------------------------------");
 			}
-			System.out.println("-------------------------------------------------");
 		}
 
-		System.out.println();
+		if (Track.debugPrint)
+			System.out.println();
 
 		findMissingPhrases(bb);
 
-		printBreakdown(bb.capacity());
+		if (Track.debugPrint)
+			printBreakdown(bb.capacity());
 	}
 
 	public void build(File outFile) throws IOException

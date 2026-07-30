@@ -170,6 +170,11 @@ public class Envelope implements XmlSerializable
 			this.release = release;
 		}
 
+		public EnvelopePair withPress(int[] press)
+		{
+			return new EnvelopePair(press, release);
+		}
+
 		private EnvelopePair(ByteBuffer bb, int pressOffset, int releaseOffset)
 		{
 			ArrayList<Integer> pressList = readCmdList(bb, pressOffset);

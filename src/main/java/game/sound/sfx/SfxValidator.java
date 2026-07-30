@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import game.sound.engine.EnvelopeCommand;
+import game.sound.engine.EnvelopeProgram;
 import game.sound.sfx.SfxArchive.Allocation;
 import game.sound.sfx.SfxArchive.Command;
 import game.sound.sfx.SfxArchive.Definition;
@@ -148,7 +149,7 @@ public final class SfxValidator
 							commandContext + " duration index");
 						break;
 					case SET_SCALE:
-						range(command.value, 0, 127, commandContext + " value");
+						range(command.value, 0, EnvelopeProgram.MAX_SCALE, commandContext + " value");
 						break;
 					case ADD_SCALE:
 						range(command.value, -128, 127, commandContext + " value");

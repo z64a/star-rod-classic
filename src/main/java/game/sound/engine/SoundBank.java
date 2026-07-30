@@ -72,10 +72,6 @@ public class SoundBank
 				throw new StarRodException("Duplicate key for sound bank, group %X with index %X", e.group, e.index);
 
 			bankRefMap.put(key, bank);
-
-			int i = 0;
-			for (Instrument ins : bank.instruments)
-				System.out.printf("INS: %X %X --> %4s %X%n", e.group, e.index, bank.name, i++);
 		}
 
 		SoundBankCatalog catalog = SoundBankCatalog.loadMod();

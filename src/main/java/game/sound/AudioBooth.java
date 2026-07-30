@@ -44,6 +44,7 @@ import game.sound.mseq.Mseq;
 import game.sound.mseq.MseqPlayer;
 import game.sound.sfx.SfxArchive;
 import game.sound.sfx.SfxArchive.Sound;
+import game.sound.sfx.SfxPlayer;
 import game.sound.sfx.SfxXml;
 import net.miginfocom.swing.MigLayout;
 import util.Logger;
@@ -51,6 +52,13 @@ import util.ui.FilteredListModel;
 
 public class AudioBooth
 {
+	private enum PlaybackType
+	{
+		NONE,
+		SFX,
+		MSEQ
+	}
+
 	private final Object threadLock = new Object();
 
 	public static void main(String[] args) throws Exception
@@ -62,6 +70,7 @@ public class AudioBooth
 	private final AudioEngine engine;
 	private final SoundBank bank;
 	private final MseqPlayer mseqPlayer;
+	private final SfxPlayer sfxPlayer;
 
 	private final JLabel statusLabel;
 	private final JButton pauseButton;
@@ -70,12 +79,14 @@ public class AudioBooth
 	private boolean ignoreSliderUpdate = false;
 	private volatile boolean running = true;
 	private volatile int seekTime = -1;
+	private PlaybackType playbackType = PlaybackType.NONE;
 
 	private AudioBooth() throws Exception
 	{
 		engine = new AudioEngine();
 		bank = new SoundBank();
 		mseqPlayer = new MseqPlayer(engine, bank);
+		sfxPlayer = new SfxPlayer(engine, bank);
 
 		// required for radio songs, just keep this always loaded
 		bank.installAuxBank("SPC3", 2);
@@ -114,9 +125,17 @@ public class AudioBooth
 		pauseButton.setEnabled(false);
 		pauseButton.addActionListener((e) -> {
 			synchronized (threadLock) {
-				boolean paused = mseqPlayer.getPaused();
-				mseqPlayer.setPaused(!paused);
-				pauseButton.setText(mseqPlayer.getPaused() ? "Play" : "Pause");
+				boolean paused;
+				if (playbackType == PlaybackType.SFX) {
+					paused = sfxPlayer.getPaused();
+					sfxPlayer.setPaused(!paused);
+					pauseButton.setText(sfxPlayer.getPaused() ? "Play" : "Pause");
+				}
+				else if (playbackType == PlaybackType.MSEQ) {
+					paused = mseqPlayer.getPaused();
+					mseqPlayer.setPaused(!paused);
+					pauseButton.setText(mseqPlayer.getPaused() ? "Play" : "Pause");
+				}
 			}
 		});
 
@@ -163,6 +182,7 @@ public class AudioBooth
 			try {
 				SoundBankCatalog catalog = SoundBankCatalog.loadMod();
 				SfxArchive archive = SfxXml.read(manifest.toPath(), catalog);
+				sfxPlayer.setArchive(archive);
 				model.addAll(archive.sounds.values());
 			}
 			catch (Exception e) {
@@ -311,12 +331,36 @@ public class AudioBooth
 		if (sound == null)
 			return;
 
+		int duration = 0;
+		synchronized (threadLock) {
+			mseqPlayer.stop();
+			seekTime = -1;
+
+			if (sound.isEmpty()) {
+				sfxPlayer.stop();
+				playbackType = PlaybackType.NONE;
+			}
+			else {
+				sfxPlayer.play(sound.id);
+				duration = sfxPlayer.getDuration();
+				playbackType = PlaybackType.SFX;
+			}
+		}
+
+		ignoreSliderUpdate = true;
+		timeSlider.setMaximum(Math.max(1, duration));
+		timeSlider.setValue(0);
+		ignoreSliderUpdate = false;
+		timeSlider.setEnabled(duration > 0);
+
 		if (sound.isEmpty()) {
+			pauseButton.setEnabled(false);
 			statusLabel.setText(String.format("SFX %04X %s is an available empty slot.", sound.id, sound.name));
 		}
 		else {
-			statusLabel.setText(String.format(
-				"Selected SFX %04X %s. SFX playback is not implemented yet.", sound.id, sound.name));
+			pauseButton.setText("Pause");
+			pauseButton.setEnabled(true);
+			statusLabel.setText(String.format("Playing SFX %04X %s.", sound.id, sound.name));
 		}
 	}
 
@@ -327,10 +371,12 @@ public class AudioBooth
 			mseq.calculateTiming();
 
 			synchronized (threadLock) {
+				sfxPlayer.stop();
 				timeSlider.setMaximum(Math.max(1, mseq.duration));
 				timeSlider.setValue(0);
 				seekTime = -1;
 				mseqPlayer.setMseq(mseq);
+				playbackType = PlaybackType.MSEQ;
 			}
 
 			pauseButton.setText("Pause");
@@ -347,6 +393,14 @@ public class AudioBooth
 
 	private void selectBgm(File file)
 	{
+		synchronized (threadLock) {
+			sfxPlayer.stop();
+			mseqPlayer.stop();
+			playbackType = PlaybackType.NONE;
+			seekTime = -1;
+		}
+		pauseButton.setEnabled(false);
+		timeSlider.setEnabled(false);
 		statusLabel.setText("Selected BGM " + file.getName() + ". BGM playback is not implemented yet.");
 	}
 
@@ -371,12 +425,20 @@ public class AudioBooth
 
 			synchronized (threadLock) {
 				if (seekTime >= 0) {
-					mseqPlayer.seekTime(seekTime);
+					if (playbackType == PlaybackType.MSEQ)
+						mseqPlayer.seekTime(seekTime);
+					else if (playbackType == PlaybackType.SFX)
+						sfxPlayer.seekTime(seekTime);
 					seekTime = -1;
 				}
 
 				engine.renderFrame(deltaTime, false);
-				playbackTime = mseqPlayer.getTime();
+				if (playbackType == PlaybackType.MSEQ)
+					playbackTime = mseqPlayer.getTime();
+				else if (playbackType == PlaybackType.SFX)
+					playbackTime = sfxPlayer.getTime();
+				else
+					playbackTime = 0;
 			}
 
 			updateTimeSlider(playbackTime);

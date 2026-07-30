@@ -26,6 +26,7 @@ public class Voice
 	private int pan;
 	private int reverb;
 
+	private boolean allowLooping;
 	private int loopIterations;
 
 	public Voice()
@@ -35,6 +36,7 @@ public class Voice
 		volume = 1.0f;
 		pitch = 1.0f;
 		pan = 64;
+		allowLooping = true;
 
 		state = VoiceState.INIT;
 	}
@@ -78,6 +80,11 @@ public class Voice
 			reverb = Math.max(0, Math.min(127, reverb));
 		}
 		this.reverb = reverb;
+	}
+
+	public void setLoopingAllowed(boolean enabled)
+	{
+		allowLooping = enabled;
 	}
 
 	public void play()
@@ -153,7 +160,7 @@ public class Voice
 			int i1 = i0 + 1;
 
 			// handle looping
-			if (ins.hasLoop && i1 >= ins.loopEnd) {
+			if (allowLooping && ins.hasLoop && i1 >= ins.loopEnd) {
 				if (ins.loopCount == Instrument.LOOP_FOREVER) {
 					// infinite loop
 					readPos = ins.loopStart + (readPos - ins.loopEnd);
