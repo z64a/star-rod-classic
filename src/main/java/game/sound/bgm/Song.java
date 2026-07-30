@@ -481,6 +481,30 @@ public class Song implements XmlSerializable
 		}
 	}
 
+	public int getTicksPerBeat()
+	{
+		return TIMING_PRESET_MAP[timingPreset];
+	}
+
+	public Composition getComposition(int index)
+	{
+		if (index < 0 || index >= compositions.length)
+			return null;
+		if (!compositions[index].enabled)
+			return null;
+		return compositions[index];
+	}
+
+	public List<InstrumentPreset> getInstruments()
+	{
+		return Collections.unmodifiableList(instruments);
+	}
+
+	public List<DrumPreset> getDrums()
+	{
+		return Collections.unmodifiableList(drums);
+	}
+
 	SoundBankCatalog getSoundBankCatalog()
 	{
 		return soundBankCatalog;

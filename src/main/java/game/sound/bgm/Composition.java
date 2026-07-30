@@ -4,7 +4,9 @@ import static game.sound.bgm.SongKey.*;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -38,6 +40,11 @@ public class Composition implements XmlSerializable
 	protected Composition(Song song)
 	{
 		this.song = song;
+	}
+
+	public List<CompCommand> getCommands()
+	{
+		return Collections.unmodifiableList(commands);
 	}
 
 	protected Composition(Song song, ByteBuffer bb, int index, int filePos)
@@ -202,6 +209,11 @@ public class Composition implements XmlSerializable
 			bb.position(nextPos);
 		}
 
+		public Phrase getPhrase()
+		{
+			return phrase;
+		}
+
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
@@ -254,6 +266,11 @@ public class Composition implements XmlSerializable
 			this.loopIndex = loopIndex;
 		}
 
+		public int getLoopIndex()
+		{
+			return loopIndex;
+		}
+
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
@@ -296,6 +313,16 @@ public class Composition implements XmlSerializable
 			super(comp);
 			this.loopIndex = loopIndex;
 			this.loopCount = loopCount;
+		}
+
+		public int getLoopIndex()
+		{
+			return loopIndex;
+		}
+
+		public int getLoopCount()
+		{
+			return loopCount;
 		}
 
 		@Override

@@ -31,6 +31,7 @@ public class SoundBank
 
 	private HashMap<String, Bank> bankNameMap;
 	private HashMap<Integer, Bank> bankRefMap;
+	private HashMap<String, Instrument> instrumentNameMap;
 
 	private ArrayList<InstrumentPreset> instrumentList;
 	private ArrayList<DrumPreset> drumList;
@@ -38,6 +39,7 @@ public class SoundBank
 	public SoundBank() throws IOException
 	{
 		bankNameMap = new HashMap<>();
+		instrumentNameMap = new HashMap<>();
 
 		for (File dir : MOD_AUDIO_BANK.toFile().listFiles(File::isDirectory)) {
 			String bankName = FilenameUtils.getBaseName(dir.getName());
@@ -51,6 +53,8 @@ public class SoundBank
 			Bank bank = new Bank(bankName, xmlFile);
 			for (Instrument ins : bank.instruments) {
 				ins.load(dir);
+				if (instrumentNameMap.put(ins.name, ins) != null)
+					throw new StarRodException("Duplicate sound bank WAV name %s", ins.name);
 			}
 			bankNameMap.put(bank.name, bank);
 			Logger.log("Loaded bank " + bank.name);
@@ -95,6 +99,21 @@ public class SoundBank
 
 	public record InstrumentQueryResult(Instrument instrument, EnvelopePair envelope)
 	{}
+
+	public record PresetQueryResult(InstrumentPreset preset, Instrument instrument, EnvelopePair envelope)
+	{}
+
+	public InstrumentQueryResult getInstrument(String wav, int envelope)
+	{
+		String name = FilenameUtils.getBaseName(wav);
+		Instrument ins = instrumentNameMap.get(name);
+		if (ins == null) {
+			Logger.logfError("Could not find sound bank WAV %s", wav);
+			return null;
+		}
+
+		return getInstrument(ins, envelope);
+	}
 
 	public InstrumentQueryResult getInstrument(int groupEnv, int index)
 	{
@@ -143,12 +162,31 @@ public class SoundBank
 		}
 
 		Instrument ins = bank.instruments.get(insIndex);
+		return getInstrument(ins, envIndex);
+	}
+
+	private InstrumentQueryResult getInstrument(Instrument ins, int envIndex)
+	{
 		EnvelopePair env = DEFAULT_ENVELOPE;
 
 		if (envIndex < ins.envelope.count())
 			env = ins.envelope.get(envIndex);
 
 		return new InstrumentQueryResult(ins, env);
+	}
+
+	public PresetQueryResult getPreset(int index)
+	{
+		if (index < 0 || index >= instrumentList.size()) {
+			Logger.logfError("Instrument preset ID is out of range: %X", index);
+			return null;
+		}
+
+		InstrumentPreset preset = instrumentList.get(index);
+		InstrumentQueryResult result = getInstrument(preset.wav, preset.envelope);
+		if (result == null)
+			return null;
+		return new PresetQueryResult(preset, result.instrument, result.envelope);
 	}
 
 	public record DrumQueryResult(DrumPreset drum, Instrument instrument, EnvelopePair envelope)
@@ -163,7 +201,7 @@ public class SoundBank
 
 		DrumPreset drum = drumList.get(drumID);
 
-		InstrumentQueryResult ins = getInstrument(drum.bank, drum.patch);
+		InstrumentQueryResult ins = getInstrument(drum.wav, drum.envelope);
 		if (ins == null) {
 			Logger.logfError("Failed to find instrument for drum %X", drumID);
 			return null;

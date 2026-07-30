@@ -107,6 +107,16 @@ public class Track implements XmlSerializable
 		return false;
 	}
 
+	public CommandStream getCommands()
+	{
+		return commands;
+	}
+
+	public boolean isDrum()
+	{
+		return commands.isDrum;
+	}
+
 	public Track(Phrase phrase, int i, ByteBuffer bb, int trackInfo)
 	{
 		this(phrase);
@@ -614,6 +624,11 @@ public class Track implements XmlSerializable
 			this.track = track;
 		}
 
+		public CommandStream getCommands()
+		{
+			return commands;
+		}
+
 		public void build(DynamicByteBuffer dbb)
 		{
 			commands.build(dbb, false);
@@ -663,6 +678,13 @@ public class Track implements XmlSerializable
 			for (int i = 0; i < options.length; i++) {
 				options[i] = new CommandStream(StreamType.BRANCH);
 			}
+		}
+
+		public CommandStream getOption(int index)
+		{
+			if (index < 0 || index >= options.length)
+				return null;
+			return options[index];
 		}
 
 		@Override
@@ -760,6 +782,21 @@ public class Track implements XmlSerializable
 			this.pitch = pitch;
 			this.velocity = velocity;
 			this.length = length;
+		}
+
+		public int getPitch()
+		{
+			return pitch;
+		}
+
+		public int getVelocity()
+		{
+			return velocity;
+		}
+
+		public int getLength()
+		{
+			return length;
 		}
 
 		@Override

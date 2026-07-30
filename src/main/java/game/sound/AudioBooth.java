@@ -3,12 +3,14 @@ package game.sound;
 import static app.Directories.MOD_AUDIO;
 import static app.Directories.MOD_AUDIO_BGM;
 import static app.Directories.MOD_AUDIO_MSEQ;
+import static app.Directories.FN_AUDIO_SONGS;
 
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -20,6 +22,7 @@ import java.util.function.Function;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -34,12 +37,16 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import org.apache.commons.io.FilenameUtils;
+
 import app.Environment;
 import app.SwingUtils;
 import app.input.IOUtils;
 import common.FrameLimiter;
 import game.sound.engine.AudioEngine;
 import game.sound.engine.SoundBank;
+import game.sound.bgm.BgmPlayer;
+import game.sound.bgm.Song;
 import game.sound.mseq.Mseq;
 import game.sound.mseq.MseqPlayer;
 import game.sound.sfx.SfxArchive;
@@ -49,6 +56,7 @@ import game.sound.sfx.SfxXml;
 import net.miginfocom.swing.MigLayout;
 import util.Logger;
 import util.ui.FilteredListModel;
+import util.xml.XmlWrapper.XmlReader;
 
 public class AudioBooth
 {
@@ -56,7 +64,8 @@ public class AudioBooth
 	{
 		NONE,
 		SFX,
-		MSEQ
+		MSEQ,
+		BGM
 	}
 
 	private final Object threadLock = new Object();
@@ -71,6 +80,7 @@ public class AudioBooth
 	private final SoundBank bank;
 	private final MseqPlayer mseqPlayer;
 	private final SfxPlayer sfxPlayer;
+	private final BgmPlayer bgmPlayer;
 
 	private final JLabel statusLabel;
 	private final JButton pauseButton;
@@ -80,6 +90,11 @@ public class AudioBooth
 	private volatile boolean running = true;
 	private volatile int seekTime = -1;
 	private PlaybackType playbackType = PlaybackType.NONE;
+	private JComboBox<Integer> bgmVariationBox;
+	private JComboBox<Integer> bgmBranchBox;
+	private Song selectedBgm;
+	private File selectedBgmFile;
+	private boolean updatingBgmControls;
 
 	private AudioBooth() throws Exception
 	{
@@ -87,6 +102,7 @@ public class AudioBooth
 		bank = new SoundBank();
 		mseqPlayer = new MseqPlayer(engine, bank);
 		sfxPlayer = new SfxPlayer(engine, bank);
+		bgmPlayer = new BgmPlayer(engine, bank);
 
 		// required for radio songs, just keep this always loaded
 		bank.installAuxBank("SPC3", 2);
@@ -136,6 +152,11 @@ public class AudioBooth
 					mseqPlayer.setPaused(!paused);
 					pauseButton.setText(mseqPlayer.getPaused() ? "Play" : "Pause");
 				}
+				else if (playbackType == PlaybackType.BGM) {
+					paused = bgmPlayer.getPaused();
+					bgmPlayer.setPaused(!paused);
+					pauseButton.setText(bgmPlayer.getPaused() ? "Play" : "Pause");
+				}
 			}
 		});
 
@@ -143,8 +164,7 @@ public class AudioBooth
 		assetTabs.addTab("SFX", createSfxTab());
 		assetTabs.addTab("MSEQ", createFileTab(
 			IOUtils.getFilesWithExtension(MOD_AUDIO_MSEQ, "xml", false), this::selectMseq, "MSEQ"));
-		assetTabs.addTab("BGM", createFileTab(
-			IOUtils.getFilesWithExtension(MOD_AUDIO_BGM, "xml", false), this::selectBgm, "BGM"));
+		assetTabs.addTab("BGM", createBgmTab());
 
 		frame.add(SwingUtils.getLabel("Volume:", 12));
 		frame.add(masterVolumeSlider, "growx, wrap");
@@ -251,6 +271,43 @@ public class AudioBooth
 		return createListPanel(list, model, assetType, directory, File::getName);
 	}
 
+	private JPanel createBgmTab() throws IOException
+	{
+		JPanel panel = createFileTab(
+			IOUtils.getFilesWithExtension(MOD_AUDIO_BGM, "xml", false), this::selectBgm, "BGM");
+
+		bgmVariationBox = new JComboBox<>();
+		bgmVariationBox.setEnabled(false);
+		bgmVariationBox.addActionListener((e) -> {
+			if (updatingBgmControls || selectedBgm == null)
+				return;
+			Integer variation = (Integer) bgmVariationBox.getSelectedItem();
+			if (variation != null)
+				playBgm(variation);
+		});
+
+		bgmBranchBox = new JComboBox<>();
+		bgmBranchBox.setEnabled(false);
+		bgmBranchBox.addActionListener((e) -> {
+			if (updatingBgmControls || selectedBgm == null)
+				return;
+			Integer branch = (Integer) bgmBranchBox.getSelectedItem();
+			if (branch == null)
+				return;
+			synchronized (threadLock) {
+				bgmPlayer.setBranchOption(branch);
+			}
+		});
+
+		JPanel controls = new JPanel(new MigLayout("ins 0", "[][grow][][grow]", "[]"));
+		controls.add(SwingUtils.getLabel("Variation:", 12));
+		controls.add(bgmVariationBox, "growx");
+		controls.add(SwingUtils.getLabel("Branch:", 12));
+		controls.add(bgmBranchBox, "growx");
+		panel.add(controls, "span, growx");
+		return panel;
+	}
+
 	private static void configureList(JList<?> list)
 	{
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -334,6 +391,7 @@ public class AudioBooth
 		int duration = 0;
 		synchronized (threadLock) {
 			mseqPlayer.stop();
+			bgmPlayer.stop();
 			seekTime = -1;
 
 			if (sound.isEmpty()) {
@@ -372,6 +430,7 @@ public class AudioBooth
 
 			synchronized (threadLock) {
 				sfxPlayer.stop();
+				bgmPlayer.stop();
 				timeSlider.setMaximum(Math.max(1, mseq.duration));
 				timeSlider.setValue(0);
 				seekTime = -1;
@@ -393,15 +452,91 @@ public class AudioBooth
 
 	private void selectBgm(File file)
 	{
-		synchronized (threadLock) {
-			sfxPlayer.stop();
-			mseqPlayer.stop();
-			playbackType = PlaybackType.NONE;
-			seekTime = -1;
+		try {
+			SoundBankCatalog catalog = SoundBankCatalog.loadMod();
+			String bgmFilename = FilenameUtils.getBaseName(file.getName()) + ".bgm";
+			SoundBankCatalog songCatalog = catalog.withSongBanks(
+				MOD_AUDIO.getFile(FN_AUDIO_SONGS), bgmFilename);
+			Song song = new Song();
+			song.setSoundBankCatalog(songCatalog);
+			XmlReader xmr = new XmlReader(file);
+			song.fromXML(xmr, xmr.getRootElement());
+
+			selectedBgm = song;
+			selectedBgmFile = file;
+			updateBgmControls(song);
+			Integer variation = (Integer) bgmVariationBox.getSelectedItem();
+			playBgm(variation == null ? 0 : variation);
 		}
-		pauseButton.setEnabled(false);
-		timeSlider.setEnabled(false);
-		statusLabel.setText("Selected BGM " + file.getName() + ". BGM playback is not implemented yet.");
+		catch (Exception e) {
+			Logger.logfError("Could not load BGM asset %s", file.getName());
+			Logger.printStackTrace(e);
+			statusLabel.setText("Could not load BGM " + file.getName());
+		}
+	}
+
+	private void updateBgmControls(Song song)
+	{
+		updatingBgmControls = true;
+		bgmVariationBox.removeAllItems();
+		for (int i = 0; i < 4; i++) {
+			if (song.getComposition(i) != null)
+				bgmVariationBox.addItem(i);
+		}
+		bgmVariationBox.setEnabled(bgmVariationBox.getItemCount() > 1);
+
+		bgmBranchBox.removeAllItems();
+		for (int i = 0; i < Math.max(1, song.branchOptions); i++)
+			bgmBranchBox.addItem(i);
+		bgmBranchBox.setEnabled(bgmBranchBox.getItemCount() > 1);
+		bgmBranchBox.setSelectedIndex(0);
+		updatingBgmControls = false;
+	}
+
+	private void playBgm(int variation)
+	{
+		if (selectedBgm == null)
+			return;
+		try {
+			synchronized (threadLock) {
+				sfxPlayer.stop();
+				mseqPlayer.stop();
+				seekTime = -1;
+				bgmPlayer.play(selectedBgm, variation);
+				Integer branch = (Integer) bgmBranchBox.getSelectedItem();
+				if (branch != null && branch != 0)
+					bgmPlayer.setBranchOption(branch);
+				playbackType = bgmPlayer.isPlaying() ? PlaybackType.BGM : PlaybackType.NONE;
+				updateTimeline(bgmPlayer.getDuration());
+			}
+			if (playbackType == PlaybackType.BGM) {
+				pauseButton.setText("Pause");
+				pauseButton.setEnabled(true);
+				statusLabel.setText("Playing BGM " + selectedBgmFile.getName());
+			}
+			else {
+				pauseButton.setEnabled(false);
+				statusLabel.setText("BGM " + selectedBgmFile.getName()
+					+ " has an empty composition for this variation.");
+			}
+		}
+		catch (Exception e) {
+			Logger.logfError("Could not play BGM asset %s", selectedBgmFile.getName());
+			Logger.printStackTrace(e);
+			playbackType = PlaybackType.NONE;
+			pauseButton.setEnabled(false);
+			timeSlider.setEnabled(false);
+			statusLabel.setText("Could not play BGM " + selectedBgmFile.getName());
+		}
+	}
+
+	private void updateTimeline(int duration)
+	{
+		ignoreSliderUpdate = true;
+		timeSlider.setMaximum(Math.max(1, duration));
+		timeSlider.setValue(0);
+		ignoreSliderUpdate = false;
+		timeSlider.setEnabled(duration > 0);
 	}
 
 	private void close(JFrame frame)
@@ -429,6 +564,8 @@ public class AudioBooth
 						mseqPlayer.seekTime(seekTime);
 					else if (playbackType == PlaybackType.SFX)
 						sfxPlayer.seekTime(seekTime);
+					else if (playbackType == PlaybackType.BGM)
+						bgmPlayer.seekTime(seekTime);
 					seekTime = -1;
 				}
 
@@ -437,6 +574,8 @@ public class AudioBooth
 					playbackTime = mseqPlayer.getTime();
 				else if (playbackType == PlaybackType.SFX)
 					playbackTime = sfxPlayer.getTime();
+				else if (playbackType == PlaybackType.BGM)
+					playbackTime = bgmPlayer.getTime();
 				else
 					playbackTime = 0;
 			}

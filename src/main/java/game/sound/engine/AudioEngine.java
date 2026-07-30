@@ -16,6 +16,7 @@ public class AudioEngine
 
 	public static final int OUTPUT_RATE = 32000;
 	public static final int FRAME_SAMPLES = 184;
+	public static final int NUM_EFFECT_BUSES = 2;
 
 	private static final int NUM_CHANNELS = 2; // stereo
 
@@ -24,16 +25,17 @@ public class AudioEngine
 	private int overflowSamples = 0;
 
 	private final SourceDataLine line;
-	private final EffectBus effectBus;
+	private final EffectBus[] effectBuses;
 	private final List<Voice> voices;
 
 	private final List<AudioClient> clients;
 
-	private float[] dryBufferL;
-	private float[] dryBufferR;
+	private float[][] dryBufferL;
+	private float[][] dryBufferR;
 
-	private float[] wetBufferL;
-	private float[] wetBufferR;
+	private float[][] wetBufferL;
+	private float[][] wetBufferR;
+	private StereoDelay[] stereoDelays;
 
 	private float[] mixedBufferL;
 	private float[] mixedBufferR;
@@ -44,20 +46,35 @@ public class AudioEngine
 
 	public AudioEngine() throws LineUnavailableException
 	{
-		effectBus = new EffectBus();
+		this(true);
+	}
+
+	public AudioEngine(boolean enableOutput) throws LineUnavailableException
+	{
+		effectBuses = new EffectBus[NUM_EFFECT_BUSES];
+		for (int i = 0; i < effectBuses.length; i++)
+			effectBuses[i] = new EffectBus();
 		voices = new ArrayList<>();
 		clients = new ArrayList<>();
 
-		AudioFormat format = new AudioFormat(OUTPUT_RATE, Short.SIZE, NUM_CHANNELS, true, false);
-		line = AudioSystem.getSourceDataLine(format);
-		line.open(format);
-		line.start();
+		if (enableOutput) {
+			AudioFormat format = new AudioFormat(OUTPUT_RATE, Short.SIZE, NUM_CHANNELS, true, false);
+			line = AudioSystem.getSourceDataLine(format);
+			line.open(format);
+			line.start();
+		}
+		else {
+			line = null;
+		}
 
-		dryBufferL = new float[FRAME_SAMPLES];
-		dryBufferR = new float[FRAME_SAMPLES];
+		dryBufferL = new float[NUM_EFFECT_BUSES][FRAME_SAMPLES];
+		dryBufferR = new float[NUM_EFFECT_BUSES][FRAME_SAMPLES];
 
-		wetBufferL = new float[FRAME_SAMPLES];
-		wetBufferR = new float[FRAME_SAMPLES];
+		wetBufferL = new float[NUM_EFFECT_BUSES][FRAME_SAMPLES];
+		wetBufferR = new float[NUM_EFFECT_BUSES][FRAME_SAMPLES];
+		stereoDelays = new StereoDelay[NUM_EFFECT_BUSES];
+		for (int i = 0; i < stereoDelays.length; i++)
+			stereoDelays[i] = new StereoDelay();
 
 		mixedBufferL = new float[FRAME_SAMPLES];
 		mixedBufferR = new float[FRAME_SAMPLES];
@@ -67,15 +84,18 @@ public class AudioEngine
 
 	public void flush()
 	{
-		line.flush();
+		if (line != null)
+			line.flush();
 		overflowSamples = 0;
 	}
 
 	public void shutdown()
 	{
-		line.drain();
-		line.stop();
-		line.close();
+		if (line != null) {
+			line.drain();
+			line.stop();
+			line.close();
+		}
 	}
 
 	public void addClient(AudioClient client)
@@ -110,10 +130,34 @@ public class AudioEngine
 		return masterVolume;
 	}
 
+	public void setEffectPreset(int bus, EffectBus.EffectPreset preset)
+	{
+		if (bus < 0 || bus >= effectBuses.length)
+			return;
+		effectBuses[bus].setPreset(preset);
+	}
+
+	public void setStereoDelay(int bus, int side, int length)
+	{
+		if (bus < 0 || bus >= stereoDelays.length)
+			return;
+		stereoDelays[bus].set(side, length);
+	}
+
+	public void resetEffects()
+	{
+		for (int i = 0; i < effectBuses.length; i++) {
+			effectBuses[i].setPreset(EffectBus.EffectPreset.NONE);
+			stereoDelays[i].set(0, 0);
+		}
+	}
+
 	private static final byte[] DUMMY_FRAME = new byte[BYTES_PER_SAMPLE * FRAME_SAMPLES];
 
 	public void padLine(double time)
 	{
+		if (line == null)
+			return;
 		int reqFrames = (int) Math.ceil((time * OUTPUT_RATE) / FRAME_SAMPLES);
 
 		for (int i = 0; i < reqFrames; i++)
@@ -129,14 +173,16 @@ public class AudioEngine
 
 		if (overflowSamples > 0) {
 			int startPos = FRAME_SAMPLES - overflowSamples; // where the last frame left off and overflow began
-			if (!fastForward)
+			if (!fastForward && line != null)
 				writeSamples(line, mixedBufferL, mixedBufferR, outBuffer, startPos, FRAME_SAMPLES);
 			processed += overflowSamples;
 			overflowSamples = 0;
 		}
 
 		// how many bytes are currently sitting in the data line
-		int lineBytesQueued = line.getBufferSize() - line.available();
+		int lineBytesQueued = 0;
+		if (line != null)
+			lineBytesQueued = line.getBufferSize() - line.available();
 
 		if (!fastForward && lineBytesQueued >= 2 * totalSamples * BYTES_PER_SAMPLE) {
 			// buffer already contains two frames of data, skip rendering
@@ -152,23 +198,39 @@ public class AudioEngine
 			}
 
 			// clear buffers
-			Arrays.fill(dryBufferL, 0, FRAME_SAMPLES, 0.0f);
-			Arrays.fill(dryBufferR, 0, FRAME_SAMPLES, 0.0f);
-
-			Arrays.fill(wetBufferL, 0, FRAME_SAMPLES, 0.0f);
-			Arrays.fill(wetBufferR, 0, FRAME_SAMPLES, 0.0f);
+			for (int i = 0; i < NUM_EFFECT_BUSES; i++) {
+				Arrays.fill(dryBufferL[i], 0, FRAME_SAMPLES, 0.0f);
+				Arrays.fill(dryBufferR[i], 0, FRAME_SAMPLES, 0.0f);
+				Arrays.fill(wetBufferL[i], 0, FRAME_SAMPLES, 0.0f);
+				Arrays.fill(wetBufferR[i], 0, FRAME_SAMPLES, 0.0f);
+			}
 
 			// mix voices
-			for (Voice v : voices)
-				v.renderInto(dryBufferL, dryBufferR, wetBufferL, wetBufferR);
+			for (Voice v : voices) {
+				int bus = v.getEffectBus();
+				v.renderInto(dryBufferL[bus], dryBufferR[bus], wetBufferL[bus], wetBufferR[bus]);
+			}
 
 			// process effects
-			effectBus.renderInto(wetBufferL, wetBufferR);
+			for (int i = 0; i < NUM_EFFECT_BUSES; i++) {
+				effectBuses[i].renderInto(wetBufferL[i], wetBufferR[i]);
+				for (int j = 0; j < FRAME_SAMPLES; j++) {
+					dryBufferL[i][j] += wetBufferL[i][j];
+					dryBufferR[i][j] += wetBufferR[i][j];
+				}
+				stereoDelays[i].process(dryBufferL[i], dryBufferR[i]);
+			}
 
 			// final mixdown for output samples
 			for (int i = 0; i < FRAME_SAMPLES; i++) {
-				mixedBufferL[i] = (dryBufferL[i] + wetBufferL[i]) * masterVolumeRatio;
-				mixedBufferR[i] = (dryBufferR[i] + wetBufferR[i]) * masterVolumeRatio;
+				mixedBufferL[i] = 0.0f;
+				mixedBufferR[i] = 0.0f;
+				for (int j = 0; j < NUM_EFFECT_BUSES; j++) {
+					mixedBufferL[i] += dryBufferL[j][i];
+					mixedBufferR[i] += dryBufferR[j][i];
+				}
+				mixedBufferL[i] *= masterVolumeRatio;
+				mixedBufferR[i] *= masterVolumeRatio;
 			}
 
 			processed += FRAME_SAMPLES;
@@ -184,7 +246,7 @@ public class AudioEngine
 				writeSamples = FRAME_SAMPLES;
 			}
 
-			if (!fastForward)
+			if (!fastForward && line != null)
 				writeSamples(line, mixedBufferL, mixedBufferR, outBuffer, 0, writeSamples);
 		}
 	}
@@ -216,5 +278,44 @@ public class AudioEngine
 	{
 		detune = Math.max(-0x3FFF, Math.min(0xFFF, detune));
 		return (float) Math.pow(2, detune / 1200.0); // 1200 = CENTS_PER_OCTAVE
+	}
+
+	private static final class StereoDelay
+	{
+		private final float[] buffer = new float[4 * FRAME_SAMPLES];
+		private int side;
+		private int length;
+		private int pos;
+
+		private void set(int side, int length)
+		{
+			if (side < 1 || side > 2 || length < 1) {
+				this.side = 0;
+				this.length = 0;
+			}
+			else {
+				this.side = side;
+				this.length = Math.min(4, length);
+			}
+			pos = 0;
+			Arrays.fill(buffer, 0.0f);
+		}
+
+		private void process(float[] left, float[] right)
+		{
+			if (side == 0)
+				return;
+
+			float[] channel = side == 1 ? left : right;
+			int delaySamples = length * FRAME_SAMPLES;
+			for (int i = 0; i < FRAME_SAMPLES; i++) {
+				float sample = channel[i];
+				channel[i] = buffer[pos];
+				buffer[pos] = sample;
+				pos++;
+				if (pos == delaySamples)
+					pos = 0;
+			}
+		}
 	}
 }

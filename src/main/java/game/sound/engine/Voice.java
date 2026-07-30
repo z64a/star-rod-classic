@@ -25,6 +25,7 @@ public class Voice
 	private float pitch;
 	private int pan;
 	private int reverb;
+	private int effectBus;
 
 	private boolean allowLooping;
 	private int loopIterations;
@@ -36,6 +37,7 @@ public class Voice
 		volume = 1.0f;
 		pitch = 1.0f;
 		pan = 64;
+		effectBus = 0;
 		allowLooping = true;
 
 		state = VoiceState.INIT;
@@ -80,6 +82,20 @@ public class Voice
 			reverb = Math.max(0, Math.min(127, reverb));
 		}
 		this.reverb = reverb;
+	}
+
+	public void setEffectBus(int effectBus)
+	{
+		if (effectBus < 0 || effectBus >= AudioEngine.NUM_EFFECT_BUSES) {
+			Logger.logWarning("Invalid effect bus: " + effectBus);
+			effectBus = Math.max(0, Math.min(AudioEngine.NUM_EFFECT_BUSES - 1, effectBus));
+		}
+		this.effectBus = effectBus;
+	}
+
+	int getEffectBus()
+	{
+		return effectBus;
 	}
 
 	public void setLoopingAllowed(boolean enabled)

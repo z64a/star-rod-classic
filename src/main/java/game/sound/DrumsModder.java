@@ -1,6 +1,7 @@
 package game.sound;
 
 import static app.Directories.*;
+import static game.sound.DrumPreset.DrumKey.TAG_DRUM;
 import static game.sound.DrumPreset.DrumKey.TAG_LIST;
 
 import java.io.File;
@@ -114,7 +115,7 @@ public class DrumsModder
 		XmlReader xmr = new XmlReader(xmlFile);
 		Element rootElem = xmr.getRootElement();
 
-		for (Element drumElem : xmr.getTags(rootElem, TAG_LIST)) {
+		for (Element drumElem : xmr.getTags(rootElem, TAG_DRUM)) {
 			drums.add(new DrumPreset(xmr, drumElem));
 		}
 

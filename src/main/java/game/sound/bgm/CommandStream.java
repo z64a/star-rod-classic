@@ -1,6 +1,8 @@
 package game.sound.bgm;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import game.sound.bgm.Track.Note;
 import game.sound.bgm.Track.TrackCommand;
@@ -40,6 +42,21 @@ public class CommandStream
 	public CommandStream(StreamType type)
 	{
 		this.type = type;
+	}
+
+	public List<TrackCommand> getCommands()
+	{
+		return Collections.unmodifiableList(all);
+	}
+
+	public boolean isDrum()
+	{
+		return isDrum;
+	}
+
+	public int getDuration()
+	{
+		return duration;
 	}
 
 	public void toXML(XmlWriter xmw, XmlTag tag)
