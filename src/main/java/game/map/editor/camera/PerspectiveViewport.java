@@ -225,7 +225,7 @@ public class PerspectiveViewport extends MapEditViewport
 			editor.cursor3D.render(this, opts, camera.pos);
 
 			if (opts.spriteShading != null)
-				opts.spriteShading.render(this, opts, camera.pos);
+				opts.spriteShading.render(this, opts);
 		}
 
 		if (doPerspProfiling)

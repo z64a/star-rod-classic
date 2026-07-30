@@ -1,5 +1,10 @@
 package game.map.scripts;
 
+import java.awt.Toolkit;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -64,7 +69,14 @@ public class ShadingPanel extends JPanel implements IShutdownListener
 		cbHasShading.addActionListener((e) -> {
 			if (ignoreChanges || map.scripts == null)
 				return;
-			MapEditor.execute(map.scripts.hasSpriteShading.mutator(cbHasShading.isSelected()));
+
+			if (cbHasShading.isSelected() && map.scripts.shadingProfile.get() == null) {
+				Toolkit.getDefaultToolkit().beep();
+				updateFields(map.scripts);
+				return;
+			}
+
+			MapEditor.execute(new SetShadingEnabled(cbHasShading.isSelected()));
 		});
 
 		profileBox = new JComboBox<>(new ListAdapterComboboxModel<>(ProjectDatabase.SpriteShading.listModel));
@@ -145,7 +157,7 @@ public class ShadingPanel extends JPanel implements IShutdownListener
 		ignoreChanges = true;
 
 		cbHasShading.setSelected(data.hasSpriteShading.get());
-		profileBox.setEnabled(data.hasSpriteShading.get());
+		profileBox.setEnabled(true);
 		profileBox.setSelectedItem(data.shadingProfile.get());
 
 		ShadingProfile profile = data.shadingProfile.get();
@@ -159,6 +171,11 @@ public class ShadingPanel extends JPanel implements IShutdownListener
 	{
 		private final ShadingProfile oldShading;
 		private final ShadingProfile newShading;
+		private final boolean oldEnabled;
+		private final boolean newEnabled;
+		private final List<ShadingLightSource> oldSelection;
+		private final ShadingLightSource oldSelectedSource;
+		private final ShadingLightSource newSelectedSource;
 
 		public SetShadingProfile(ShadingProfile profile)
 		{
@@ -166,57 +183,163 @@ public class ShadingPanel extends JPanel implements IShutdownListener
 
 			this.oldShading = map.scripts.shadingProfile.get();
 			this.newShading = profile;
+			this.oldEnabled = map.scripts.hasSpriteShading.get();
+			this.newEnabled = oldEnabled && newShading != null;
+			this.oldSelection = getSelectedSources(oldShading);
+			this.oldSelectedSource = oldShading == null ? null : oldShading.selectedSource;
+			this.newSelectedSource = newShading == null ? null : newShading.selectedSource;
 		}
 
 		@Override
 		public boolean shouldExec()
 		{
-			return newShading != oldShading;
+			return newShading != oldShading || newEnabled != oldEnabled;
 		}
 
 		@Override
 		public void exec()
 		{
 			super.exec();
-			map.scripts.shadingProfile.set(newShading);
-			updateFields(map.scripts);
-
-			if (oldShading != null) {
-				for (ShadingLightSource source : oldShading.sources) {
-					editor.removeEditorObject(source);
-					editor.selectionManager.deleteObject(source);
-				}
+			if (oldEnabled) {
+				removeSourcesFromEditor(oldShading);
+				oldShading.setSelectedSource(oldSelectedSource);
 			}
 
-			if (newShading != null) {
-				for (ShadingLightSource source : newShading.sources) {
-					editor.addEditorObject(source);
-					editor.selectionManager.createObject(source);
-				}
-			}
+			setShadingState(newShading, newEnabled);
+			if (newEnabled)
+				addSourcesToEditor(newShading, getActivationSelection(null, newSelectedSource));
 		}
 
 		@Override
 		public void undo()
 		{
 			super.undo();
-
-			if (newShading != null) {
-				for (ShadingLightSource source : newShading.sources) {
-					editor.removeEditorObject(source);
-					editor.selectionManager.deleteObject(source);
-				}
+			if (newEnabled) {
+				removeSourcesFromEditor(newShading);
+				newShading.setSelectedSource(newSelectedSource);
 			}
 
-			if (oldShading != null) {
-				for (ShadingLightSource source : oldShading.sources) {
-					editor.addEditorObject(source);
-					editor.selectionManager.createObject(source);
-				}
+			setShadingState(oldShading, oldEnabled);
+			if (oldEnabled)
+				addSourcesToEditor(oldShading, oldSelection);
+			else if (oldShading != null)
+				oldShading.setSelectedSource(oldSelectedSource);
+		}
+	}
+
+	private class SetShadingEnabled extends AbstractCommand
+	{
+		private final ShadingProfile profile;
+		private final boolean oldValue;
+		private final boolean newValue;
+		private final List<ShadingLightSource> oldSelection;
+		private final ShadingLightSource oldSelectedSource;
+
+		public SetShadingEnabled(boolean enabled)
+		{
+			super(enabled ? "Enable Sprite Shading" : "Disable Sprite Shading");
+			profile = map.scripts.shadingProfile.get();
+			oldValue = map.scripts.hasSpriteShading.get();
+			newValue = enabled && profile != null;
+			oldSelection = getSelectedSources(profile);
+			oldSelectedSource = profile == null ? null : profile.selectedSource;
+		}
+
+		@Override
+		public boolean shouldExec()
+		{
+			return oldValue != newValue;
+		}
+
+		@Override
+		public void exec()
+		{
+			super.exec();
+			if (oldValue) {
+				removeSourcesFromEditor(profile);
+				profile.setSelectedSource(oldSelectedSource);
 			}
 
-			map.scripts.shadingProfile.set(oldShading);
-			updateFields(map.scripts);
+			setShadingState(profile, newValue);
+			if (newValue)
+				addSourcesToEditor(profile, getActivationSelection(oldSelection, oldSelectedSource));
+		}
+
+		@Override
+		public void undo()
+		{
+			super.undo();
+			if (newValue) {
+				removeSourcesFromEditor(profile);
+				profile.setSelectedSource(oldSelectedSource);
+			}
+
+			setShadingState(profile, oldValue);
+			if (oldValue)
+				addSourcesToEditor(profile, oldSelection);
+			else if (profile != null)
+				profile.setSelectedSource(oldSelectedSource);
+		}
+	}
+
+	private void setShadingState(ShadingProfile profile, boolean enabled)
+	{
+		boolean profileChanged = map.scripts.shadingProfile.get() != profile;
+		boolean enabledChanged = map.scripts.hasSpriteShading.get() != enabled;
+		map.scripts.shadingProfile.set(profile, false);
+		map.scripts.hasSpriteShading.set(enabled, false);
+		if (profileChanged)
+			map.scripts.shadingProfile.fireCallbacks();
+		else if (enabledChanged)
+			map.scripts.hasSpriteShading.fireCallbacks();
+		updateFields(map.scripts);
+	}
+
+	private List<ShadingLightSource> getActivationSelection(List<ShadingLightSource> selectedSources, ShadingLightSource selectedSource)
+	{
+		if (selectedSources != null && !selectedSources.isEmpty())
+			return selectedSources;
+		if (selectedSource != null)
+			return Collections.singletonList(selectedSource);
+		return null;
+	}
+
+	private List<ShadingLightSource> getSelectedSources(ShadingProfile profile)
+	{
+		List<ShadingLightSource> selectedSources = new ArrayList<>();
+		if (profile != null) {
+			for (ShadingLightSource source : profile.sources) {
+				if (source.selected)
+					selectedSources.add(source);
+			}
+		}
+		return selectedSources;
+	}
+
+	private void removeSourcesFromEditor(ShadingProfile profile)
+	{
+		if (profile == null)
+			return;
+
+		for (ShadingLightSource source : profile.sources)
+			source.removeFromEditor();
+	}
+
+	private void addSourcesToEditor(ShadingProfile profile, List<ShadingLightSource> selectedSources)
+	{
+		if (profile == null)
+			return;
+
+		profile.setSelectedSource(null);
+		for (ShadingLightSource source : profile.sources) {
+			if (source.selected)
+				MapEditor.instance().selectionManager.deselectObject(source);
+			source.addToEditor();
+		}
+
+		if (selectedSources != null) {
+			for (ShadingLightSource source : selectedSources)
+				MapEditor.instance().selectionManager.selectObject(source);
 		}
 	}
 }

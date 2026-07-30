@@ -3988,7 +3988,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 			ShadingProfile profile = map.scripts.shadingProfile.get();
 			if (map.scripts.hasSpriteShading.get() && profile != null) {
 				for (ShadingLightSource source : profile.sources)
-					addEditorObject(source);
+					source.addToEditor();
 			}
 
 			if (!thumbnailMode) {

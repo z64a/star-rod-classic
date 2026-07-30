@@ -10,6 +10,7 @@ import org.w3c.dom.Element;
 import common.Vector3f;
 import game.map.Axis;
 import game.map.MutablePoint;
+import game.map.ReversibleTransform;
 import game.map.editor.MapEditor;
 import game.map.editor.PointObject;
 import game.map.editor.camera.MapEditViewport;
@@ -37,8 +38,14 @@ public class ShadingLightSource extends PointObject implements XmlSerializable
 	public transient final ShadingProfile profile;
 
 	private final Consumer<Object> notifyCallback = (o) -> {
-		notifyListeners();
+		notifyDataListeners();
 	};
+
+	private void notifyDataListeners()
+	{
+		notifyListeners();
+		profile.lightSourceChanged();
+	}
 
 	public static enum FalloffType
 	{
@@ -65,6 +72,7 @@ public class ShadingLightSource extends PointObject implements XmlSerializable
 	{
 		super(new Vector3f(0, 0, 0), 16.0f);
 		this.profile = parent;
+		recalculateAABB();
 	}
 
 	public ShadingLightSource(ShadingProfile parent, ByteBuffer bb)
@@ -81,6 +89,7 @@ public class ShadingLightSource extends PointObject implements XmlSerializable
 		falloff.set(bb.getFloat());
 		unk_0E = bb.get() & 0xFF;
 		int padding = bb.get(); // always zero
+		recalculateAABB();
 		assert (padding == 0);
 		assert (unk_0E == 0);
 		assert ((flags & 0xF2) == 0); // only 1, 4, 8 are valid
@@ -96,6 +105,7 @@ public class ShadingLightSource extends PointObject implements XmlSerializable
 		copy.falloffType.copy(falloffType);
 		copy.enabled.copy(enabled);
 		copy.unk_0E = unk_0E;
+		copy.recalculateAABB();
 		return copy;
 	}
 
@@ -163,6 +173,43 @@ public class ShadingLightSource extends PointObject implements XmlSerializable
 		return new int[] { (rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF };
 	}
 
+	public double getFalloffDistance()
+	{
+		return coeffToDistance(falloffType.get(), falloff.get());
+	}
+
+	public static double coeffToDistance(FalloffType type, double coefficient)
+	{
+		if (coefficient == 0.0)
+			return 0.0;
+
+		switch (type) {
+			case Linear:
+				return 1.0 / coefficient;
+			case Quadratic:
+				return 1.0 / Math.sqrt(coefficient);
+			default:
+			case Uniform:
+				return coefficient;
+		}
+	}
+
+	public static double distanceToCoeff(FalloffType type, double distance)
+	{
+		if (distance == 0.0)
+			return 0.0;
+
+		switch (type) {
+			case Linear:
+				return 1.0 / distance;
+			case Quadratic:
+				return 1.0 / (distance * distance);
+			default:
+			case Uniform:
+				return distance;
+		}
+	}
+
 	@Override
 	public String toString()
 	{
@@ -216,13 +263,13 @@ public class ShadingLightSource extends PointObject implements XmlSerializable
 		xmw.printTag(lightTag);
 	}
 
-	public void render(MapEditViewport viewport, RenderingOptions opts, Vector3f cameraPos, boolean uiselected)
+	public void render(MapEditViewport viewport, RenderingOptions opts)
 	{
 		int[] rgb = getColor();
 
-		if (uiselected) {
+		if (selected) {
 			TransformMatrix mtx = TransformMatrix.identity();
-			mtx.scale(100);
+			mtx.scale(getFalloffDistance());
 			mtx.translate(position.getX(), position.getY(), position.getZ());
 
 			LineShader shader = ShaderManager.use(LineShader.class);
@@ -242,35 +289,76 @@ public class ShadingLightSource extends PointObject implements XmlSerializable
 		texShader.multiplyBaseColor.set(true);
 		texShader.selected.set(selected);
 
-		float renderYaw = 0;
-		float renderPitch = 0;
-
-		switch (viewport.type) {
-			case PERSPECTIVE:
-				Vector3f deltaPos = Vector3f.sub(cameraPos, position.getVector());
-				double R = Math.sqrt(deltaPos.x * deltaPos.x + deltaPos.z * deltaPos.z);
-				renderYaw = -(float) Math.toDegrees(Math.atan2(deltaPos.x, deltaPos.z));
-				renderPitch = (float) Math.toDegrees(Math.atan2(deltaPos.y, R));
-				break;
-			case FRONT:
-				break;
-			case SIDE:
-				renderYaw = 90.0f;
-				break;
-			case TOP:
-				renderPitch = 90.0f;
-				break;
-		}
-
+		// Cancel the view rotation so the icon remains parallel to the viewport with its top aligned to screen-up.
 		TransformMatrix mtx = TransformMatrix.identity();
-		mtx.rotate(Axis.X, -renderPitch);
-		mtx.rotate(Axis.Y, -renderYaw);
+		mtx.rotate(Axis.X, -viewport.camera.getPitch());
+		mtx.rotate(Axis.Y, -viewport.camera.getYaw());
 		mtx.translate(position.getX(), position.getY(), position.getZ());
 
 		texShader.setXYQuadCoords(-25, -25, 25, 25, 0);
 		texShader.renderQuad(mtx);
 
 		RenderState.setModelMatrix(null);
+	}
+
+	@Override
+	public void setSelected(boolean val)
+	{
+		if (selected == val)
+			return;
+
+		super.setSelected(val);
+		profile.updateSelectedSource(this, val);
+	}
+
+	public void addToEditor()
+	{
+		if (!MapEditor.exists())
+			return;
+
+		MapEditor editor = MapEditor.instance();
+		recalculateAABB();
+		if (!editor.getEditorObjects().contains(this))
+			editor.addEditorObject(this);
+	}
+
+	public void removeFromEditor()
+	{
+		if (!MapEditor.exists())
+			return;
+
+		MapEditor editor = MapEditor.instance();
+		editor.selectionManager.deleteObject(this);
+		while (editor.removeEditorObject(this)) {}
+	}
+
+	@Override
+	public ReversibleTransform createTransformer(TransformMatrix m)
+	{
+		ReversibleTransform transformer = super.createTransformer(m);
+		return new ReversibleTransform() {
+			@Override
+			public void transform()
+			{
+				transformer.transform();
+				shadingDataChanged();
+			}
+
+			@Override
+			public void revert()
+			{
+				transformer.revert();
+				shadingDataChanged();
+			}
+		};
+	}
+
+	private void shadingDataChanged()
+	{
+		if (ProjectDatabase.SpriteShading != null)
+			ProjectDatabase.SpriteShading.modified = true;
+		notifyListeners();
+		profile.lightSourceChanged();
 	}
 
 	public static final class SetLightColor extends AbstractCommand
@@ -369,9 +457,8 @@ public class ShadingLightSource extends PointObject implements XmlSerializable
 					light.position.setZ(newValue);
 					break;
 			}
-			//	light.notifyListeners();
 			light.recalculateAABB();
-			ProjectDatabase.SpriteShading.modified = true;
+			light.shadingDataChanged();
 		}
 
 		@Override
@@ -389,9 +476,8 @@ public class ShadingLightSource extends PointObject implements XmlSerializable
 					light.position.setZ(oldValue);
 					break;
 			}
-			//	light.notifyListeners();
 			light.recalculateAABB();
-			ProjectDatabase.SpriteShading.modified = true;
+			light.shadingDataChanged();
 		}
 	}
 
@@ -401,12 +487,12 @@ public class ShadingLightSource extends PointObject implements XmlSerializable
 		private final float oldValue;
 		private final float newValue;
 
-		public SetLightFalloff(ShadingLightSource source, float newFalloff)
+		public SetLightFalloff(ShadingLightSource source, float newDistance)
 		{
-			super("Set Source Falloff");
+			super("Set Source Falloff Radius");
 			this.source = source;
 			oldValue = source.falloff.get();
-			newValue = newFalloff;
+			newValue = (float) distanceToCoeff(source.falloffType.get(), newDistance);
 		}
 
 		@Override
@@ -443,6 +529,8 @@ public class ShadingLightSource extends PointObject implements XmlSerializable
 		private final ShadingLightSource source;
 		private final FalloffType oldValue;
 		private final FalloffType newValue;
+		private final float oldFalloff;
+		private final float newFalloff;
 
 		public SetLightFalloffType(ShadingLightSource source, FalloffType newFalloff)
 		{
@@ -450,6 +538,9 @@ public class ShadingLightSource extends PointObject implements XmlSerializable
 			this.source = source;
 			oldValue = source.falloffType.get();
 			newValue = newFalloff;
+			oldFalloff = source.falloff.get();
+			double distance = coeffToDistance(oldValue, oldFalloff);
+			this.newFalloff = (float) distanceToCoeff(newValue, distance);
 		}
 
 		@Override
@@ -468,16 +559,18 @@ public class ShadingLightSource extends PointObject implements XmlSerializable
 		public void exec()
 		{
 			super.exec();
-			source.falloffType.set(newValue);
-			ProjectDatabase.SpriteShading.modified = true;
+			source.falloffType.set(newValue, false);
+			source.falloff.set(newFalloff, false);
+			source.shadingDataChanged();
 		}
 
 		@Override
 		public void undo()
 		{
 			super.undo();
-			source.falloffType.set(oldValue);
-			ProjectDatabase.SpriteShading.modified = true;
+			source.falloffType.set(oldValue, false);
+			source.falloff.set(oldFalloff, false);
+			source.shadingDataChanged();
 		}
 	}
 

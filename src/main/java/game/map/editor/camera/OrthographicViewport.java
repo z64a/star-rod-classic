@@ -167,7 +167,7 @@ public class OrthographicViewport extends MapEditViewport
 		if (!opts.thumbnailMode) {
 			editor.cursor3D.render(this, opts, camera.pos);
 			if (opts.spriteShading != null)
-				opts.spriteShading.render(this, opts, camera.pos);
+				opts.spriteShading.render(this, opts);
 		}
 
 		renderer.drawGeometryPreviews(editor);

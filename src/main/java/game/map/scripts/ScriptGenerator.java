@@ -28,6 +28,7 @@ import game.map.marker.GridComponent;
 import game.map.marker.GridOccupant;
 import game.map.marker.Marker;
 import game.map.marker.Marker.MarkerType;
+import game.map.shading.ShadingProfile;
 import game.map.scripts.generators.Entrance;
 import game.map.scripts.generators.Entrance.EntranceType;
 import game.map.scripts.generators.Exit;
@@ -248,7 +249,11 @@ public class ScriptGenerator
 		lines.add("{");
 		lines.add("\tSet   *GB_WorldLocation  .Location:" + map.scripts.locationName.get());
 		if (map.scripts.hasSpriteShading.get()) {
-			String profileName = map.scripts.shadingProfile.get().name.get();
+			ShadingProfile profile = map.scripts.shadingProfile.get();
+			if (profile == null)
+				throw new InvalidInputException("Sprite shading is enabled, but no shading profile is selected.");
+
+			String profileName = profile.name.get();
 			lines.add("\tCall  SetSpriteShading   ( ." + ProjectDatabase.SHADING_NAMESPACE + ":" + profileName + " )");
 		}
 		lines.add("\tCall  SetCamPerspective  ( .Cam:Default " + String.format("00000003 %08X %08X %08X )",

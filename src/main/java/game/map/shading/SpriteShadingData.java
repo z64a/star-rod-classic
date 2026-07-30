@@ -33,6 +33,9 @@ public class SpriteShadingData
 
 	public ShadingProfile getShadingProfile(String name)
 	{
+		if (name == null)
+			return null;
+
 		if (name.equalsIgnoreCase(NO_SHADING_NAME))
 			return null;
 
@@ -77,7 +80,10 @@ public class SpriteShadingData
 
 	public Integer getShadingKey(String name)
 	{
-		if (name.equals(NO_SHADING_NAME))
+		if (name == null)
+			return null;
+
+		if (name.equalsIgnoreCase(NO_SHADING_NAME))
 			return NO_SHADING_KEY;
 
 		ShadingProfile profile = getShadingProfile(name);
@@ -225,12 +231,13 @@ public class SpriteShadingData
 				continue;
 			}
 
-			if (nameMap.containsKey(name)) {
-				ShadingProfile other = nameMap.get(name);
+			String normalizedName = name.toLowerCase();
+			if (nameMap.containsKey(normalizedName)) {
+				ShadingProfile other = nameMap.get(normalizedName);
 				other.invalidName = true;
 				profile.invalidName = true;
 			}
-			nameMap.put(name, profile);
+			nameMap.put(normalizedName, profile);
 		}
 	}
 
@@ -242,7 +249,7 @@ public class SpriteShadingData
 				continue;
 
 			if (profile.group == CUSTOM_GROUP_ID)
-				profile.key = currentProfileID++;
+				profile.key = (CUSTOM_GROUP_ID << 16) | currentProfileID++;
 		}
 		return currentProfileID;
 	}

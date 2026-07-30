@@ -7,6 +7,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -145,7 +148,13 @@ public class ShadingProfileInfoPanel extends MapInfoPanel<ShadingProfile>
 		sourceList.addListSelectionListener((e) -> {
 			if (e.getValueIsAdjusting() || ignoreEvents() || getData() == null)
 				return;
-			MapEditor.execute(new SetLightSource(getData(), sourceList.getSelectedValue()));
+
+			ShadingLightSource selected = sourceList.getSelectedValue();
+			if (getData().isActive())
+				MapEditor.execute(getSetLightSourceSelection(getData(), selected));
+			else {
+				MapEditor.execute(new SetLightSource(getData(), selected));
+			}
 		});
 
 		sourceList.getInputMap().put(KeyStroke.getKeyStroke("control D"), "DuplicateSelected");
@@ -154,6 +163,8 @@ public class ShadingProfileInfoPanel extends MapInfoPanel<ShadingProfile>
 			public void actionPerformed(ActionEvent e)
 			{
 				ShadingLightSource selected = sourceList.getSelectedValue();
+				if (selected == null)
+					return;
 				createSource(selected.copy(), sourceList.getSelectedIndex());
 			}
 		});
@@ -222,8 +233,12 @@ public class ShadingProfileInfoPanel extends MapInfoPanel<ShadingProfile>
 			return;
 		AddLightSource createCmd = new AddLightSource(getData(), source, index);
 		CommandBatch createBatch = new CommandBatch("Create Light Source");
+		createBatch.setModifiesMap(false);
 		createBatch.addCommand(createCmd);
-		createBatch.addCommand(new SetLightSource(getData(), source));
+		if (getData().isActive())
+			createBatch.addCommand(getSetLightSourceSelection(getData(), source));
+		else
+			createBatch.addCommand(new SetLightSource(getData(), source));
 		MapEditor.execute(createBatch);
 	}
 
@@ -235,9 +250,28 @@ public class ShadingProfileInfoPanel extends MapInfoPanel<ShadingProfile>
 		if (selected == null)
 			return;
 		CommandBatch deleteBatch = new CommandBatch("Delete Light Source");
-		deleteBatch.addCommand(new SetLightSource(getData(), null));
+		deleteBatch.setModifiesMap(false);
+		if (getData().isActive())
+			deleteBatch.addCommand(MapEditor.instance().selectionManager.getModifyObjects(Collections.emptyList(), Collections.singletonList(selected)));
+		else
+			deleteBatch.addCommand(new SetLightSource(getData(), null));
 		deleteBatch.addCommand(new RemoveLightSource(getData(), selected));
 		MapEditor.execute(deleteBatch);
+	}
+
+	private AbstractCommand getSetLightSourceSelection(ShadingProfile profile, ShadingLightSource selected)
+	{
+		List<ShadingLightSource> addList = new ArrayList<>();
+		List<ShadingLightSource> removeList = new ArrayList<>();
+
+		for (ShadingLightSource source : profile.sources) {
+			if (source.selected && source != selected)
+				removeList.add(source);
+		}
+		if (selected != null && !selected.selected)
+			addList.add(selected);
+
+		return MapEditor.instance().selectionManager.getModifyObjects(addList, removeList);
 	}
 
 	public void repaintSourceList()
@@ -268,7 +302,7 @@ public class ShadingProfileInfoPanel extends MapInfoPanel<ShadingProfile>
 		nameField.setForeground(textColor);
 	}
 
-	private class SetLightSource extends AbstractCommand
+	private static class SetLightSource extends AbstractCommand
 	{
 		private final ShadingProfile profile;
 		private final ShadingLightSource oldShading;
@@ -283,6 +317,12 @@ public class ShadingProfileInfoPanel extends MapInfoPanel<ShadingProfile>
 		}
 
 		@Override
+		public boolean modifiesMap()
+		{
+			return false;
+		}
+
+		@Override
 		public boolean shouldExec()
 		{
 			return newShading != oldShading;
@@ -292,16 +332,14 @@ public class ShadingProfileInfoPanel extends MapInfoPanel<ShadingProfile>
 		public void exec()
 		{
 			super.exec();
-			profile.selectedSource = newShading;
-			updateFields(profile, null);
+			profile.setSelectedSource(newShading);
 		}
 
 		@Override
 		public void undo()
 		{
 			super.undo();
-			profile.selectedSource = oldShading;
-			updateFields(profile, null);
+			profile.setSelectedSource(oldShading);
 		}
 	}
 
