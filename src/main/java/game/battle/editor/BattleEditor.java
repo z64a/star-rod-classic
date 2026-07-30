@@ -339,14 +339,18 @@ public class BattleEditor extends BaseEditor
 		ShadowRenderer.init();
 
 		playerSprite = spriteLoader.getSprite(SpriteSet.Player, 1);
-		//	playerSprite.enableStencilBuffer = true;
-		playerSprite.prepareForEditor();
-		playerSprite.loadTextures();
+		if (playerSprite != null && playerSprite.animations.size() > 4) {
+			//	playerSprite.enableStencilBuffer = true;
+			playerSprite.prepareForEditor();
+			playerSprite.loadTextures();
+		}
 
 		for (PartnerActor partner : PartnerActor.values()) {
 			partner.sprite = spriteLoader.getSprite(SpriteSet.Npc, partner.spriteID);
-			partner.sprite.prepareForEditor();
-			partner.sprite.loadTextures();
+			if (partner.sprite != null) {
+				partner.sprite.prepareForEditor();
+				partner.sprite.loadTextures();
+			}
 		}
 
 		glEnable(GL_STENCIL_TEST);
@@ -474,23 +478,27 @@ public class BattleEditor extends BaseEditor
 		renderables = Renderer.sortByRenderDepth(camera, renderables);
 		Renderer.drawOpaque(opts, camera, renderables);
 
-		TransformMatrix mtx = TransformMatrix.identity();
-		mtx.setScale(-1, 1, 1);
-		mtx.scale(Sprite.WORLD_SCALE);
-		//	mtx.rotate(Axis.Y, -renderYaw);
-		mtx.translate(MARIO_POS);
-		RenderState.setModelMatrix(mtx);
-		playerSprite.updateAnimation(4);
-		playerSprite.render(null, 4, 0, useFiltering, false);
+		if (playerSprite != null && playerSprite.animations.size() > 4) {
+			TransformMatrix mtx = TransformMatrix.identity();
+			mtx.setScale(-1, 1, 1);
+			mtx.scale(Sprite.WORLD_SCALE);
+			//	mtx.rotate(Axis.Y, -renderYaw);
+			mtx.translate(MARIO_POS);
+			RenderState.setModelMatrix(mtx);
+			playerSprite.updateAnimation(4);
+			playerSprite.render(null, 4, 0, useFiltering, false);
+		}
 
-		mtx = TransformMatrix.identity();
-		mtx.setScale(-1, 1, 1);
-		mtx.scale(Sprite.WORLD_SCALE);
-		//	mtx.rotate(Axis.Y, -renderYaw);
-		mtx.translate(currentPartner.posX, currentPartner.posY, currentPartner.posZ);
-		RenderState.setModelMatrix(mtx);
-		currentPartner.sprite.updateAnimation(currentPartner.idleAnim);
-		currentPartner.sprite.render(null, currentPartner.idleAnim, 0, useFiltering, false);
+		if (currentPartner.sprite != null && currentPartner.idleAnim >= 0 && currentPartner.idleAnim < currentPartner.sprite.animations.size()) {
+			TransformMatrix mtx = TransformMatrix.identity();
+			mtx.setScale(-1, 1, 1);
+			mtx.scale(Sprite.WORLD_SCALE);
+			//	mtx.rotate(Axis.Y, -renderYaw);
+			mtx.translate(currentPartner.posX, currentPartner.posY, currentPartner.posZ);
+			RenderState.setModelMatrix(mtx);
+			currentPartner.sprite.updateAnimation(currentPartner.idleAnim);
+			currentPartner.sprite.render(null, currentPartner.idleAnim, 0, useFiltering, false);
+		}
 
 		for (Unit unit : getVisibleUnits()) {
 			if ((unit.actor.flags.get() & 1) != 0)

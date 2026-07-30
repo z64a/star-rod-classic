@@ -290,7 +290,7 @@ public class SpriteEditor extends BaseEditor
 		TextureManager.bindEditorTextures();
 
 		Sprite referenceSprite = spriteLoader.getSprite(SpriteSet.Player, 1);
-		if (referenceSprite != null) {
+		if (referenceSprite != null && !referenceSprite.rasters.isEmpty()) {
 			referenceTile = referenceSprite.rasters.get(0).img;
 			referenceTile.glLoad(GL_REPEAT, GL_REPEAT, false);
 

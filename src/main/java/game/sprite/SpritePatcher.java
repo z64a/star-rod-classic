@@ -142,7 +142,7 @@ public class SpritePatcher
 				continue;
 			}
 
-			Sprite sprite = spriteLoader.getSprite(set, data.id, true);
+			Sprite sprite = spriteLoader.requireSprite(set, data.id, true);
 			sprite.recalculateIndices();
 
 			String spriteName = sprite.toString().replaceAll("\\s+", "");
@@ -362,7 +362,7 @@ public class SpritePatcher
 
 		// load player sprites, get lists of the rasters
 		for (int i = 1; i <= highestID; i++) {
-			Sprite spr = spriteLoader.getSprite(SpriteSet.Player, i);
+			Sprite spr = spriteLoader.requireSprite(SpriteSet.Player, i);
 			playerSprites.add(spr);
 			numPlayerSprites++;
 			numPlayerSpriteRasters += spr.rasters.size();
@@ -647,7 +647,7 @@ public class SpritePatcher
 			File out = new File(MOD_SPR_NPC_TEMP + spriteSheetIDName);
 			Logger.log(String.format("Writing NPC sprite %02X of %02X...", i, highestID), Priority.MILESTONE);
 
-			Sprite spr = spriteLoader.getSprite(SpriteSet.Npc, i);
+			Sprite spr = spriteLoader.requireSprite(SpriteSet.Npc, i);
 			writeBinaryNpc(spr, out);
 
 			CacheResult result = cache.get(out);
