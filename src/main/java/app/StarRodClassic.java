@@ -86,6 +86,7 @@ import game.map.shading.SpriteShadingEditor;
 import game.requests.SpecialRequestDumper;
 import game.shared.ProjectDatabase;
 import game.shared.struct.script.ScriptVariable;
+import game.sound.AudioBooth;
 import game.sound.AudioModder;
 import game.sprite.SpriteDumper;
 import game.sprite.editor.SpriteEditor;
@@ -193,6 +194,13 @@ public class StarRodClassic extends JFrame
 						case WORLD_MAP_EDITOR:
 							BaseEditor worldEditor = new WorldMapEditor();
 							showMenu = worldEditor.launch();
+							break;
+
+						case AUDIO_BOOTH:
+							editorClosedSignal = new CountDownLatch(1);
+							AudioBooth audioBooth = new AudioBooth(editorClosedSignal);
+							editorClosedSignal.await();
+							showMenu = audioBooth.exitToMainMenu;
 							break;
 
 						case THEMES:
@@ -1241,6 +1249,7 @@ public class StarRodClassic extends JFrame
 		SPRITE_EDITOR,
 		STRING_EDITOR,
 		WORLD_MAP_EDITOR,
+		AUDIO_BOOTH,
 		THEMES
 	}
 
@@ -1325,6 +1334,14 @@ public class StarRodClassic extends JFrame
 				dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 			});
 
+			JButton audioBoothButton = new JButton("Audio Booth");
+			trySetIcon(audioBoothButton, "item/badge/AttackFXA");
+			SwingUtils.setFontSize(audioBoothButton, 12);
+			audioBoothButton.addActionListener((e) -> {
+				selected = GreetingChoice.AUDIO_BOOTH;
+				dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+			});
+
 			JButton themesEditorButton = new JButton("Themes");
 			trySetIcon(themesEditorButton, "item/badge/PUpDDown");
 			SwingUtils.setFontSize(themesEditorButton, 12);
@@ -1354,6 +1371,7 @@ public class StarRodClassic extends JFrame
 			add(imageEditorButton, fmtButton);
 			if (!Environment.project.isDecomp)
 				add(worldMapEditorButton, fmtButton);
+			add(audioBoothButton, fmtButton);
 			add(themesEditorButton, fmtButton);
 
 			pack();

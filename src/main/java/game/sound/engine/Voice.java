@@ -170,27 +170,23 @@ public class Voice
 
 		float resampleRatio = pitch * ((float) ins.sampleRate / AudioEngine.OUTPUT_RATE);
 		resampleRatio = Math.min(resampleRatio, 1.99996f);
+		float voiceVolumeStart = volume * envVolumeStart;
+		float voiceVolumeEnd = volume * envVolumeEnd;
+		float gainStart = voiceVolumeStart * voiceVolumeStart;
+		float gainEnd = voiceVolumeEnd * voiceVolumeEnd;
 
 		for (int i = 0; i < AudioEngine.FRAME_SAMPLES; i++) {
+			while (canLoop() && readPos >= ins.loopEnd) {
+				if (ins.loopCount != Instrument.LOOP_FOREVER)
+					loopIterations++;
+				readPos = ins.loopStart + (readPos - ins.loopEnd);
+			}
+
 			int i0 = (int) readPos;
 			int i1 = i0 + 1;
 
-			// handle looping
-			if (allowLooping && ins.hasLoop && i1 >= ins.loopEnd) {
-				if (ins.loopCount == Instrument.LOOP_FOREVER) {
-					// infinite loop
-					readPos = ins.loopStart + (readPos - ins.loopEnd);
-					i0 = (int) readPos;
-					i1 = i0 + 1;
-				}
-				else if (loopIterations < ins.loopCount) {
-					// fixed number of iterations
-					loopIterations++;
-					readPos = ins.loopStart + (readPos - ins.loopEnd);
-					i0 = (int) readPos;
-					i1 = i0 + 1;
-				}
-			}
+			if (canLoop() && i1 >= ins.loopEnd)
+				i1 = ins.loopStart + (i1 - ins.loopEnd);
 
 			if (i1 >= ins.samples.size()) {
 				// reached end of non-looping sample
@@ -205,8 +201,8 @@ public class Voice
 			float sample = (1 - frac) * s0 + frac * s1;
 
 			float envelopeTime = (i + 1.0f) / AudioEngine.FRAME_SAMPLES;
-			float envVolume = envVolumeStart + envelopeTime * (envVolumeEnd - envVolumeStart);
-			float scaled = sample * volume * envVolume;
+			float gain = gainStart + envelopeTime * (gainEnd - gainStart);
+			float scaled = sample * gain;
 
 			dryBufferL[i] += scaled * panL * dryAmt;
 			dryBufferR[i] += scaled * panR * dryAmt;
@@ -219,5 +215,11 @@ public class Voice
 
 		if (envelopeDone)
 			state = VoiceState.DONE;
+	}
+
+	private boolean canLoop()
+	{
+		return allowLooping && ins.hasLoop
+			&& (ins.loopCount == Instrument.LOOP_FOREVER || loopIterations < ins.loopCount);
 	}
 }

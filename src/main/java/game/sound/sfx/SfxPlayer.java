@@ -36,8 +36,11 @@ public class SfxPlayer implements AudioClient
 	private static final int MAX_COMMANDS_PER_FRAME = 65536;
 	private static final int MAX_TIMELINE_FRAMES =
 		10 * 60 * AudioEngine.OUTPUT_RATE / AudioEngine.FRAME_SAMPLES;
-	private static final int TRIGGER_ALTERNATIVE = 1;
+	private static final int TRIGGER_NONE = 0;
+	private static final int TRIGGER_ALTERNATIVE_SOUND = 1;
 	private static final int TRIGGER_ALTERNATIVE_VOLUME = 2;
+	private static final int UPDATE_STEP = 312500;
+	private static final int UPDATE_INTERVAL = 434782;
 	// Rounds up to exactly one mixer block in AudioEngine.renderFrame().
 	private static final double AUDIO_BLOCK_TIME =
 		(AudioEngine.FRAME_SAMPLES - 0.5) / AudioEngine.OUTPUT_RATE;
@@ -88,9 +91,11 @@ public class SfxPlayer implements AudioClient
 	private boolean paused;
 	private int frameCounter;
 	private int randomValue;
+	private int updateCounter;
 	private int currentTime;
 	private int duration;
 	private int requestedTime;
+	private int initialTrigger;
 
 	public SfxPlayer(AudioEngine engine, SoundBank bank)
 	{
@@ -130,6 +135,21 @@ public class SfxPlayer implements AudioClient
 
 	public void play(int soundID)
 	{
+		play(soundID, TRIGGER_NONE);
+	}
+
+	public void playAlternativeSound(int soundID)
+	{
+		play(soundID, TRIGGER_ALTERNATIVE_SOUND);
+	}
+
+	public void playAlternativeVolume(int soundID)
+	{
+		play(soundID, TRIGGER_ALTERNATIVE_VOLUME);
+	}
+
+	private void play(int soundID, int trigger)
+	{
 		stop();
 		if (archive == null)
 			return;
@@ -143,10 +163,11 @@ public class SfxPlayer implements AudioClient
 			return;
 
 		selectedSound = sound;
-		engine.flush();
+		initialTrigger = trigger;
+		engine.resetRenderState();
 		duration = calculateDuration(sound);
 		beginPlayback(sound);
-		engine.flush();
+		engine.resetRenderState();
 	}
 
 	private int calculateDuration(Sound sound)
@@ -173,9 +194,11 @@ public class SfxPlayer implements AudioClient
 		paused = false;
 		frameCounter = 0;
 		randomValue = 0;
+		updateCounter = UPDATE_INTERVAL;
 		currentTime = 0;
 		requestedTime = -1;
 		startTracks(sound.tracks, true);
+		setTrigger(initialTrigger);
 	}
 
 	public void stop()
@@ -218,6 +241,14 @@ public class SfxPlayer implements AudioClient
 		return duration;
 	}
 
+	public int getTimelineLoopCount()
+	{
+		int count = 0;
+		for (SfxTrackPlayer player : trackPlayers)
+			count = Math.max(count, player.timelineLoopCount);
+		return count;
+	}
+
 	public void seekTime(int seekTime)
 	{
 		if (selectedSound == null || duration == 0)
@@ -258,9 +289,9 @@ public class SfxPlayer implements AudioClient
 		}
 	}
 
-	public void triggerAlternative()
+	public void triggerAlternativeSound()
 	{
-		setTrigger(TRIGGER_ALTERNATIVE);
+		setTrigger(TRIGGER_ALTERNATIVE_SOUND);
 	}
 
 	public void triggerAlternativeVolume()
@@ -288,18 +319,25 @@ public class SfxPlayer implements AudioClient
 			return;
 
 		frameCounter++;
-		randomValue = (randomValue & 0xFFFF) + (frameCounter & 0xFFFF);
 		requestedTime = -1;
+		updateCounter -= UPDATE_STEP;
+		boolean updatePlayers = updateCounter <= 0;
+		if (updatePlayers) {
+			updateCounter += UPDATE_INTERVAL;
+			randomValue = (randomValue & 0xFFFF) + (frameCounter & 0xFFFF);
+		}
 
-		if (!pendingSpawns.isEmpty()) {
+		if (updatePlayers && !pendingSpawns.isEmpty()) {
 			List<SpawnedEffect> ready = new ArrayList<>(pendingSpawns);
 			pendingSpawns.clear();
 			for (SpawnedEffect spawned : ready)
 				startTracks(spawned.tracks, false);
 		}
 
-		for (SfxTrackPlayer player : trackPlayers)
-			player.update(fastForward);
+		if (updatePlayers) {
+			for (SfxTrackPlayer player : trackPlayers)
+				player.update(fastForward);
+		}
 
 		Iterator<SfxTrackPlayer> iterator = trackPlayers.iterator();
 		while (iterator.hasNext()) {
@@ -310,7 +348,7 @@ public class SfxPlayer implements AudioClient
 		if (trackPlayers.isEmpty() && pendingSpawns.isEmpty()) {
 			currentSound = null;
 		}
-		else if (!fastForward && requestedTime >= 0) {
+		else if (updatePlayers && !fastForward && requestedTime >= 0) {
 			currentTime = requestedTime;
 		}
 		else {
@@ -361,6 +399,7 @@ public class SfxPlayer implements AudioClient
 		private int trigger;
 		private int loopStartPos = -1;
 		private int loopCount;
+		private int timelineLoopCount;
 		private int delay = 1;
 		private int playLength;
 
@@ -439,7 +478,7 @@ public class SfxPlayer implements AudioClient
 		{
 			boolean startedNewVoice = false;
 
-			if (alternativePos >= 0 && trigger == TRIGGER_ALTERNATIVE) {
+			if (alternativePos >= 0 && trigger == TRIGGER_ALTERNATIVE_SOUND) {
 				pos = alternativePos;
 				if (!fastForward)
 					requestTime(program.getStartTime(pos));
@@ -550,7 +589,7 @@ public class SfxPlayer implements AudioClient
 					coarseTune = command.a * 100;
 					break;
 				case FINE_TUNE:
-					fineTune = (byte) command.a;
+					fineTune = command.a;
 					break;
 				case WAIT_FOR_END:
 					if (voice != null && !voice.isDone()) {
@@ -578,6 +617,8 @@ public class SfxPlayer implements AudioClient
 							finish();
 					}
 					else if (loopCount == 0 || --loopCount != 0) {
+						if (loopCount == 0)
+							timelineLoopCount++;
 						pos = loopStartPos;
 						requestTime(program.getStartTime(pos));
 					}

@@ -68,6 +68,9 @@ public class BgmPlayer implements AudioClient
 	private static final int NUM_LOOP_LABELS = 32;
 	private static final int MAX_LOOP_DEPTH = 4;
 	private static final int MAX_COMMANDS_PER_TICK = 65536;
+	private static final int MAX_PROXIMITY_VOLUME = 127;
+	private static final int PROXIMITY_MIX_FADE_TICKS = 144;
+	private static final int PROXIMITY_OVERRIDE_FADE_TICKS = 72;
 	private static final int MAX_TIMELINE_FRAMES =
 		30 * 60 * AudioEngine.OUTPUT_RATE / AudioEngine.FRAME_SAMPLES;
 	private static final double AUDIO_BLOCK_TIME =
@@ -111,9 +114,13 @@ public class BgmPlayer implements AudioClient
 	private int masterPitchShift;
 	private int detune;
 	private double tickAccumulator;
+	private int maximumTempo;
 
-	private int variation;
-	private int branchOption;
+	private int compositionIndex;
+	private int timelineLoopCount;
+	private int proximityMixID;
+	private int proximityMixVolume;
+	private boolean proximityMixInstant;
 	private int frameCounter;
 	private int randomValue1;
 	private int randomValue2;
@@ -144,19 +151,19 @@ public class BgmPlayer implements AudioClient
 		this.listener = listener;
 	}
 
-	public void play(Song song, int variation)
+	public void play(Song song, int compositionIndex)
 	{
-		boolean newSong = selectedSong != song;
 		stop();
 		if (song == null)
 			return;
-		if (newSong)
-			branchOption = 0;
+		proximityMixID = 0;
+		proximityMixVolume = 0;
+		proximityMixInstant = false;
 
-		Composition selected = song.getComposition(variation);
+		Composition selected = song.getComposition(compositionIndex);
 		if (selected == null) {
-			variation = 0;
-			selected = song.getComposition(variation);
+			compositionIndex = 0;
+			selected = song.getComposition(compositionIndex);
 		}
 		if (selected == null) {
 			Logger.logfWarning("BGM %s has no playable composition", song.name);
@@ -164,11 +171,11 @@ public class BgmPlayer implements AudioClient
 		}
 
 		selectedSong = song;
-		this.variation = variation;
-		engine.flush();
+		this.compositionIndex = compositionIndex;
+		engine.resetRenderState();
 		duration = calculateDuration(song);
 		beginPlayback(song);
-		engine.flush();
+		engine.resetRenderState();
 	}
 
 	public void stop()
@@ -209,27 +216,53 @@ public class BgmPlayer implements AudioClient
 		return duration;
 	}
 
-	public int getVariation()
+	public int getCompositionIndex()
 	{
-		return variation;
+		return compositionIndex;
 	}
 
-	public int getBranchOption()
+	public int getTimelineLoopCount()
 	{
-		return branchOption;
+		return timelineLoopCount;
 	}
 
-	public void setBranchOption(int branchOption)
+	public int getProximityMixID()
+	{
+		return proximityMixID;
+	}
+
+	public int getProximityMixVolume()
+	{
+		return proximityMixVolume;
+	}
+
+	public void setProximityMix(int mixID, int volume)
+	{
+		setProximityMix(mixID, volume, false);
+	}
+
+	public void setProximityMix(int mixID, int volume, boolean instant)
 	{
 		if (selectedSong == null)
 			return;
 
 		int max = Math.max(1, selectedSong.branchOptions);
-		branchOption = Math.max(0, Math.min(max - 1, branchOption));
-		if (this.branchOption == branchOption)
+		mixID = Math.max(0, Math.min(max - 1, mixID));
+		volume = Math.max(0, Math.min(MAX_PROXIMITY_VOLUME, volume));
+		if (proximityMixID == mixID && proximityMixVolume == volume
+			&& proximityMixInstant == instant)
 			return;
 
-		this.branchOption = branchOption;
+		boolean mixChanged = proximityMixID != mixID;
+		boolean finishFade = instant && !proximityMixInstant;
+		proximityMixID = mixID;
+		proximityMixVolume = volume;
+		proximityMixInstant = instant;
+		if (finishFade) {
+			for (BgmTrackPlayer track : tracks)
+				track.proximityVolume.finish();
+		}
+		markProximityMixChanged(mixChanged);
 	}
 
 	public void seekTime(int seekTime)
@@ -284,7 +317,7 @@ public class BgmPlayer implements AudioClient
 
 	private int calculateDuration(Song song)
 	{
-		Composition selected = song.getComposition(variation);
+		Composition selected = song.getComposition(compositionIndex);
 		if (selected == null)
 			selected = song.getComposition(0);
 		if (selected == null)
@@ -305,13 +338,14 @@ public class BgmPlayer implements AudioClient
 	private void beginPlayback(Song song)
 	{
 		clearActivePlayback();
-		composition = song.getComposition(variation);
+		composition = song.getComposition(compositionIndex);
 		if (composition == null)
 			composition = song.getComposition(0);
 		if (composition == null)
 			return;
 
 		currentSong = song;
+		maximumTempo = calculateMaximumTempo(song);
 		compCommands = composition.getCommands();
 		compPos = 0;
 		Arrays.fill(compLoopStartPos, 0);
@@ -319,7 +353,7 @@ public class BgmPlayer implements AudioClient
 			compLoops[i].clear();
 		compLoopDepth = 0;
 
-		masterTempo.setImmediate(DEFAULT_BPM);
+		masterTempo.setImmediate(tempo(DEFAULT_BPM));
 		masterVolume.setImmediate(1.0f);
 		masterPitchShift = 0;
 		detune = 0;
@@ -328,6 +362,7 @@ public class BgmPlayer implements AudioClient
 		randomValue1 = 0;
 		randomValue2 = 0;
 		currentTime = 0;
+		timelineLoopCount = 0;
 		requestedTime = -1;
 		paused = false;
 		phraseFinished = false;
@@ -338,8 +373,30 @@ public class BgmPlayer implements AudioClient
 		Arrays.fill(effectValues, 0);
 		for (BgmTrackPlayer track : tracks)
 			track.reset();
+		if (proximityMixID != 0 || proximityMixVolume != 0)
+			markProximityMixChanged(proximityMixID != 0);
 		engine.resetEffects();
 		advanceComposition(false);
+	}
+
+	private void markProximityMixChanged(boolean mixChanged)
+	{
+		for (BgmTrackPlayer track : tracks) {
+			if (mixChanged)
+				track.proximityMixChanged = true;
+			track.proximityValueChanged = true;
+		}
+	}
+
+	private static int calculateMaximumTempo(Song song)
+	{
+		return Math.max(1, 60 * AudioEngine.OUTPUT_RATE
+			/ (AudioEngine.FRAME_SAMPLES * song.getTicksPerBeat()));
+	}
+
+	private int tempo(int bpm)
+	{
+		return Math.max(1, Math.min(maximumTempo, bpm));
 	}
 
 	private void clearActivePlayback()
@@ -443,6 +500,9 @@ public class BgmPlayer implements AudioClient
 			loop.remaining = command.getLoopCount();
 		}
 
+		if (command.getLoopCount() == 0)
+			timelineLoopCount++;
+
 		int loopStart = compLoopStartPos[command.getLoopIndex() & 0x1F];
 		compPos = loopStart;
 		if (compStartTimes != null && loopStart < compStartTimes.length)
@@ -476,7 +536,8 @@ public class BgmPlayer implements AudioClient
 			track.voiceOwner = tracks[linked].voiceOwner;
 			track.polyphonicIndex = tracks[linked].polyphonicIndex;
 			track.polyphony = tracks[linked].polyphony;
-			track.muted = initLinkMute;
+			if (initLinkMute)
+				track.muted = true;
 			foundLinked = true;
 		}
 		if (foundLinked)
@@ -535,6 +596,18 @@ public class BgmPlayer implements AudioClient
 			voices.remove(candidate);
 		}
 		return new BgmVoice(track);
+	}
+
+	private void resetVoices(BgmTrackPlayer track)
+	{
+		Iterator<BgmVoice> iterator = voices.iterator();
+		while (iterator.hasNext()) {
+			BgmVoice voice = iterator.next();
+			if (voice.owner == track.voiceOwner) {
+				voice.kill();
+				iterator.remove();
+			}
+		}
 	}
 
 	private void clearCustomEnvelope(int index)
@@ -629,7 +702,9 @@ public class BgmPlayer implements AudioClient
 		private int tremoloDepth;
 		private int pressOverride;
 		private int effectBus;
-		private float proxVolume;
+		private final Lerp proximityVolume = new Lerp(1.0f);
+		private boolean proximityMixChanged;
+		private boolean proximityValueChanged;
 		private int proxVol1;
 		private int proxVol2;
 
@@ -657,7 +732,9 @@ public class BgmPlayer implements AudioClient
 			tremoloDepth = 0;
 			pressOverride = 0;
 			effectBus = 0;
-			proxVolume = 1.0f;
+			proximityVolume.setImmediate(1.0f);
+			proximityMixChanged = false;
+			proximityValueChanged = false;
 			proxVol1 = 0;
 			proxVol2 = 0;
 			muted = false;
@@ -667,7 +744,6 @@ public class BgmPlayer implements AudioClient
 		{
 			enabled = true;
 			isDrum = track.isDrum();
-			muted = false;
 			linkedIndex = track.linkedIndex;
 			polyphonicIndex = track.polyphonicIndex;
 			polyphony = track.polyphonicVoiceCount;
@@ -690,6 +766,7 @@ public class BgmPlayer implements AudioClient
 		private void updateParameters()
 		{
 			instrumentVolume.update();
+			proximityVolume.update();
 		}
 
 		private boolean updateCommands(boolean fastForward)
@@ -734,7 +811,7 @@ public class BgmPlayer implements AudioClient
 		private void execute(TrackCommand command, boolean fastForward)
 		{
 			if (command instanceof SetMasterTempo cmd) {
-				masterTempo.setImmediate(cmd.bpm);
+				masterTempo.setImmediate(tempo(cmd.bpm));
 			}
 			else if (command instanceof SetMasterVolume cmd) {
 				masterVolume.setImmediate(volume(cmd.value));
@@ -746,7 +823,7 @@ public class BgmPlayer implements AudioClient
 				engine.setEffectPreset(0, effectPreset(cmd.effectType));
 			}
 			else if (command instanceof MasterTempoLerp cmd) {
-				masterTempo.set(cmd.time, cmd.bpm);
+				masterTempo.set(cmd.time, tempo(cmd.bpm));
 			}
 			else if (command instanceof MasterVolumeLerp cmd) {
 				masterVolume.set(cmd.time, volume(cmd.value));
@@ -850,7 +927,32 @@ public class BgmPlayer implements AudioClient
 					proxVol1 = cmd.vol1;
 					proxVol2 = cmd.vol2;
 				}
+				else if (proximityValueChanged) {
+					proximityValueChanged = false;
+					applyProximityOverrides();
+				}
 			}
+		}
+
+		private void applyProximityOverrides()
+		{
+			boolean full = proximityMixVolume == MAX_PROXIMITY_VOLUME;
+			for (BgmTrackPlayer track : tracks) {
+				int value = full ? track.proxVol1 : track.proxVol2;
+				if (value == 0)
+					continue;
+				track.proximityValueChanged = false;
+				track.setProximityVolume(value, PROXIMITY_OVERRIDE_FADE_TICKS);
+			}
+		}
+
+		private void setProximityVolume(int value, int fadeTicks)
+		{
+			float target = volume(value);
+			if (proximityMixInstant)
+				proximityVolume.setImmediate(target);
+			else
+				proximityVolume.set(fadeTicks, target);
 		}
 
 		private void useInstrument(UseInstrument command)
@@ -886,6 +988,7 @@ public class BgmPlayer implements AudioClient
 			reverb = preset.reverb;
 			coarseTune = preset.coarseTune * 100;
 			fineTune = preset.fineTune;
+			updateVoiceMix();
 		}
 
 		private void setInstrument(InstrumentQueryResult result)
@@ -902,13 +1005,22 @@ public class BgmPlayer implements AudioClient
 
 		private void enterBranch(Branch command)
 		{
-			CommandStream option = command.branch.getOption(branchOption);
+			CommandStream option = command.branch.getOption(proximityMixID);
 			if (option == null)
 				option = command.branch.getOption(0);
 			if (option == null)
 				return;
 
 			isDrum = option.isDrum();
+			if (proximityMixChanged) {
+				proximityMixChanged = false;
+				proximityVolume.setImmediate(0.0f);
+				resetVoices(this);
+			}
+			if (proximityValueChanged) {
+				proximityValueChanged = false;
+				setProximityVolume(proximityMixVolume, PROXIMITY_MIX_FADE_TICKS);
+			}
 			coarseTune = 0;
 			fineTune = 0;
 			pressOverride = 0;
@@ -1097,7 +1209,7 @@ public class BgmPlayer implements AudioClient
 		private void updateMix()
 		{
 			float noteVolume = velocity / 128.0f;
-			float value = masterVolume.current * track.instrumentVolume.current * track.proxVolume
+			float value = masterVolume.current * track.instrumentVolume.current * track.proximityVolume.current
 				* volume(track.trackVolume) * noteVolume * drumVolume;
 			setVolume(value);
 			setPan(pan);
@@ -1173,6 +1285,11 @@ public class BgmPlayer implements AudioClient
 			time = 0;
 			goal = current;
 			step = 0.0f;
+		}
+
+		private void finish()
+		{
+			setImmediate(goal);
 		}
 
 		private boolean update()

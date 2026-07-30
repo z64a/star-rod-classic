@@ -33,7 +33,7 @@ public class Composition implements XmlSerializable
 	protected ArrayList<CompCommand> commands = new ArrayList<>();
 
 	public boolean enabled;
-	public int index; // which variation (0-3) this corresponds to
+	public int index; // which composition (0-3) this corresponds to
 
 	public transient int filePos; // file offset where composition begins
 

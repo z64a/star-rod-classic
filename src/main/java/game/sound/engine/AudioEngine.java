@@ -11,10 +11,16 @@ import javax.sound.sampled.SourceDataLine;
 
 public class AudioEngine
 {
+	public interface PcmOutput
+	{
+		public void write(byte[] data, int offset, int length);
+	}
+
 	public static final int TARGET_FPS = 60; // PM audio thread
 	public static final double FRAME_TIME = 1.0 / TARGET_FPS;
 
 	public static final int OUTPUT_RATE = 32000;
+	public static final int MAX_MASTER_VOLUME = 256;
 	public static final int FRAME_SAMPLES = 184;
 	public static final int NUM_EFFECT_BUSES = 2;
 
@@ -25,6 +31,7 @@ public class AudioEngine
 	private int overflowSamples = 0;
 
 	private final SourceDataLine line;
+	private final PcmOutput output;
 	private final EffectBus[] effectBuses;
 	private final List<Voice> voices;
 
@@ -42,14 +49,24 @@ public class AudioEngine
 
 	private byte[] outBuffer;
 
-	private int masterVolume = 256;
+	private int masterVolume = MAX_MASTER_VOLUME;
 
 	public AudioEngine() throws LineUnavailableException
 	{
-		this(true);
+		this(true, null);
 	}
 
 	public AudioEngine(boolean enableOutput) throws LineUnavailableException
+	{
+		this(enableOutput, null);
+	}
+
+	public AudioEngine(PcmOutput output) throws LineUnavailableException
+	{
+		this(false, output);
+	}
+
+	private AudioEngine(boolean enableOutput, PcmOutput output) throws LineUnavailableException
 	{
 		effectBuses = new EffectBus[NUM_EFFECT_BUSES];
 		for (int i = 0; i < effectBuses.length; i++)
@@ -65,6 +82,18 @@ public class AudioEngine
 		}
 		else {
 			line = null;
+		}
+		if (line != null) {
+			this.output = new PcmOutput() {
+				@Override
+				public void write(byte[] data, int offset, int length)
+				{
+					line.write(data, offset, length);
+				}
+			};
+		}
+		else {
+			this.output = output;
 		}
 
 		dryBufferL = new float[NUM_EFFECT_BUSES][FRAME_SAMPLES];
@@ -86,6 +115,11 @@ public class AudioEngine
 	{
 		if (line != null)
 			line.flush();
+		resetRenderState();
+	}
+
+	public void resetRenderState()
+	{
 		overflowSamples = 0;
 	}
 
@@ -130,6 +164,15 @@ public class AudioEngine
 		return masterVolume;
 	}
 
+	public boolean hasActiveVoices()
+	{
+		for (Voice voice : voices) {
+			if (!voice.isDone())
+				return true;
+		}
+		return false;
+	}
+
 	public void setEffectPreset(int bus, EffectBus.EffectPreset preset)
 	{
 		if (bus < 0 || bus >= effectBuses.length)
@@ -166,15 +209,15 @@ public class AudioEngine
 
 	public void renderFrame(double deltaTime, boolean fastForward)
 	{
-		float masterVolumeRatio = (float) (masterVolume / 256.0);
+		float masterVolumeRatio = (float) (masterVolume / (double) MAX_MASTER_VOLUME);
 
 		int totalSamples = (int) Math.ceil(deltaTime * OUTPUT_RATE);
 		int processed = 0;
 
 		if (overflowSamples > 0) {
 			int startPos = FRAME_SAMPLES - overflowSamples; // where the last frame left off and overflow began
-			if (!fastForward && line != null)
-				writeSamples(line, mixedBufferL, mixedBufferR, outBuffer, startPos, FRAME_SAMPLES);
+			if (!fastForward && output != null)
+				writeSamples(output, mixedBufferL, mixedBufferR, outBuffer, startPos, FRAME_SAMPLES);
 			processed += overflowSamples;
 			overflowSamples = 0;
 		}
@@ -246,12 +289,12 @@ public class AudioEngine
 				writeSamples = FRAME_SAMPLES;
 			}
 
-			if (!fastForward && line != null)
-				writeSamples(line, mixedBufferL, mixedBufferR, outBuffer, 0, writeSamples);
+			if (!fastForward && output != null)
+				writeSamples(output, mixedBufferL, mixedBufferR, outBuffer, 0, writeSamples);
 		}
 	}
 
-	private static void writeSamples(SourceDataLine line, float[] mixedL, float[] mixedR, byte[] outBuffer, int start, int end)
+	private static void writeSamples(PcmOutput output, float[] mixedL, float[] mixedR, byte[] outBuffer, int start, int end)
 	{
 		int sampleCount = (end - start);
 
@@ -264,7 +307,7 @@ public class AudioEngine
 			outBuffer[4 * i + 3] = (byte) (right >> 8);
 		}
 
-		line.write(outBuffer, 0, sampleCount * BYTES_PER_SAMPLE);
+		output.write(outBuffer, 0, sampleCount * BYTES_PER_SAMPLE);
 	}
 
 	// clamp and convert to PCM
@@ -286,10 +329,17 @@ public class AudioEngine
 		private int side;
 		private int length;
 		private int pos;
+		private int requestedSide;
+		private int requestedLength;
 
 		private void set(int side, int length)
 		{
-			if (side < 1 || side > 2 || length < 1) {
+			if (side == requestedSide && length == requestedLength)
+				return;
+
+			requestedSide = side;
+			requestedLength = length;
+			if (side < 1 || side > 2 || length < 2) {
 				this.side = 0;
 				this.length = 0;
 			}
@@ -307,7 +357,7 @@ public class AudioEngine
 				return;
 
 			float[] channel = side == 1 ? left : right;
-			int delaySamples = length * FRAME_SAMPLES;
+			int delaySamples = (length - 1) * FRAME_SAMPLES;
 			for (int i = 0; i < FRAME_SAMPLES; i++) {
 				float sample = channel[i];
 				channel[i] = buffer[pos];

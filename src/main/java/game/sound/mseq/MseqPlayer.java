@@ -28,6 +28,7 @@ import util.Logger;
 public class MseqPlayer implements AudioClient
 {
 	private static final int NUM_VOICES = 16;
+	public static final int SAMPLES_PER_TICK = 2 * AudioEngine.FRAME_SAMPLES;
 
 	public static enum PlayerState
 	{
@@ -56,10 +57,11 @@ public class MseqPlayer implements AudioClient
 	// loop state
 	private int[] loopPositions;
 	private int[] loopIterations;
+	private int[] timelineLoopCounts;
 
 	// these values cause the player to only update/tick on every other audio frame
-	private int updateCounter = 2;
-	private static final int updateInverval = 2;
+	private static final int UPDATE_INTERVAL = 2;
+	private int updateCounter = UPDATE_INTERVAL;
 
 	public static class MseqVoice extends Voice
 	{
@@ -141,6 +143,18 @@ public class MseqPlayer implements AudioClient
 	public boolean getPaused()
 	{
 		return state == PlayerState.PAUSED;
+	}
+
+	public boolean isPlaying()
+	{
+		return state == PlayerState.PLAYING || state == PlayerState.PAUSED;
+	}
+
+	public int getTimelineLoopCount()
+	{
+		if (timelineLoopCounts == null)
+			return 0;
+		return Math.max(timelineLoopCounts[0], timelineLoopCounts[1]);
 	}
 
 	public void stop()
@@ -253,12 +267,13 @@ public class MseqPlayer implements AudioClient
 		// loop state
 		loopPositions = new int[2];
 		loopIterations = new int[2];
+		timelineLoopCounts = new int[2];
 
 		curPos = 0;
 		curTime = 0;
 		curDuration = 0;
 		delayTime = 0;
-		updateCounter = updateInverval;
+		updateCounter = UPDATE_INTERVAL;
 
 		for (int i = 0; i < tracks.length; i++) {
 			tracks[i].reset();
@@ -278,7 +293,7 @@ public class MseqPlayer implements AudioClient
 			}
 		}
 
-		engine.flush();
+		engine.resetRenderState();
 		state = PlayerState.PLAYING;
 	}
 
@@ -287,7 +302,7 @@ public class MseqPlayer implements AudioClient
 	{
 		updateCounter--;
 		if (updateCounter <= 0) {
-			updateCounter += updateInverval;
+			updateCounter += UPDATE_INTERVAL;
 			update(fastForward);
 		}
 	}
@@ -550,6 +565,7 @@ public class MseqPlayer implements AudioClient
 				if (cmd.count == 0) {
 					// infinite loop, jump to loop start
 					loopIterations[loopID] = 0;
+					timelineLoopCounts[loopID]++;
 					curPos = startPos;
 				}
 				else {
