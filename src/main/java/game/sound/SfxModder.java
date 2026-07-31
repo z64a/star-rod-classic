@@ -62,13 +62,14 @@ public final class SfxModder
 
 	public static BuildSummary build(Path archiveXml, Path outputSef) throws IOException
 	{
-		return build(archiveXml, outputSef, SfxNames.loadBundled());
+		return build(archiveXml, outputSef, null,
+			catalogFor(archiveXml.toAbsolutePath().normalize().getParent()));
 	}
 
 	public static BuildSummary build(Path archiveXml, Path outputSef,
 		SoundBankCatalog catalog) throws IOException
 	{
-		return build(archiveXml, outputSef, SfxNames.loadBundled(), catalog);
+		return build(archiveXml, outputSef, null, catalog);
 	}
 
 	public static BuildSummary build(Path archiveXml, Path outputSef, SfxNames names) throws IOException
@@ -81,7 +82,11 @@ public final class SfxModder
 		SoundBankCatalog catalog) throws IOException
 	{
 		SfxArchive archive = SfxXml.read(archiveXml, catalog);
-		List<String> warnings = SfxValidator.validate(archive, names);
+		List<String> warnings;
+		if (names == null)
+			warnings = SfxValidator.validate(archive);
+		else
+			warnings = SfxValidator.validate(archive, names);
 		byte[] bytes = SfxBinary.encode(archive);
 		writeAtomically(outputSef, bytes);
 		return new BuildSummary(bytes.length, warnings);
@@ -89,7 +94,8 @@ public final class SfxModder
 
 	public static List<String> lint(Path archiveXml) throws IOException
 	{
-		return lint(archiveXml, SfxNames.loadBundled());
+		return SfxValidator.validate(SfxXml.read(archiveXml,
+			catalogFor(archiveXml.toAbsolutePath().normalize().getParent())));
 	}
 
 	public static List<String> lint(Path archiveXml, SfxNames names)
@@ -171,8 +177,11 @@ public final class SfxModder
 	{
 		if (args.length != 3 && args.length != 4)
 			throw new IllegalArgumentException("build requires: SoundEffects.xml output.sef [names.txt]");
-		SfxNames names = args.length == 4 ? SfxNames.load(Path.of(args[3])) : SfxNames.loadBundled();
-		BuildSummary summary = build(Path.of(args[1]), Path.of(args[2]), names);
+		BuildSummary summary;
+		if (args.length == 4)
+			summary = build(Path.of(args[1]), Path.of(args[2]), SfxNames.load(Path.of(args[3])));
+		else
+			summary = build(Path.of(args[1]), Path.of(args[2]));
 		Logger.logf("Built SEF: 0x%X bytes.", summary.size());
 		printWarnings(summary.warnings());
 	}
@@ -181,8 +190,11 @@ public final class SfxModder
 	{
 		if (args.length != 2 && args.length != 3)
 			throw new IllegalArgumentException("lint requires: SoundEffects.xml [names.txt]");
-		SfxNames names = args.length == 3 ? SfxNames.load(Path.of(args[2])) : SfxNames.loadBundled();
-		List<String> warnings = lint(Path.of(args[1]), names);
+		List<String> warnings;
+		if (args.length == 3)
+			warnings = lint(Path.of(args[1]), SfxNames.load(Path.of(args[2])));
+		else
+			warnings = lint(Path.of(args[1]));
 		Logger.log("SFX assets are valid.");
 		printWarnings(warnings);
 	}

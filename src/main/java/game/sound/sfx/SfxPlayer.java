@@ -840,9 +840,9 @@ public class SfxPlayer implements AudioClient
 					commands.add((Command) node);
 			}
 
-			Integer entryPos = labels.get(sequence.entry);
+			Integer entryPos = labels.get(Sequence.START_LABEL);
 			if (entryPos == null)
-				throw new IllegalArgumentException("Missing SFX entry label: " + sequence.entry);
+				throw new IllegalArgumentException("Missing SFX start label");
 			this.entryPos = entryPos;
 
 			instructions = new Instruction[commands.size()];
@@ -850,20 +850,13 @@ public class SfxPlayer implements AudioClient
 				Command command = commands.get(i);
 				int targetPos = -1;
 				if (command.op == Op.JUMP || command.op == Op.SET_ALTERNATIVE) {
-					String label = localName(command.ref);
-					Integer resolved = labels.get(label);
+					Integer resolved = labels.get(command.ref);
 					if (resolved == null)
 						throw new IllegalArgumentException("Missing SFX label: " + command.ref);
 					targetPos = resolved;
 				}
 				instructions[i] = new Instruction(command, targetPos);
 			}
-		}
-
-		private static String localName(String reference)
-		{
-			int colon = reference.indexOf(':');
-			return colon < 0 ? reference : reference.substring(colon + 1);
 		}
 
 		private int getStartTime(int pos)

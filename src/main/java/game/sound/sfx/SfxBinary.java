@@ -131,10 +131,10 @@ public final class SfxBinary
 			if (hasExtraSection)
 				decodeExtraSection();
 
-			// Retain named empty and available unused slots, but not malformed slots.
+			// Retain named empty and available blank slots, but not malformed slots.
 			for (Map.Entry<Integer, List<String>> entry : names.entries()) {
 				if (!archive.sounds.containsKey(entry.getKey()) && names.shouldMaterializeEmpty(entry.getKey()))
-					archive.sounds.put(entry.getKey(), makeSound(entry.getKey()));
+					archive.sounds.put(entry.getKey(), makeSound(entry.getKey(), false));
 			}
 
 			for (Sound sound : archive.sounds.values()) {
@@ -155,11 +155,11 @@ public final class SfxBinary
 				int info = u16(entry + 2);
 				if (root == 0) {
 					if (names.shouldMaterializeEmpty(id))
-						archive.sounds.put(id, makeSound(id));
+						archive.sounds.put(id, makeSound(id, false));
 					continue;
 				}
 
-				Sound sound = makeSound(id);
+				Sound sound = makeSound(id, true);
 				int polyMode = (info >>> 5) & 3;
 				int trackCount = polyMode == 0 ? 1 : 2 << (polyMode - 1);
 				sound.routing = decodeRouting(info, trackCount, String.format("sound %04X", id));
@@ -190,13 +190,14 @@ public final class SfxBinary
 					warnings.add(String.format("Sound %04X was made empty: %s", id, e.getMessage()));
 				}
 
-				// Retail 00B5 contains an out-of-range track root and can crash the game.
+				// Vanilla 00B5 contains an out-of-range track root and can crash the game.
 				if (malformed) {
 					sound.tracks.clear();
 					sound.spawnedEffects.clear();
 					sound.routing = null;
 					if (!names.shouldMaterializeEmpty(id))
 						continue;
+					sound = makeSound(id, false);
 				}
 				archive.sounds.put(id, sound);
 			}
@@ -231,11 +232,11 @@ public final class SfxBinary
 
 			if (!populated) {
 				if (names.shouldMaterializeEmpty(id))
-					archive.sounds.put(id, makeSound(id));
+					archive.sounds.put(id, makeSound(id, false));
 				return;
 			}
 
-			Sound sound = makeSound(id);
+			Sound sound = makeSound(id, true);
 			DecodeContext context = new DecodeContext(sound);
 			Definition definition = decodeDefinition(offset, context);
 			if (!(definition instanceof OneShot))
@@ -245,17 +246,18 @@ public final class SfxBinary
 			archive.sounds.put(id, sound);
 		}
 
-		private Sound makeSound(int id)
+		private Sound makeSound(int id, boolean populated)
 		{
 			List<String> idNames = names.get(id);
 			Sound sound;
-			if (idNames.isEmpty()) {
+			if (idNames.isEmpty() || populated && names.hasEmptyName(id)) {
 				sound = new Sound(id, SfxNames.nameMissing(id));
 			}
 			else {
 				sound = new Sound(id, idNames.get(0));
 				sound.aliases.addAll(idNames.subList(1, idNames.size()));
 			}
+			sound.unused = populated && SfxVanillaUsage.isUnused(id);
 			return sound;
 		}
 
@@ -378,7 +380,7 @@ public final class SfxBinary
 			}
 
 			Map<Integer, String> labels = new LinkedHashMap<>();
-			labels.put(root + 1, "main");
+			labels.put(root + 1, Sequence.START_LABEL);
 			int nextLabel = 1;
 			for (WireRegion region : orderedRegions) {
 				for (WireCommand command : region.commands) {
@@ -699,10 +701,10 @@ public final class SfxBinary
 					if (!wire.alternativeCanTrigger)
 						return new Command(Op.NOP);
 					Command command = new Command(wire.op, wire.a);
-					command.ref = "local:" + labels.get(wire.target);
+					command.ref = labels.get(wire.target);
 					return command;
 				case JUMP:
-					return Command.reference(wire.op, "local:" + labels.get(wire.target));
+					return Command.reference(wire.op, labels.get(wire.target));
 				case SET_PRESS_ENVELOPE:
 					Command envelopeCommand = new Command(wire.op);
 					if (wire.target != 0)
@@ -887,7 +889,7 @@ public final class SfxBinary
 	}
 
 	// Canonical encoder.  It globally interns one-shots and separable sequence
-	// regions, including private copies of the retail Jump/Restart tails.
+	// regions, including private copies of the vanilla Jump/Restart tails.
 	private static final class Encoder
 	{
 		private final SfxArchive archive;
@@ -1077,7 +1079,7 @@ public final class SfxBinary
 		 * If it contains no Restart, however, a Jump is equivalent because the
 		 * continuation saved by that new Jump can never be observed.  Interning
 		 * those tails keeps XML definitions private while recovering the compact
-		 * shared graph used by the retail archive.
+		 * shared graph used by the vanilla archive.
 		 */
 		private void internSafeSuffixes(int[] groups)
 		{
@@ -1344,11 +1346,11 @@ public final class SfxBinary
 				current.builder.write(0);
 			}
 
-			LabelLocation entry = link.labels.get(sequence.entry);
+			LabelLocation entry = link.labels.get(Sequence.START_LABEL);
 			if (entry == null)
-				throw new SfxFormatException("Sequence is missing entry label: " + sequence.entry);
+				throw new SfxFormatException("Sequence is missing its implicit start label");
 			if (entry.offset != 0)
-				throw new SfxFormatException("Sequence entry label must begin a separable region: " + sequence.entry);
+				throw new SfxFormatException("Sequence start must begin a separable region");
 			link.entry = entry.region;
 			entry.region.prepend(sequence.flags());
 
@@ -1497,10 +1499,10 @@ public final class SfxBinary
 					for (Relocation relocation : region.relocations) {
 						if (relocation.type != RelocationType.LABEL)
 							continue;
-						String labelName = localReference(relocation.ref);
+						String labelName = labelReference(relocation.ref);
 						LabelLocation target = link.labels.get(labelName);
 						if (target == null)
-							throw new SfxFormatException("Unknown local sequence label: " + relocation.ref);
+							throw new SfxFormatException("Unknown sequence label: " + relocation.ref);
 						relocation.targetRegion = target.region;
 						relocation.targetOffset = target.offset;
 					}
@@ -1534,13 +1536,13 @@ public final class SfxBinary
 			}
 		}
 
-		private String localReference(String ref)
+		private String labelReference(String ref)
 		{
 			if (ref == null || ref.isBlank())
-				throw new SfxFormatException("Missing local label reference");
-			if (ref.startsWith("shared:"))
-				throw new SfxFormatException("Shared.xml is not implemented by this prototype: " + ref);
-			return ref.startsWith("local:") ? ref.substring("local:".length()) : ref;
+				throw new SfxFormatException("Missing label reference");
+			if (ref.indexOf(':') >= 0)
+				throw new SfxFormatException("Scoped label references are not implemented: " + ref);
+			return ref;
 		}
 
 		private int definitionOffset(Definition definition)

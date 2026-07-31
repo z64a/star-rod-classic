@@ -3,6 +3,7 @@ package game.sound;
 import static app.Directories.MOD_AUDIO;
 import static app.Directories.MOD_AUDIO_BGM;
 import static app.Directories.MOD_AUDIO_MSEQ;
+import static app.Directories.FN_AUDIO_AMBIENTS;
 import static app.Directories.FN_AUDIO_SONGS;
 
 import java.awt.Component;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -69,6 +71,7 @@ import game.sound.mseq.MseqPlayer;
 import game.sound.sfx.SfxArchive;
 import game.sound.sfx.SfxArchive.Command;
 import game.sound.sfx.SfxArchive.Node;
+import game.sound.sfx.SfxArchive.OneShot;
 import game.sound.sfx.SfxArchive.Op;
 import game.sound.sfx.SfxArchive.Sequence;
 import game.sound.sfx.SfxArchive.Sound;
@@ -428,6 +431,7 @@ public class AudioBooth
 	private JPanel createSfxTab()
 	{
 		DefaultListModel<Sound> model = new DefaultListModel<>();
+		Map<Sound, String> sampleNames = new HashMap<>();
 		File manifest = MOD_AUDIO.getFile(SfxXml.FN_SOUND_EFFECTS);
 
 		if (manifest.isFile()) {
@@ -435,6 +439,8 @@ public class AudioBooth
 				SoundBankCatalog catalog = SoundBankCatalog.loadMod();
 				sfxArchive = SfxXml.read(manifest.toPath(), catalog);
 				sfxPlayer.setArchive(sfxArchive);
+				for (Sound sound : sfxArchive.sounds.values())
+					sampleNames.put(sound, getSfxSampleNames(sound, catalog));
 				model.addAll(sfxArchive.sounds.values());
 			}
 			catch (Exception e) {
@@ -445,7 +451,6 @@ public class AudioBooth
 
 		sfxList = new JList<>(model);
 		configureList(sfxList);
-		sfxList.setToolTipText("[S] has an alternative sound; [V] has an alternative volume.");
 		sfxList.setCellRenderer(new DefaultListCellRenderer() {
 			@Override
 			public Component getListCellRendererComponent(JList<?> list, Object value, int index,
@@ -454,9 +459,18 @@ public class AudioBooth
 				Component component = super.getListCellRendererComponent(
 					list, value, index, isSelected, cellHasFocus);
 				if (value instanceof Sound sound) {
-					String suffix = sound.isEmpty() ? "  (empty)" : "";
+					String samples = sampleNames.get(sound);
+					String suffix = "";
+					if (sound.isEmpty())
+						suffix = "  (empty)";
+					else {
+						if (sound.unused)
+							suffix = "  (unused)";
+						if (samples != null && !samples.isEmpty())
+							suffix += "  (" + samples + ")";
+					}
 					setText(String.format("%04X  %s%s%s",
-						sound.id, sound.name, triggerIndicator(sound), suffix));
+						sound.id, sound.name, suffix, triggerIndicator(sound)));
 				}
 				return component;
 			}
@@ -468,7 +482,8 @@ public class AudioBooth
 		});
 
 		JPanel listPanel = createListPanel(sfxList, model, "SFX", manifest, (sound) ->
-			String.format("%04X %s %s", sound.id, sound.name, String.join(" ", sound.aliases)));
+			String.format("%04X %s %s %s %s", sound.id, sound.name,
+				String.join(" ", sound.aliases), sound.unused ? "unused" : "", sampleNames.get(sound)));
 
 		JPanel alternativePanel = new JPanel(new MigLayout("ins 0 8 8 8", "[][]", "[]"));
 		alternativePanel.add(alternativeSoundBox);
@@ -478,6 +493,31 @@ public class AudioBooth
 		panel.add(listPanel, "grow, push, wrap");
 		panel.add(alternativePanel, "growx");
 		return panel;
+	}
+
+	private static String getSfxSampleNames(Sound sound, SoundBankCatalog catalog)
+	{
+		LinkedHashSet<String> samples = new LinkedHashSet<>();
+		collectSfxSampleNames(samples, sound.tracks, catalog);
+		for (SfxArchive.SpawnedEffect effect : sound.spawnedEffects)
+			collectSfxSampleNames(samples, effect.tracks, catalog);
+		return String.join(", ", samples);
+	}
+
+	private static void collectSfxSampleNames(Collection<String> samples,
+		Collection<Track> tracks, SoundBankCatalog catalog)
+	{
+		for (Track track : tracks) {
+			if (track.definition instanceof OneShot oneShot) {
+				samples.add(catalog.getWav(oneShot.bank, oneShot.patch).wav);
+			}
+			else if (track.definition instanceof Sequence sequence) {
+				for (Node node : sequence.nodes) {
+					if (node instanceof Command command && command.op == Op.SET_INSTRUMENT)
+						samples.add(catalog.getWav(command.a, command.b).wav);
+				}
+			}
+		}
 	}
 
 	private static String triggerIndicator(Sound sound)
@@ -505,6 +545,7 @@ public class AudioBooth
 
 	private JPanel createMseqTab() throws IOException
 	{
+		Map<String, String> names = loadMseqNames();
 		List<File> sortedFiles = new ArrayList<>(
 			IOUtils.getFilesWithExtension(MOD_AUDIO_MSEQ, "xml", false));
 		sortedFiles.sort(Comparator.comparing(File::getName, String.CASE_INSENSITIVE_ORDER));
@@ -522,7 +563,7 @@ public class AudioBooth
 				Component component = super.getListCellRendererComponent(
 					list, value, index, isSelected, cellHasFocus);
 				if (value instanceof File file)
-					setText(FilenameUtils.getBaseName(file.getName()));
+					setText(formatMseqName(file, names));
 				return component;
 			}
 		});
@@ -534,11 +575,13 @@ public class AudioBooth
 				selectMseq(selected);
 		});
 
-		return createListPanel(mseqList, model, "MSEQ", MOD_AUDIO_MSEQ.toFile(), File::getName);
+		return createListPanel(mseqList, model, "MSEQ", MOD_AUDIO_MSEQ.toFile(),
+			(file) -> formatMseqName(file, names));
 	}
 
 	private JPanel createBgmTab() throws IOException
 	{
+		Map<String, String> names = loadBgmNames();
 		Collection<File> files = IOUtils.getFilesWithExtension(MOD_AUDIO_BGM, "xml", false);
 		Map<File, BgmSummary> summaries = new HashMap<>();
 		for (File file : files)
@@ -552,7 +595,6 @@ public class AudioBooth
 
 		bgmList = new JList<>(model);
 		configureList(bgmList);
-		bgmList.setToolTipText("[n] is the number of compositions; [P] uses proximity mixing.");
 		bgmList.setCellRenderer(new DefaultListCellRenderer() {
 			@Override
 			public Component getListCellRendererComponent(JList<?> list, Object value, int index,
@@ -561,7 +603,7 @@ public class AudioBooth
 				Component component = super.getListCellRendererComponent(
 					list, value, index, isSelected, cellHasFocus);
 				if (value instanceof File file)
-					setText(formatBgmName(file, summaries.get(file)));
+					setText(formatBgmName(file, summaries.get(file), names));
 				return component;
 			}
 		});
@@ -574,7 +616,8 @@ public class AudioBooth
 		});
 
 		JPanel listPanel = createListPanel(
-			bgmList, model, "BGM", MOD_AUDIO_BGM.toFile(), File::getName);
+			bgmList, model, "BGM", MOD_AUDIO_BGM.toFile(),
+			(file) -> formatBgmName(file, summaries.get(file), names));
 
 		bgmCompositionBox = new JComboBox<>();
 		bgmCompositionBox.setEnabled(false);
@@ -639,9 +682,49 @@ public class AudioBooth
 		}
 	}
 
-	private static String formatBgmName(File file, BgmSummary summary)
+	private static Map<String, String> loadMseqNames()
 	{
-		String name = FilenameUtils.getBaseName(file.getName()) + " [" + summary.compositions + "]";
+		File catalog = MOD_AUDIO.getFile(FN_AUDIO_AMBIENTS);
+		try {
+			return AudioCatalog.readMseqNames(catalog, MOD_AUDIO.getFile(FN_AUDIO_SONGS));
+		}
+		catch (Exception e) {
+			Logger.logError("Could not read MSEQ names from " + catalog.getName());
+			Logger.printStackTrace(e);
+			return new HashMap<>();
+		}
+	}
+
+	private static Map<String, String> loadBgmNames()
+	{
+		File catalog = MOD_AUDIO.getFile(FN_AUDIO_SONGS);
+		try {
+			return AudioCatalog.readSongNames(catalog);
+		}
+		catch (Exception e) {
+			Logger.logError("Could not read BGM names from " + catalog.getName());
+			Logger.printStackTrace(e);
+			return new HashMap<>();
+		}
+	}
+
+	private static String formatMseqName(File file, Map<String, String> names)
+	{
+		String name = FilenameUtils.getBaseName(file.getName());
+		String canonicalName = AudioCatalog.getName(names, file.getName());
+		if (canonicalName != null)
+			name += "  " + canonicalName;
+		return name;
+	}
+
+	private static String formatBgmName(File file, BgmSummary summary,
+		Map<String, String> names)
+	{
+		String name = FilenameUtils.getBaseName(file.getName());
+		String canonicalName = AudioCatalog.getName(names, file.getName());
+		if (canonicalName != null)
+			name += "  " + canonicalName;
+		name += " [" + summary.compositions + "]";
 		if (summary.hasProximityMixes)
 			name += " [P]";
 		return name;

@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.swing.JComboBox;
@@ -31,6 +32,9 @@ import game.globals.editor.GlobalsData;
 import game.globals.editor.GlobalsRecord;
 import game.map.shading.SpriteShadingData;
 import game.map.shading.SpriteShadingEditor;
+import game.sound.AudioCatalog;
+import game.sound.sfx.SfxNames;
+import game.sound.sfx.SfxXml;
 import game.shared.ProjectDatabase.ConstEnum.EnumPair;
 import game.shared.lib.CType;
 import game.shared.struct.script.ScriptVariable;
@@ -89,6 +93,9 @@ public class ProjectDatabase
 
 	public static final String ITEM_NAMESPACE = "Item";
 	public static final String MOVE_NAMESPACE = "Move";
+	public static final String SOUND_NAMESPACE = "Sound";
+	public static final String SONG_NAMESPACE = "Song";
+	public static final String AMBIENT_SOUND_NAMESPACE = "AmbientSounds";
 
 	public static final String SHADING_NAMESPACE = "Shading";
 	public static SpriteShadingData SpriteShading;
@@ -156,6 +163,9 @@ public class ProjectDatabase
 					constLibMap.put(ce.libName, ce);
 			}
 		}
+
+		if (hasProject)
+			loadAudioEnums();
 
 		CType.loadTypes();
 
@@ -230,16 +240,61 @@ public class ProjectDatabase
 
 	private static void replaceEnum(String namespace, String libName, Iterable<? extends GlobalsRecord> entries)
 	{
-		constNameMap.remove(namespace);
-		constLibMap.remove(libName);
-
 		LinkedHashMap<Integer, String> decodeMap = new LinkedHashMap<>();
 		for (GlobalsRecord rec : entries)
 			decodeMap.put(rec.listIndex, rec.getIdentifier());
+		replaceEnum(namespace, libName, decodeMap);
+	}
+
+	private static void loadAudioEnums()
+	{
+		File soundEffects = MOD_AUDIO.getFile(SfxXml.FN_SOUND_EFFECTS);
+		if (soundEffects.isFile())
+			replaceEnum(SOUND_NAMESPACE, "soundID", SfxXml.readNames(soundEffects.toPath()));
+
+		File songs = MOD_AUDIO.getFile(FN_AUDIO_SONGS);
+		if (songs.isFile())
+			replaceEnum(SONG_NAMESPACE, "songID", AudioCatalog.readSongNameTable(songs));
+
+		File ambientSounds = MOD_AUDIO.getFile(FN_AUDIO_AMBIENTS);
+		if (ambientSounds.isFile())
+			replaceEnum(AMBIENT_SOUND_NAMESPACE, "ambientSFX",
+				AudioCatalog.readAmbientNameTable(ambientSounds));
+	}
+
+	private static void replaceEnum(String namespace, String libName, Map<Integer, String> entries)
+	{
+		LinkedHashMap<Integer, String> decodeMap = new LinkedHashMap<>();
+		decodeMap.putAll(entries);
+		installEnum(namespace, libName, decodeMap);
+	}
+
+	private static void replaceEnum(String namespace, String libName, SfxNames entries)
+	{
+		LinkedHashMap<Integer, String> decodeMap = new LinkedHashMap<>();
+		for (Entry<Integer, List<String>> entry : entries.entries()) {
+			if (!entry.getValue().isEmpty())
+				decodeMap.put(entry.getKey(), entry.getValue().get(0));
+		}
+
+		ConstEnum generated = installEnum(namespace, libName, decodeMap);
+		for (Entry<Integer, List<String>> entry : entries.entries()) {
+			List<String> names = entry.getValue();
+			for (int i = 1; i < names.size(); i++)
+				generated.addAlias(entry.getKey(), names.get(i));
+		}
+	}
+
+	private static ConstEnum installEnum(String namespace, String libName,
+		LinkedHashMap<Integer, String> decodeMap)
+	{
+		constNameMap.remove(namespace);
+		constLibMap.remove(libName);
 
 		ConstEnum ce = new ConstEnum(namespace, libName, decodeMap);
 		constNameMap.put(ce.namespace, ce);
 		constLibMap.put(ce.libName, ce);
+		return ce;
 	}
 
 	public static boolean hasItem(int index)
@@ -591,6 +646,11 @@ public class ProjectDatabase
 			decodeMap.putAll(ce.decodeMap);
 		}
 
+		private void addAlias(int id, String name)
+		{
+			encodeMap.put(name, String.format("%08X", id));
+		}
+
 		public String getNamespace()
 		{
 			return namespace;
@@ -693,7 +753,6 @@ public class ProjectDatabase
 
 		public int getNumDefined()
 		{
-			assert (decodeMap.size() == encodeMap.size());
 			return decodeMap.size();
 		}
 

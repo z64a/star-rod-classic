@@ -534,7 +534,7 @@ MAR0_0F	MAR0_0F_HammerStrike3
 
 MAR1_00	MAR1_00_SearchBush
 MAR1_01	MAR1_01_CheckLaughingFlowers
-MAR1_02	MAR1_02_Unk_0154
+MAR1_02	MAR1_02_Unused_0154
 MAR1_03	MAR1_03_SmallBoing
 MAR1_04	MAR1_04_SmackTree
 MAR1_05	MAR1_05_ShakeTreeLeaves
@@ -580,7 +580,7 @@ PAR0_06	PAR0_06_ParakarryAirRaid1
 PAR0_07	PAR0_07_ParakarryAirRaid2
 PAR0_08	PAR0_08_ParakarryFlap
 PAR0_09	PAR0_09_ParakarryShellShot
-PAR0_0A	PAR0_0A_BombetteFuse
+PAR0_0A	PAR0_0A_BombetteIgnite
 PAR0_0B	PAR0_0B_BombetteFuse
 PAR0_0B_Loop	PAR0_0B_BombetteFuse_Loop
 PAR0_0C	PAR0_0C_BombetteBlastLv1
@@ -608,8 +608,8 @@ PAR1_0F	PAR1_0F_PartnerSwapBattlePos
 
 PAR2_00	PAR2_00_BooVanishA
 PAR2_01	PAR2_01_BooAppearA
-PAR2_02	PAR2_02_Unk_029E
-PAR2_03	PAR2_03_Unk_029F
+PAR2_02	PAR2_02_Unused_029E
+PAR2_03	PAR2_03_Unused_029F
 
 ETC0_00	ETC0_00_FallQuick
 ETC0_00_Loop	ETC0_00_FallQuick_Loop
@@ -663,14 +663,14 @@ ENE0_03	ENE0_03_FuzzyHopA
 ENE0_04	ENE0_04_BulletBillFire
 ENE0_05	ENE0_05_BulletBillMotion
 ENE0_06	ENE0_06_CreepyLaugh
-ENE0_07	ENE0_07_Unk_0325
-ENE0_08	ENE0_08_Unk_0326
+ENE0_07	ENE0_07_Unused_0325
+ENE0_08	ENE0_08_Unused_0326
 ENE0_09	ENE0_09_Skid
-ENE0_0A	ENE0_0A_Unk_032A
-ENE0_0A_Loop	ENE0_0A_Unk_032A_Loop
+ENE0_0A	ENE0_0A_Unused_032A
+ENE0_0A_Loop	ENE0_0A_Unused_032A_Loop
 ENE0_0B	ENE0_0B_FLO_LakituFlyAway
 ENE0_0B_Loop	ENE0_0B_FLO_LakituFlyAway_Loop
-ENE0_0C	ENE0_0C_Unk_0324
+ENE0_0C	ENE0_0C_Unused_0324
 ENE0_0D	ENE0_0D_FireBar0B
 ENE0_0E	ENE0_0E_ActorTwitch
 
@@ -692,8 +692,8 @@ ENE1_0D	ENE1_0D_Unk
 
 EVT0_00	EVT0_00_ShimmerFalling
 EVT0_01	EVT0_01_NOK_BridgeXylophone1
-EVT0_02	EVT0_02_Unk_006F
-EVT0_02_Loop	EVT0_02_Unk_006F_Loop
+EVT0_02	EVT0_02_Unused_006F
+EVT0_02_Loop	EVT0_02_Unused_006F_Loop
 EVT0_03	EVT0_03_GoompaAttacked
 EVT0_04	EVT0_04_GoompaAttacked
 EVT0_05	EVT0_05_ObjectLand
@@ -712,24 +712,24 @@ EVT0_0D_Loop	EVT0_0D_FLO_BlowBubble_Loop
 EVT0_0E	EVT0_0E_OMO_TrainTrackLever
 EVT0_0F	EVT0_0F_GeneralWhistle
 
-EVT1_00	EVT1_00_KKJ_Rumbling
-EVT1_00_Loop	EVT1_00_KKJ_Rumbling_Loop
-EVT1_01	EVT1_01_SBK_RuinsFinishRising
-EVT1_01_Loop	EVT1_01_SBK_RuinsFinishRising_Loop
-EVT1_02	EVT1_02_SAM_DropStair
-EVT1_03	EVT1_03_TRD_PoundingHigh
-EVT1_04	EVT1_04_OpenTrapdoor
-EVT1_05	EVT1_05_ISK_StairsEmergeRumble
-EVT1_06	EVT1_06_HeavyNpcStepB
-EVT1_07	EVT1_07_TrainDeparture
-EVT1_08	EVT1_08_TrainDeparture
+EVT1_00	EVT1_00_StoneRumble
+EVT1_00_Loop	EVT1_00_StoneRumble_Loop
+EVT1_01	EVT1_01_Wind
+EVT1_01_Loop	EVT1_01_Wind_Loop
+EVT1_02	EVT1_02_StoneThud
+EVT1_03	EVT1_03_Pounding
+EVT1_04	EVT1_04_WoodKnock
+EVT1_05	EVT1_05_LowRumble
+EVT1_06	EVT1_06_HeavyStep
+EVT1_07	EVT1_07_TrainBell
+EVT1_08	EVT1_08_TrainWhistle
 EVT1_09	EVT1_09_TrainReleaseSteam
-EVT1_0A	EVT1_0A_TrainChugA
-EVT1_0B	EVT1_0B_OMO_TrainSwitchRattle
-EVT1_0C	EVT1_0C_OMO_TrainSwitchSelect
-EVT1_0D	EVT1_0D_DGB_Collapse1
-EVT1_0E	EVT1_0E_DGB_Collapse1
-EVT1_0F	EVT1_0F_DGB_Collapse
+EVT1_0A	EVT1_0A_TrainChug
+EVT1_0B	EVT1_0B_TrainSwitchRattle
+EVT1_0C	EVT1_0C_TrainSwitchSelect
+EVT1_0D	EVT1_0D_WoodCrashA
+EVT1_0E	EVT1_0E_WoodCrashB
+EVT1_0F	EVT1_0F_WoodGroan
 
 EVT2_00	EVT2_00_QuizTicking
 EVT2_01	EVT2_01_QuizTicking
@@ -748,7 +748,7 @@ EVT2_0A_Loop	EVT2_0A_PRA_ShiftFloorsRumble_Loop
 EVT2_0B	EVT2_0B_OBK_ChandelierSwing
 EVT2_0C	EVT2_0C_OBK_CheckCabinet
 EVT2_0D	EVT2_0D_KKJ_WindowTap
-EVT2_0E	EVT2_0E_Unk_01D7
+EVT2_0E	EVT2_0E_Unused_01D7
 EVT2_0F	EVT2_0F_Boing
 
 EVT3_00	EVT3_00_OMO_BarricadeDrop
@@ -788,12 +788,12 @@ EVT4_0B	EVT4_0B_SAM_PondShatter
 EVT4_0C	EVT4_0C_PuffPuffSmash
 EVT4_0D	EVT4_0D_PuffPuffPartBreaks
 EVT4_0E	EVT4_0E_PuffPuffPanelBreaks
-EVT4_0F	EVT4_0F_Unk_0090
-EVT4_0F_Loop	EVT4_0F_Unk_0090_Loop
+EVT4_0F	EVT4_0F_ClockTicking
+EVT4_0F_Loop	EVT4_0F_ClockTicking_Loop
 
 EVT5_00	EVT5_00_CrystalBallWave
 EVT5_01	EVT5_01_GoombarioGathering
-EVT5_02	EVT5_02_Unk_01F8
+EVT5_02	EVT5_02_Unused_01F8
 EVT5_03	EVT5_03_RescueStarSpirit
 EVT5_04	EVT5_04_RecoverHeart
 EVT5_05	EVT5_05_BeginWish
@@ -804,10 +804,10 @@ EVT5_09	EVT5_09_WishAscending
 EVT5_0A	EVT5_0A_UpAndAwaySendAway
 EVT5_0B	EVT5_0B_Refresh
 EVT5_0C	EVT5_0C_DarkToadDispel
-EVT5_0D	EVT5_0D_Unk_013F
-EVT5_0D_Loop	EVT5_0D_Unk_013F_Loop
-EVT5_0E	EVT5_0E_Unk_0140
-EVT5_0E_Loop	EVT5_0E_Unk_0140_Loop
+EVT5_0D	EVT5_0D_Unused_013F
+EVT5_0D_Loop	EVT5_0D_Unused_013F_Loop
+EVT5_0E	EVT5_0E_Unused_0140
+EVT5_0E_Loop	EVT5_0E_Unused_0140_Loop
 EVT5_0F	EVT5_0F_StarshipAppears
 EVT5_0F_Loop	EVT5_0F_StarshipAppears_Loop
 
@@ -878,9 +878,9 @@ MOB0_06	MOB0_06_OBK_CabinetCrash
 MOB0_07	MOB0_07_FlipPage
 MOB0_08	MOB0_08_HeartPlant
 MOB0_09	MOB0_09_MunchlesiaSuction
-MOB0_0A	MOB0_0A_Unk_03FD
+MOB0_0A	MOB0_0A_HornHonk
 
-PEA0_00	PEA0_00_Unk_03FE
+PEA0_00	PEA0_00_Unused_03FE
 PEA0_01	PEA0_01_KKJ_UseSneakyParasol
 PEA0_02	PEA0_02_SneakyParasolTransform
 PEA0_03	PEA0_03_KKJ_UseSneakyParasol
@@ -944,14 +944,14 @@ BTL0_01	BTL0_01_Danger
 BTL0_02	BTL0_02_Peril
 BTL0_03	BTL0_03_HitNormal
 BTL0_04	BTL0_04_HitFire
-BTL0_05	BTL0_05_Unk_034D
-BTL0_05_Loop	BTL0_05_Unk_034D_Loop
+BTL0_05	BTL0_05_Unused_034D
+BTL0_05_Loop	BTL0_05_Unused_034D_Loop
 BTL0_06	BTL0_06_HitIce
 BTL0_07	BTL0_07_PokeyThrow
 BTL0_08	BTL0_08_ActorFlight
-BTL0_09	BTL0_09_Cheering
-BTL0_09_Loop	BTL0_09_Cheering_Loop
-BTL0_0A	BTL0_0A_Cheering
+BTL0_09	BTL0_09_CrowdCheer
+BTL0_09_Loop	BTL0_09_CrowdCheer_Loop
+BTL0_0A	BTL0_0A_CrowdClap
 BTL0_0B	BTL0_0B_KnockoutChirping
 BTL0_0C	BTL0_0C_ActorHurt
 BTL0_0D	BTL0_0D_Immune
@@ -1011,7 +1011,7 @@ BTL3_08	BTL3_08_InflictKO
 BTL3_09	BTL3_09_Lucky
 
 BT20_00	BT20_00_TubbasHeartCharge
-BT20_01	BT20_01_Unk_035A
+BT20_01	BT20_01_Unused_035A
 BT20_02	BT20_02_TubbasHeartSwarmAttack
 BT20_03	BT20_03_TubbasHeartSwarmVanish
 BT20_04	BT20_04_EmberSpit
@@ -1121,16 +1121,16 @@ BT26_05_Loop	BT26_05_HeavyWindLoop_Loop
 BT26_06	BT26_06_HuffNPuffInhale
 BT26_06_Loop	BT26_06_HuffNPuffInhale_Loop
 BT26_07	BT26_07_LightThrow
-BT26_08	BT26_08_Unk_03DA
+BT26_08	BT26_08_Unused_03DA
 BT26_09	BT26_09_Squeeze
 BT26_0A	BT26_0A_PowerUp
 BT26_0B	BT26_0B_HyperCleftLand
 BT26_0C	BT26_0C_HyperCleftCharge
 BT26_0D	BT26_0D_SpearStab
 BT26_0E	BT26_0E_LavaPiranhaRecover
-BT26_0F	BT26_0F_Unk_20C0
+BT26_0F	BT26_0F_Unused_20C0
 
-BT27_00	BT27_00_Unk_03D8
+BT27_00	BT27_00_Unused_03D8
 BT27_01	BT27_01_MagikoopaVanish
 BT27_02	BT27_02_MagikoopaWandStrike
 BT27_03	BT27_03_MagikoopaPowerUp
@@ -1142,7 +1142,7 @@ BT27_08	BT27_08_SummonCrystalBits
 BT27_09	BT27_09_SummonCrystalClones
 BT27_0A	BT27_0A_CrystalKingIceBolt
 BT27_0B	BT27_0B_UpAndAwayCast
-BT27_0C	BT27_0C_Unk_0360
+BT27_0C	BT27_0C_Unused_0360
 BT27_0D	BT27_0D_DayzeeJump
 BT27_0E	BT27_0E_Leech
 BT27_0F	BT27_0F_LavaBudSpitPetit
@@ -1184,7 +1184,7 @@ BT29_0F	BT29_0F_Toss
 
 BT2A_00	BT2A_00_ToyTankMove1
 BT2A_01	BT2A_01_GulpitLick
-BT2A_02	BT2A_02_Unk_02FE
+BT2A_02	BT2A_02_Unused_02FE
 BT2A_03	BT2A_03_JrTroopaNewPower
 BT2A_04	BT2A_04_CloseShell
 BT2A_05	BT2A_05_TankBulbFire
@@ -1224,7 +1224,7 @@ BT2C_01	BT2C_01_LanternGhostInhale
 BT2C_02	BT2C_02_NpcJump
 BT2C_03	BT2C_03_HuffNPuffJiggle
 BT2C_04	BT2C_04_HuffNPuffWobble
-BT2C_05	BT2C_05_Unk_20B5
+BT2C_05	BT2C_05_Unused_20B5
 BT2C_06	BT2C_06_GhostTransform
 BT2C_07	BT2C_07_BowserStarRodUse
 BT2C_08	BT2C_08_BowserStarRodDrainWave

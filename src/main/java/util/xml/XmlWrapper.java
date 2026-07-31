@@ -596,6 +596,18 @@ public class XmlWrapper
 				pw.println();
 		}
 
+		public void increaseIndent()
+		{
+			indentString = indentString + "\t";
+		}
+
+		public void decreaseIndent()
+		{
+			if (indentString.isEmpty())
+				throw new IllegalStateException("XML indentation is already zero");
+			indentString = indentString.substring(1);
+		}
+
 		public void openTag(XmlTag tag)
 		{
 			openTag(tag, null);
@@ -612,7 +624,7 @@ public class XmlWrapper
 				pw.println();
 
 			if (!tag.selfClose)
-				indentString = indentString + "\t";
+				increaseIndent();
 		}
 
 		public void closeTag(XmlTag tag)
@@ -622,7 +634,7 @@ public class XmlWrapper
 
 		public void closeTag(XmlTag tag, String comment)
 		{
-			indentString = indentString.substring(1);
+			decreaseIndent();
 
 			pw.print(indentString);
 			tag.printClose();

@@ -46,7 +46,13 @@ public final class SfxNames
 	{
 		List<String> idNames = get(id);
 		return hasAuthoritativeName(id)
-			|| idNames.size() == 1 && unusedName(id).equals(idNames.get(0));
+			|| idNames.size() == 1 && emptyName(id).equals(idNames.get(0));
+	}
+
+	public boolean hasEmptyName(int id)
+	{
+		List<String> idNames = get(id);
+		return idNames.size() == 1 && emptyName(id).equals(idNames.get(0));
 	}
 
 	public String preferredName(int id)
@@ -65,6 +71,11 @@ public final class SfxNames
 		return String.format("Unused_%04X", id);
 	}
 
+	public static String emptyName(int id)
+	{
+		return String.format("Empty_%04X", id);
+	}
+
 	public static String invalidName(int id)
 	{
 		return String.format("Invalid_%04X", id);
@@ -74,10 +85,11 @@ public final class SfxNames
 	{
 		return nameMissing(id).equals(name)
 			|| unusedName(id).equals(name)
+			|| emptyName(id).equals(name)
 			|| invalidName(id).equals(name);
 	}
 
-	private void add(int id, String name)
+	void add(int id, String name)
 	{
 		if (isRawSoundID(id))
 			names.computeIfAbsent(id, ignored -> new ArrayList<>()).add(name);

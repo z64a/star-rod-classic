@@ -1353,24 +1353,20 @@ public class StarRodClassic extends JFrame
 			setTitle(Environment.decorateTitle("Star Rod"));
 			setIconImage(Environment.getDefaultIconImage());
 
-			//	setMinimumSize(new Dimension(320,64)); // 2x2
-			setMinimumSize(new Dimension(220, 220));
+			setMinimumSize(new Dimension(400, 220));
 			setLocationRelativeTo(null);
 
 			String fmtButton = "sg buttons, grow, push";
 
-			setLayout(new MigLayout("fill, wrap"));
+			setLayout(new MigLayout("fill, wrap 2"));
 			add(modManagerButton, fmtButton);
-			if (!Environment.project.isDecomp)
-				add(globalsEditorButton, fmtButton);
-			add(stringEditorButton, fmtButton);
-			if (!Environment.project.isDecomp)
-				add(levelEditorButton, fmtButton);
+			add(globalsEditorButton, fmtButton);
 			add(mapEditorButton, fmtButton);
+			add(stringEditorButton, fmtButton);
 			add(spriteEditorButton, fmtButton);
 			add(imageEditorButton, fmtButton);
-			if (!Environment.project.isDecomp)
-				add(worldMapEditorButton, fmtButton);
+			add(levelEditorButton, fmtButton);
+			add(worldMapEditorButton, fmtButton);
 			add(audioBoothButton, fmtButton);
 			add(themesEditorButton, fmtButton);
 
@@ -1412,7 +1408,7 @@ public class StarRodClassic extends JFrame
 		imageIcon = new ImageIcon(image);
 
 		button.setIcon(imageIcon);
-		button.setIconTextGap(24);
+		button.setIconTextGap(16);
 		button.setHorizontalAlignment(SwingConstants.LEFT);
 		button.setVerticalTextPosition(SwingConstants.CENTER);
 		button.setHorizontalTextPosition(SwingConstants.RIGHT);

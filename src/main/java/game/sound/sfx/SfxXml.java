@@ -106,6 +106,50 @@ public final class SfxXml
 		writeArchive(archive, audioDirectory.resolve(FN_SOUND_EFFECTS), catalog);
 	}
 
+	public static SfxNames readNames(Path archiveXml)
+	{
+		Path manifest = requireInputFile(archiveXml, "SFX archive manifest");
+		XmlReader reader = parseDocument(manifest);
+		Element root = requireRoot(reader, manifest, TAG_SOUNDS);
+		checkAttributes(manifest, root);
+
+		SfxNames names = new SfxNames();
+		Set<Integer> ids = new HashSet<>();
+		Set<String> identifiers = new HashSet<>();
+		for (Element element : childElements(manifest, root)) {
+			if (!element.getTagName().equals(TAG_SOUND.toString()))
+				throw unknownElement(manifest, root, element);
+			checkAttributes(manifest, element, ATTR_ID, ATTR_NAME, ATTR_SRC, ATTR_EMPTY, ATTR_UNUSED);
+
+			reader.requiresAttribute(element, ATTR_ID);
+			String idText = reader.getAttribute(element, ATTR_ID);
+			if (!SOUND_ID.matcher(idText).matches())
+				throw error(manifest, element, "id must be four uppercase hexadecimal digits");
+			int id = reader.readHex(element, ATTR_ID);
+			if (!SfxNames.isRawSoundID(id))
+				throw error(manifest, element, String.format("%04X is not a raw DAT1 sound ID", id));
+			if (!ids.add(id))
+				throw error(manifest, element, String.format("duplicate sound ID %04X", id));
+
+			String name = readIdentifier(reader, manifest, element, ATTR_NAME, true);
+			if (!identifiers.add(name))
+				throw error(manifest, element, "duplicate sound name or alias: " + name);
+			names.add(id, name);
+
+			for (Element child : childElements(manifest, element)) {
+				if (!child.getTagName().equals(TAG_ALIAS.toString()))
+					continue;
+				checkAttributes(manifest, child, ATTR_NAME);
+				requireNoChildren(manifest, child);
+				String alias = readIdentifier(reader, manifest, child, ATTR_NAME, true);
+				if (!identifiers.add(alias))
+					throw error(manifest, child, "duplicate sound name or alias: " + alias);
+				names.add(id, alias);
+			}
+		}
+		return names;
+	}
+
 	public static void writeArchive(SfxArchive archive, Path archiveXml, SoundBankCatalog catalog)
 	{
 		if (archive == null)
@@ -166,7 +210,7 @@ public final class SfxXml
 	private static Sound readSound(XmlReader reader, Path manifest, Path assetRoot, Element element,
 		SoundBankCatalog catalog)
 	{
-		checkAttributes(manifest, element, ATTR_ID, ATTR_NAME, ATTR_SRC, ATTR_EMPTY);
+		checkAttributes(manifest, element, ATTR_ID, ATTR_NAME, ATTR_SRC, ATTR_EMPTY, ATTR_UNUSED);
 		reader.requiresAttribute(element, ATTR_ID);
 		String idText = reader.getAttribute(element, ATTR_ID);
 		if (!SOUND_ID.matcher(idText).matches())
@@ -177,6 +221,10 @@ public final class SfxXml
 
 		String name = readIdentifier(reader, manifest, element, ATTR_NAME, true);
 		Sound sound = new Sound(id, name);
+		boolean hasUnused = reader.hasAttribute(element, ATTR_UNUSED);
+		if (hasUnused && !reader.readBoolean(element, ATTR_UNUSED, false))
+			throw error(manifest, element, "unused, when present, must be true");
+		sound.unused = hasUnused;
 
 		Element routingElement = null;
 		Element oneShotElement = null;
@@ -209,6 +257,8 @@ public final class SfxXml
 		int choices = (hasSource ? 1 : 0) + (hasEmpty ? 1 : 0) + (oneShotElement != null ? 1 : 0);
 		if (choices != 1)
 			throw error(manifest, element, "Sound must choose exactly one of src, empty=true, or OneShot");
+		if (hasEmpty && hasUnused)
+			throw error(manifest, element, "empty sounds must not be marked unused");
 
 		if (hasSource) {
 			sound.source = reader.getAttribute(element, ATTR_SRC);
@@ -386,15 +436,16 @@ public final class SfxXml
 		SoundBankCatalog catalog)
 	{
 		checkAttributes(source, element,
-			ATTR_ENTRY, ATTR_LOCK_VOLUME, ATTR_LOCK_PAN, ATTR_LOCK_PITCH, ATTR_LOCK_REVERB);
+			ATTR_LOCK_VOLUME, ATTR_LOCK_PAN, ATTR_LOCK_PITCH, ATTR_LOCK_REVERB);
 		Sequence sequence = new Sequence();
-		sequence.entry = readIdentifier(reader, source, element, ATTR_ENTRY, true);
 		sequence.lockVolume = reader.readBoolean(element, ATTR_LOCK_VOLUME, false);
 		sequence.lockPan = reader.readBoolean(element, ATTR_LOCK_PAN, false);
 		sequence.lockPitch = reader.readBoolean(element, ATTR_LOCK_PITCH, false);
 		sequence.lockReverb = reader.readBoolean(element, ATTR_LOCK_REVERB, false);
 
 		Set<String> labels = new LinkedHashSet<>();
+		labels.add(Sequence.START_LABEL);
+		sequence.nodes.add(new Label(Sequence.START_LABEL));
 		for (Element child : childElements(source, element)) {
 			if (child.getTagName().equals(TAG_LABEL.toString())) {
 				checkAttributes(source, child, ATTR_NAME);
@@ -409,13 +460,11 @@ public final class SfxXml
 			}
 		}
 
-		if (!labels.contains(sequence.entry))
-			throw error(source, element, "Sequence entry does not name a Label: " + sequence.entry);
 		for (SfxArchive.Node node : sequence.nodes) {
 			if (node instanceof Command command && (command.op == Op.JUMP || command.op == Op.SET_ALTERNATIVE)) {
-				String label = localReferenceName(source, element, command.ref);
+				String label = labelReferenceName(source, element, command.ref);
 				if (!labels.contains(label))
-					throw error(source, element, "missing local label referenced by " + command.op + ": " + label);
+					throw error(source, element, "missing label referenced by " + command.op + ": " + label);
 			}
 		}
 		return sequence;
@@ -492,7 +541,7 @@ public final class SfxXml
 				checkAttributes(source, element, ATTR_TYPE, ATTR_TARGET);
 				requireNoChildren(source, element);
 				Command command = Command.reference(Op.SET_ALTERNATIVE,
-					readReference(reader, source, element, ATTR_TARGET, true));
+					readIdentifier(reader, source, element, ATTR_TARGET, true));
 				command.a = readRangedInt(reader, source, element, ATTR_TYPE, 1, 3, false);
 				return command;
 			case TAG_STOP:
@@ -500,7 +549,8 @@ public final class SfxXml
 			case TAG_JUMP:
 				checkAttributes(source, element, ATTR_TARGET);
 				requireNoChildren(source, element);
-				return Command.reference(Op.JUMP, readReference(reader, source, element, ATTR_TARGET, true));
+				return Command.reference(Op.JUMP,
+					readIdentifier(reader, source, element, ATTR_TARGET, true));
 			case TAG_RESTART:
 				return noArgCommand(reader, source, element, Op.RESTART);
 			case TAG_NOP:
@@ -639,6 +689,8 @@ public final class SfxXml
 			}
 
 			if (sound.isEmpty()) {
+				if (sound.unused)
+					throw modelError(source, String.format("empty sound %04X cannot be marked unused", sound.id));
 				if (sound.routing != null)
 					throw modelError(source, String.format("empty sound %04X cannot have routing", sound.id));
 				if (!sound.spawnedEffects.isEmpty())
@@ -835,7 +887,11 @@ public final class SfxXml
 		if (!(definition instanceof Sequence sequence))
 			throw modelError(source, "unsupported track definition: " + definition.getClass().getName());
 
-		validateIdentifier(sequence.entry, "sequence entry", source);
+		if (sequence.nodes.isEmpty()
+			|| !(sequence.nodes.get(0) instanceof Label entryLabel)
+			|| !entryLabel.name().equals(Sequence.START_LABEL)) {
+			throw modelError(source, "sequence must begin with its implicit start label");
+		}
 		Set<String> labels = new HashSet<>();
 		for (SfxArchive.Node node : sequence.nodes) {
 			if (node == null)
@@ -849,15 +905,13 @@ public final class SfxXml
 				validateCommand(command, source);
 			}
 		}
-		if (!labels.contains(sequence.entry))
-			throw modelError(source, "sequence entry does not name a label: " + sequence.entry);
 		for (SfxArchive.Node node : sequence.nodes) {
 			if (!(node instanceof Command command))
 				continue;
 			if (command.op == Op.JUMP || command.op == Op.SET_ALTERNATIVE) {
-				String label = localReferenceName(source, null, command.ref);
+				String label = labelReferenceName(source, null, command.ref);
 				if (!labels.contains(label))
-					throw modelError(source, "missing local label: " + label);
+					throw modelError(source, "missing label: " + label);
 			}
 			else if (command.op == Op.SPAWN && !spawnedNames.contains(command.ref)) {
 				throw modelError(source, "missing local spawned effect: " + command.ref);
@@ -918,10 +972,10 @@ public final class SfxXml
 				break;
 			case SET_ALTERNATIVE:
 				requireRange(command.a, 1, 3, command.op, "type", source);
-				localReferenceName(source, null, command.ref);
+				labelReferenceName(source, null, command.ref);
 				break;
 			case JUMP:
-				localReferenceName(source, null, command.ref);
+				labelReferenceName(source, null, command.ref);
 				break;
 			case SET_PRESS_ENVELOPE:
 				if (command.ref != null)
@@ -1069,6 +1123,8 @@ public final class SfxXml
 			for (Sound sound : sounds) {
 				Map<SfxXmlKey, String> soundAttributes = attributes(
 					ATTR_ID, String.format("%04X", sound.id), ATTR_NAME, sound.name);
+				if (sound.unused)
+					soundAttributes.put(ATTR_UNUSED, "true");
 				if (sound.isEmpty())
 					soundAttributes.put(ATTR_EMPTY, "true");
 
@@ -1196,17 +1252,34 @@ public final class SfxXml
 
 	private static void writeSequence(XmlWriter writer, Sequence sequence, SoundBankCatalog catalog)
 	{
-		Map<SfxXmlKey, String> attributes = attributes(ATTR_ENTRY, sequence.entry);
+		Map<SfxXmlKey, String> attributes = attributes();
 		putTrue(attributes, ATTR_LOCK_VOLUME, sequence.lockVolume);
 		putTrue(attributes, ATTR_LOCK_PAN, sequence.lockPan);
 		putTrue(attributes, ATTR_LOCK_PITCH, sequence.lockPitch);
 		putTrue(attributes, ATTR_LOCK_REVERB, sequence.lockReverb);
 		XmlTag sequenceTag = openTag(writer, TAG_SEQUENCE, attributes);
-		for (SfxArchive.Node node : sequence.nodes) {
-			if (node instanceof Label label)
+		int loopDepth = 0;
+		for (int i = 1; i < sequence.nodes.size(); i++) {
+			SfxArchive.Node node = sequence.nodes.get(i);
+			if (node instanceof Label label) {
 				printTag(writer, TAG_LABEL, attributes(ATTR_NAME, label.name()));
-			else
-				writeCommand(writer, (Command) node, catalog);
+			}
+			else {
+				Command command = (Command) node;
+				if (command.op == Op.END_LOOP && loopDepth > 0) {
+					writer.decreaseIndent();
+					loopDepth--;
+				}
+				writeCommand(writer, command, catalog);
+				if (command.op == Op.START_LOOP) {
+					writer.increaseIndent();
+					loopDepth++;
+				}
+			}
+		}
+		while (loopDepth > 0) {
+			writer.decreaseIndent();
+			loopDepth--;
 		}
 		writer.closeTag(sequenceTag);
 	}
@@ -1395,26 +1468,11 @@ public final class SfxXml
 		return value;
 	}
 
-	private static String readReference(XmlReader reader, Path source, Element element,
-		SfxXmlKey name, boolean localOnly)
+	private static String labelReferenceName(Path source, Element element, String reference)
 	{
-		reader.requiresAttribute(element, name);
-		String value = reader.getAttribute(element, name);
-		if (value.startsWith("shared:"))
-			throw error(source, element, "Shared.xml references are not supported by the prototype: " + value);
-		if (localOnly)
-			localReferenceName(source, element, value);
-		return value;
-	}
-
-	private static String localReferenceName(Path source, Element element, String reference)
-	{
-		if (reference == null || !reference.startsWith("local:"))
-			throw locationError(source, element, "expected local:<label> reference, found: " + reference);
-		String name = reference.substring("local:".length());
-		if (!IDENTIFIER.matcher(name).matches())
-			throw locationError(source, element, "invalid local label reference: " + reference);
-		return name;
+		if (reference == null || !IDENTIFIER.matcher(reference).matches())
+			throw locationError(source, element, "invalid label reference: " + reference);
+		return reference;
 	}
 
 	private static int readHexByte(XmlReader reader, Path source, Element element,

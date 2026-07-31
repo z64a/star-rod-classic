@@ -97,6 +97,7 @@ public class AudioModder
 		TAG_SONG_LIST	("SongList"),
 		TAG_SONG		("Song"),
 		ATTR_ID			("id"),
+		ATTR_SONG_NAME	("name"),
 		ATTR_BGM		("bgm"),
 		ATTR_BK1		("bk1"),
 		ATTR_BK2		("bk2"),
@@ -296,6 +297,8 @@ public class AudioModder
 				XmlTag songTag = xmw.createTag(TAG_SONG, true);
 
 				xmw.addHex(songTag, ATTR_ID, songID);
+				if (songEnum.has(songID))
+					xmw.addAttribute(songTag, ATTR_SONG_NAME, songEnum.getName(songID));
 				xmw.addAttribute(songTag, ATTR_BGM, dumpedFilenames.get(sbnID));
 
 				if (bk1 != 0)
@@ -305,10 +308,7 @@ public class AudioModder
 				if (bk3 != 0)
 					xmw.addAttribute(songTag, ATTR_BK3, dumpedFilenames.get(bk3));
 
-				if (songEnum.has(songID))
-					xmw.printTag(songTag, songEnum.getName(songID));
-				else
-					xmw.printTag(songTag);
+				xmw.printTag(songTag);
 
 				songID++;
 			}
@@ -316,6 +316,32 @@ public class AudioModder
 			xmw.closeTag(listTag);
 			xmw.save();
 		}
+
+		List<String> extraFiles = readExtraFileNames(raf, initOffset, dumpedFilenames);
+		AudioCatalog.writeAmbientSounds(
+			DUMP_AUDIO.getFile(FN_AUDIO_AMBIENTS), extraFiles);
+	}
+
+	private static List<String> readExtraFileNames(RandomAccessFile raf, int initOffset,
+		List<String> dumpedFilenames) throws IOException
+	{
+		raf.seek(TABLE_BASE + initOffset + 0x10);
+		int listOffset = raf.readUnsignedShort();
+		int listSize = raf.readUnsignedShort();
+		if ((listSize & 1) != 0)
+			throw new IOException("INIT extra-file list has an invalid size");
+
+		List<String> extraFiles = new ArrayList<>();
+		raf.seek(TABLE_BASE + initOffset + listOffset);
+		for (int i = 0; i < listSize / 2; i++) {
+			int sbnID = raf.readUnsignedShort();
+			if (sbnID == 0xFFFF)
+				break;
+			if (sbnID >= dumpedFilenames.size())
+				throw new IOException("INIT extra-file list references an invalid SBN file ID");
+			extraFiles.add(dumpedFilenames.get(sbnID));
+		}
+		return extraFiles;
 	}
 
 	public static void dumpAudio() throws IOException
@@ -613,20 +639,24 @@ public class AudioModder
 		}
 	}
 
-	private static void writeINIT(RomPatcher rp, List<SongEntry> songList) throws IOException
+	private static void writeINIT(RomPatcher rp, List<SongEntry> songList,
+		int[] extraFileList) throws IOException
 	{
 		byte[] bankListBytes = new byte[0x110];
-		byte[] list3Bytes = new byte[0x40];
+		byte[] list3Bytes = null;
 
 		//XXX take parts from the original INIT
 		RandomAccessFile raf_original = Environment.getBaseRomReader();
 		raf_original.seek(0x19425E0);
 		raf_original.read(bankListBytes);
-		raf_original.seek(0x1942C00);
-		raf_original.read(list3Bytes);
+		if (extraFileList == null) {
+			list3Bytes = new byte[0x40];
+			raf_original.seek(0x1942C00);
+			raf_original.read(list3Bytes);
+		}
 		raf_original.close();
 		int numBanks = 64;
-		int numList3 = 24;
+		int numList3 = extraFileList == null ? 24 : extraFileList.length;
 
 		int initStartPosition = rp.getCurrentOffset();
 		rp.write("INIT".getBytes());
@@ -649,7 +679,15 @@ public class AudioModder
 		rp.padOut(16);
 
 		int list3Position = rp.getCurrentOffset();
-		rp.write(list3Bytes); //XXX
+		if (extraFileList == null) {
+			rp.write(list3Bytes); //XXX
+		}
+		else {
+			for (int fileID : extraFileList)
+				rp.writeShort(fileID);
+			rp.writeShort(0xFFFF);
+			rp.padOut(16);
+		}
 
 		int initEndPosition = rp.getCurrentOffset();
 		rp.padOut(16);
@@ -693,6 +731,7 @@ public class AudioModder
 		List<FileEntry> fileList;
 		List<SongEntry> songList;
 		List<BankEntry> bankList;
+		int[] extraFileList = null;
 
 		File sfxArchive = MOD_AUDIO.getFile(FN_SFX_ARCHIVE);
 		if (sfxArchive.exists()) {
@@ -713,13 +752,16 @@ public class AudioModder
 		fileList = readFileListXML(MOD_AUDIO.getFile(FN_AUDIO_FILES), sbnLookup);
 		songList = readSongListXML(MOD_AUDIO.getFile(FN_AUDIO_SONGS), sbnLookup);
 		bankList = readBankListXML(MOD_AUDIO.getFile(FN_AUDIO_BANKS), sbnLookup);
+		File ambientSounds = MOD_AUDIO.getFile(FN_AUDIO_AMBIENTS);
+		if (ambientSounds.isFile())
+			extraFileList = AudioCatalog.readAmbientExtraFiles(ambientSounds, sbnLookup);
 
 		ByteBuffer sbnBuffer = createBufferForSBN(fileList);
 
 		rp.seek("INIT", TABLE_BASE + sbnBuffer.capacity());
 
 		// write INIT
-		writeINIT(rp, songList);
+		writeINIT(rp, songList, extraFileList);
 
 		// write other files
 		writeAudioFiles(rp, fileList);

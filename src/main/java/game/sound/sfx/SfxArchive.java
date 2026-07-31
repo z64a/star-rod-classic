@@ -16,6 +16,7 @@ public final class SfxArchive
 	{
 		public final int id;
 		public String name;
+		public boolean unused;
 		public final List<String> aliases = new ArrayList<>();
 		public Routing routing;
 		public final List<Track> tracks = new ArrayList<>();
@@ -123,7 +124,8 @@ public final class SfxArchive
 
 	public static final class Sequence implements Definition
 	{
-		public String entry = "main";
+		public static final String START_LABEL = "start";
+
 		public boolean lockVolume;
 		public boolean lockPan;
 		public boolean lockPitch;

@@ -228,6 +228,8 @@ public final class SfxValidator
 			List<String> expected = authoritativeNames.get(sound.id);
 			if (expected.isEmpty() || authoritativeNames.hasGeneratedName(sound.id)) {
 				String expectedName = authoritativeNames.preferredName(sound.id);
+				if (!sound.isEmpty() && authoritativeNames.hasEmptyName(sound.id))
+					expectedName = SfxNames.nameMissing(sound.id);
 				if (!expectedName.equals(sound.name))
 					error(context + " must use generated name " + expectedName);
 				if (!sound.aliases.isEmpty())
@@ -275,6 +277,8 @@ public final class SfxValidator
 		private void validateSound(Sound sound, String context)
 		{
 			if (sound.isEmpty()) {
+				if (sound.unused)
+					error(context + " is empty and must not be marked unused");
 				if (sound.routing != null)
 					error(context + " is empty and must not have routing");
 				if (!sound.spawnedEffects.isEmpty())
@@ -451,7 +455,11 @@ public final class SfxValidator
 
 		private void validateSequence(Sequence sequence, String context, Set<String> spawnedNames)
 		{
-			validateIdentifier(sequence.entry, context + " Sequence entry");
+			if (sequence.nodes.isEmpty()
+				|| !(sequence.nodes.get(0) instanceof Label entryLabel)
+				|| !entryLabel.name().equals(Sequence.START_LABEL)) {
+				error(context + " Sequence must begin with its implicit start label");
+			}
 			Set<String> labels = new HashSet<>();
 			for (int i = 0; i < sequence.nodes.size(); i++) {
 				Node node = sequence.nodes.get(i);
@@ -465,9 +473,6 @@ public final class SfxValidator
 						error(context + " defines label " + label.name() + " more than once");
 				}
 			}
-
-			if (sequence.entry != null && !labels.contains(sequence.entry))
-				error(context + " Sequence entry label does not exist: " + sequence.entry);
 
 			for (int i = 0; i < sequence.nodes.size(); i++) {
 				Node node = sequence.nodes.get(i);
@@ -550,20 +555,9 @@ public final class SfxValidator
 				error(context + " is missing");
 				return;
 			}
-			if (reference.startsWith("local:")) {
-				String name = reference.substring("local:".length());
-				validateIdentifier(name, context);
-				if (!labels.contains(name))
-					error(context + " does not exist: " + reference);
-			}
-			else if (reference.startsWith("shared:")) {
-				String name = reference.substring("shared:".length());
-				validateIdentifier(name, context);
-				error(context + " uses unsupported shared reference " + reference);
-			}
-			else {
-				error(context + " must use local:name or shared:name syntax: " + reference);
-			}
+			validateIdentifier(reference, context);
+			if (!labels.contains(reference))
+				error(context + " does not exist: " + reference);
 		}
 
 		private void validateEnvelopeReference(String reference, String context)
@@ -581,18 +575,8 @@ public final class SfxValidator
 				error(context + " spawn reference is missing");
 				return;
 			}
-			if (reference.startsWith("shared:")) {
-				String name = reference.substring("shared:".length());
-				validateIdentifier(name, context + " spawn reference");
-				error(context + " uses unsupported shared reference " + reference);
-				return;
-			}
-
-			String name = reference.startsWith("local:")
-				? reference.substring("local:".length())
-				: reference;
-			validateIdentifier(name, context + " spawn reference");
-			if (!spawnedNames.contains(name))
+			validateIdentifier(reference, context + " spawn reference");
+			if (!spawnedNames.contains(reference))
 				error(context + " references missing spawned effect " + reference);
 		}
 
