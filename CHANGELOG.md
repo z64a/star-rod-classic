@@ -6,14 +6,22 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - Releases include a packaged runtime, users no longer need to install Java
+- (Map Editor) Keyboard shortcuts can now be rebound
+- (Map Editor) Vertex paint controls now support hex colors and undo/redo
 
 ### Fixed
 - Viewport scaling in various editors now correctly accounts for HiDPI
 - Lines render via shaders instead of relying on the deprecated GL_LINES
-- Fixed crashes involving the "Cutting Triangles" tool
+- Sprite-loading failures are now reported more clearly
+- (Map Editor) Fixed crashes involving the "Cutting Triangles" tool
+- (Map Editor) Fixed crashes involving empty models and undo/redo during active transforms
+- (Map Editor) Fuse vertices no longer merges vertices with different UVs or colors
+- (Map Editor) More reliable handling of sprite shading light sources
 
-## Changed
+### Changed
+- Copy Assets to Mod now copies missing assets into partially populated directories
 - Hitting escape during a "Save and Quit?" dialog now cancels the dialog rather than exiting without saving
+- (Map Editor) Improved triangle cutting to handle shared edges more reliably
 
 ## [0.5.9] - 2025-02-07
 
