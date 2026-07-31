@@ -350,18 +350,18 @@ public class Patcher implements IGlobalDatabase
 
 		/*
 		// ======== Phase 4: add things that will be loaded via DMA -- these can move around!
-		
+
 		// clear old map table - will help to root out hard-coded map table instructions
 		//clearRegion(0x6B450, 0x6EAC0); // map and area config tables
 		clearRegion(0x6B860, 0x6EAC0); // map and area config tables (with extended move table)
 		clearRegion(0x73DA0, 0x73E10); // area SJIS strings
 		clearRegion(0x73E2C, 0x74EA0); // map and area name strings
-		
+
 		clearRegion(0x65A80, 0x66508);
 		clearRegion(0x66508, 0x691D4);
 		clearRegion(0x691D4, 0x697D8);
 		clearRegion(0x5B8F0, 0x62CE0);
-		
+
 		 */
 
 		imgPatcher.patchCompressedImages();

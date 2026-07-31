@@ -8,7 +8,6 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 
@@ -30,7 +29,6 @@ import common.BaseEditorSettings;
 import common.BasicCamera;
 import common.BasicCommandManager;
 import common.BasicEditorCommand;
-import common.KeyboardInput.KeyInputEvent;
 import common.MouseInput.MouseManagerListener;
 import common.MousePixelRead;
 import game.map.editor.render.PresetColor;
@@ -133,7 +131,8 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 
 	public ImageEditor()
 	{
-		super(EDITOR_SETTINGS);
+		super(EDITOR_SETTINGS, new ImageKeyConfig());
+		registerKeyboardInputs(ImageInput.class, this::inputPressed);
 
 		cam = new BasicCamera(
 			0.0f, 0.0f, 0.5f,
@@ -589,51 +588,37 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 		time += deltaTime;
 	}
 
-	@Override
-	public void keyPress(KeyInputEvent key)
+	public void inputPressed(ImageInput input)
 	{
-		boolean ctrl = keyboard.isCtrlDown();
-		boolean shift = keyboard.isShiftDown();
-		boolean alt = keyboard.isAltDown();
-
-		switch (key.code) {
-			case KeyEvent.VK_SPACE:
-				if (!shift && !ctrl && !alt)
-					resetCam();
+		switch (input) {
+			case RESET_CAMERA:
+				resetCam();
 				break;
-			case KeyEvent.VK_Z:
-				if (!shift && ctrl && !alt)
-					commandManager.undo();
+			case UNDO:
+				commandManager.undo();
 				break;
-			case KeyEvent.VK_Y:
-				if (!shift && ctrl && !alt)
-					commandManager.redo();
+			case REDO:
+				commandManager.redo();
 				break;
-			case KeyEvent.VK_F:
-				if (!ctrl) {
-					if (shift)
-						selectionFill();
-					else if (alt)
-						deselectionFill();
-					else
-						fillSelection();
-				}
+			case FILL_SELECTION:
+				fillSelection();
 				break;
-			case KeyEvent.VK_K:
-				if (!shift && ctrl && !alt)
-					clearSelection();
+			case FILL_SELECTED_AREA:
+				selectionFill();
 				break;
-			case KeyEvent.VK_G:
-				if (!shift && !ctrl && !alt) {
-					bDrawGrid = !bDrawGrid;
-					cbGrid.setSelected(bDrawGrid);
-				}
+			case FILL_DESELECTED_AREA:
+				deselectionFill();
 				break;
-			case KeyEvent.VK_B:
-				if (!shift && !ctrl && !alt) {
-					bDrawBackground = !bDrawBackground;
-					cbBackground.setSelected(bDrawBackground);
-				}
+			case CLEAR_SELECTION:
+				clearSelection();
+				break;
+			case TOGGLE_GRID:
+				bDrawGrid = !bDrawGrid;
+				cbGrid.setSelected(bDrawGrid);
+				break;
+			case TOGGLE_BACKGROUND:
+				bDrawBackground = !bDrawBackground;
+				cbBackground.setSelected(bDrawBackground);
 				break;
 			default:
 		}
@@ -1200,8 +1185,8 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 	{
 		assert (pickedPixel != null);
 
-		boolean shift = keyboard.isShiftDown();
-		boolean alt = keyboard.isAltDown();
+		boolean shift = rawKeyboard.isShiftDown();
+		boolean alt = rawKeyboard.isAltDown();
 
 		if (!mousePixelValid) {
 			if (shift && image.hasSelectedPixels())

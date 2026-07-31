@@ -9,7 +9,6 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Insets;
-import java.awt.KeyboardFocusManager;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -58,7 +57,6 @@ import app.config.Options;
 import app.config.Options.Scope;
 import common.BaseEditor;
 import common.BaseEditorSettings;
-import common.KeyboardInput.KeyInputEvent;
 import game.map.editor.render.PresetColor;
 import game.map.editor.render.TextureManager;
 import game.map.editor.ui.dialogs.ChooseDialogResult;
@@ -175,6 +173,7 @@ public class SpriteEditor extends BaseEditor
 
 	private final SpriteCamera animCamera;
 	private final SpriteCamera sheetCamera;
+	private final SpriteKeyConfig keyConfig;
 	private BasicTraceRay trace;
 
 	// sprite sheet tab
@@ -239,7 +238,14 @@ public class SpriteEditor extends BaseEditor
 
 	public SpriteEditor(boolean player, int id)
 	{
-		super(EDITOR_SETTINGS);
+		this(player, id, new SpriteKeyConfig());
+	}
+
+	private SpriteEditor(boolean player, int id, SpriteKeyConfig keyConfig)
+	{
+		super(EDITOR_SETTINGS, keyConfig);
+		this.keyConfig = keyConfig;
+		registerKeyboardInputs(SpriteInput.class, this::inputPressed);
 
 		animCamera = new SpriteCamera(
 			0.0f, 32.0f, 0.3f,
@@ -284,7 +290,7 @@ public class SpriteEditor extends BaseEditor
 		TextureManager.bindEditorTextures();
 
 		Sprite referenceSprite = spriteLoader.getSprite(SpriteSet.Player, 1);
-		if (referenceSprite != null) {
+		if (referenceSprite != null && !referenceSprite.rasters.isEmpty()) {
 			referenceTile = referenceSprite.rasters.get(0).img;
 			referenceTile.glLoad(GL_REPEAT, GL_REPEAT, false);
 
@@ -654,15 +660,11 @@ public class SpriteEditor extends BaseEditor
 	{
 		switch (editorMode) {
 			case Animation: {
-				animCamera.handleInput(keyboard, mouse, deltaTime, glCanvasWidth(), glCanvasHeight());
-				if (keyboard.isKeyDown(KeyEvent.VK_SPACE))
-					animCamera.reset();
+				animCamera.handleInput(mouse, keyboard, deltaTime, glCanvasWidth(), glCanvasHeight());
 			}
 				break;
 			case SpriteSheet: {
-				sheetCamera.handleInput(keyboard, mouse, deltaTime, glCanvasWidth(), glCanvasHeight());
-				if (keyboard.isKeyDown(KeyEvent.VK_SPACE))
-					sprite.centerAtlas(sheetCamera, glCanvasWidth(), glCanvasHeight());
+				sheetCamera.handleInput(mouse, keyboard, deltaTime, glCanvasWidth(), glCanvasHeight());
 			}
 				break;
 			default:
@@ -670,14 +672,9 @@ public class SpriteEditor extends BaseEditor
 		}
 	}
 
-	@Override
-	public void keyPress(KeyInputEvent key)
+	public void inputPressed(SpriteInput input)
 	{
-		boolean ctrl = keyboard.isCtrlDown();
-		boolean alt = keyboard.isAltDown();
-		boolean shift = keyboard.isShiftDown();
-
-		if (key.code == KeyEvent.VK_DELETE && !ctrl && !alt && !shift) {
+		if (input == SpriteInput.DELETE_SELECTED) {
 			switch (editorMode) {
 				case Animation: {
 					if (sprite != null && currentAnim != null && currentComp != null && currentComp.selected) {
@@ -717,12 +714,42 @@ public class SpriteEditor extends BaseEditor
 					throw new IllegalStateException("Invalid editor mode in handleInput().");
 			}
 		}
-		else if (key.code == KeyEvent.VK_H && !ctrl && !alt && !shift) {
-			cbShowComponent.doClick();
+		else if (input == SpriteInput.TOGGLE_COMPONENT) {
+			SwingUtilities.invokeLater(() -> cbShowComponent.doClick());
 		}
-		else {
+		else if (input == SpriteInput.RESET_CAMERA) {
+			switch (editorMode) {
+				case Animation:
+					animCamera.reset();
+					break;
+				case SpriteSheet:
+					if (sprite != null)
+						sprite.centerAtlas(sheetCamera, glCanvasWidth(), glCanvasHeight());
+					break;
+				default:
+					throw new IllegalStateException("Invalid editor mode in inputPressed().");
+			}
+		}
+		else if (editorMode == EditorMode.Animation) {
 			SwingUtilities.invokeLater(() -> {
-				handleKey(ctrl, alt, shift, key.code);
+				switch (input) {
+					case RESET_PLAYBACK:
+						resetButton.doClick();
+						break;
+					case PLAY:
+						playButton.doClick();
+						break;
+					case STOP:
+						stopButton.doClick();
+						break;
+					case PREVIOUS_FRAME:
+						prevFrameButton.doClick();
+						break;
+					case NEXT_FRAME:
+						nextFrameButton.doClick();
+						break;
+					default:
+				}
 			});
 		}
 	}
@@ -1047,49 +1074,6 @@ public class SpriteEditor extends BaseEditor
 		addSpriteMenu(menuBar);
 		addRenderingMenu(menuBar);
 
-		KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-		manager.addKeyEventDispatcher(e -> {
-			if (e.getID() == KeyEvent.KEY_PRESSED)
-				return handleKey(e.isControlDown(), e.isAltDown(), e.isShiftDown(), e.getKeyCode());
-			else
-				return false;
-		});
-	}
-
-	private boolean handleKey(boolean ctrl, boolean alt, boolean shift, int key)
-	{
-		// no multiple modifers
-		int count = 0;
-		if (ctrl)
-			count++;
-		if (alt)
-			count++;
-		if (shift)
-			count++;
-		if (count > 1)
-			return false;
-
-		if (editorMode == EditorMode.Animation && alt) {
-			switch (key) {
-				case KeyEvent.VK_HOME:
-					resetButton.doClick();
-					return true;
-				case KeyEvent.VK_UP:
-					playButton.doClick();
-					return true;
-				case KeyEvent.VK_DOWN:
-					stopButton.doClick();
-					return true;
-				case KeyEvent.VK_LEFT:
-					prevFrameButton.doClick();
-					return true;
-				case KeyEvent.VK_RIGHT:
-					nextFrameButton.doClick();
-					return true;
-			}
-		}
-
-		return false;
 	}
 
 	private void addEditorMenu(JMenuBar menuBar)
@@ -1837,7 +1821,7 @@ public class SpriteEditor extends BaseEditor
 		SwingUtils.getMessageDialog()
 			.setParent(getFrame())
 			.setTitle("Controls and Shortcuts")
-			.setMessage(new SpriteShortcutsPanel())
+			.setMessage(new SpriteShortcutsPanel(keyConfig))
 			.setMessageType(JOptionPane.PLAIN_MESSAGE)
 			.show();
 

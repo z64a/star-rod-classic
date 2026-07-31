@@ -10,7 +10,6 @@ import java.awt.Canvas;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -44,7 +43,6 @@ import app.StarRodException;
 import app.SwingUtils;
 import common.BaseEditor;
 import common.BaseEditorSettings;
-import common.KeyboardInput.KeyInputEvent;
 import common.Vector3f;
 import game.battle.ActorTypesEditor;
 import game.battle.ActorTypesEditor.ActorType;
@@ -209,7 +207,8 @@ public class BattleEditor extends BaseEditor
 
 	public BattleEditor()
 	{
-		super(EDITOR_SETTINGS);
+		super(EDITOR_SETTINGS, new BattleKeyConfig());
+		registerKeyboardInputs(BattleInput.class, this::inputPressed);
 
 		camera = new BattleCamera();
 		camera.pitch = 8;
@@ -340,14 +339,18 @@ public class BattleEditor extends BaseEditor
 		ShadowRenderer.init();
 
 		playerSprite = spriteLoader.getSprite(SpriteSet.Player, 1);
-		//	playerSprite.enableStencilBuffer = true;
-		playerSprite.prepareForEditor();
-		playerSprite.loadTextures();
+		if (playerSprite != null && playerSprite.animations.size() > 4) {
+			//	playerSprite.enableStencilBuffer = true;
+			playerSprite.prepareForEditor();
+			playerSprite.loadTextures();
+		}
 
 		for (PartnerActor partner : PartnerActor.values()) {
 			partner.sprite = spriteLoader.getSprite(SpriteSet.Npc, partner.spriteID);
-			partner.sprite.prepareForEditor();
-			partner.sprite.loadTextures();
+			if (partner.sprite != null) {
+				partner.sprite.prepareForEditor();
+				partner.sprite.loadTextures();
+			}
 		}
 
 		glEnable(GL_STENCIL_TEST);
@@ -475,23 +478,27 @@ public class BattleEditor extends BaseEditor
 		renderables = Renderer.sortByRenderDepth(camera, renderables);
 		Renderer.drawOpaque(opts, camera, renderables);
 
-		TransformMatrix mtx = TransformMatrix.identity();
-		mtx.setScale(-1, 1, 1);
-		mtx.scale(Sprite.WORLD_SCALE);
-		//	mtx.rotate(Axis.Y, -renderYaw);
-		mtx.translate(MARIO_POS);
-		RenderState.setModelMatrix(mtx);
-		playerSprite.updateAnimation(4);
-		playerSprite.render(null, 4, 0, useFiltering, false);
+		if (playerSprite != null && playerSprite.animations.size() > 4) {
+			TransformMatrix mtx = TransformMatrix.identity();
+			mtx.setScale(-1, 1, 1);
+			mtx.scale(Sprite.WORLD_SCALE);
+			//	mtx.rotate(Axis.Y, -renderYaw);
+			mtx.translate(MARIO_POS);
+			RenderState.setModelMatrix(mtx);
+			playerSprite.updateAnimation(4);
+			playerSprite.render(null, 4, 0, useFiltering, false);
+		}
 
-		mtx = TransformMatrix.identity();
-		mtx.setScale(-1, 1, 1);
-		mtx.scale(Sprite.WORLD_SCALE);
-		//	mtx.rotate(Axis.Y, -renderYaw);
-		mtx.translate(currentPartner.posX, currentPartner.posY, currentPartner.posZ);
-		RenderState.setModelMatrix(mtx);
-		currentPartner.sprite.updateAnimation(currentPartner.idleAnim);
-		currentPartner.sprite.render(null, currentPartner.idleAnim, 0, useFiltering, false);
+		if (currentPartner.sprite != null && currentPartner.idleAnim >= 0 && currentPartner.idleAnim < currentPartner.sprite.animations.size()) {
+			TransformMatrix mtx = TransformMatrix.identity();
+			mtx.setScale(-1, 1, 1);
+			mtx.scale(Sprite.WORLD_SCALE);
+			//	mtx.rotate(Axis.Y, -renderYaw);
+			mtx.translate(currentPartner.posX, currentPartner.posY, currentPartner.posZ);
+			RenderState.setModelMatrix(mtx);
+			currentPartner.sprite.updateAnimation(currentPartner.idleAnim);
+			currentPartner.sprite.render(null, currentPartner.idleAnim, 0, useFiltering, false);
+		}
 
 		for (Unit unit : getVisibleUnits()) {
 			if ((unit.actor.flags.get() & 1) != 0)
@@ -703,30 +710,12 @@ public class BattleEditor extends BaseEditor
 	private void handleInput(double deltaTime)
 	{
 		camera.handleInput(mouse.getFrameDW(), deltaTime, glCanvasWidth(), glCanvasHeight());
-		if (keyboard.isKeyDown(KeyEvent.VK_SPACE))
-			camera.resetPosition();
 	}
 
-	@Override
-	public void keyPress(KeyInputEvent key)
+	public void inputPressed(BattleInput input)
 	{
-		boolean ctrl = keyboard.isCtrlDown();
-		boolean shift = keyboard.isShiftDown();
-
-		if (key.code == KeyEvent.VK_CONTROL || key.code == KeyEvent.VK_SHIFT)
-			return;
-
-		if (ctrl && shift)
-			return;
-
-		/*
-		SwingUtilities.invokeLater(() -> {
-			handleKey(Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL),
-					Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU),
-					Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT),
-					KeyMapper.toAWT(key));
-		});
-		 */
+		if (input == BattleInput.RESET_CAMERA)
+			camera.resetPosition();
 	}
 
 	@Override

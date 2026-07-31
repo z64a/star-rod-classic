@@ -2,8 +2,7 @@ package game.map.editor.camera;
 
 import static java.lang.Math.*;
 
-import java.awt.event.KeyEvent;
-
+import common.CameraInput;
 import common.KeyboardInput;
 import common.MouseInput;
 import common.Vector3f;
@@ -92,7 +91,7 @@ public class PerspFreeCamera extends PerspBaseCamera
 	@Override
 	public void handleMovementInput(MouseInput mouse, KeyboardInput keyboard, float deltaTime)
 	{
-		boolean moveEnabled = keyboard.isKeyDown(KeyEvent.VK_SHIFT);
+		boolean moveEnabled = keyboard.isShiftDown();
 		mouse.setGrabbed(moveEnabled);
 
 		if (moveEnabled) {
@@ -110,10 +109,10 @@ public class PerspFreeCamera extends PerspBaseCamera
 
 			int vx = 0, vz = 0;
 
-			boolean moveForward = keyboard.isKeyDown(KeyEvent.VK_W);
-			boolean moveBackward = keyboard.isKeyDown(KeyEvent.VK_S);
-			boolean moveLeft = keyboard.isKeyDown(KeyEvent.VK_A);
-			boolean moveRight = keyboard.isKeyDown(KeyEvent.VK_D);
+			boolean moveForward = keyboard.isDown(CameraInput.PAN_UP);
+			boolean moveBackward = keyboard.isDown(CameraInput.PAN_DOWN);
+			boolean moveLeft = keyboard.isDown(CameraInput.PAN_LEFT);
+			boolean moveRight = keyboard.isDown(CameraInput.PAN_RIGHT);
 
 			float mod = 1.0f;
 			if (mouse.isHoldingLMB())

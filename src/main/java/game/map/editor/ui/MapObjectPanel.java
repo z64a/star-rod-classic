@@ -20,7 +20,7 @@ import app.SwingUtils;
 import game.map.Map;
 import game.map.MapObject;
 import game.map.MapObject.MapObjectType;
-import game.map.editor.EditorShortcut;
+import game.map.editor.MapInput;
 import game.map.editor.MapEditor;
 import game.map.editor.MapInfoPanel;
 import game.map.editor.selection.SelectionManager.GUISelectionInterface;
@@ -196,12 +196,12 @@ public class MapObjectPanel extends JTabbedPane implements TreeSelectionListener
 
 		JMenuItem invertNormalsButton = new JMenuItem("Invert Normals");
 		invertNormalsButton.setToolTipText("Invert normals for selected triangles.");
-		invertNormalsButton.addActionListener((e) -> editor.enqueueKeyEvent(EditorShortcut.FLIP_NORMALS));
+		invertNormalsButton.addActionListener((e) -> editor.enqueueShortcut(MapInput.FLIP_NORMALS));
 		modifyMenu.add(invertNormalsButton);
 
 		JMenuItem cameraNormalsButton = new JMenuItem("Normals to Camera");
 		cameraNormalsButton.setToolTipText("Orients normals of selected triangles toward the camera position of the 3D viewport.");
-		cameraNormalsButton.addActionListener((e) -> editor.enqueueKeyEvent(EditorShortcut.NORMALS_TO_CAMERA));
+		cameraNormalsButton.addActionListener((e) -> editor.enqueueShortcut(MapInput.NORMALS_TO_CAMERA));
 		modifyMenu.add(cameraNormalsButton);
 
 		modifyMenu.addSeparator();
@@ -297,12 +297,12 @@ public class MapObjectPanel extends JTabbedPane implements TreeSelectionListener
 
 		JMenuItem invertNormalsButton = new JMenuItem("Invert Normals");
 		invertNormalsButton.setToolTipText("Invert normals for selected triangles.");
-		invertNormalsButton.addActionListener((e) -> editor.enqueueKeyEvent(EditorShortcut.FLIP_NORMALS));
+		invertNormalsButton.addActionListener((e) -> editor.enqueueShortcut(MapInput.FLIP_NORMALS));
 		modifyMenu.add(invertNormalsButton);
 
 		JMenuItem cameraNormalsButton = new JMenuItem("Normals to Camera");
 		cameraNormalsButton.setToolTipText("Orients normals of selected triangles toward the camera position of the 3D viewport.");
-		cameraNormalsButton.addActionListener((e) -> editor.enqueueKeyEvent(EditorShortcut.NORMALS_TO_CAMERA));
+		cameraNormalsButton.addActionListener((e) -> editor.enqueueShortcut(MapInput.NORMALS_TO_CAMERA));
 		modifyMenu.add(cameraNormalsButton);
 
 		modifyMenu.addSeparator();
@@ -400,12 +400,12 @@ public class MapObjectPanel extends JTabbedPane implements TreeSelectionListener
 
 		JMenuItem invertNormalsButton = new JMenuItem("Invert Normals");
 		invertNormalsButton.setToolTipText("Invert normals for selected triangles.");
-		invertNormalsButton.addActionListener((e) -> editor.enqueueKeyEvent(EditorShortcut.FLIP_NORMALS));
+		invertNormalsButton.addActionListener((e) -> editor.enqueueShortcut(MapInput.FLIP_NORMALS));
 		modifyMenu.add(invertNormalsButton);
 
 		JMenuItem cameraNormalsButton = new JMenuItem("Normals to Camera");
 		cameraNormalsButton.setToolTipText("Orient normals of selected triangles toward the 3D camera position.");
-		cameraNormalsButton.addActionListener((e) -> editor.enqueueKeyEvent(EditorShortcut.NORMALS_TO_CAMERA));
+		cameraNormalsButton.addActionListener((e) -> editor.enqueueShortcut(MapInput.NORMALS_TO_CAMERA));
 		modifyMenu.add(cameraNormalsButton);
 
 		modifyMenu.addSeparator();

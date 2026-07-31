@@ -30,16 +30,16 @@ public final class FrameBuffer
 		this.hasDepth = hasDepth;
 
 		frameBuffer = glGenFramebuffers();
-		glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+		RenderState.bindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
 		glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		RenderState.bindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	public void bind(int sizeX, int sizeY)
 	{
 		glBindTexture(GL_TEXTURE_2D, 0); // make sure the texture isn't bound
-		glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+		RenderState.bindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
 
 		if (sizeX > this.sizeX || sizeY > this.sizeY) {
 			glDeleteTextures(colorTexture);
@@ -77,7 +77,7 @@ public final class FrameBuffer
 
 	public void unbind()
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		RenderState.bindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	public int getFrameBuffer()

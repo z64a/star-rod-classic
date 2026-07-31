@@ -55,6 +55,7 @@ import app.SwingUtils;
 import app.SwingUtils.OpenDialogCounter;
 import app.config.PreferencesPanel;
 import common.EditorCanvas;
+import common.KeyBindingsPanel;
 import game.globals.editor.DialogResult;
 import game.map.Map;
 import game.map.Map.SetBackground;
@@ -62,7 +63,7 @@ import game.map.Map.ToggleBackground;
 import game.map.Map.ToggleStage;
 import game.map.MapObject;
 import game.map.MapObject.MapObjectType;
-import game.map.editor.EditorShortcut;
+import game.map.editor.MapInput;
 import game.map.editor.MapEditor;
 import game.map.editor.MapEditor.EditorMode;
 import game.map.editor.MapEditor.IShutdownListener;
@@ -107,6 +108,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 	public static final int SIDE_PANEL_WIDTH = 400;
 
 	private final MapEditor editor;
+	private final MapInputMenu shortcutMenu;
 
 	// At the top level, the GUI has:
 	// (1) a menubar along the top of the screen
@@ -141,6 +143,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 
 	private OpenFileChooser importFileChooser;
 	private SaveFileChooser exportFileChooser;
+	private JColorChooser colorChooser;
 
 	public OpenFileChooser texFileChooser;
 	public OpenFileChooser bgFileChooser;
@@ -201,6 +204,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		editor.registerOnShutdown(this);
 
 		this.editor = editor;
+		shortcutMenu = new MapInputMenu(editor, editor.keyConfig);
 
 		Dimension displaySize = Toolkit.getDefaultToolkit().getScreenSize();
 		desktopX = (int) displaySize.getWidth();
@@ -237,6 +241,9 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 
 		texFileChooser = new OpenFileChooser(texDir, "Select Texture Archive", "Texture Archives", "txa");
 		bgFileChooser = new OpenFileChooser(bgDir, "Select Background Image", "Images", "png");
+
+		colorChooser = new JColorChooser();
+		colorChooser.setPreviewPanel(new JPanel());
 
 		commandMap = new HashMap<>();
 		for (GuiCommand cmd : GuiCommand.values())
@@ -438,6 +445,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 			case JOptionPane.NO_OPTION:
 				break;
 			case JOptionPane.CANCEL_OPTION:
+			case JOptionPane.CLOSED_OPTION:
 				closeRequested = false;
 				return false;
 		}
@@ -461,6 +469,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 			case JOptionPane.NO_OPTION:
 				break;
 			case JOptionPane.CANCEL_OPTION:
+			case JOptionPane.CLOSED_OPTION:
 				closeRequested = false;
 				return false;
 		}
@@ -522,7 +531,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		menu.addSeparator();
 
 		item = new JMenuItem("Save");
-		EditorShortcut.SAVE.bindMenuItem(editor, item);
+		shortcutMenu.bindMenuItem(MapInput.SAVE, item);
 		menu.add(item);
 
 		item = new JMenuItem("Save As...");
@@ -547,11 +556,11 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		menu.addSeparator();
 
 		item = new JMenuItem("Switch Tools");
-		EditorShortcut.SWITCH.bindMenuItem(editor, item);
+		shortcutMenu.bindMenuItem(MapInput.SWITCH, item);
 		menu.add(item);
 
 		item = new JMenuItem("Exit");
-		EditorShortcut.QUIT.bindMenuItem(editor, item);
+		shortcutMenu.bindMenuItem(MapInput.QUIT, item);
 		menu.add(item);
 	}
 
@@ -565,12 +574,12 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		menuBar.add(menu);
 
 		item = new JMenuItem("Undo");
-		EditorShortcut.UNDO.bindMenuItem(editor, item);
+		shortcutMenu.bindMenuItem(MapInput.UNDO, item);
 		menu.add(item);
 		item.setPreferredSize(menuItemDimension);
 
 		item = new JMenuItem("Redo");
-		EditorShortcut.REDO.bindMenuItem(editor, item);
+		shortcutMenu.bindMenuItem(MapInput.REDO, item);
 		menu.add(item);
 
 		menu.addSeparator();
@@ -580,20 +589,20 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		menu.add(gridMenu);
 
 		checkbox = new JCheckBoxMenuItem("Enable Grid");
-		EditorShortcut.TOGGLE_GRID.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.TOGGLE_GRID, checkbox);
 		gridMenu.add(checkbox);
 		checkbox.setPreferredSize(menuItemDimension);
 
 		checkbox = new JCheckBoxMenuItem("Use Decimal Grid");
-		EditorShortcut.TOGGLE_GRID_TYPE.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.TOGGLE_GRID_TYPE, checkbox);
 		gridMenu.add(checkbox);
 
 		item = new JCheckBoxMenuItem("Increase Grid Size");
-		EditorShortcut.INCREASE_GRID_POWER.bindMenuItem(editor, item);
+		shortcutMenu.bindMenuItem(MapInput.INCREASE_GRID_POWER, item);
 		gridMenu.add(item);
 
 		item = new JCheckBoxMenuItem("Decrease Grid Size");
-		EditorShortcut.DECREASE_GRID_POWER.bindMenuItem(editor, item);
+		shortcutMenu.bindMenuItem(MapInput.DECREASE_GRID_POWER, item);
 		gridMenu.add(item);
 
 		JMenu snapMenu = new JMenu("Snap");
@@ -601,20 +610,20 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		menu.add(snapMenu);
 
 		checkbox = new JCheckBoxMenuItem("Translation");
-		EditorShortcut.SNAP_TRANSLATION.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.SNAP_TRANSLATION, checkbox);
 		snapMenu.add(checkbox);
 		checkbox.setPreferredSize(menuItemDimension);
 
 		checkbox = new JCheckBoxMenuItem("Rotation");
-		EditorShortcut.SNAP_ROTATION.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.SNAP_ROTATION, checkbox);
 		snapMenu.add(checkbox);
 
 		checkbox = new JCheckBoxMenuItem("Scale");
-		EditorShortcut.SNAP_SCALE.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.SNAP_SCALE, checkbox);
 		snapMenu.add(checkbox);
 
 		checkbox = new JCheckBoxMenuItem("Scale to Grid");
-		EditorShortcut.SNAP_SCALE_GRID.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.SNAP_SCALE_GRID, checkbox);
 		snapMenu.add(checkbox);
 
 		JMenu vertexSnapMenu = new JMenu("Vertex Snap");
@@ -622,23 +631,28 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		menu.add(vertexSnapMenu);
 
 		checkbox = new JCheckBoxMenuItem("Enable");
-		EditorShortcut.VERTEX_SNAP.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.VERTEX_SNAP, checkbox);
 		vertexSnapMenu.add(checkbox);
 		checkbox.setPreferredSize(menuItemDimension);
 
 		checkbox = new JCheckBoxMenuItem("Like Objects Only");
-		EditorShortcut.VERTEX_SNAP_LIMIT.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.VERTEX_SNAP_LIMIT, checkbox);
 		vertexSnapMenu.add(checkbox);
 		checkbox.setPreferredSize(menuItemDimension);
 
 		menu.addSeparator();
 
-		item = new JMenuItem("View Shortcuts");
+		item = new JMenuItem("Shortcuts");
 		addButtonCommand(item, GuiCommand.SHOW_SHORTCUTS);
 		menu.add(item);
+		item.setPreferredSize(menuItemDimension);
 
 		item = new JMenuItem("Preferences");
 		addButtonCommand(item, GuiCommand.SHOW_EDITOR_PREFERENCES);
+		menu.add(item);
+
+		item = new JMenuItem("Key Bindings");
+		addButtonCommand(item, GuiCommand.SHOW_KEY_BINDINGS);
 		menu.add(item);
 	}
 
@@ -750,7 +764,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		menu.addSeparator();
 
 		JCheckBoxMenuItem checkbox = new JCheckBoxMenuItem("Transform Points with Markers");
-		EditorShortcut.MOVE_MARKER_POINTS.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.MOVE_MARKER_POINTS, checkbox);
 		menu.add(checkbox);
 
 		item.setPreferredSize(menuItemDimension);
@@ -766,82 +780,82 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		menuBar.add(menu);
 
 		item = new JMenuItem("Reset Layout");
-		EditorShortcut.RESET_LAYOUT.bindMenuItem(editor, item);
+		shortcutMenu.bindMenuItem(MapInput.RESET_LAYOUT, item);
 		menu.add(item);
 		item.setPreferredSize(menuItemDimension);
 
 		item = new JMenuItem("Center on Selection");
-		EditorShortcut.CENTER_VIEW.bindMenuItem(editor, item);
+		shortcutMenu.bindMenuItem(MapInput.CENTER_VIEW, item);
 		menu.add(item);
 
 		menu.addSeparator();
 
 		checkbox = new JCheckBoxMenuItem("Force In-Game Aspect Ratio");
-		EditorShortcut.USE_GAME_ASPECT_RATIO.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.USE_GAME_ASPECT_RATIO, checkbox);
 		menu.add(checkbox);
 
 		checkbox = new JCheckBoxMenuItem("Use Map Camera Settings");
-		EditorShortcut.USE_MAP_CAM_PROPERTIES.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.USE_MAP_CAM_PROPERTIES, checkbox);
 		menu.add(checkbox);
 
 		checkbox = new JCheckBoxMenuItem("Use Map Background Color");
-		EditorShortcut.USE_MAP_BG_COLOR.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.USE_MAP_BG_COLOR, checkbox);
 		menu.add(checkbox);
 
 		checkbox = new JCheckBoxMenuItem("Use Geometry Flags");
-		EditorShortcut.USE_GEOMETRY_FLAGS.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.USE_GEOMETRY_FLAGS, checkbox);
 		menu.add(checkbox);
 
 		checkbox = new JCheckBoxMenuItem("Use Texture Filtering");
-		EditorShortcut.USE_FILTERING.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.USE_FILTERING, checkbox);
 		menu.add(checkbox);
 
 		checkbox = new JCheckBoxMenuItem("Use Texture LODs");
-		EditorShortcut.USE_TEXTURE_LOD.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.USE_TEXTURE_LOD, checkbox);
 		menu.add(checkbox);
 
 		menu.addSeparator();
 
 		checkbox = new JCheckBoxMenuItem("Show Models");
-		EditorShortcut.SHOW_MODELS.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.SHOW_MODELS, checkbox);
 		menu.add(checkbox);
 
 		checkbox = new JCheckBoxMenuItem("Show Colliders");
-		EditorShortcut.SHOW_COLLIDERS.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.SHOW_COLLIDERS, checkbox);
 		menu.add(checkbox);
 
 		checkbox = new JCheckBoxMenuItem("Show Zones");
-		EditorShortcut.SHOW_ZONES.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.SHOW_ZONES, checkbox);
 		menu.add(checkbox);
 
 		checkbox = new JCheckBoxMenuItem("Show Markers");
-		EditorShortcut.SHOW_MARKERS.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.SHOW_MARKERS, checkbox);
 		menu.add(checkbox);
 
 		menu.addSeparator();
 
 		checkbox = new JCheckBoxMenuItem("Color Colliders by Flags");
-		EditorShortcut.USE_COLLIDER_COLORS.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.USE_COLLIDER_COLORS, checkbox);
 		menu.add(checkbox);
 
 		checkbox = new JCheckBoxMenuItem("Show Collision for Entities");
-		EditorShortcut.SHOW_ENTITY_COLLISION.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.SHOW_ENTITY_COLLISION, checkbox);
 		menu.add(checkbox);
 
 		checkbox = new JCheckBoxMenuItem("Show Transform Gizmo");
-		EditorShortcut.SHOW_GIZMO.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.SHOW_GIZMO, checkbox);
 		menu.add(checkbox);
 
 		checkbox = new JCheckBoxMenuItem("Show Normals");
-		EditorShortcut.SHOW_NORMALS.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.SHOW_NORMALS, checkbox);
 		menu.add(checkbox);
 
 		checkbox = new JCheckBoxMenuItem("Show Bounding Boxes");
-		EditorShortcut.SHOW_AABB.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.SHOW_AABB, checkbox);
 		menu.add(checkbox);
 
 		checkbox = new JCheckBoxMenuItem("Show Axes");
-		EditorShortcut.SHOW_AXES.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.SHOW_AXES, checkbox);
 		menu.add(checkbox);
 
 		menu.addSeparator();
@@ -875,23 +889,23 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		JCheckBoxMenuItem checkbox;
 
 		checkbox = new JCheckBoxMenuItem("Simulate");
-		EditorShortcut.PLAY_IN_EDITOR_TOGGLE.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.PLAY_IN_EDITOR_TOGGLE, checkbox);
 		menu.add(checkbox);
 
 		checkbox = new JCheckBoxMenuItem("Ignore Hidden Colliders");
-		EditorShortcut.PIE_IGNORE_HIDDEN_COL.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.PIE_IGNORE_HIDDEN_COL, checkbox);
 		menu.add(checkbox);
 
 		checkbox = new JCheckBoxMenuItem("Ignore Hidden Zones");
-		EditorShortcut.PIE_IGNORE_HIDDEN_ZONE.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.PIE_IGNORE_HIDDEN_ZONE, checkbox);
 		menu.add(checkbox);
 
 		checkbox = new JCheckBoxMenuItem("Show Current Zone Lines");
-		EditorShortcut.PIE_SHOW_ACTIVE_CAMERA.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.PIE_SHOW_ACTIVE_CAMERA, checkbox);
 		menu.add(checkbox);
 
 		checkbox = new JCheckBoxMenuItem("Interactive Map Exits");
-		EditorShortcut.PIE_ENABLE_MAP_EXITS.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.PIE_ENABLE_MAP_EXITS, checkbox);
 		menu.add(checkbox);
 	}
 
@@ -904,7 +918,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		JCheckBoxMenuItem checkbox;
 
 		checkbox = new JCheckBoxMenuItem("Show Light Sets");
-		EditorShortcut.DEBUG_TOGGLE_LIGHT_SETS.bindMenuCheckbox(editor, checkbox);
+		shortcutMenu.bindMenuCheckbox(MapInput.DEBUG_TOGGLE_LIGHT_SETS, checkbox);
 		menu.add(checkbox);
 	}
 
@@ -1251,7 +1265,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 				break;
 
 			case SHOW_CHOOSE_COLOR_DIALOG:
-				prompt_ChooseColor();
+				prompt_ChoosePaintColor();
 				break;
 
 			case SELECT_OBJECTS:
@@ -1267,6 +1281,10 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 				showControls();
 				break;
 
+			case SHOW_KEY_BINDINGS:
+				showKeyBindings();
+				break;
+
 			case SHOW_EDITOR_PREFERENCES:
 				showPreferences();
 				break;
@@ -1274,29 +1292,29 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 			// following commands are forwarded directly to the editor
 			/*
 			case SAVE_MAP:
-			
+
 			case COMPILE_SHAPE:
 			case COMPILE_COLLISION:
-			
+
 			case SHOW_MODELS:
 			case SHOW_COLLIDERS:
 			case SHOW_ZONES:
 			case SHOW_MARKERS:
-			
+
 			case RESET_CAMERAS:
 			case RESET_LAYOUT:
-			
+
 			case SEPARATE_VERTS:
 			case FUSE_VERTS:
 			case JOIN_MODELS:
 			case SPLIT_MODEL:
-			
+
 			case CONVERT_COLLIDER_TO_ZONE:
 			case CONVERT_ZONE_TO_COLLIDER:
-			
+
 			case CREATE_COLLIDER_GROUP:
 			case CREATE_ZONE_GROUP:
-			
+
 			case DEBUG_RECOMPUTE_BOUNDING_BOXES:
 			 */
 			default:
@@ -1663,13 +1681,28 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		}
 	}
 
-	private void prompt_ChooseColor()
+	public Color prompt_ChooseColor(String title, Color initialColor)
 	{
-		openDialogCount.increment();
-		Color c = null;
-		c = JColorChooser.showDialog(this, "Choose Color", c);
-		openDialogCount.decrement();
+		colorChooser.setColor(initialColor);
 
+		int result = SwingUtils.getOptionDialog()
+			.setParent(this)
+			.setCounter(openDialogCount)
+			.setTitle(title)
+			.setMessage(colorChooser)
+			.setMessageType(JOptionPane.PLAIN_MESSAGE)
+			.setOptionsType(JOptionPane.OK_CANCEL_OPTION)
+			.choose();
+
+		if (result == JOptionPane.OK_OPTION)
+			return colorChooser.getColor();
+		else
+			return null;
+	}
+
+	private void prompt_ChoosePaintColor()
+	{
+		Color c = prompt_ChooseColor("Choose Color", PaintManager.getSelectedColor());
 		if (c != null) {
 			PaintManager.setSelectedColor(c);
 			PaintManager.pushSelectedColor();
@@ -1682,7 +1715,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 			.setParent(this)
 			.setCounter(openDialogCount)
 			.setTitle("Controls and Shortcuts")
-			.setMessage(new ShorcutListPanel())
+			.setMessage(new MapInputListPanel(editor.keyConfig))
 			.setMessageType(JOptionPane.PLAIN_MESSAGE)
 			.show();
 	}
@@ -1710,6 +1743,35 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 			editor.editorConfig.saveConfigFile();
 			Logger.log("Saved preferences to " + editor.editorConfig.getFile().getName());
 		}
+	}
+
+	private void showKeyBindings()
+	{
+		KeyBindingsPanel keyBindings = new KeyBindingsPanel(editor.keyConfig);
+		int choice = SwingUtils.getConfirmDialog()
+			.setParent(this)
+			.setCounter(openDialogCount)
+			.setTitle("Key Bindings")
+			.setMessage(keyBindings)
+			.setMessageType(JOptionPane.PLAIN_MESSAGE)
+			.setOptionsType(JOptionPane.OK_CANCEL_OPTION)
+			.choose();
+
+		if (choice == JOptionPane.OK_OPTION) {
+			keyBindings.applyBindings();
+			editor.saveKeyBindings();
+			Logger.log("Saved Map Editor key bindings.");
+		}
+	}
+
+	public void setShortcutCheckbox(MapInput input, boolean selected)
+	{
+		shortcutMenu.setCheckbox(input, selected);
+	}
+
+	public JCheckBoxMenuItem getShortcutCheckbox(MapInput input)
+	{
+		return shortcutMenu.getCheckbox(input);
 	}
 
 	@Override

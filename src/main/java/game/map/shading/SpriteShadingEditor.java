@@ -112,7 +112,7 @@ public class SpriteShadingEditor
 					profileList.add(profile);
 
 					profile.name.set(nameMap.get(profile.key));
-					if (profile.name == null)
+					if (profile.name.get() == null)
 						profile.name.set(String.format("%08X", profile.key));
 				}
 			}

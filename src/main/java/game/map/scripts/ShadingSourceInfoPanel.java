@@ -62,7 +62,7 @@ public class ShadingSourceInfoPanel extends MapInfoPanel<ShadingLightSource>
 
 			SwingGUI.instance().getDialogCounter().increment();
 			Color c = new Color(getData().color.get());
-			c = JColorChooser.showDialog(null, "Choose Ambient Color", c);
+			c = JColorChooser.showDialog(null, "Choose Light Color", c);
 			SwingGUI.instance().getDialogCounter().decrement();
 
 			if (c != null)
@@ -97,8 +97,7 @@ public class ShadingSourceInfoPanel extends MapInfoPanel<ShadingLightSource>
 			if (ignoreEvents() || getData() == null)
 				return;
 
-			float value = (newValue == 0.0f) ? 0.0f : 1 / newValue;
-			MapEditor.execute(new SetLightFalloff(getData(), value));
+			MapEditor.execute(new SetLightFalloff(getData(), newValue));
 		});
 		falloffField.setHorizontalAlignment(SwingConstants.CENTER);
 		SwingUtils.addBorderPadding(falloffField);
@@ -135,7 +134,7 @@ public class ShadingSourceInfoPanel extends MapInfoPanel<ShadingLightSource>
 		add(yPosField, "growx");
 		add(zPosField, "growx, wrap");
 
-		add(new JLabel("Falloff"));
+		add(new JLabel("Falloff Radius"));
 		add(falloffField, "growx");
 		add(falloffBox, "growx, wrap");
 
@@ -155,9 +154,7 @@ public class ShadingSourceInfoPanel extends MapInfoPanel<ShadingLightSource>
 		yPosField.setValue(newData.position.getY());
 		zPosField.setValue(newData.position.getZ());
 
-		float falloff = newData.falloff.get();
-		float value = (falloff == 0.0f) ? 0.0f : 1 / falloff;
-		falloffField.setValue(value);
+		falloffField.setValue((float) newData.getFalloffDistance());
 
 		falloffBox.setSelectedItem(newData.falloffType.get());
 		cbEnabled.setSelected(newData.enabled.get());

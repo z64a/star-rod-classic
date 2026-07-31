@@ -1,7 +1,7 @@
 package game.map.editor.camera;
 
-import common.KeyboardInput;
 import common.MouseInput;
+import common.KeyboardInput;
 import common.Vector3f;
 import game.map.BoundingBox;
 import game.map.editor.CursorObject;

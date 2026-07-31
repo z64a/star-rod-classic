@@ -122,7 +122,7 @@ public class LevelEditor
 			@Override public void treeNodesInserted(TreeModelEvent e)    { treeChanged(); }
 			@Override public void treeNodesRemoved(TreeModelEvent e)     { treeChanged(); }
 			@Override public void treeStructureChanged(TreeModelEvent e) { treeChanged(); }
-		
+
 			private void treeChanged()
 			{
 				//TODO
@@ -194,6 +194,7 @@ public class LevelEditor
 					case JOptionPane.NO_OPTION:
 						break;
 					case JOptionPane.CANCEL_OPTION:
+					case JOptionPane.CLOSED_OPTION:
 						return;
 				}
 
@@ -551,7 +552,7 @@ public class LevelEditor
 		bg.add(engineOption);
 		bg.add(friendOption);
 		engineOption.setSelected(true);
-		
+
 		ActionListener nameModeListener = new ActionListener()
 		{
 			@Override

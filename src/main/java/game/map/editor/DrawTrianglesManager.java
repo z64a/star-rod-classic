@@ -1,6 +1,5 @@
 package game.map.editor;
 
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -137,24 +136,26 @@ public class DrawTrianglesManager
 
 			if (pointList.size() > 2) {
 				done = true;
-				success = true;
+				success = false;
 
 				Vector3f AB = GeometryUtils.getVectorBetween(pointList.get(0), pointList.get(1));
 				Vector3f AC = GeometryUtils.getVectorBetween(pointList.get(0), pointList.get(2));
 
 				Vector3f uAB = new Vector3f(AB);
-				Vector3f uAC = new Vector3f(AC);
 
 				uAB.normalize();
-				uAC.normalize();
 
 				Vector3f proj = uAB.scale(Vector3f.dot(uAB, AC));
 
 				Vector3f norm = Vector3f.sub(AC, proj);
 				if (norm.length() > 1e-4) {
 					norm.normalize();
-					new TriangleCutter(pointList.get(0), norm, editor.selectionManager.getSelectedObjects());
+					TriangleCutter cutter = new TriangleCutter(
+						pointList.get(0), norm, editor.selectionManager.getSelectedObjects());
+					success = cutter.wasSuccessful();
 				}
+				else
+					Logger.logWarning("Cut aborted: the side point is collinear with the cut line.");
 			}
 		}
 	}
@@ -213,10 +214,10 @@ public class DrawTrianglesManager
 	public void tick(MapEditViewport activeView)
 	{
 		if (editor.getEditorMode() == EditorMode.Modify) {
-			boolean trisModeKey = editor.keyboard.isKeyDown(KeyEvent.VK_COMMA);
-			boolean edgeModeKey = editor.keyboard.isKeyDown(KeyEvent.VK_SLASH);
-			boolean polyModeKey = editor.keyboard.isKeyDown(KeyEvent.VK_PERIOD);
-			boolean cutModeKey = editor.keyboard.isKeyDown(KeyEvent.VK_BACK_QUOTE);
+			boolean trisModeKey = editor.keyboard.isDown(MapInput.DRAW_CONVEX);
+			boolean edgeModeKey = editor.keyboard.isDown(MapInput.DRAW_WALLS);
+			boolean polyModeKey = editor.keyboard.isDown(MapInput.DRAW_CONCAVE);
+			boolean cutModeKey = editor.keyboard.isDown(MapInput.CUT_GEOMETRY);
 
 			switch (drawMode) {
 				case Inactive: {

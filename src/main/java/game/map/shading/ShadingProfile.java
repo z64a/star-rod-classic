@@ -5,6 +5,7 @@ import static game.map.shading.ShadingKey.*;
 import java.awt.Color;
 import java.awt.Component;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.function.Consumer;
 
 import javax.swing.BorderFactory;
@@ -15,6 +16,7 @@ import javax.swing.JList;
 import org.w3c.dom.Element;
 
 import app.SwingUtils;
+import app.StarRodException;
 import common.BaseCamera;
 import common.Vector3f;
 import game.map.Axis;
@@ -93,7 +95,10 @@ public class ShadingProfile extends UpdateProvider implements XmlSerializable
 		this.group = group;
 		this.key = (group << 16) | index;
 
-		int num = bb.get();
+		int num = bb.get() & 0xFF;
+		if (num > MAX_LIGHTS)
+			throw new StarRodException("Shading profile %08X contains %d lights; the game supports at most %d.", key, num, MAX_LIGHTS);
+
 		int zero = bb.get();
 		assert (zero == 0);
 
@@ -107,6 +112,9 @@ public class ShadingProfile extends UpdateProvider implements XmlSerializable
 
 	public ByteBuffer getData()
 	{
+		if (sources.size() > MAX_LIGHTS)
+			throw new StarRodException("Shading profile %s contains %d lights; the game supports at most %d.", name.get(), sources.size(), MAX_LIGHTS);
+
 		ByteBuffer buf = ByteBuffer.allocateDirect(6 + 16 * sources.size());
 
 		buf.put((byte) sources.size());
@@ -154,7 +162,11 @@ public class ShadingProfile extends UpdateProvider implements XmlSerializable
 		if (xmr.hasAttribute(elem, ATTR_PROFILE_AMBIENT))
 			setColor(xmr.readIntArray(elem, ATTR_PROFILE_AMBIENT, 3));
 
-		for (Element tagElem : xmr.getTags(elem, TAG_LIGHT))
+		List<Element> lightElems = xmr.getTags(elem, TAG_LIGHT);
+		if (lightElems.size() > MAX_LIGHTS)
+			xmr.complain(String.format("Shading profile %s contains %d lights; the game supports at most %d.", name.get(), lightElems.size(), MAX_LIGHTS));
+
+		for (Element tagElem : lightElems)
 			sources.addElement(ShadingLightSource.read(xmr, tagElem, this));
 	}
 
@@ -186,10 +198,48 @@ public class ShadingProfile extends UpdateProvider implements XmlSerializable
 		}
 	}
 
-	public void render(MapEditViewport viewport, RenderingOptions opts, Vector3f pos)
+	public void render(MapEditViewport viewport, RenderingOptions opts)
 	{
 		for (ShadingLightSource light : sources)
-			light.render(viewport, opts, pos, (selectedSource != null) && (light == selectedSource));
+			light.render(viewport, opts);
+	}
+
+	public boolean isActive()
+	{
+		if (!MapEditor.exists() || MapEditor.instance().map == null || MapEditor.instance().map.scripts == null)
+			return false;
+
+		return MapEditor.instance().map.scripts.hasSpriteShading.get() && MapEditor.instance().map.scripts.shadingProfile.get() == this;
+	}
+
+	void updateSelectedSource(ShadingLightSource source, boolean selected)
+	{
+		if (selected) {
+			selectedSource = source;
+		}
+		else if (selectedSource == source) {
+			selectedSource = null;
+			for (ShadingLightSource other : sources) {
+				if (other.selected)
+					selectedSource = other;
+			}
+		}
+
+		notifyListeners();
+	}
+
+	public void setSelectedSource(ShadingLightSource source)
+	{
+		if (selectedSource == source)
+			return;
+
+		selectedSource = source;
+		notifyListeners();
+	}
+
+	void lightSourceChanged()
+	{
+		notifyListeners();
 	}
 
 	private transient TransformMatrix viewMtx = new TransformMatrix();
@@ -247,15 +297,15 @@ public class ShadingProfile extends UpdateProvider implements XmlSerializable
 		shadowColor[2] = rgb[2];
 
 		boolean facingLeft = ((Mzz * Pzz - Mzx * Pzx) < 0);
+		Vector3f componentPos = TransformMatrix.multiply(modelMtx, mtx).applyTransform(new Vector3f());
 
 		for (ShadingLightSource source : sources) {
 			if (!source.enabled.get())
 				continue;
 
-			// might not be correct, unsure if we're adding component offsets correctly here
-			double dx = (modelMtx.get(0, 3) + mtx.get(3, 0)) - source.position.getX();
-			double dy = (modelMtx.get(1, 3) + mtx.get(3, 1)) - source.position.getY();
-			double dz = (modelMtx.get(2, 3) + mtx.get(3, 2)) - source.position.getZ();
+			double dx = componentPos.x - source.position.getX();
+			double dy = componentPos.y - source.position.getY();
+			double dz = componentPos.z - source.position.getZ();
 			double dist2 = dx * dx + dy * dy + dz * dz;
 
 			double dist = 0.0;
@@ -561,7 +611,8 @@ public class ShadingProfile extends UpdateProvider implements XmlSerializable
 			else
 				profile.sources.add(index + 1, source);
 
-			MapEditor.instance().addEditorObject(source);
+			if (profile.isActive())
+				source.addToEditor();
 			ProjectDatabase.SpriteShading.modified = true;
 		}
 
@@ -569,9 +620,10 @@ public class ShadingProfile extends UpdateProvider implements XmlSerializable
 		public void undo()
 		{
 			super.undo();
+			if (profile.isActive())
+				source.removeFromEditor();
 			profile.sources.removeElement(source);
 
-			MapEditor.instance().removeEditorObject(source);
 			ProjectDatabase.SpriteShading.modified = true;
 		}
 	}
@@ -606,9 +658,10 @@ public class ShadingProfile extends UpdateProvider implements XmlSerializable
 		public void exec()
 		{
 			super.exec();
+			if (profile.isActive())
+				source.removeFromEditor();
 			profile.sources.remove(index);
 
-			MapEditor.instance().removeEditorObject(source);
 			ProjectDatabase.SpriteShading.modified = true;
 		}
 
@@ -618,7 +671,8 @@ public class ShadingProfile extends UpdateProvider implements XmlSerializable
 			super.undo();
 			profile.sources.add(index, source);
 
-			MapEditor.instance().addEditorObject(source);
+			if (profile.isActive())
+				source.addToEditor();
 			ProjectDatabase.SpriteShading.modified = true;
 		}
 	}

@@ -32,7 +32,6 @@ import common.BaseEditorSettings;
 import common.BasicCamera;
 import common.BasicCommandManager;
 import common.BasicEditorCommand;
-import common.KeyboardInput.KeyInputEvent;
 import common.MouseInput.MouseManagerListener;
 import common.MousePixelRead;
 import game.map.editor.render.PresetColor;
@@ -110,7 +109,8 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 
 	public WorldMapEditor()
 	{
-		super(EDITOR_SETTINGS);
+		super(EDITOR_SETTINGS, new WorldMapKeyConfig());
+		registerKeyboardInputs(WorldMapInput.class, this::inputPressed);
 
 		cam = new BasicCamera(
 			0.0f, 0.0f, 0.5f,
@@ -353,49 +353,33 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 		cam.handleInput(mouse, keyboard, deltaTime, glCanvasWidth(), glCanvasHeight());
 	}
 
-	@Override
-	public void keyPress(KeyInputEvent key)
+	public void inputPressed(WorldMapInput input)
 	{
-		boolean ctrl = keyboard.isCtrlDown();
-		boolean shift = keyboard.isShiftDown();
-		boolean alt = keyboard.isAltDown();
-
-		switch (key.code) {
-			case KeyEvent.VK_SPACE:
-				if (!shift && !ctrl && !alt)
-					resetCam();
+		switch (input) {
+			case RESET_CAMERA:
+				resetCam();
 				break;
-			case KeyEvent.VK_Z:
-				if (!shift && ctrl && !alt)
-					commandManager.undo();
+			case UNDO:
+				commandManager.undo();
 				break;
-			case KeyEvent.VK_Y:
-				if (!shift && ctrl && !alt)
-					commandManager.redo();
+			case REDO:
+				commandManager.redo();
 				break;
-			case KeyEvent.VK_G:
-				if (!shift && !ctrl && !alt) {
-					bDrawGrid = !bDrawGrid;
-					cbGrid.setSelected(bDrawGrid);
-				}
+			case TOGGLE_GRID:
+				bDrawGrid = !bDrawGrid;
+				cbGrid.setSelected(bDrawGrid);
 				break;
-			case KeyEvent.VK_N:
-				if (!shift && !ctrl && !alt) {
-					bDrawLines = !bDrawLines;
-					cbLines.setSelected(bDrawLines);
-				}
+			case TOGGLE_PATHS:
+				bDrawLines = !bDrawLines;
+				cbLines.setSelected(bDrawLines);
 				break;
-			case KeyEvent.VK_M:
-				if (!shift && !ctrl && !alt) {
-					bDrawIcons = !bDrawIcons;
-					cbIcons.setSelected(bDrawIcons);
-				}
+			case TOGGLE_MARKERS:
+				bDrawIcons = !bDrawIcons;
+				cbIcons.setSelected(bDrawIcons);
 				break;
-			case KeyEvent.VK_B:
-				if (!shift && !ctrl && !alt) {
-					bDrawBackground = !bDrawBackground;
-					cbBackground.setSelected(bDrawBackground);
-				}
+			case TOGGLE_BACKGROUND:
+				bDrawBackground = !bDrawBackground;
+				cbBackground.setSelected(bDrawBackground);
 				break;
 			default:
 		}
@@ -700,7 +684,7 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 	@Override
 	public void clickLMB()
 	{
-		if (keyboard.isCtrlDown()) {
+		if (rawKeyboard.isCtrlDown()) {
 			if (dragMarker == null && mouseMarker != null)
 				addPathPoint(mouseMarker);
 		}
@@ -713,7 +697,7 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 	@Override
 	public void clickRMB()
 	{
-		if (dragMarker == null && keyboard.isCtrlDown()) {
+		if (dragMarker == null && rawKeyboard.isCtrlDown()) {
 			if (mouseMarker != null)
 				removePathPoint(mouseMarker);
 		}

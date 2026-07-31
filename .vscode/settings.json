@@ -1,7 +1,24 @@
 {
-    "editor.formatOnSaveMode": "modifications",
-    "editor.rulers": [
-        140
+    "[java]": {
+        "editor.defaultFormatter": "redhat.java",
+        "editor.detectIndentation": false,
+        "editor.formatOnSave": true,
+        "editor.formatOnSaveMode": "file",
+        "editor.insertSpaces": false,
+        "editor.rulers": [
+            160
+        ],
+        "editor.tabSize": 4,
+        "files.insertFinalNewline": true,
+        "files.trimTrailingWhitespace": true
+    },
+    "files.encoding": "utf8",
+    "java.cleanup.actions": [
+        "addOverride",
+        "lambdaExpressionFromAnonymousClass",
+        "organizeImports"
     ],
-    "trailing-spaces.deleteModifiedLinesOnly": true,
+    "java.codeGeneration.useBlocks": true,
+    "java.format.enabled": true,
+    "java.saveActions.cleanup": true
 }

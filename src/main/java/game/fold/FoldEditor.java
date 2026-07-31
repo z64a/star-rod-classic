@@ -5,7 +5,6 @@ import static org.lwjgl.opengl.GL13.GL_CLAMP_TO_BORDER;
 
 import java.awt.Canvas;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -18,7 +17,6 @@ import javax.swing.JPanel;
 import app.Environment;
 import common.BaseEditor;
 import common.BaseEditorSettings;
-import common.KeyboardInput.KeyInputEvent;
 import game.fold.FoldAnimations.FoldAnim;
 import game.fold.FoldAnimations.FoldTriangle;
 import game.fold.FoldAnimations.FoldVertex;
@@ -31,9 +29,7 @@ import game.texture.Tile;
 import net.miginfocom.swing.MigLayout;
 import renderer.buffers.LineRenderQueue;
 import renderer.buffers.PointRenderQueue;
-import renderer.buffers.TriangleRenderQueue;
 import renderer.shaders.RenderState;
-import renderer.shaders.RenderState.PolygonMode;
 import renderer.shaders.ShaderManager;
 import renderer.shaders.scene.BasicSolidShader;
 import renderer.shaders.scene.BasicTexturedShader;
@@ -95,7 +91,8 @@ public class FoldEditor extends BaseEditor
 
 	public FoldEditor()
 	{
-		super(EDITOR_SETTINGS);
+		super(EDITOR_SETTINGS, new FoldKeyConfig());
+		registerKeyboardInputs(FoldInput.class, this::inputPressed);
 
 		camera = new FoldCamera(
 			0.0f, 1000.0f, 0.3f,
@@ -222,21 +219,18 @@ public class FoldEditor extends BaseEditor
 
 		PointRenderQueue.render(true);
 
-		RenderState.setPolygonMode(PolygonMode.LINE);
-		//		RenderState.setColor(preview.color.x, preview.color.y, preview.color.z);
-
 		for (FoldTriangle tri : anim.triangles) {
 			FoldVertex vi = anim.frames[i][tri.i];
 			FoldVertex vj = anim.frames[i][tri.j];
 			FoldVertex vk = anim.frames[i][tri.k];
-			TriangleRenderQueue.addTriangle(
-				TriangleRenderQueue.addVertex().setPosition(vi.x, vi.y, vi.z).getIndex(),
-				TriangleRenderQueue.addVertex().setPosition(vj.x, vj.y, vj.z).getIndex(),
-				TriangleRenderQueue.addVertex().setPosition(vk.x, vk.y, vk.z).getIndex());
+			int a = LineRenderQueue.addVertex().setPosition(vi.x, vi.y, vi.z).getIndex();
+			int b = LineRenderQueue.addVertex().setPosition(vj.x, vj.y, vj.z).getIndex();
+			int c = LineRenderQueue.addVertex().setPosition(vk.x, vk.y, vk.z).getIndex();
+			LineRenderQueue.addLineLoop(a, b, c);
 		}
 
 		LineShader shader = ShaderManager.use(LineShader.class);
-		TriangleRenderQueue.render(shader, true);
+		LineRenderQueue.render(shader, true);
 
 		TransformMatrix projMatrix = TransformMatrix.identity();
 		projMatrix.ortho(12.0f, 308.0f, 208.0f, 12.0f, -1.0f, 1.0f);
@@ -247,7 +241,6 @@ public class FoldEditor extends BaseEditor
 		float canvasScaleY = 200.0f / camera.glViewSizeY;
 
 		RenderState.setDepthWrite(false);
-		RenderState.setPolygonMode(PolygonMode.FILL);
 		BasicSolidShader shaderd = ShaderManager.use(BasicSolidShader.class);
 
 		int leftX = 28;
@@ -259,19 +252,19 @@ public class FoldEditor extends BaseEditor
 		// left
 		shader.setXYQuadCoords(leftX - 16, 120, leftX + 16, 120 - 16, 0);
 		shader.renderQuad();
-		
+
 		// right
 		shader.setXYQuadCoords(rightX - 16, 120, rightX + 16, 120 - 16, 0);
 		shader.renderQuad();
-		
+
 		// top
 		shader.setXYQuadCoords(160 - 16, topY + 16, 160 + 16, topY, 0);
 		shader.renderQuad();
-		
+
 		// bottom
 		shader.setXYQuadCoords(160 - 16, bottomY, 160 + 16, bottomY - 16, 0);
 		shader.renderQuad();
-		
+
 		*/
 
 		uiText.draw(16, 0, 0, (float) super.getDeltaTime());
@@ -318,45 +311,29 @@ public class FoldEditor extends BaseEditor
 
 	private void handleInput(double deltaTime)
 	{
-		camera.handleInput(keyboard, mouse, deltaTime, glCanvasWidth(), glCanvasHeight());
-		if (keyboard.isKeyDown(KeyEvent.VK_SPACE))
-			camera.resetPosition();
+		camera.handleInput(mouse, keyboard, deltaTime, glCanvasWidth(), glCanvasHeight());
 	}
 
-	@Override
-	public void keyPress(KeyInputEvent key)
+	public void inputPressed(FoldInput input)
 	{
-		boolean ctrl = keyboard.isCtrlDown();
-		boolean shift = keyboard.isShiftDown();
-
-		if (key.code == KeyEvent.VK_CONTROL || key.code == KeyEvent.VK_SHIFT)
-			return;
-
-		if (ctrl && shift)
-			return;
-
-		if (key.code == KeyEvent.VK_UP) {
-			currentAnimID--;
-			if (currentAnimID < 0)
-				currentAnimID = 0;
-			System.out.println(currentAnimID);
+		switch (input) {
+			case RESET_CAMERA:
+				camera.resetPosition();
+				break;
+			case PREVIOUS_ANIMATION:
+				currentAnimID--;
+				if (currentAnimID < 0)
+					currentAnimID = 0;
+				System.out.println(currentAnimID);
+				break;
+			case NEXT_ANIMATION:
+				currentAnimID++;
+				if (currentAnimID >= foldAnims.size())
+					currentAnimID = foldAnims.size() - 1;
+				System.out.println(currentAnimID);
+				break;
+			default:
 		}
-
-		if (key.code == KeyEvent.VK_DOWN) {
-			currentAnimID++;
-			if (currentAnimID >= foldAnims.size())
-				currentAnimID = foldAnims.size() - 1;
-			System.out.println(currentAnimID);
-		}
-
-		/*
-		SwingUtilities.invokeLater(() -> {
-			handleKey(Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL),
-					Keyboard.isKeyDown(Keyboard.KEY_LMENU) || Keyboard.isKeyDown(Keyboard.KEY_RMENU),
-					Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT),
-					KeyMapper.toAWT(key));
-		});
-		 */
 	}
 
 	@Override

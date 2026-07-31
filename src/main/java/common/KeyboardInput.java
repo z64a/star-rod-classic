@@ -1,117 +1,171 @@
 package common;
 
-import java.awt.Component;
+import java.awt.KeyEventDispatcher;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.List;
+import java.util.function.Consumer;
 
-public class KeyboardInput implements KeyListener
+import common.RawKeyboard.KeyInputEvent;
+import common.RawKeyboard.RawKeyboardListener;
+
+/**
+ * Resolves physical keyboard events into exact logical editor inputs and exposes bound physical state for polled inputs.
+ */
+public final class KeyboardInput implements RawKeyboardListener, KeyEventDispatcher
 {
-	public static class KeyInputEvent
+	private static final class PressedInput
 	{
-		public final int code;
+		private final KeyInput input;
+		private final KeyInput alias;
 
-		private KeyInputEvent(KeyEvent evt)
+		private PressedInput(KeyInput input, KeyInput alias)
 		{
-			code = evt.getKeyCode();
+			this.input = input;
+			this.alias = alias;
 		}
+	}
 
-		public KeyInputEvent(int keyCode)
+	private static final class ListenerRegistration<T extends KeyInput>
+	{
+		private final Class<T> inputType;
+		private final Consumer<T> pressedHandler;
+		private final Consumer<T> releasedHandler;
+		private final Consumer<T> enqueueHandler;
+
+		private ListenerRegistration(Class<T> inputType, Consumer<T> pressedHandler, Consumer<T> releasedHandler, Consumer<T> enqueueHandler)
 		{
-			code = keyCode;
+			this.inputType = inputType;
+			this.pressedHandler = pressedHandler;
+			this.releasedHandler = releasedHandler;
+			this.enqueueHandler = enqueueHandler;
+		}
+
+		private void inputPressed(KeyInput input)
+		{
+			if (pressedHandler != null && inputType.isInstance(input))
+				pressedHandler.accept(inputType.cast(input));
+		}
+
+		private void inputReleased(KeyInput input)
+		{
+			if (releasedHandler != null && inputType.isInstance(input))
+				releasedHandler.accept(inputType.cast(input));
+		}
+
+		private void enqueueInput(KeyInput input)
+		{
+			if (enqueueHandler != null && inputType.isInstance(input))
+				enqueueHandler.accept(inputType.cast(input));
 		}
 	}
 
-	public static interface KeyboardInputListener
-	{
-		public default void keyPress(KeyInputEvent evt)
-		{}
+	private final RawKeyboard rawKeyboard;
+	private final KeyboardInputConfig config;
+	private final HashMap<Integer, PressedInput> pressedKeys = new HashMap<>();
+	private final HashSet<KeyInput> activeInputs = new HashSet<>();
+	private final List<ListenerRegistration<?>> listeners = new ArrayList<>();
 
-		public default void keyRelease(KeyInputEvent evt)
-		{}
+	public KeyboardInput(RawKeyboard rawKeyboard, KeyboardInputConfig config)
+	{
+		this.rawKeyboard = rawKeyboard;
+		this.config = config;
 	}
 
-	private HashSet<Integer> isKeyDown = new HashSet<>();
-
-	private BlockingQueue<KeyEvent> pressed = new LinkedBlockingQueue<>();
-	private BlockingQueue<KeyEvent> released = new LinkedBlockingQueue<>();
-
-	public KeyboardInput(Component comp)
+	public <T extends KeyInput> void addListener(Class<T> inputType, Consumer<T> pressedHandler, Consumer<T> releasedHandler, Consumer<T> enqueueHandler)
 	{
-		comp.addKeyListener(this);
-	}
-
-	public void reset()
-	{
-		isKeyDown = new HashSet<>();
-		pressed = new LinkedBlockingQueue<>();
-		released = new LinkedBlockingQueue<>();
+		listeners.add(new ListenerRegistration<>(inputType, pressedHandler, releasedHandler, enqueueHandler));
 	}
 
 	@Override
-	public void keyTyped(KeyEvent e)
-	{}
-
-	@Override
-	public void keyPressed(KeyEvent e)
+	public void keyPress(KeyInputEvent key)
 	{
-		if (!isKeyDown.contains(e.getKeyCode())) {
-			pressed.add(e);
-			isKeyDown.add(e.getKeyCode());
+		if (KeyBinding.isModifierKey(key.code))
+			return;
+
+		KeyInput input = config.resolve(key.code, key.modifiers);
+		if (input != null) {
+			KeyInput alias = config.getAlias(input);
+			pressedKeys.put(key.code, new PressedInput(input, alias));
+			activeInputs.add(input);
+			notifyPressed(input);
+			if (alias != null) {
+				activeInputs.add(alias);
+				notifyPressed(alias);
+			}
 		}
 	}
 
 	@Override
-	public void keyReleased(KeyEvent e)
+	public void keyRelease(KeyInputEvent key)
 	{
-		if (isKeyDown.contains(e.getKeyCode())) {
-			released.add(e);
-			isKeyDown.remove(e.getKeyCode());
+		if (KeyBinding.isModifierKey(key.code))
+			return;
+
+		PressedInput pressedInput = pressedKeys.remove(key.code);
+		if (pressedInput != null) {
+			activeInputs.remove(pressedInput.input);
+			notifyReleased(pressedInput.input);
+			if (pressedInput.alias != null) {
+				activeInputs.remove(pressedInput.alias);
+				notifyReleased(pressedInput.alias);
+			}
 		}
 	}
 
-	public boolean isCtrlDown()
+	@Override
+	public boolean dispatchKeyEvent(KeyEvent event)
 	{
-		return isKeyDown.contains(KeyEvent.VK_CONTROL);
+		if (event.getID() != KeyEvent.KEY_PRESSED || rawKeyboard.ownsEvent(event))
+			return false;
+
+		KeyInput input = config.resolve(event.getKeyCode(), event.getModifiersEx());
+		if (input != null && config.isGlobal(input)) {
+			notifyEnqueued(input);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Tests the input's physical binding as held state. Required modifiers must be down; additional modifiers are ignored.
+	 */
+	public boolean isDown(KeyInput input)
+	{
+		return rawKeyboard.isKeyDown(config.getHeldBinding(input));
 	}
 
 	public boolean isShiftDown()
 	{
-		return isKeyDown.contains(KeyEvent.VK_SHIFT);
+		return rawKeyboard.isShiftDown();
 	}
 
-	public boolean isAltDown()
+	public void reset()
 	{
-		return isKeyDown.contains(KeyEvent.VK_ALT);
+		for (KeyInput input : new ArrayList<>(activeInputs))
+			notifyReleased(input);
+		pressedKeys.clear();
+		activeInputs.clear();
+		rawKeyboard.reset();
 	}
 
-	public boolean isKeyDown(int keycode)
+	private void notifyPressed(KeyInput input)
 	{
-		return isKeyDown.contains(keycode);
+		for (ListenerRegistration<?> listener : listeners)
+			listener.inputPressed(input);
 	}
 
-	public void update(KeyboardInputListener listener, boolean hasFocus)
+	private void notifyReleased(KeyInput input)
 	{
-		if (hasFocus) {
-			while (!pressed.isEmpty())
-				listener.keyPress(new KeyInputEvent(pressed.poll()));
-
-			while (!released.isEmpty())
-				listener.keyRelease(new KeyInputEvent(released.poll()));
-		}
-		else if (!isKeyDown.isEmpty()) {
-			reset(listener);
-		}
+		for (ListenerRegistration<?> listener : listeners)
+			listener.inputReleased(input);
 	}
 
-	public void reset(KeyboardInputListener listener)
+	private void notifyEnqueued(KeyInput input)
 	{
-		for (int keyCode : isKeyDown)
-			listener.keyRelease(new KeyInputEvent(keyCode));
-		isKeyDown.clear();
-		pressed.clear();
-		released.clear();
+		for (ListenerRegistration<?> listener : listeners)
+			listener.enqueueInput(input);
 	}
 }

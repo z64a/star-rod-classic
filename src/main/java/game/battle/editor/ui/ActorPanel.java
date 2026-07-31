@@ -20,9 +20,9 @@ public class ActorPanel extends InfoPanel<Actor>
 	//TODO
 	public String name = "";
 	public String scriptName = "";
-	
+
 	public int actorType;
-	
+
 	... parts ...
 	public IterableListModel<ActorPart> parts = new IterableListModel<>();
 	 */

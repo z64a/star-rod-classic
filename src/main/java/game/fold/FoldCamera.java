@@ -2,13 +2,13 @@ package game.fold;
 
 import static org.lwjgl.opengl.GL11.*;
 
-import java.awt.event.KeyEvent;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 import org.lwjgl.BufferUtils;
 
 import common.BaseCamera;
+import common.CameraInput;
 import common.KeyboardInput;
 import common.MouseInput;
 import common.MousePixelRead;
@@ -78,7 +78,7 @@ public class FoldCamera extends BaseCamera
 		pos.y += boomLength * Math.sin(Math.toRadians(boomPitch));
 	}
 
-	public void handleInput(KeyboardInput keyboard, MouseInput mouse, double deltaTime, float canvasW, float canvasH)
+	public void handleInput(MouseInput mouse, KeyboardInput keyboard, double deltaTime, float canvasW, float canvasH)
 	{
 		float zdh = 0;
 		float zdv = 0;
@@ -112,13 +112,13 @@ public class FoldCamera extends BaseCamera
 
 		int pv = 0;
 		int ph = 0;
-		if (keyboard.isKeyDown(KeyEvent.VK_W))
+		if (keyboard.isDown(CameraInput.PAN_UP))
 			pv -= 1;
-		if (keyboard.isKeyDown(KeyEvent.VK_S))
+		if (keyboard.isDown(CameraInput.PAN_DOWN))
 			pv += 1;
-		if (keyboard.isKeyDown(KeyEvent.VK_A))
+		if (keyboard.isDown(CameraInput.PAN_LEFT))
 			ph -= 1;
-		if (keyboard.isKeyDown(KeyEvent.VK_D))
+		if (keyboard.isDown(CameraInput.PAN_RIGHT))
 			ph += 1;
 
 		float dv = zv;
@@ -244,7 +244,8 @@ public class FoldCamera extends BaseCamera
 
 		if (useDepth) {
 			// this is the expensive part, reading z from the depth buffer
-			glReadPixels(mouseX, mouseY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, winZ);
+			glReadPixels(RenderState.toFramebufferX(mouseX), RenderState.toFramebufferY(mouseY),
+				1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, winZ);
 		}
 		else {
 			winZ.put(0);
@@ -252,7 +253,8 @@ public class FoldCamera extends BaseCamera
 		}
 
 		IntBuffer stencilValue = BufferUtils.createIntBuffer(1);
-		glReadPixels(mouseX, mouseY, 1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_INT, stencilValue);
+		glReadPixels(RenderState.toFramebufferX(mouseX), RenderState.toFramebufferY(mouseY),
+			1, 1, GL_STENCIL_INDEX, GL_UNSIGNED_INT, stencilValue);
 
 		FloatBuffer position = BufferUtils.createFloatBuffer(3);
 		GLUtils.gluUnProject(winX, winY, winZ.get(), viewMatrix.toFloatBuffer(), projMatrix.toFloatBuffer(), viewport, position);

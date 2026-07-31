@@ -15,6 +15,7 @@ import org.w3c.dom.Element;
 
 import app.AssetManager;
 import app.Environment;
+import app.StarRodException;
 import game.texture.Palette;
 import util.Logger;
 import util.xml.XmlWrapper.XmlReader;
@@ -141,6 +142,30 @@ public class SpriteLoader
 
 	public Sprite getSprite(SpriteSet set, int id, boolean forceReload)
 	{
+		try {
+			return loadSprite(set, id, forceReload);
+		}
+		catch (SpriteLoadingException e) {
+			Logger.logWarning(e.getMessage());
+			return null;
+		}
+	}
+
+	public Sprite requireSprite(SpriteSet set, int id)
+	{
+		return requireSprite(set, id, false);
+	}
+
+	public Sprite requireSprite(SpriteSet set, int id, boolean forceReload)
+	{
+		Sprite sprite = loadSprite(set, id, forceReload);
+		if (sprite == null)
+			throw new StarRodException("Could not find %s sprite $%02X.", getSetName(set), id);
+		return sprite;
+	}
+
+	private Sprite loadSprite(SpriteSet set, int id, boolean forceReload)
+	{
 		if (!loaded)
 			throw new IllegalStateException("getSprite invoked before initializing SpriteLoader!");
 
@@ -149,6 +174,17 @@ public class SpriteLoader
 				return getNpcSprite(id, forceReload);
 			case Player:
 				return getPlayerSprite(id, forceReload);
+		}
+		throw new IllegalArgumentException("Unknown sprite set: " + set);
+	}
+
+	private static String getSetName(SpriteSet set)
+	{
+		switch (set) {
+			case Npc:
+				return "NPC";
+			case Player:
+				return "player";
 		}
 		throw new IllegalArgumentException("Unknown sprite set: " + set);
 	}
@@ -163,21 +199,15 @@ public class SpriteLoader
 
 		SpriteMetadata md = npcSpriteData.get(id);
 		File xmlFile = md.xml;
-		Sprite npcSprite = null;
-
 		try {
-			npcSprite = Sprite.read(xmlFile, SpriteSet.Npc);
+			Sprite npcSprite = Sprite.read(xmlFile, SpriteSet.Npc);
 			npcSprite.name = md.name;
 			npcSpriteCache.put(id, npcSprite);
+			return npcSprite;
 		}
-		catch (Throwable e) {
-			Logger.logWarning("Error while loading NPC sprite! " + e.getMessage());
-			e.printStackTrace();
-			return null;
-			//			npcSpriteData.remove(id); // file is invalid
+		catch (RuntimeException e) {
+			throw new SpriteLoadingException(e, getSetName(SpriteSet.Npc), id, md.name, xmlFile);
 		}
-
-		return npcSprite;
 	}
 
 	private Sprite getPlayerSprite(int id, boolean forceReload)
@@ -190,20 +220,15 @@ public class SpriteLoader
 
 		SpriteMetadata md = playerSpriteData.get(id);
 		File xmlFile = md.xml;
-		Sprite playerSprite = null;
-
 		try {
-			playerSprite = Sprite.read(xmlFile, SpriteSet.Player);
+			Sprite playerSprite = Sprite.read(xmlFile, SpriteSet.Player);
 			playerSprite.name = md.name;
 			playerSpriteCache.put(id, playerSprite);
+			return playerSprite;
 		}
-		catch (Throwable e) {
-			Logger.logWarning("Error while loading player sprite " + md.id + "! " + e.getMessage());
-			e.printStackTrace();
-			playerSpriteData.remove(id); // file is invalid
+		catch (RuntimeException e) {
+			throw new SpriteLoadingException(e, getSetName(SpriteSet.Player), id, md.name, xmlFile);
 		}
-
-		return playerSprite;
 	}
 
 	private static void readSpriteTable()

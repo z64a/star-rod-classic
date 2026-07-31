@@ -464,7 +464,9 @@ public class Renderer implements IShutdownListener
 			LineRenderQueue.addVertex().setPosition(0, 0, Short.MIN_VALUE).setColor(PresetColor.BLUE).getIndex(),
 			LineRenderQueue.addVertex().setPosition(0, 0, Short.MAX_VALUE).setColor(PresetColor.BLUE).getIndex());
 
+		RenderState.setDepthWrite(false);
 		LineRenderQueue.render(true);
+		RenderState.setDepthWrite(true);
 	}
 
 	public void drawPaintSphere(PickHit hit)
@@ -560,7 +562,12 @@ public class Renderer implements IShutdownListener
 		LineRenderQueue.addLine(MMm, MMM);
 
 		RenderState.enableDepthTest(false);
-		LineRenderQueue.render(true);
+		LineShader shader = ShaderManager.use(LineShader.class);
+		shader.useVertexColor.set(true);
+		shader.dashRatio.set(1.0f);
+		shader.clipDepth.set(false);
+		LineRenderQueue.render(shader, true);
+		shader.clipDepth.set(true);
 		RenderState.enableDepthTest(true);
 	}
 
@@ -591,20 +598,26 @@ public class Renderer implements IShutdownListener
 			RenderState.enableDepthTest(preview.useDepth);
 
 			if (preview.batch != null && preview.batch.triangles.size() > 0) {
-				RenderState.setPolygonMode(PolygonMode.LINE);
 				RenderState.setColor(preview.color.x, preview.color.y, preview.color.z);
 
 				for (Triangle t : preview.batch.triangles) {
-					TriangleRenderQueue.addTriangle(
-						TriangleRenderQueue.addVertex()
-							.setPosition(t.vert[0].getCurrentX(), t.vert[0].getCurrentY(), t.vert[0].getCurrentZ())
-							.getIndex(),
-						TriangleRenderQueue.addVertex()
-							.setPosition(t.vert[1].getCurrentX(), t.vert[1].getCurrentY(), t.vert[1].getCurrentZ())
-							.getIndex(),
-						TriangleRenderQueue.addVertex()
-							.setPosition(t.vert[2].getCurrentX(), t.vert[2].getCurrentY(), t.vert[2].getCurrentZ())
-							.getIndex());
+					int lineA = LineRenderQueue.addVertex()
+						.setPosition(t.vert[0].getCurrentX(), t.vert[0].getCurrentY(), t.vert[0].getCurrentZ()).getIndex();
+					int lineB = LineRenderQueue.addVertex()
+						.setPosition(t.vert[1].getCurrentX(), t.vert[1].getCurrentY(), t.vert[1].getCurrentZ()).getIndex();
+					int lineC = LineRenderQueue.addVertex()
+						.setPosition(t.vert[2].getCurrentX(), t.vert[2].getCurrentY(), t.vert[2].getCurrentZ()).getIndex();
+					LineRenderQueue.addLineLoop(lineA, lineB, lineC);
+
+					if (preview.drawMode == PreviewDrawMode.FILLED) {
+						TriangleRenderQueue.addTriangle(
+							TriangleRenderQueue.addVertex()
+								.setPosition(t.vert[0].getCurrentX(), t.vert[0].getCurrentY(), t.vert[0].getCurrentZ()).getIndex(),
+							TriangleRenderQueue.addVertex()
+								.setPosition(t.vert[1].getCurrentX(), t.vert[1].getCurrentY(), t.vert[1].getCurrentZ()).getIndex(),
+							TriangleRenderQueue.addVertex()
+								.setPosition(t.vert[2].getCurrentX(), t.vert[2].getCurrentY(), t.vert[2].getCurrentZ()).getIndex());
+					}
 				}
 
 				switch (preview.drawMode) {
@@ -613,21 +626,21 @@ public class Renderer implements IShutdownListener
 						shader.dashSize.set(20.0f);
 						shader.dashRatio.set(0.5f);
 						shader.dashSpeedRate.set(1.0f);
-						TriangleRenderQueue.render(shader, true);
+						LineRenderQueue.render(shader, true);
 					}
 						break;
 
 					case EDGES: {
 						LineShader shader = ShaderManager.use(LineShader.class);
 						shader.dashRatio.set(1.0f);
-						TriangleRenderQueue.render(shader, true);
+						LineRenderQueue.render(shader, true);
 					}
 						break;
 
 					case FILLED:
-						BasicSolidShader shader = ShaderManager.use(BasicSolidShader.class);
-						TriangleRenderQueue.render(shader, false);
+						LineRenderQueue.render(true);
 						RenderState.setPolygonMode(PolygonMode.FILL);
+						BasicSolidShader shader = ShaderManager.use(BasicSolidShader.class);
 						shader.baseColor.set(preview.color.x, preview.color.y, preview.color.z, 0.5f);
 						TriangleRenderQueue.render(shader, true);
 						break;

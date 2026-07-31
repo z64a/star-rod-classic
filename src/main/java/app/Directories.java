@@ -252,6 +252,7 @@ public enum Directories
 	public static final String FN_BATTLE_ITEMS = "Items.txt";
 
 	public static final String FN_MAP_EDITOR_CONFIG = "map_editor.cfg";
+	public static final String FN_MAP_EDITOR_KEY_BINDINGS = "map_editor_keys.cfg";
 	public static final String FN_EDITOR_GUIDES = "EditorGuides.xml";
 
 	public static final String FN_STRING_EDITOR_CONFIG = "string_editor.cfg";

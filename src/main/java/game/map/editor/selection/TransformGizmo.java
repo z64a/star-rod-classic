@@ -150,7 +150,7 @@ public class TransformGizmo implements Selectable
 			mtx.rotate(selection.getRotatationAxis(), selection.getRotatationAngle());
 		mtx.translate(origin.getX(), origin.getY(), origin.getZ());
 
-		boolean useScaleModel = editor.keyboard.isKeyDown(MapEditor.SCALE_KEY) || editor.rescaling;
+		boolean useScaleModel = editor.rawKeyboard.isKeyDown(MapEditor.SCALE_KEY) || editor.rescaling;
 
 		RenderState.setPolygonMode(PolygonMode.FILL);
 

@@ -747,7 +747,7 @@ public class MapDecoder extends BaseDataDecoder
 			case 0x802EA274: break; // Hammer3BlockThick
 			case 0x802EA298: break; // Hammer3BlockTiny
 			case 0x802EA2E0: break; // PowBlock
-			
+
 			case 0x802EA5F4: break; // SingleTriggerBlock
 			case 0x802EA7E0: break; // HealingBlock
 			case 0x802EA910: break; // SuperBlock
@@ -761,7 +761,7 @@ public class MapDecoder extends BaseDataDecoder
 			case 0x802BCE84: break; // BoardedFloor
 			case 0x802BCF00: break; // BombableRock1
 			case 0x802BCF24: break; // BombableRock2
-			
+
 			case 0x802BCA74: break; // Tweester
 			case 0x802BCB44: break; // StarBoxLaucher
 			 */
@@ -1550,7 +1550,7 @@ public class MapDecoder extends BaseDataDecoder
 			case 0x802EA274: break; // Hammer3BlockThick
 			case 0x802EA298: break; // Hammer3BlockTiny
 			case 0x802EA2E0: break; // PowBlock
-			
+
 			case 0x802EA5F4: break; // SingleTriggerBlock
 			case 0x802EA7E0: break; // HealingBlock
 			case 0x802EA910: break; // SuperBlock
@@ -1564,7 +1564,7 @@ public class MapDecoder extends BaseDataDecoder
 			case 0x802BCE84: break; // BoardedFloor
 			case 0x802BCF00: break; // BombableRock1
 			case 0x802BCF24: break; // BombableRock2
-			
+
 			case 0x802BCA74: break; // Tweester
 			case 0x802BCB44: break; // StarBoxLaucher
 			 */

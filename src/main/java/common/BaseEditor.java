@@ -12,7 +12,6 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +20,7 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.function.Consumer;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -48,7 +48,6 @@ import app.SwingUtils.OpenDialogCounter;
 import app.config.Config;
 import app.config.Options;
 import app.config.Options.Scope;
-import common.KeyboardInput.KeyboardInputListener;
 import common.MouseInput.MouseManagerListener;
 import game.map.editor.CommandManager;
 import game.map.editor.Tickable;
@@ -63,7 +62,7 @@ import util.ui.FadingLabel;
 /**
  * Sets up LWJGL and manages the lifecycle of an editor tool.
  */
-public abstract class BaseEditor extends GLEditor implements Logger.Listener, MouseManagerListener, KeyboardInputListener
+public abstract class BaseEditor extends GLEditor implements Logger.Listener, MouseManagerListener
 {
 	private final int targetFPS;
 	private double deltaTime;
@@ -85,8 +84,10 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 	private FadingLabel infoLabel;
 	private JMenuBar menuBar;
 
+	protected RawKeyboard rawKeyboard;
 	protected KeyboardInput keyboard;
 	protected MouseInput mouse;
+	private final KeyboardInputConfig keyboardConfig;
 
 	private static final float MESSAGE_HOLD_TIME = 4.0f;
 	private static final float MESSAGE_FADE_TIME = 0.5f;
@@ -115,9 +116,10 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 
 	// gl renderer information
 
-	public BaseEditor(BaseEditorSettings settings)
+	public BaseEditor(BaseEditorSettings settings, KeyboardInputConfig keyboardConfig)
 	{
 		super();
+		this.keyboardConfig = keyboardConfig;
 
 		LoadingBar.show("Please Wait");
 
@@ -223,7 +225,7 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 					prevCanvasSize = glCanvas.getSize();
 				}
 
-				keyboard.update(this, frame.isFocused());
+				rawKeyboard.update(keyboard, frame.isFocused());
 				mouse.update(this, frame.isFocused());
 
 				if (!glWindowHaltsForDialogs || !areDialogsOpen()) {
@@ -282,6 +284,7 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 	private void base_cleanup(boolean crashed)
 	{
 		cleanup(crashed);
+		KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(keyboard);
 
 		Logger.removeListener(logListener);
 		if (log != null)
@@ -318,7 +321,8 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 
 		frame.setIconImage(windowSettings.iconImage);
 
-		keyboard = new KeyboardInput(glCanvas);
+		rawKeyboard = new RawKeyboard(glCanvas);
+		keyboard = new KeyboardInput(rawKeyboard, keyboardConfig);
 		mouse = new MouseInput(glCanvas);
 
 		if (windowSettings.resizeable)
@@ -358,22 +362,12 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 			}
 		});
 
-		KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-		manager.addKeyEventDispatcher(e -> {
-			if (e.getID() == KeyEvent.KEY_PRESSED) {
-				switch (e.getKeyCode()) {
-					case KeyEvent.VK_Z:
-						if (e.isControlDown())
-							undoEDT();
-						break;
-					case KeyEvent.VK_Y:
-						if (e.isControlDown())
-							redoEDT();
-						break;
-				}
-			}
-			return false;
-		});
+		KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(keyboard);
+	}
+
+	protected final <T extends KeyInput> void registerKeyboardInputs(Class<T> inputType, Consumer<T> pressedHandler)
+	{
+		keyboard.addListener(inputType, pressedHandler, null, input -> invokeLater(() -> pressedHandler.accept(input)));
 	}
 
 	protected void undoEDT()
@@ -511,6 +505,7 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 			case JOptionPane.NO_OPTION:
 				break;
 			case JOptionPane.CANCEL_OPTION:
+			case JOptionPane.CLOSED_OPTION:
 				closeRequested = false;
 				return false;
 		}

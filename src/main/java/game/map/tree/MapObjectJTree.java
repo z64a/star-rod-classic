@@ -29,7 +29,7 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 import game.map.MapObject;
-import game.map.editor.EditorShortcut;
+import game.map.editor.MapInput;
 import game.map.editor.MapEditor;
 import game.map.editor.commands.AbstractCommand;
 import game.map.editor.ui.GuiCommand;
@@ -180,7 +180,7 @@ public abstract class MapObjectJTree<T extends MapObject> extends JTree implemen
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				editor.enqueueKeyEvent(EditorShortcut.SELECT_ALL);
+				editor.enqueueShortcut(MapInput.SELECT_ALL);
 			}
 		});
 		 */
@@ -196,7 +196,7 @@ public abstract class MapObjectJTree<T extends MapObject> extends JTree implemen
 				if (lastSelected == null)
 					return;
 
-				editor.enqueueKeyEvent(EditorShortcut.COPY_OBJECTS);
+				editor.enqueueShortcut(MapInput.COPY_OBJECTS);
 			}
 		});
 
@@ -211,7 +211,7 @@ public abstract class MapObjectJTree<T extends MapObject> extends JTree implemen
 				if (lastSelected == null)
 					return;
 
-				editor.enqueueKeyEvent(EditorShortcut.PASTE_OBJECTS);
+				editor.enqueueShortcut(MapInput.PASTE_OBJECTS);
 			}
 		});
 
@@ -226,7 +226,7 @@ public abstract class MapObjectJTree<T extends MapObject> extends JTree implemen
 				if (lastSelected == null)
 					return;
 
-				editor.enqueueKeyEvent(EditorShortcut.DUPLICATE_SELECTED);
+				editor.enqueueShortcut(MapInput.DUPLICATE_SELECTED);
 			}
 		});
 
@@ -253,7 +253,7 @@ public abstract class MapObjectJTree<T extends MapObject> extends JTree implemen
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				editor.enqueueKeyEvent(EditorShortcut.DELETE_SELECTED);
+				editor.enqueueShortcut(MapInput.DELETE_SELECTED);
 			}
 		});
 	}

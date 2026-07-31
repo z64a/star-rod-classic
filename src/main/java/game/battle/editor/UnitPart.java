@@ -106,7 +106,7 @@ public class UnitPart
 	public void render(float[] partPos, RenderingOptions opts)
 	{
 		//TODO set palette override based on status
-		if (!validAnim)
+		if (sprite == null || !validAnim)
 			return;
 
 		TransformMatrix mtx = TransformMatrix.identity();
