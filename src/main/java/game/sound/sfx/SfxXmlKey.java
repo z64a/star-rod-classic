@@ -7,7 +7,6 @@ enum SfxXmlKey implements XmlKey
 	// @formatter:off
 	TAG_SOUNDS                     ("Sounds"),
 	TAG_SOUND                      ("Sound"),
-	TAG_ALIAS                      ("Alias"),
 	TAG_ROUTING                    ("Routing"),
 	TAG_ONE_SHOT                   ("OneShot"),
 	TAG_EFFECT                     ("SoundEffect"),
@@ -54,6 +53,8 @@ enum SfxXmlKey implements XmlKey
 	ATTR_SRC                       ("src"),
 	ATTR_EMPTY                     ("empty"),
 	ATTR_UNUSED                    ("unused"),
+	ATTR_DESC                      ("desc"),
+	ATTR_TAGS                      ("tags"),
 	ATTR_ALLOCATION                ("allocation"),
 	ATTR_MAX_PLAYER                ("maxPlayer"),
 	ATTR_PLAYER                    ("player"),

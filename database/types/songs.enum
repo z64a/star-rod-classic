@@ -3,12 +3,12 @@ songID	% library name
 false	% reversed
 
 00 = ToadTown
-% 01 = GoombaVillageCopy
+01 = Unused_01
 02 = NormalBattle
 03 = SpecialBattle
 04 = JrTroopaBattle
 05 = FinalBowserBattle
-% 06 = GoombaVillageCopy
+06 = Unused_06
 07 = GoombaKingBattle
 08 = KoopaBrosBattle
 09 = FakeBowserBattle
@@ -38,7 +38,7 @@ false	% reversed
 20 = ShyGuyToybox
 21 = ToyboxTrain
 22 = CreepyToybox
-% 23 = GoombaVillageCopy
+23 = Unused_23
 24 = JadeJungle
 25 = DeepJungle
 26 = YoshisVillage
@@ -57,7 +57,7 @@ false	% reversed
 33 = PuffPuffMachine
 34 = SunTowerCloudy
 35 = SunTowerSunny
-% 36 = GoombaVillageCopy
+36 = Unused_36
 37 = CrystalPalace
 38 = ShiverCity
 39 = PenguinMystery
@@ -71,7 +71,7 @@ false	% reversed
 40 = ChapterEnd
 41 = ChapterStart % followed by original mario theme
 42 = ItemUpgrade
-% 43 = GoombaVillageCopy
+43 = Unused_43
 44 = PhonographMusic
 45 = TutankoopaTheme
 46 = KammyKoopaTheme
@@ -149,11 +149,20 @@ false	% reversed
 8C = PopDivaSong
 8D = BooMinigame
 8E = LevelUp
-% 8F = GoombaVillageCopy
+8F = Unused_8F
 90 = ParadeDay
 91 = ParadeNight
-% 92 = GoombaVillageCopy
-% 93 = GoombaVillageCopy
+92 = Unused_92
+93 = Unused_93
 94 = MarioBrosHouse
 95 = IntroStory
 96 = NewPartnerJP
+97 = Unused_97
+98 = Unused_98
+99 = Unused_99
+9A = Unused_9A
+9B = Unused_9B
+9C = Unused_9C
+9D = Unused_9D
+9E = Unused_9E
+9F = Unused_9F

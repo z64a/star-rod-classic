@@ -17,7 +17,8 @@ public final class SfxArchive
 		public final int id;
 		public String name;
 		public boolean unused;
-		public final List<String> aliases = new ArrayList<>();
+		public String desc = "";
+		public final List<String> tags = new ArrayList<>();
 		public Routing routing;
 		public final List<Track> tracks = new ArrayList<>();
 		public final List<SpawnedEffect> spawnedEffects = new ArrayList<>();

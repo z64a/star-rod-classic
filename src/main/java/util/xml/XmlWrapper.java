@@ -3,6 +3,7 @@ package util.xml;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -48,6 +49,30 @@ public class XmlWrapper
 				DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 				DocumentBuilder builder = factory.newDocumentBuilder();
 				document = builder.parse(xmlFile);
+			}
+			catch (ParserConfigurationException e) {
+				throw new InputFileException(xmlFile, e.getMessage());
+			}
+			catch (SAXException e) {
+				throw new InputFileException(xmlFile, e.getMessage());
+			}
+			catch (IOException e) {
+				throw new InputFileException(xmlFile, e.getMessage());
+			}
+
+			document.getDocumentElement().normalize();
+			rootElement = document.getDocumentElement();
+		}
+
+		public XmlReader(InputStream stream, String sourceName)
+		{
+			this.xmlFile = new File(sourceName);
+			Document document;
+
+			try {
+				DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+				DocumentBuilder builder = factory.newDocumentBuilder();
+				document = builder.parse(stream);
 			}
 			catch (ParserConfigurationException e) {
 				throw new InputFileException(xmlFile, e.getMessage());

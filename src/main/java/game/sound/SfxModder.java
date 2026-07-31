@@ -165,7 +165,7 @@ public final class SfxModder
 	private static void runDump(String[] args) throws IOException
 	{
 		if (args.length != 3 && args.length != 4)
-			throw new IllegalArgumentException("dump requires: input.sef audio-directory [names.txt]");
+			throw new IllegalArgumentException("dump requires: input.sef audio-directory [Sounds.xml]");
 		SfxNames names = args.length == 4 ? SfxNames.load(Path.of(args[3])) : SfxNames.loadBundled();
 		DumpSummary summary = dump(Path.of(args[1]), Path.of(args[2]), names);
 		Logger.logf("Dumped %d sounds (%d effect files, %d envelopes).",
@@ -176,7 +176,7 @@ public final class SfxModder
 	private static void runBuild(String[] args) throws IOException
 	{
 		if (args.length != 3 && args.length != 4)
-			throw new IllegalArgumentException("build requires: SoundEffects.xml output.sef [names.txt]");
+			throw new IllegalArgumentException("build requires: SoundEffects.xml output.sef [Sounds.xml]");
 		BuildSummary summary;
 		if (args.length == 4)
 			summary = build(Path.of(args[1]), Path.of(args[2]), SfxNames.load(Path.of(args[3])));
@@ -189,7 +189,7 @@ public final class SfxModder
 	private static void runLint(String[] args) throws IOException
 	{
 		if (args.length != 2 && args.length != 3)
-			throw new IllegalArgumentException("lint requires: SoundEffects.xml [names.txt]");
+			throw new IllegalArgumentException("lint requires: SoundEffects.xml [Sounds.xml]");
 		List<String> warnings;
 		if (args.length == 3)
 			warnings = lint(Path.of(args[1]), SfxNames.load(Path.of(args[2])));
@@ -208,8 +208,8 @@ public final class SfxModder
 	private static void printUsage()
 	{
 		Logger.log("Usage:");
-		Logger.log("  SfxModder dump  input.sef audio-directory [names.txt]");
-		Logger.log("  SfxModder build SoundEffects.xml output.sef [names.txt]");
-		Logger.log("  SfxModder lint  SoundEffects.xml [names.txt]");
+		Logger.log("  SfxModder dump  input.sef audio-directory [Sounds.xml]");
+		Logger.log("  SfxModder build SoundEffects.xml output.sef [Sounds.xml]");
+		Logger.log("  SfxModder lint  SoundEffects.xml [Sounds.xml]");
 	}
 }

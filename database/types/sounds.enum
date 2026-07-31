@@ -1158,8 +1158,8 @@ false	% reversed
 2080 = Empty_2080
 2081 = QuickPlayerJump
 2082 = Jump8BITMario
-2083 = Unused_QuickPlayerJumpCopy
-2084 = Unused_2084
+2083 = QuickPlayerJumpCopy
+2084 = LongPlayerJumpCopy
 2085 = StarBoxLauncher
 2086 = Spring
 2087 = ZiplineFinish
@@ -1183,7 +1183,7 @@ false	% reversed
 2099 = HeartPlant
 209A = HurtPlantShriek
 209B = MunchlesiaSuction
-209C = Unused_209C
+209C = LogLandAlt
 209D = JAN_LogLand
 209E = JAN_LogSplit
 209F = SeparateBushes
@@ -1275,7 +1275,7 @@ false	% reversed
 20F5 = BuzzarGrab
 20F6 = HeavyNpcStepC
 20F7 = TubbasHeartCharge
-20F8 = Unused_TubbasHeartChargeCopy
+20F8 = TubbasHeartChargeCopy
 20F9 = TubbasHeartSwarmAttack
 20FA = Empty_20FA
 20FB = TubbasHeartSwarmDisperse
@@ -1283,7 +1283,7 @@ false	% reversed
 20FD = FakeBowserSwing
 20FE = FakeBowserStrike
 20FF = FakeBowserLaugh
-2100 = Unused_SmallNpcStepCopy
+2100 = SmallNpcStepCopy
 2101 = FileMenuMoveCursor
 2102 = CreateFileMoveCursor
 2103 = CreateFileSetCharacter

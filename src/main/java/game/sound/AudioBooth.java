@@ -67,6 +67,7 @@ import game.sound.bgm.SongKey;
 import game.sound.engine.AudioEngine;
 import game.sound.engine.SoundBank;
 import game.sound.mseq.Mseq;
+import game.sound.mseq.Mseq.MseqKey;
 import game.sound.mseq.MseqPlayer;
 import game.sound.sfx.SfxArchive;
 import game.sound.sfx.SfxArchive.Command;
@@ -153,6 +154,7 @@ public class AudioBooth
 	private final JTabbedPane assetTabs;
 	private final JCheckBox alternativeSoundBox;
 	private final JCheckBox alternativeVolumeBox;
+	private final JButton mseqRampButton;
 
 	private boolean ignoreSliderUpdate = false;
 	private volatile boolean running = true;
@@ -274,6 +276,11 @@ public class AudioBooth
 
 		alternativeVolumeBox = new JCheckBox("Alternative Volume");
 		alternativeVolumeBox.addActionListener((e) -> updateSfxPreview());
+
+		mseqRampButton = new JButton("Trigger Ramps");
+		mseqRampButton.setToolTipText("Start this MSEQ's track tune and volume ramps.");
+		mseqRampButton.setEnabled(false);
+		mseqRampButton.addActionListener((e) -> triggerMseqRamps());
 
 		JMenuBar menuBar = new JMenuBar();
 		JMenu fileMenu = new JMenu("File");
@@ -482,8 +489,9 @@ public class AudioBooth
 		});
 
 		JPanel listPanel = createListPanel(sfxList, model, "SFX", manifest, (sound) ->
-			String.format("%04X %s %s %s %s", sound.id, sound.name,
-				String.join(" ", sound.aliases), sound.unused ? "unused" : "", sampleNames.get(sound)));
+			String.format("%04X %s %s %s %s %s", sound.id, sound.name,
+				sound.unused ? "unused" : "", sound.desc,
+				String.join(" ", sound.tags), sampleNames.get(sound)));
 
 		JPanel alternativePanel = new JPanel(new MigLayout("ins 0 8 8 8", "[][]", "[]"));
 		alternativePanel.add(alternativeSoundBox);
@@ -546,8 +554,12 @@ public class AudioBooth
 	private JPanel createMseqTab() throws IOException
 	{
 		Map<String, String> names = loadMseqNames();
-		List<File> sortedFiles = new ArrayList<>(
-			IOUtils.getFilesWithExtension(MOD_AUDIO_MSEQ, "xml", false));
+		Collection<File> files = IOUtils.getFilesWithExtension(MOD_AUDIO_MSEQ, "xml", false);
+		Map<File, Boolean> hasRamps = new HashMap<>();
+		for (File file : files)
+			hasRamps.put(file, readMseqHasRamps(file));
+
+		List<File> sortedFiles = new ArrayList<>(files);
 		sortedFiles.sort(Comparator.comparing(File::getName, String.CASE_INSENSITIVE_ORDER));
 
 		DefaultListModel<File> model = new DefaultListModel<>();
@@ -563,7 +575,7 @@ public class AudioBooth
 				Component component = super.getListCellRendererComponent(
 					list, value, index, isSelected, cellHasFocus);
 				if (value instanceof File file)
-					setText(formatMseqName(file, names));
+					setText(formatMseqName(file, names, hasRamps.get(file)));
 				return component;
 			}
 		});
@@ -575,8 +587,15 @@ public class AudioBooth
 				selectMseq(selected);
 		});
 
-		return createListPanel(mseqList, model, "MSEQ", MOD_AUDIO_MSEQ.toFile(),
-			(file) -> formatMseqName(file, names));
+		JPanel listPanel = createListPanel(mseqList, model, "MSEQ", MOD_AUDIO_MSEQ.toFile(),
+			(file) -> formatMseqName(file, names, hasRamps.get(file)));
+		JPanel rampPanel = new JPanel(new MigLayout("ins 0 8 8 8", "[]", "[]"));
+		rampPanel.add(mseqRampButton);
+
+		JPanel panel = new JPanel(new MigLayout("fill, ins 0", "[grow,fill]", "[grow][]"));
+		panel.add(listPanel, "grow, push, wrap");
+		panel.add(rampPanel, "growx");
+		return panel;
 	}
 
 	private JPanel createBgmTab() throws IOException
@@ -708,12 +727,28 @@ public class AudioBooth
 		}
 	}
 
-	private static String formatMseqName(File file, Map<String, String> names)
+	private static boolean readMseqHasRamps(File file)
+	{
+		try {
+			XmlReader xmr = new XmlReader(file);
+			return !xmr.getTags(
+				xmr.getUniqueRequiredTag(xmr.getRootElement(), MseqKey.TAG_RAMP_LIST),
+				MseqKey.TAG_RAMP).isEmpty();
+		}
+		catch (Exception e) {
+			Logger.logfWarning("Could not read MSEQ summary from asset %s", file.getName());
+			return false;
+		}
+	}
+
+	private static String formatMseqName(File file, Map<String, String> names, boolean hasRamps)
 	{
 		String name = FilenameUtils.getBaseName(file.getName());
 		String canonicalName = AudioCatalog.getName(names, file.getName());
 		if (canonicalName != null)
 			name += "  " + canonicalName;
+		if (hasRamps)
+			name += " [R]";
 		return name;
 	}
 
@@ -1024,6 +1059,9 @@ public class AudioBooth
 		stopButton.setEnabled(isPlaybackActive());
 		reloadItem.setEnabled(selectedType != PlaybackType.NONE && !exporting);
 		exportItem.setEnabled(hasAsset && !exporting);
+		mseqRampButton.setEnabled(playbackType == PlaybackType.MSEQ
+			&& selectedMseq != null && !selectedMseq.trackRamps.isEmpty()
+			&& isPlaybackActive() && !exporting);
 
 		boolean hasAlternativeSound = selectedSfx != null
 			&& hasCommand(selectedSfx, Op.SET_ALTERNATIVE);
@@ -1047,6 +1085,17 @@ public class AudioBooth
 			selectSfx(selectedSfx);
 		else
 			updateTransportControls();
+	}
+
+	private void triggerMseqRamps()
+	{
+		if (playbackType != PlaybackType.MSEQ || selectedMseq == null)
+			return;
+
+		synchronized (threadLock) {
+			mseqPlayer.triggerTrackRamps();
+		}
+		statusLabel.setText("Triggered track ramps for MSEQ " + selectedMseqFile.getName());
 	}
 
 	private boolean isPlaybackActive()

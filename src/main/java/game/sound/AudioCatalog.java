@@ -3,6 +3,7 @@ package game.sound;
 import static game.sound.AudioModder.SongListKey.ATTR_BGM;
 import static game.sound.AudioModder.SongListKey.ATTR_ID;
 import static game.sound.AudioModder.SongListKey.ATTR_OLD_BGM;
+import static game.sound.AudioModder.SongListKey.ATTR_UNUSED;
 import static game.sound.AudioModder.SongListKey.TAG_SONG;
 
 import java.io.File;
@@ -30,21 +31,28 @@ import util.xml.XmlWrapper.XmlWriter;
 
 public final class AudioCatalog
 {
-	private static final int LAST_AMBIENT_ID = 0xD;
+	private static final int LAST_AMBIENT_ID = 0xF;
 	private static final int RADIO_ID = 0x10;
 	private static final int RADIO_PLAYER_COUNT = 4;
 	private static final Pattern IDENTIFIER = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
+	private static final Set<Integer> VANILLA_UNUSED_SONG_IDS = Set.of(
+		0x01, 0x06, 0x23, 0x2D, 0x2E, 0x2F, 0x36, 0x43,
+		0x45, 0x4D, 0x4F, 0x5E, 0x8F, 0x92, 0x93, 0x96,
+		0x97, 0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9E, 0x9F);
+	private static final Set<Integer> VANILLA_UNUSED_AMBIENT_IDS = Set.of(
+		0x06, 0x0D, 0x0E, 0x0F);
 
 	private static final int[] AMBIENT_EXTRA_INDICES = {
 		0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
-		0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10
+		0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10,
+		0x11, 0x12
 	};
 
 	private static final String[] DEFAULT_AMBIENT_MSEQS = {
 		"DB_501.mseq", "DC_502.mseq", "E5_511.mseq", "E6_512.mseq",
 		"DD_503.mseq", "DE_504.mseq", "DF_505.mseq", "E0_506.mseq",
 		"E1_507.mseq", "E2_508.mseq", "E3_509.mseq", "E4_510.mseq",
-		"E7_513.mseq", "E5_511.mseq"
+		"E7_513.mseq", "E5_511.mseq", "E5_511.mseq", "E5_511.mseq"
 	};
 
 	private static final int[] RADIO_SONG_IDS = { 0x2D, 0x2E, 0x2F, 0x2D };
@@ -59,9 +67,9 @@ public final class AudioCatalog
 		TAG_AMBIENT_SOUND	("AmbientSound"),
 		TAG_RADIO			("Radio"),
 		TAG_STATION			("Station"),
-		TAG_UNUSED			("Unused"),
 		ATTR_ID				("id"),
 		ATTR_NAME			("name"),
+		ATTR_UNUSED			("unused"),
 		ATTR_MSEQ			("mseq"),
 		ATTR_BANK			("bank"),
 		ATTR_PLAYER			("player"),
@@ -97,6 +105,8 @@ public final class AudioCatalog
 				XmlTag ambientTag = xmw.createTag(Key.TAG_AMBIENT_SOUND, true);
 				xmw.addHex(ambientTag, Key.ATTR_ID, "%02X", id);
 				xmw.addAttribute(ambientTag, Key.ATTR_NAME, ambientNames.getName(id));
+				if (isVanillaUnusedAmbientID(id))
+					xmw.addBoolean(ambientTag, Key.ATTR_UNUSED, true);
 				xmw.addAttribute(ambientTag, Key.ATTR_MSEQ,
 					extraFiles.get(AMBIENT_EXTRA_INDICES[id]));
 				xmw.printTag(ambientTag);
@@ -108,19 +118,15 @@ public final class AudioCatalog
 			xmw.addAttribute(radioTag, Key.ATTR_BANK, extraFiles.get(0x17));
 			xmw.openTag(radioTag);
 
-			for (int player = 0; player < RADIO_PLAYER_COUNT - 1; player++) {
+			for (int player = 0; player < RADIO_PLAYER_COUNT; player++) {
 				XmlTag stationTag = xmw.createTag(Key.TAG_STATION, true);
 				xmw.addInt(stationTag, Key.ATTR_PLAYER, player);
 				xmw.addHex(stationTag, Key.ATTR_SONG, "%02X", RADIO_SONG_IDS[player]);
+				if (player == RADIO_PLAYER_COUNT - 1)
+					xmw.addBoolean(stationTag, Key.ATTR_UNUSED, true);
 				xmw.addAttribute(stationTag, Key.ATTR_MSEQ, extraFiles.get(0x13 + player));
 				xmw.printTag(stationTag);
 			}
-
-			XmlTag unusedTag = xmw.createTag(Key.TAG_UNUSED, true);
-			xmw.addInt(unusedTag, Key.ATTR_PLAYER, RADIO_PLAYER_COUNT - 1);
-			xmw.addHex(unusedTag, Key.ATTR_SONG, "%02X", RADIO_SONG_IDS[3]);
-			xmw.addAttribute(unusedTag, Key.ATTR_MSEQ, extraFiles.get(0x16));
-			xmw.printTag(unusedTag);
 
 			xmw.closeTag(radioTag);
 			xmw.closeTag(rootTag);
@@ -142,6 +148,9 @@ public final class AudioCatalog
 				id = xmr.readHex(songElement, ATTR_ID);
 			String name = songNames.get(id);
 			if (name == null)
+				continue;
+			boolean unused = readUnused(xmr, songElement, ATTR_UNUSED);
+			if (unused && name.equals(unusedName(id)))
 				continue;
 
 			String filename;
@@ -166,8 +175,10 @@ public final class AudioCatalog
 		Map<Integer, String> songNames = readSongNameTable(songsXml);
 		Map<String, List<String>> names = new LinkedHashMap<>();
 
-		for (int id = 0; id <= LAST_AMBIENT_ID; id++)
-			addName(names, data.ambientMseqs[id], data.ambientNames[id]);
+		for (int id = 0; id <= LAST_AMBIENT_ID; id++) {
+			if (!data.ambientUnused[id] || !data.ambientNames[id].equals(unusedName(id)))
+				addName(names, data.ambientMseqs[id], data.ambientNames[id]);
+		}
 
 		for (int player = 0; player < RADIO_PLAYER_COUNT - 1; player++) {
 			String songName = songNames.get(data.radioSongIDs[player]);
@@ -192,11 +203,11 @@ public final class AudioCatalog
 		Set<String> identifiers = new HashSet<>();
 		for (Element element : xmr.getTags(root, TAG_SONG)) {
 			xmr.requiresAttribute(element, ATTR_ID);
+			xmr.requiresAttribute(element, AudioModder.SongListKey.ATTR_SONG_NAME);
 			int id = xmr.readHex(element, ATTR_ID);
 			if (!ids.add(id))
 				throw new InputFileException(xmlFile, String.format("Song ID %X is defined more than once", id));
-			if (!xmr.hasAttribute(element, AudioModder.SongListKey.ATTR_SONG_NAME))
-				continue;
+			readUnused(xmr, element, ATTR_UNUSED);
 
 			String name = readIdentifier(xmr, xmlFile, element, AudioModder.SongListKey.ATTR_SONG_NAME);
 			if (!identifiers.add(name))
@@ -237,9 +248,6 @@ public final class AudioCatalog
 				getFileIndex(xmlFile, sbnLookup, data.ambientMseqs[id]);
 		}
 
-		extraFiles[0x11] = extraFiles[0x10];
-		extraFiles[0x12] = extraFiles[0x10];
-
 		for (int player = 0; player < RADIO_PLAYER_COUNT; player++) {
 			extraFiles[0x13 + player] =
 				getFileIndex(xmlFile, sbnLookup, data.radioMseqs[player]);
@@ -276,6 +284,7 @@ public final class AudioCatalog
 			if (id != index)
 				xmr.complain(Key.TAG_AMBIENT_SOUND + " ID is out of order; do not skip IDs");
 			data.ambientNames[id] = readIdentifier(xmr, xmlFile, ambientElement, Key.ATTR_NAME);
+			data.ambientUnused[id] = readUnused(xmr, ambientElement, Key.ATTR_UNUSED);
 			data.ambientMseqs[id] = xmr.getAttribute(ambientElement, Key.ATTR_MSEQ);
 		}
 
@@ -289,15 +298,12 @@ public final class AudioCatalog
 		data.radioBank = xmr.getAttribute(radioElement, Key.ATTR_BANK);
 
 		List<Element> stationElements = xmr.getTags(radioElement, Key.TAG_STATION);
-		if (stationElements.size() != RADIO_PLAYER_COUNT - 1)
-			xmr.complain("Radio must define three stations");
+		if (stationElements.size() != RADIO_PLAYER_COUNT)
+			xmr.complain("Radio must define four stations");
 
 		for (int index = 0; index < stationElements.size(); index++) {
 			readRadioPlayer(xmr, stationElements.get(index), data, index);
 		}
-
-		Element unusedElement = xmr.getUniqueRequiredTag(radioElement, Key.TAG_UNUSED);
-		readRadioPlayer(xmr, unusedElement, data, RADIO_PLAYER_COUNT - 1);
 		return data;
 	}
 
@@ -309,11 +315,21 @@ public final class AudioCatalog
 		return name;
 	}
 
+	private static boolean readUnused(XmlReader xmr, Element element, XmlKey key)
+	{
+		if (!xmr.hasAttribute(element, key))
+			return false;
+		if (!xmr.readBoolean(element, key, false))
+			xmr.complain(element.getTagName() + " attribute " + key + " must be true when present");
+		return true;
+	}
+
 	private static void readRadioPlayer(XmlReader xmr, Element element, AmbientData data, int index)
 	{
 		xmr.requiresAttribute(element, Key.ATTR_PLAYER);
 		xmr.requiresAttribute(element, Key.ATTR_SONG);
 		xmr.requiresAttribute(element, Key.ATTR_MSEQ);
+		readUnused(xmr, element, Key.ATTR_UNUSED);
 
 		int player = xmr.readInt(element, Key.ATTR_PLAYER);
 		if (player != index)
@@ -328,8 +344,11 @@ public final class AudioCatalog
 		ConstEnum ambientNames = ProjectDatabase.getFromNamespace("AmbientSounds");
 		ConstEnum songNames = ProjectDatabase.getFromNamespace("Song");
 
-		for (int id = 0; id <= LAST_AMBIENT_ID; id++)
-			addName(names, DEFAULT_AMBIENT_MSEQS[id], ambientNames.getName(id));
+		for (int id = 0; id <= LAST_AMBIENT_ID; id++) {
+			String name = ambientNames.getName(id);
+			if (!isVanillaUnusedAmbientID(id) || !name.equals(unusedName(id)))
+				addName(names, DEFAULT_AMBIENT_MSEQS[id], name);
+		}
 		for (int player = 0; player < RADIO_PLAYER_COUNT - 1; player++)
 			addName(names, DEFAULT_RADIO_MSEQS[player], songNames.getName(RADIO_SONG_IDS[player]));
 		addName(names, DEFAULT_RADIO_MSEQS[3], songNames.getName(RADIO_SONG_IDS[3]) + "Copy (unused)");
@@ -372,9 +391,25 @@ public final class AudioCatalog
 		return FilenameUtils.getBaseName(filename).toUpperCase(Locale.ROOT);
 	}
 
+	public static boolean isVanillaUnusedSongID(int id)
+	{
+		return VANILLA_UNUSED_SONG_IDS.contains(id);
+	}
+
+	private static boolean isVanillaUnusedAmbientID(int id)
+	{
+		return VANILLA_UNUSED_AMBIENT_IDS.contains(id);
+	}
+
+	private static String unusedName(int id)
+	{
+		return String.format("Unused_%02X", id);
+	}
+
 	private static class AmbientData
 	{
 		private final String[] ambientNames = new String[LAST_AMBIENT_ID + 1];
+		private final boolean[] ambientUnused = new boolean[LAST_AMBIENT_ID + 1];
 		private final String[] ambientMseqs = new String[LAST_AMBIENT_ID + 1];
 		private final String[] radioMseqs = new String[RADIO_PLAYER_COUNT];
 		private final int[] radioSongIDs = new int[RADIO_PLAYER_COUNT];

@@ -132,7 +132,7 @@ public final class SfxBinary
 				decodeExtraSection();
 
 			// Retain named empty and available blank slots, but not malformed slots.
-			for (Map.Entry<Integer, List<String>> entry : names.entries()) {
+			for (Map.Entry<Integer, String> entry : names.entries()) {
 				if (!archive.sounds.containsKey(entry.getKey()) && names.shouldMaterializeEmpty(entry.getKey()))
 					archive.sounds.put(entry.getKey(), makeSound(entry.getKey(), false));
 			}
@@ -248,16 +248,17 @@ public final class SfxBinary
 
 		private Sound makeSound(int id, boolean populated)
 		{
-			List<String> idNames = names.get(id);
+			String name = names.get(id);
 			Sound sound;
-			if (idNames.isEmpty() || populated && names.hasEmptyName(id)) {
+			if (name == null || populated && names.hasEmptyName(id)) {
 				sound = new Sound(id, SfxNames.nameMissing(id));
 			}
 			else {
-				sound = new Sound(id, idNames.get(0));
-				sound.aliases.addAll(idNames.subList(1, idNames.size()));
+				sound = new Sound(id, name);
 			}
-			sound.unused = populated && SfxVanillaUsage.isUnused(id);
+			sound.unused = populated && names.isUnused(id);
+			sound.desc = names.getDescription(id);
+			sound.tags.addAll(names.getTags(id));
 			return sound;
 		}
 

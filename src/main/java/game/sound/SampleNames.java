@@ -15,6 +15,8 @@ import app.StarRodException;
 
 public final class SampleNames
 {
+	private static final String RESOURCE_SAMPLES = "/audio/Samples.txt";
+
 	private static final Pattern TABLE_ROW = Pattern.compile(
 		"^\\s*([A-Z0-9]{4}_[0-9A-F]{2}(?:_Loop)?)\\s+([A-Za-z0-9_]+)\\s*$");
 
@@ -34,9 +36,9 @@ public final class SampleNames
 
 	public static SampleNames loadBundled() throws IOException
 	{
-		InputStream stream = SampleNames.class.getResourceAsStream("/samples.txt");
+		InputStream stream = SampleNames.class.getResourceAsStream(RESOURCE_SAMPLES);
 		if (stream == null)
-			throw new IOException("Missing bundled samples.txt");
+			throw new IOException("Missing bundled " + RESOURCE_SAMPLES);
 
 		SampleNames result = new SampleNames();
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {

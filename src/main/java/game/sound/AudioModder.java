@@ -98,6 +98,7 @@ public class AudioModder
 		TAG_SONG		("Song"),
 		ATTR_ID			("id"),
 		ATTR_SONG_NAME	("name"),
+		ATTR_UNUSED		("unused"),
 		ATTR_BGM		("bgm"),
 		ATTR_BK1		("bk1"),
 		ATTR_BK2		("bk2"),
@@ -299,6 +300,8 @@ public class AudioModder
 				xmw.addHex(songTag, ATTR_ID, songID);
 				if (songEnum.has(songID))
 					xmw.addAttribute(songTag, ATTR_SONG_NAME, songEnum.getName(songID));
+				if (AudioCatalog.isVanillaUnusedSongID(songID))
+					xmw.addBoolean(songTag, ATTR_UNUSED, true);
 				xmw.addAttribute(songTag, ATTR_BGM, dumpedFilenames.get(sbnID));
 
 				if (bk1 != 0)
@@ -420,10 +423,14 @@ public class AudioModder
 			Element songElem = songElems.get(index);
 
 			xmr.requiresAttribute(songElem, ATTR_ID);
+			xmr.requiresAttribute(songElem, ATTR_SONG_NAME);
 			int id = xmr.readHex(songElem, ATTR_ID);
 
 			if (id != index)
 				throw new InputFileException(xmlFile, TAG_SONG + " ID is out of order! Do not skip song IDs.");
+			if (xmr.hasAttribute(songElem, ATTR_UNUSED)
+				&& !xmr.readBoolean(songElem, ATTR_UNUSED, false))
+				xmr.complain(TAG_SONG + " attribute " + ATTR_UNUSED + " must be true when present");
 
 			SongEntry s = new SongEntry();
 			if (xmr.hasAttribute(songElem, ATTR_OLD_BGM)) {

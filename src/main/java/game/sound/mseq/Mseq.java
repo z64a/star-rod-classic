@@ -28,7 +28,7 @@ import util.xml.XmlWrapper.XmlWriter;
 
 public class Mseq implements XmlSerializable
 {
-	public final List<TrackSetting> trackSettings = new ArrayList<>();
+	public final List<TrackRamp> trackRamps = new ArrayList<>();
 	public final List<MseqCommand> commands = new ArrayList<>();
 	public String name;
 	public int firstVoiceIdx;
@@ -165,14 +165,14 @@ public class Mseq implements XmlSerializable
 		name = getUTF8(bb, 4).trim();
 
 		firstVoiceIdx = bb.get() & 0xFF;
-		int numSettings = bb.get() & 0xFF;
-		int settingsOffset = bb.getShort() & 0xFFFF;
+		int numRamps = bb.get() & 0xFF;
+		int rampsOffset = bb.getShort() & 0xFFFF;
 		int streamOffset = bb.getShort() & 0xFFFF;
 
-		bb.position(settingsOffset);
+		bb.position(rampsOffset);
 
-		for (int i = 0; i < numSettings; i++)
-			trackSettings.add(new TrackSetting(bb));
+		for (int i = 0; i < numRamps; i++)
+			trackRamps.add(new TrackRamp(bb));
 
 		bb.position(streamOffset);
 
@@ -260,14 +260,14 @@ public class Mseq implements XmlSerializable
 		dbb.putByte(0); // end
 
 		int endOffset = dbb.position();
-		int trackSettingsOffset = 0;
+		int trackRampsOffset = 0;
 
-		if (trackSettings.size() > 0) {
+		if (trackRamps.size() > 0) {
 			dbb.align(4);
-			trackSettingsOffset = dbb.position();
+			trackRampsOffset = dbb.position();
 
-			for (TrackSetting setting : trackSettings)
-				setting.build(dbb);
+			for (TrackRamp ramp : trackRamps)
+				ramp.build(dbb);
 
 			endOffset = dbb.position();
 		}
@@ -279,8 +279,8 @@ public class Mseq implements XmlSerializable
 		dbb.putInt(endOffset);
 		dbb.putUTF8(String.format("%-4s", name), false);
 		dbb.putByte(firstVoiceIdx);
-		dbb.putByte(trackSettings.size());
-		dbb.putShort(trackSettingsOffset);
+		dbb.putByte(trackRamps.size());
+		dbb.putShort(trackRampsOffset);
 		dbb.putShort(0x18);
 
 		IOUtils.writeBufferToFile(dbb.getFixedBuffer(), outFile);
@@ -294,21 +294,21 @@ public class Mseq implements XmlSerializable
 		return sb.toString();
 	}
 
-	public class TrackSetting implements XmlSerializable
+	public class TrackRamp implements XmlSerializable
 	{
 		public int track;
-		public int type;
+		public TrackRampType type;
 		public int time;
 		public short delta;
 		public short goal;
 
-		public TrackSetting()
+		public TrackRamp()
 		{} // for fromXML
 
-		public TrackSetting(ByteBuffer bb)
+		public TrackRamp(ByteBuffer bb)
 		{
 			track = bb.get() & 0xFF;
-			type = bb.get() & 0xFF;
+			type = TrackRampType.fromBinary(bb.get() & 0xFF);
 			time = bb.getShort() & 0xFFFF;
 			delta = bb.getShort();
 			goal = bb.getShort();
@@ -317,7 +317,7 @@ public class Mseq implements XmlSerializable
 		public void build(DynamicByteBuffer dbb)
 		{
 			dbb.putByte(track);
-			dbb.putByte(type);
+			dbb.putByte(type.binaryValue);
 			dbb.putShort(time);
 			dbb.putShort(delta);
 			dbb.putShort(goal);
@@ -327,23 +327,80 @@ public class Mseq implements XmlSerializable
 		public void fromXML(XmlReader xmr, Element elem)
 		{
 			track = xmr.readHex(elem, ATTR_TRACK);
-			type = xmr.readHex(elem, ATTR_TYPE);
+			type = TrackRampType.fromName(xmr.getAttribute(elem, ATTR_TYPE));
+			if (type == null) {
+				xmr.complain("Unknown track ramp type: " + xmr.getAttribute(elem, ATTR_TYPE));
+				return;
+			}
 			time = xmr.readHex(elem, ATTR_TIME);
-			delta = (short) xmr.readHex(elem, ATTR_DELTA);
-			goal = (short) xmr.readHex(elem, ATTR_GOAL);
+			if (type == TrackRampType.TUNE) {
+				delta = (short) xmr.readInt(elem, ATTR_DELTA);
+				goal = (short) xmr.readInt(elem, ATTR_GOAL);
+			}
+			else {
+				delta = (short) xmr.readHex(elem, ATTR_DELTA);
+				goal = (short) xmr.readHex(elem, ATTR_GOAL);
+			}
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
-			XmlTag tag = xmw.createTag(TAG_SETTINGS, true);
+			XmlTag tag = xmw.createTag(TAG_RAMP, true);
 			xmw.addHex(tag, ATTR_TRACK, track);
-			xmw.addHex(tag, ATTR_TYPE, type);
+			xmw.addAttribute(tag, ATTR_TYPE, type.name);
 			xmw.addHex(tag, ATTR_TIME, time);
-			xmw.addHex(tag, ATTR_DELTA, delta);
-			xmw.addHex(tag, ATTR_GOAL, goal);
+			if (type == TrackRampType.TUNE) {
+				xmw.addInt(tag, ATTR_DELTA, delta);
+				xmw.addInt(tag, ATTR_GOAL, goal);
+			}
+			else {
+				addSignedHex(xmw, tag, ATTR_DELTA, delta);
+				addSignedHex(xmw, tag, ATTR_GOAL, goal);
+			}
 			xmw.printTag(tag);
 		}
+	}
+
+	public static enum TrackRampType
+	{
+		TUNE(0, "tune"),
+		VOLUME(1, "volume");
+
+		private final int binaryValue;
+		private final String name;
+
+		private TrackRampType(int binaryValue, String name)
+		{
+			this.binaryValue = binaryValue;
+			this.name = name;
+		}
+
+		private static TrackRampType fromBinary(int value)
+		{
+			if (value == TUNE.binaryValue)
+				return TUNE;
+			if (value == VOLUME.binaryValue)
+				return VOLUME;
+			throw new IllegalArgumentException("Unknown MSEQ track ramp type: " + value);
+		}
+
+		private static TrackRampType fromName(String name)
+		{
+			for (TrackRampType type : values()) {
+				if (type.name.equals(name))
+					return type;
+			}
+			return null;
+		}
+	}
+
+	private static void addSignedHex(XmlWriter xmw, XmlTag tag, XmlKey key, int value)
+	{
+		if (value < 0)
+			xmw.addAttribute(tag, key, String.format("-%X", -value));
+		else
+			xmw.addHex(tag, key, value);
 	}
 
 	public static enum MseqKey implements XmlKey
@@ -352,8 +409,8 @@ public class Mseq implements XmlSerializable
 		TAG_MSEQ            ("Mseq"),
 		ATTR_NAME		   	("name"),
 		ATTR_FIRST_VOICE   	("firstVoice"),
-		TAG_SETTINGS_LIST   ("TrackSettings"),
-		TAG_SETTINGS        ("TrackSetting"),
+		TAG_RAMP_LIST       ("TrackRamps"),
+		TAG_RAMP            ("TrackRamp"),
 		ATTR_TYPE           ("type"),
 		ATTR_TIME           ("time"),
 		ATTR_DELTA          ("delta"),
@@ -428,12 +485,12 @@ public class Mseq implements XmlSerializable
 		}
 		firstVoiceIdx = xmr.readHex(root, ATTR_FIRST_VOICE);
 
-		Element settingsElem = xmr.getUniqueRequiredTag(root, TAG_SETTINGS_LIST);
+		Element rampsElem = xmr.getUniqueRequiredTag(root, TAG_RAMP_LIST);
 
-		for (Element elem : xmr.getTags(settingsElem, TAG_SETTINGS)) {
-			TrackSetting setting = new TrackSetting();
-			setting.fromXML(xmr, elem);
-			trackSettings.add(setting);
+		for (Element elem : xmr.getTags(rampsElem, TAG_RAMP)) {
+			TrackRamp ramp = new TrackRamp();
+			ramp.fromXML(xmr, elem);
+			trackRamps.add(ramp);
 		}
 
 		Element commandsElem = xmr.getUniqueRequiredTag(root, TAG_COMMAND_LIST);
@@ -453,13 +510,13 @@ public class Mseq implements XmlSerializable
 		xmw.addHex(root, ATTR_FIRST_VOICE, firstVoiceIdx);
 		xmw.openTag(root);
 
-		XmlTag settingsListTag = xmw.createTag(TAG_SETTINGS_LIST, false);
-		xmw.openTag(settingsListTag);
+		XmlTag rampListTag = xmw.createTag(TAG_RAMP_LIST, false);
+		xmw.openTag(rampListTag);
 
-		for (TrackSetting s : trackSettings)
-			s.toXML(xmw);
+		for (TrackRamp ramp : trackRamps)
+			ramp.toXML(xmw);
 
-		xmw.closeTag(settingsListTag);
+		xmw.closeTag(rampListTag);
 
 		XmlTag commandListTag = xmw.createTag(TAG_COMMAND_LIST, false);
 		xmw.openTag(commandListTag);
@@ -813,7 +870,7 @@ public class Mseq implements XmlSerializable
 	public static class SetTuneCommand extends Mseq.MseqCommand
 	{
 		public int track;
-		public int value; // 16-bit coarse/fine packed
+		public int value; // signed cents
 
 		public SetTuneCommand()
 		{} // for fromXML
@@ -821,14 +878,14 @@ public class Mseq implements XmlSerializable
 		public SetTuneCommand(int track, int value)
 		{
 			this.track = track;
-			this.value = value;
+			this.value = (short) value;
 		}
 
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
 			track = xmr.readHex(elem, ATTR_TRACK);
-			value = (short) xmr.readHex(elem, ATTR_TUNE);
+			value = (short) xmr.readInt(elem, ATTR_TUNE);
 		}
 
 		@Override
@@ -836,7 +893,7 @@ public class Mseq implements XmlSerializable
 		{
 			XmlTag tag = xmw.createTag(TAG_SET_TUNE, true);
 			xmw.addHex(tag, ATTR_TRACK, track);
-			xmw.addHex(tag, ATTR_TUNE, value);
+			xmw.addInt(tag, ATTR_TUNE, value);
 			xmw.printTag(tag);
 		}
 

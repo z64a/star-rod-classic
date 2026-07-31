@@ -209,9 +209,14 @@ public final class SfxValidator
 				validateIdentifier(sound.name, context + " primary name");
 				registerSoundName(names, sound.name, sound.id, "primary name");
 
-				for (String alias : sound.aliases) {
-					validateIdentifier(alias, context + " alias");
-					registerSoundName(names, alias, sound.id, "alias");
+				if (sound.desc == null)
+					error(context + " has a null description");
+				Set<String> tags = new HashSet<>();
+				for (String tag : sound.tags) {
+					if (tag == null || tag.isBlank())
+						error(context + " has a blank tag");
+					else if (!tags.add(tag))
+						error(context + " has duplicate tag " + tag);
 				}
 				validateAuthoritativeNames(sound, context);
 
@@ -225,23 +230,27 @@ public final class SfxValidator
 			if (authoritativeNames == null)
 				return;
 
-			List<String> expected = authoritativeNames.get(sound.id);
-			if (expected.isEmpty() || authoritativeNames.hasGeneratedName(sound.id)) {
+			String expected = authoritativeNames.get(sound.id);
+			if (expected == null || authoritativeNames.hasGeneratedName(sound.id)) {
 				String expectedName = authoritativeNames.preferredName(sound.id);
 				if (!sound.isEmpty() && authoritativeNames.hasEmptyName(sound.id))
 					expectedName = SfxNames.nameMissing(sound.id);
 				if (!expectedName.equals(sound.name))
 					error(context + " must use generated name " + expectedName);
-				if (!sound.aliases.isEmpty())
-					error(context + " cannot have aliases because its generated name table row has none");
-				return;
 			}
+			else if (!expected.equals(sound.name))
+				error(context + " must use authoritative name " + expected);
 
-			if (!expected.get(0).equals(sound.name))
-				error(context + " must use authoritative primary name " + expected.get(0));
-			List<String> expectedAliases = expected.subList(1, expected.size());
-			if (!expectedAliases.equals(sound.aliases))
-				error(context + " must use authoritative aliases " + expectedAliases);
+			if (authoritativeNames.contains(sound.id)) {
+				if (authoritativeNames.isUnused(sound.id) != sound.unused)
+					error(context + " has incorrect authoritative unused status");
+				String expectedDesc = authoritativeNames.getDescription(sound.id);
+				if (!expectedDesc.equals(sound.desc))
+					error(context + " must use authoritative description " + printable(expectedDesc));
+				List<String> expectedTags = authoritativeNames.getTags(sound.id);
+				if (!expectedTags.equals(sound.tags))
+					error(context + " must use authoritative tags " + expectedTags);
+			}
 		}
 
 		private void registerSoundName(Map<String, Integer> names, String name, int id, String kind)

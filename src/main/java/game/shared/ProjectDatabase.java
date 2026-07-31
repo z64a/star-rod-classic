@@ -272,17 +272,9 @@ public class ProjectDatabase
 	private static void replaceEnum(String namespace, String libName, SfxNames entries)
 	{
 		LinkedHashMap<Integer, String> decodeMap = new LinkedHashMap<>();
-		for (Entry<Integer, List<String>> entry : entries.entries()) {
-			if (!entry.getValue().isEmpty())
-				decodeMap.put(entry.getKey(), entry.getValue().get(0));
-		}
-
-		ConstEnum generated = installEnum(namespace, libName, decodeMap);
-		for (Entry<Integer, List<String>> entry : entries.entries()) {
-			List<String> names = entry.getValue();
-			for (int i = 1; i < names.size(); i++)
-				generated.addAlias(entry.getKey(), names.get(i));
-		}
+		for (Entry<Integer, String> entry : entries.entries())
+			decodeMap.put(entry.getKey(), entry.getValue());
+		installEnum(namespace, libName, decodeMap);
 	}
 
 	private static ConstEnum installEnum(String namespace, String libName,

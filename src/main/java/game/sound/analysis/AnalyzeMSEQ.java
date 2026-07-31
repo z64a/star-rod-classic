@@ -23,7 +23,7 @@ public class AnalyzeMSEQ
 		Environment.exit();
 	}
 
-	private static class TrackSettings
+	private static class TrackRamp
 	{
 		private final int trackIdx;
 		private final int type; // 0 = tune, 1 = volume
@@ -31,7 +31,7 @@ public class AnalyzeMSEQ
 		private final int delta;
 		private final int goal;
 
-		public TrackSettings(ByteBuffer bb)
+		public TrackRamp(ByteBuffer bb)
 		{
 			trackIdx = bb.get() & 0xFF;
 			type = bb.get() & 0xFF;
@@ -55,25 +55,25 @@ public class AnalyzeMSEQ
 		String name = getUTF8(bb, 4);
 
 		int firstVoice = bb.get() & 0xFF;
-		int numSettings = bb.get() & 0xFF;
-		int settingsOffset = bb.getShort() & 0xFFFF;
+		int numRamps = bb.get() & 0xFF;
+		int rampsOffset = bb.getShort() & 0xFFFF;
 		int streamOffset = bb.getShort() & 0xFFFF;
 
-		System.out.printf("SETTINGS: %X%n", settingsOffset);
-		bb.position(settingsOffset);
-		TrackSettings[] settings = new TrackSettings[numSettings];
+		System.out.printf("RAMPS: %X%n", rampsOffset);
+		bb.position(rampsOffset);
+		TrackRamp[] ramps = new TrackRamp[numRamps];
 
-		for (int i = 0; i < numSettings; i++) {
-			settings[i] = new TrackSettings(bb);
+		for (int i = 0; i < numRamps; i++) {
+			ramps[i] = new TrackRamp(bb);
 
-			switch (settings[i].type) {
+			switch (ramps[i].type) {
 				case 0:
-					System.out.printf("[%d] PITCH LERP:  %3d %6d %5X%n", settings[i].trackIdx,
-						settings[i].time, settings[i].delta, settings[i].goal);
+					System.out.printf("[%d] TUNE RAMP:   %3d %6d %5X%n", ramps[i].trackIdx,
+						ramps[i].time, ramps[i].delta, ramps[i].goal);
 					break;
 				case 1:
-					System.out.printf("[%d] VOLUME LERP: %3d %6d %5X%n", settings[i].trackIdx,
-						settings[i].time, settings[i].delta, settings[i].goal);
+					System.out.printf("[%d] VOLUME RAMP: %3d %6d %5X%n", ramps[i].trackIdx,
+						ramps[i].time, ramps[i].delta, ramps[i].goal);
 					break;
 			}
 		}
@@ -197,8 +197,8 @@ public class AnalyzeMSEQ
 	/ 0x04 / s32 size; // including header
 	/ 0x08 / s32 name;
 	/ 0x0C / u8 firstVoiceIdx;
-	/ 0x0D / u8 trackSettingsCount;
-	/ 0x0E / u16 trackSettingsOffset;
+	/ 0x0D / u8 trackRampCount;
+	/ 0x0E / u16 trackRampsOffset;
 	/ 0x10 / u16 dataStart;
 	} MSEQHeader; // size variable
 	 */

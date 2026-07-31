@@ -22,7 +22,8 @@ import game.sound.mseq.Mseq.SetTuneCommand;
 import game.sound.mseq.Mseq.SetVolCommand;
 import game.sound.mseq.Mseq.StartLoopCommand;
 import game.sound.mseq.Mseq.StopSoundCommand;
-import game.sound.mseq.Mseq.TrackSetting;
+import game.sound.mseq.Mseq.TrackRamp;
+import game.sound.mseq.Mseq.TrackRampType;
 import util.Logger;
 
 public class MseqPlayer implements AudioClient
@@ -148,6 +149,26 @@ public class MseqPlayer implements AudioClient
 	public boolean isPlaying()
 	{
 		return state == PlayerState.PLAYING || state == PlayerState.PAUSED;
+	}
+
+	public void triggerTrackRamps()
+	{
+		if (mseq == null)
+			return;
+
+		for (TrackRamp ramp : mseq.trackRamps) {
+			MseqTrack track = tracks[ramp.track];
+			if (ramp.type == TrackRampType.TUNE) {
+				track.tuneLerp.time = ramp.time;
+				track.tuneLerp.goal = ramp.goal;
+				track.tuneLerp.step = ((float) ramp.delta) / ramp.time;
+			}
+			else if (ramp.type == TrackRampType.VOLUME) {
+				track.volumeLerp.time = ramp.time;
+				track.volumeLerp.goal = ramp.goal / Mseq.MAX_VOL_16;
+				track.volumeLerp.step = (ramp.delta / Mseq.MAX_VOL_16) / ramp.time;
+			}
+		}
 	}
 
 	public int getTimelineLoopCount()
@@ -279,20 +300,6 @@ public class MseqPlayer implements AudioClient
 			tracks[i].reset();
 		}
 
-		for (TrackSetting settings : mseq.trackSettings) {
-			MseqTrack track = tracks[settings.track];
-			if (settings.type == 0) {
-				track.tuneLerp.time = settings.time;
-				track.tuneLerp.goal = settings.goal;
-				track.tuneLerp.step = ((float) settings.delta) / settings.time;
-			}
-			else {
-				track.volumeLerp.time = settings.time;
-				track.volumeLerp.goal = settings.goal / Mseq.MAX_VOL_16;
-				track.volumeLerp.step = (settings.delta / Mseq.MAX_VOL_16) / settings.time;
-			}
-		}
-
 		engine.resetRenderState();
 		state = PlayerState.PLAYING;
 	}
@@ -322,7 +329,7 @@ public class MseqPlayer implements AudioClient
 				voices[i] = null;
 		}
 
-		// update fade in lerps
+		// update track ramps
 		for (MseqTrack track : tracks) {
 			if (track.volumeLerp.time != 0) {
 				track.volumeLerp.time--;
@@ -487,7 +494,7 @@ public class MseqPlayer implements AudioClient
 				}
 			}
 			else if (abs instanceof SetTuneCommand cmd) {
-				logCommand("[%X] Set Tune: %X", cmd.track, cmd.value);
+				logCommand("[%X] Set Tune: %d", cmd.track, cmd.value);
 
 				MseqTrack track = tracks[cmd.track];
 				track.tuneLerp.current = (short) cmd.value;

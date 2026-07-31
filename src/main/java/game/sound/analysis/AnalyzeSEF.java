@@ -10,9 +10,8 @@ import java.util.TreeMap;
 
 import app.Directories;
 import app.Environment;
-import app.Resource;
-import app.Resource.ResourceType;
 import app.input.IOUtils;
+import game.sound.sfx.SfxNames;
 import util.Logger;
 
 public class AnalyzeSEF
@@ -62,7 +61,7 @@ public class AnalyzeSEF
 		int[] sections = new int[8];
 		int section2000;
 
-		public SoundArchive(ByteBuffer bb)
+		public SoundArchive(ByteBuffer bb) throws IOException
 		{
 			this.bb = bb;
 			parts = new ArrayList<>();
@@ -131,12 +130,11 @@ public class AnalyzeSEF
 			return (offset >= p.start && offset < p.end);
 		}
 
-		private void decodeIDs()
+		private void decodeIDs() throws IOException
 		{
-			for (String s : Resource.getText(ResourceType.Basic, "sfx.txt")) {
-				String[] line = s.split("\\s+");
-				String name = line[1];
-				int id = (int) Long.parseLong(line[0], 16);
+			for (Entry<Integer, String> entry : SfxNames.loadBundled().entries()) {
+				int id = entry.getKey();
+				String name = entry.getValue();
 				int offset, section, index;
 
 				if ((id & 0x2000) != 0) {

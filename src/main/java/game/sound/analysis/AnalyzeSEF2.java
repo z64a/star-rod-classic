@@ -11,12 +11,11 @@ import java.util.TreeMap;
 
 import app.Directories;
 import app.Environment;
-import app.Resource;
-import app.Resource.ResourceType;
 import app.StarRodException;
 import app.input.IOUtils;
 import game.sound.engine.SoundBank;
 import game.sound.engine.SoundBank.InstrumentQueryResult;
+import game.sound.sfx.SfxNames;
 import util.Logger;
 
 public class AnalyzeSEF2
@@ -93,11 +92,8 @@ public class AnalyzeSEF2
 
 			soundNameMap = new HashMap<>();
 
-			for (String s : Resource.getText(ResourceType.Basic, "sfx.txt")) {
-				String[] line = s.split("\\s+");
-				String name = line[1];
-				int id = (int) Long.parseLong(line[0], 16);
-				soundNameMap.put(id, name);
+			for (Entry<Integer, String> entry : SfxNames.loadBundled().entries()) {
+				soundNameMap.put(entry.getKey(), entry.getValue());
 			}
 
 			parts = new ArrayList<>();

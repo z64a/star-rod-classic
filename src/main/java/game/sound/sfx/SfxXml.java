@@ -119,7 +119,8 @@ public final class SfxXml
 		for (Element element : childElements(manifest, root)) {
 			if (!element.getTagName().equals(TAG_SOUND.toString()))
 				throw unknownElement(manifest, root, element);
-			checkAttributes(manifest, element, ATTR_ID, ATTR_NAME, ATTR_SRC, ATTR_EMPTY, ATTR_UNUSED);
+			checkAttributes(manifest, element, ATTR_ID, ATTR_NAME, ATTR_SRC, ATTR_EMPTY, ATTR_UNUSED,
+				ATTR_DESC, ATTR_TAGS);
 
 			reader.requiresAttribute(element, ATTR_ID);
 			String idText = reader.getAttribute(element, ATTR_ID);
@@ -133,19 +134,21 @@ public final class SfxXml
 
 			String name = readIdentifier(reader, manifest, element, ATTR_NAME, true);
 			if (!identifiers.add(name))
-				throw error(manifest, element, "duplicate sound name or alias: " + name);
+				throw error(manifest, element, "duplicate sound name: " + name);
 			names.add(id, name);
-
 			for (Element child : childElements(manifest, element)) {
-				if (!child.getTagName().equals(TAG_ALIAS.toString()))
-					continue;
-				checkAttributes(manifest, child, ATTR_NAME);
-				requireNoChildren(manifest, child);
-				String alias = readIdentifier(reader, manifest, child, ATTR_NAME, true);
-				if (!identifiers.add(alias))
-					throw error(manifest, child, "duplicate sound name or alias: " + alias);
-				names.add(id, alias);
+				if (SfxXmlKey.forTag(child.getTagName()) == null)
+					throw unknownElement(manifest, element, child);
 			}
+
+			boolean unused = readTrueFlag(reader, manifest, element, ATTR_UNUSED);
+			boolean empty = readTrueFlag(reader, manifest, element, ATTR_EMPTY);
+			if (unused && empty)
+				throw error(manifest, element, "empty sounds must not be marked unused");
+			String desc = reader.hasAttribute(element, ATTR_DESC)
+				? reader.getAttribute(element, ATTR_DESC) : "";
+			List<String> tags = readTags(reader, manifest, element);
+			names.setMetadata(id, unused, empty, desc, tags);
 		}
 		return names;
 	}
@@ -210,7 +213,8 @@ public final class SfxXml
 	private static Sound readSound(XmlReader reader, Path manifest, Path assetRoot, Element element,
 		SoundBankCatalog catalog)
 	{
-		checkAttributes(manifest, element, ATTR_ID, ATTR_NAME, ATTR_SRC, ATTR_EMPTY, ATTR_UNUSED);
+		checkAttributes(manifest, element, ATTR_ID, ATTR_NAME, ATTR_SRC, ATTR_EMPTY, ATTR_UNUSED,
+			ATTR_DESC, ATTR_TAGS);
 		reader.requiresAttribute(element, ATTR_ID);
 		String idText = reader.getAttribute(element, ATTR_ID);
 		if (!SOUND_ID.matcher(idText).matches())
@@ -221,20 +225,16 @@ public final class SfxXml
 
 		String name = readIdentifier(reader, manifest, element, ATTR_NAME, true);
 		Sound sound = new Sound(id, name);
-		boolean hasUnused = reader.hasAttribute(element, ATTR_UNUSED);
-		if (hasUnused && !reader.readBoolean(element, ATTR_UNUSED, false))
-			throw error(manifest, element, "unused, when present, must be true");
+		boolean hasUnused = readTrueFlag(reader, manifest, element, ATTR_UNUSED);
 		sound.unused = hasUnused;
+		if (reader.hasAttribute(element, ATTR_DESC))
+			sound.desc = reader.getAttribute(element, ATTR_DESC);
+		sound.tags.addAll(readTags(reader, manifest, element));
 
 		Element routingElement = null;
 		Element oneShotElement = null;
 		for (Element child : childElements(manifest, element)) {
 			switch (tagKey(manifest, element, child)) {
-				case TAG_ALIAS:
-					checkAttributes(manifest, child, ATTR_NAME);
-					requireNoChildren(manifest, child);
-					sound.aliases.add(readIdentifier(reader, manifest, child, ATTR_NAME, true));
-					break;
 				case TAG_ROUTING:
 					if (routingElement != null)
 						throw error(manifest, child, "a sound cannot contain more than one Routing element");
@@ -251,9 +251,7 @@ public final class SfxXml
 		}
 
 		boolean hasSource = reader.hasAttribute(element, ATTR_SRC);
-		boolean hasEmpty = reader.hasAttribute(element, ATTR_EMPTY);
-		if (hasEmpty && !reader.readBoolean(element, ATTR_EMPTY, false))
-			throw error(manifest, element, "empty, when present, must be true");
+		boolean hasEmpty = readTrueFlag(reader, manifest, element, ATTR_EMPTY);
 		int choices = (hasSource ? 1 : 0) + (hasEmpty ? 1 : 0) + (oneShotElement != null ? 1 : 0);
 		if (choices != 1)
 			throw error(manifest, element, "Sound must choose exactly one of src, empty=true, or OneShot");
@@ -274,6 +272,30 @@ public final class SfxXml
 
 		validateSoundRouting(sound, manifest, element);
 		return sound;
+	}
+
+	private static boolean readTrueFlag(XmlReader reader, Path source, Element element, SfxXmlKey key)
+	{
+		if (!reader.hasAttribute(element, key))
+			return false;
+		if (!reader.readBoolean(element, key, false))
+			throw error(source, element, key + ", when present, must be true");
+		return true;
+	}
+
+	private static List<String> readTags(XmlReader reader, Path source, Element element)
+	{
+		if (!reader.hasAttribute(element, ATTR_TAGS))
+			return List.of();
+		List<String> tags = reader.readStringList(element, ATTR_TAGS);
+		Set<String> unique = new LinkedHashSet<>();
+		for (String tag : tags) {
+			if (tag.isBlank())
+				throw error(source, element, "tags must not contain a blank value");
+			if (!unique.add(tag))
+				throw error(source, element, "duplicate tag: " + tag);
+		}
+		return tags;
 	}
 
 	private static void readEffect(Sound sound, Path effectXml, SoundBankCatalog catalog)
@@ -681,11 +703,15 @@ public final class SfxXml
 				throw modelError(source, String.format("%04X is not a raw DAT1 sound ID", sound.id));
 			validateIdentifier(sound.name, "sound name", source);
 			if (!allSoundNames.add(sound.name))
-				throw modelError(source, "duplicate sound name or alias: " + sound.name);
-			for (String alias : sound.aliases) {
-				validateIdentifier(alias, "sound alias", source);
-				if (!allSoundNames.add(alias))
-					throw modelError(source, "duplicate sound name or alias: " + alias);
+				throw modelError(source, "duplicate sound name: " + sound.name);
+			if (sound.desc == null)
+				throw modelError(source, String.format("sound %04X has a null description", sound.id));
+			Set<String> uniqueTags = new LinkedHashSet<>();
+			for (String tag : sound.tags) {
+				if (tag == null || tag.isBlank())
+					throw modelError(source, String.format("sound %04X has a blank tag", sound.id));
+				if (!uniqueTags.add(tag))
+					throw modelError(source, String.format("sound %04X has duplicate tag %s", sound.id, tag));
 			}
 
 			if (sound.isEmpty()) {
@@ -1127,8 +1153,12 @@ public final class SfxXml
 					soundAttributes.put(ATTR_UNUSED, "true");
 				if (sound.isEmpty())
 					soundAttributes.put(ATTR_EMPTY, "true");
+				if (!sound.desc.isBlank())
+					soundAttributes.put(ATTR_DESC, sound.desc);
+				if (!sound.tags.isEmpty())
+					soundAttributes.put(ATTR_TAGS, String.join(", ", sound.tags));
 
-				if (sound.isEmpty() && sound.aliases.isEmpty()) {
+				if (sound.isEmpty()) {
 					printTag(writer, TAG_SOUND, soundAttributes);
 				}
 				else {
@@ -1136,8 +1166,6 @@ public final class SfxXml
 					if (!sound.isEmpty() && effectSource != null)
 						soundAttributes.put(ATTR_SRC, effectSource);
 					XmlTag soundTag = openTag(writer, TAG_SOUND, soundAttributes);
-					for (String alias : sound.aliases)
-						printTag(writer, TAG_ALIAS, attributes(ATTR_NAME, alias));
 					if (!sound.isEmpty() && sound.routing != null)
 						writeRouting(writer, sound.routing, sound.tracks.size());
 					if (!sound.isEmpty() && effectSource == null)
