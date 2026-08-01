@@ -48,6 +48,9 @@ import util.xml.XmlWrapper.XmlWriter;
 
 public class NpcComponent extends BaseMarkerComponent
 {
+	private final Consumer<Object> notifyGeneral = (o) -> {
+		parentMarker.updateListeners(MarkerInfoPanel.tag_NPCTab);
+	};
 	private final Consumer<Object> notifyMovement = (o) -> {
 		parentMarker.updateListeners(MarkerInfoPanel.tag_NPCMovementTab);
 	};
@@ -71,6 +74,47 @@ public class NpcComponent extends BaseMarkerComponent
 	private int[] animations = new int[Npc.ANIM_TABLE_SIZE];
 	public transient int previewAnimIndex;
 	public transient Sprite previewSprite = null;
+
+	public EditableField<Boolean> genDefaultGroup = EditableFieldFactory.create(false)
+			.setCallback(notifyGeneral).setName("Add to default NPC Group").build();
+
+	public EditableField<Integer> flags = EditableFieldFactory.create(0)
+			.setCallback(notifyGeneral).setName("Flags").build();
+
+	public EditableField<String> tattleString = EditableFieldFactory.create("00-000")
+			.setCallback(notifyGeneral).setName("Tattle String").build();
+
+	public EditableField<Boolean> hasInit = EditableFieldFactory.create(false)
+			.setCallback(notifyGeneral).setName(new StandardBoolName("Init Callback")).build();
+
+	public EditableField<Boolean> hasInteract = EditableFieldFactory.create(false)
+			.setCallback(notifyGeneral).setName(new StandardBoolName("Interact Callback")).build();
+
+	public EditableField<Boolean> hasIdle = EditableFieldFactory.create(false)
+			.setCallback(notifyGeneral).setName(new StandardBoolName("Idle Callback")).build();
+
+	public EditableField<Boolean> hasAI = EditableFieldFactory.create(false)
+			.setCallback(notifyGeneral).setName(new StandardBoolName("AI Callback")).build();
+
+	public EditableField<Boolean> hasHit = EditableFieldFactory.create(false)
+			.setCallback(notifyGeneral).setName(new StandardBoolName("Hit Callback")).build();
+
+	public EditableField<Boolean> hasDefeat = EditableFieldFactory.create(false)
+			.setCallback(notifyGeneral).setName(new StandardBoolName("Defeat Callback")).build();
+
+	public EditableField<Boolean> hasAux = EditableFieldFactory.create(false)
+			.setCallback(notifyGeneral).setName(new StandardBoolName("Aux Callback")).build();
+
+	// npc settings
+
+	public EditableField<Integer> height = EditableFieldFactory.create(0)
+			.setCallback(notifyGeneral).setName("Height").build();
+
+	public EditableField<Integer> radius = EditableFieldFactory.create(0)
+			.setCallback(notifyGeneral).setName("Radius").build();
+
+	public EditableField<Integer> level = EditableFieldFactory.create(0)
+			.setCallback(notifyGeneral).setName("Level").build();
 
 	// movement
 
@@ -163,6 +207,25 @@ public class NpcComponent extends BaseMarkerComponent
 	@Override
 	public void toXML(XmlWriter xmw)
 	{
+		int[] callbacks = new int[] {
+				hasInit.get() ? 1 : 0,
+                hasInteract.get() ? 1 : 0,
+                hasIdle.get() ? 1 : 0,
+                hasAI.get() ? 1 : 0,
+                hasHit.get() ? 1 : 0,
+                hasDefeat.get() ? 1 : 0,
+                hasAux.get() ? 1 : 0,
+		};
+		XmlTag npcTag = xmw.createTag(TAG_NPC, true);
+		xmw.addHex(npcTag, ATTR_NPC_FLAGS, flags.get());
+		xmw.addAttribute(npcTag, ATTR_NPC_TATTLE_STRING, tattleString.get());
+		xmw.addBoolean(npcTag, ATTR_NPC_GEN_DEFAULT, genDefaultGroup.get());
+		xmw.addInt(npcTag, ATTR_NPC_HEIGHT, height.get());
+		xmw.addInt(npcTag, ATTR_NPC_RADIUS, radius.get());
+		xmw.addInt(npcTag, ATTR_NPC_LEVEL, level.get());
+		xmw.addIntArray(npcTag, ATTR_NPC_HAS_CALLBACKS, callbacks);
+		xmw.printTag(npcTag);
+
 		XmlTag movementTag = xmw.createTag(TAG_MOVEMENT, true);
 		xmw.addEnum(movementTag, ATTR_MOVEMENT_TYPE, moveType.get());
 		int[] data = getTerritoryData();
@@ -179,6 +242,37 @@ public class NpcComponent extends BaseMarkerComponent
 	@Override
 	public void fromXML(XmlReader xmr, Element markerElem)
 	{
+		Element npcElem = xmr.getUniqueTag(markerElem, TAG_NPC);
+		if (npcElem != null) {
+			xmr.requiresAttribute(npcElem, ATTR_NPC_FLAGS);
+			flags.set(xmr.readHex(npcElem, ATTR_NPC_FLAGS));
+
+			xmr.requiresAttribute(npcElem, ATTR_NPC_TATTLE_STRING);
+			tattleString.set(xmr.getAttribute(npcElem, ATTR_NPC_TATTLE_STRING));
+
+			xmr.requiresAttribute(npcElem, ATTR_NPC_GEN_DEFAULT);
+			genDefaultGroup.set(xmr.readBoolean(npcElem, ATTR_NPC_GEN_DEFAULT));
+
+			xmr.requiresAttribute(npcElem, ATTR_NPC_HEIGHT);
+			height.set(xmr.readInt(npcElem, ATTR_NPC_HEIGHT));
+
+			xmr.requiresAttribute(npcElem, ATTR_NPC_RADIUS);
+			radius.set(xmr.readInt(npcElem, ATTR_NPC_RADIUS));
+
+			xmr.requiresAttribute(npcElem, ATTR_NPC_LEVEL);
+			level.set(xmr.readInt(npcElem, ATTR_NPC_LEVEL));
+
+			xmr.requiresAttribute(npcElem, ATTR_NPC_HAS_CALLBACKS);
+			int[] hasCallbacks = xmr.readIntArray(npcElem, ATTR_NPC_HAS_CALLBACKS, 7);
+			hasInit.set(hasCallbacks[0] != 0);
+			hasInteract.set(hasCallbacks[1] != 0);
+			hasIdle.set(hasCallbacks[2] != 0);
+			hasAI.set(hasCallbacks[3] != 0);
+			hasHit.set(hasCallbacks[4] != 0);
+			hasDefeat.set(hasCallbacks[5] != 0);
+			hasAux.set(hasCallbacks[6] != 0);
+		}
+
 		Element movementElem = xmr.getUniqueRequiredTag(markerElem, TAG_MOVEMENT);
 
 		xmr.requiresAttribute(movementElem, ATTR_MOVEMENT_TYPE);
@@ -261,6 +355,14 @@ public class NpcComponent extends BaseMarkerComponent
 
 		for (int i = 0; i < 16; i++)
 			animations[i] = in.readInt();
+	}
+
+	public boolean hasInitScript()
+	{
+		return hasInit.get()
+				|| hasInteract.get() || hasIdle.get()
+				|| hasAI.get() || hasHit.get()
+				|| hasDefeat.get() || hasAux.get();
 	}
 
 	public int[] getTerritoryData()

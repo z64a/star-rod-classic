@@ -55,13 +55,11 @@ public class GlobalsEditor
 	public boolean exitToMainMenu;
 
 	private JTabbedPane tabbedPane;
-	private ArrayList<GlobalEditorTab> tabList;
+	private final ArrayList<GlobalEditorTab> tabList;
 	private int selectedTabIndex;
 
 	public final GlobalsData data;
-	public final IterableListModel<PMString> messageListModel;
-	public final HashMap<String, PMString> messageNameMap;
-	public final HashMap<Integer, PMString> messageIDMap;
+	public final GameStrings strings;
 
 	public static abstract class GlobalEditorTab extends JPanel
 	{
@@ -120,10 +118,8 @@ public class GlobalsEditor
 
 		tabList = new ArrayList<>();
 
-		messageListModel = new IterableListModel<>();
-		messageNameMap = new HashMap<>();
-		messageIDMap = new HashMap<>();
-		loadStrings();
+		strings = new GameStrings();
+		strings.loadStrings();
 
 		data = new GlobalsData();
 		data.loadDataFlexible(true);
@@ -350,70 +346,4 @@ public class GlobalsEditor
 		return new ImageIcon(image);
 	}
 
-	private void loadStrings()
-	{
-		messageNameMap.clear();
-		messageIDMap.clear();
-
-		try {
-			if (Environment.project.isDecomp) {
-				for (File assetDir : Environment.project.decompConfig.assetDirectories) {
-					File msgDir = new File(assetDir, "msg");
-					if (!msgDir.exists())
-						continue;
-
-					loadMessages(IOUtils.getFilesWithExtension(assetDir, new String[] { "msg" }, true));
-				}
-			}
-			else {
-				loadMessages(IOUtils.getFilesWithExtension(MOD_STRINGS_SRC, new String[] { "str", "msg" }, true));
-				loadMessages(IOUtils.getFilesWithExtension(MOD_STRINGS_PATCH, new String[] { "str", "msg" }, true));
-			}
-		}
-		catch (IOException e) {
-			throw new StarRodException("Exception while loading strings! %n%s", e.getMessage());
-		}
-
-		Logger.logf("Loaded %d strings", messageListModel.getSize());
-	}
-
-	private void loadMessages(Collection<File> msgFiles)
-	{
-		for (File f : msgFiles) {
-			StringResource res = new StringResource(f);
-			for (PMString str : res.strings) {
-				if (str.hasName()) {
-					messageNameMap.put(str.name, str);
-					messageListModel.addElement(str);
-				}
-				else if (str.indexed && !str.autoAssign) {
-					messageNameMap.put(str.getIDName(), str);
-					messageIDMap.put(str.getID(), str);
-					messageListModel.addElement(str);
-				}
-			}
-		}
-	}
-
-	public PMString getMessage(String msgName)
-	{
-		if (msgName == null)
-			return null;
-
-		if (messageNameMap.containsKey(msgName))
-			return messageNameMap.get(msgName);
-
-		if (msgName.matches("[0-9A-Fa-f]{1,4}-[0-9A-Fa-f]{1,4}")) {
-			String[] parts = msgName.split("-");
-			int group = Integer.parseInt(parts[0], 16);
-			int index = Integer.parseInt(parts[1], 16);
-			int fullID = (group << 16) | (index & 0xFFFF);
-			return messageIDMap.get(fullID);
-		}
-
-		if (msgName.matches("[0-9A-Fa-f]{1,8}"))
-			return messageIDMap.get((int) Long.parseLong(msgName, 16));
-
-		return null;
-	}
 }

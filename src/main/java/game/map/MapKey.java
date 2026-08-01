@@ -242,6 +242,13 @@ public enum MapKey implements XmlKey
 	ATTR_NTT_PIPE_ENTRY		("pipeEntry"),
 
 	TAG_NPC				("NPC"),
+	ATTR_NPC_FLAGS		("flags"),
+	ATTR_NPC_TATTLE_STRING	("tattleString"),
+	ATTR_NPC_GEN_DEFAULT	("genDefaultGroup"),
+	ATTR_NPC_HEIGHT		("height"),
+	ATTR_NPC_RADIUS		("radius"),
+	ATTR_NPC_LEVEL		("level"),
+	ATTR_NPC_HAS_CALLBACKS	("hasCallbacks"),
 
 	TAG_OVERRIDE		("Override"),
 	ATTR_SHAPE			("shape"),

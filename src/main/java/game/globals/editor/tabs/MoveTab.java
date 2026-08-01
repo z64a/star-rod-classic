@@ -20,8 +20,6 @@ import game.globals.ItemRecord;
 import game.globals.MoveRecord;
 import game.globals.editor.GlobalsData.GlobalsCategory;
 import game.globals.editor.GlobalsEditor;
-import game.globals.editor.ListSelectorDialog;
-import game.globals.editor.renderers.MessageCellRenderer;
 import game.globals.editor.renderers.MoveRecordCellRenderer;
 import game.globals.editor.renderers.PaddedCellRenderer;
 import game.shared.ProjectDatabase;
@@ -118,7 +116,7 @@ public class MoveTab extends SingleListTab<MoveRecord>
 		battleMessageModel.removeAllElements();
 		battleMessageModel.addElement(MoveRecord.NONE);
 		for (int i = 0; i < BATTLE_INPUT_MESSAGE_IDS.length; i++) {
-			PMString message = editor.messageNameMap.get(BATTLE_INPUT_MESSAGE_IDS[i]);
+			PMString message = editor.strings.messageNameMap.get(BATTLE_INPUT_MESSAGE_IDS[i]);
 			if (message == null)
 				battleMessageModel.addElement(BATTLE_INPUT_MESSAGE_IDS[i]);
 			else
@@ -127,23 +125,11 @@ public class MoveTab extends SingleListTab<MoveRecord>
 		reloading = false;
 	}
 
-	private PMString chooseMessage(String title)
-	{
-		ListSelectorDialog<PMString> chooser = new ListSelectorDialog<>(editor.messageListModel, new MessageCellRenderer(48));
-
-		SwingUtils.showModalDialog(chooser, title);
-		if (!chooser.isResultAccepted())
-			return null;
-
-		PMString selected = chooser.getValue();
-		return selected;
-	}
-
 	private void updateMessageField(StringField field, JLabel lbl, String identifier)
 	{
 		field.setText(identifier);
 
-		PMString msg = editor.getMessage(identifier);
+		PMString msg = editor.strings.getMessage(identifier);
 		if (msg == null) {
 			field.setForeground(SwingUtils.getRedTextColor());
 			lbl.setForeground(SwingUtils.getRedTextColor());
@@ -350,7 +336,7 @@ public class MoveTab extends SingleListTab<MoveRecord>
 		chooseNameButton.addActionListener((e) -> {
 			if (hasSelected()) {
 				MoveRecord move = getSelected();
-				PMString msg = chooseMessage("Choose Name");
+				PMString msg = editor.strings.chooseMessage("Choose Name");
 				if (msg != null) {
 					String newValue = msg.getIdentifier();
 					if (!newValue.equals(move.msgName)) {
@@ -367,7 +353,7 @@ public class MoveTab extends SingleListTab<MoveRecord>
 		chooseFullDescButton.addActionListener((e) -> {
 			if (hasSelected()) {
 				MoveRecord move = getSelected();
-				PMString msg = chooseMessage("Choose Full Description");
+				PMString msg = editor.strings.chooseMessage("Choose Full Description");
 				if (msg != null) {
 					String newValue = msg.getIdentifier();
 					if (!newValue.equals(move.msgFullDesc)) {
@@ -384,7 +370,7 @@ public class MoveTab extends SingleListTab<MoveRecord>
 		chooseShortDescButton.addActionListener((e) -> {
 			if (hasSelected()) {
 				MoveRecord move = getSelected();
-				PMString msg = chooseMessage("Choose Short Description");
+				PMString msg = editor.strings.chooseMessage("Choose Short Description");
 				if (msg != null) {
 					String newValue = msg.getIdentifier();
 					if (!newValue.equals(move.msgShortDesc)) {

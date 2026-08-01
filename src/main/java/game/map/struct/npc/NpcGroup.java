@@ -50,7 +50,7 @@ public class NpcGroup extends BaseStruct
 			float x = fileBuffer.getFloat(); // X
 			float y = fileBuffer.getFloat(); // Y
 			float z = fileBuffer.getFloat(); // Z
-			fileBuffer.getInt(); // flags
+			int flags = fileBuffer.getInt(); // flags
 			int initScript = fileBuffer.getInt();
 			Pointer initPtr = decoder.tryEnqueueAsChild(npc, initScript, ScriptT);
 			if (initPtr != null)
@@ -65,6 +65,8 @@ public class NpcGroup extends BaseStruct
 
 			String tempName = String.format("NPC_%08X", npcAddress);
 			Marker npcMarker = new Marker(tempName, MarkerType.NPC, x, y, z, angle);
+			npcMarker.npcComponent.flags.set(flags);
+			npc.associatedMarker = npcMarker;
 			if (mapDecoder != null)
 				mapDecoder.addMarker(npcMarker);
 
@@ -151,7 +153,8 @@ public class NpcGroup extends BaseStruct
 			assert (w3 == 0 || w3 == 1) : String.format("%X NPC_%08X", w3, npcAddress);
 
 			decoder.tryEnqueueAsChild(npc, fileBuffer.getInt(), ExtraAnimationListT);
-			fileBuffer.getInt(); // tattle string ID
+			int tattleString = fileBuffer.getInt(); // tattle string ID
+			npcMarker.npcComponent.tattleString.set(String.format("%02d-%03d", tattleString >> 16, tattleString & 0xFFF));
 		}
 	}
 

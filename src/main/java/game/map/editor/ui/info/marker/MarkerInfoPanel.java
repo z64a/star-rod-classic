@@ -45,6 +45,7 @@ public class MarkerInfoPanel extends MapInfoPanel<Marker>
 	private GridSubpanel gridSubpanel;
 	private PathSubpanel pathSubpanel;
 	private EntitySubpanel entitySubpanel;
+	private NpcSubpanel npcSubpanel;
 	private BombPosSubpanel bombPosSubpanel;
 	//private VolumeSubpanel volumeSubpanel;
 
@@ -58,6 +59,7 @@ public class MarkerInfoPanel extends MapInfoPanel<Marker>
 
 	public static final String tag_GeneralTab = "GeneralTab";
 	public static final String tag_NPCAnimTab = "NPCAnimTab";
+	public static final String tag_NPCTab = "NPCTab";
 	public static final String tag_NPCMovementTab = "NPCMovementTab";
 	public static final String tag_EntityTab = "EntityTab";
 	public static final String tag_CameraTab = "CameraTab";
@@ -136,6 +138,7 @@ public class MarkerInfoPanel extends MapInfoPanel<Marker>
 		gridSubpanel = new GridSubpanel(this);
 		bombPosSubpanel = new BombPosSubpanel(this);
 		entitySubpanel = new EntitySubpanel(this);
+		npcSubpanel = new NpcSubpanel(this);
 		cameraSubpanel = new CamTargetSubpanel(this);
 
 		JPanel commonMarkerPanel = new JPanel();
@@ -202,6 +205,9 @@ public class MarkerInfoPanel extends MapInfoPanel<Marker>
 					gridSubpanel.updateFields();
 					break;
 				case NPC:
+					subpanelContainer.add(npcSubpanel, "growx");
+					npcSubpanel.onUpdateFields();
+
 					territoryTab.updateDynamicFields(true);
 					territoryTab.updateFields();
 					npcAnimationsTab.updateFields();

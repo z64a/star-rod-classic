@@ -38,7 +38,6 @@ import game.globals.editor.renderers.ItemEntityBoxRenderer;
 import game.globals.editor.renderers.ItemEntityListRenderer;
 import game.globals.editor.renderers.ItemRecordListRenderer;
 import game.globals.editor.renderers.MenuIconBoxRenderer;
-import game.globals.editor.renderers.MessageCellRenderer;
 import game.globals.editor.renderers.PaddedCellRenderer;
 import game.string.PMString;
 import game.texture.images.HudElementRecord;
@@ -235,23 +234,11 @@ public class ItemTab extends SingleListTab<ItemRecord>
 		listPanel.add(actionsButton, "grow, sg but");
 	}
 
-	private PMString chooseMessage(String title)
-	{
-		ListSelectorDialog<PMString> chooser = new ListSelectorDialog<>(editor.messageListModel, new MessageCellRenderer(48));
-
-		SwingUtils.showModalDialog(chooser, title);
-		if (!chooser.isResultAccepted())
-			return null;
-
-		PMString selected = chooser.getValue();
-		return selected;
-	}
-
 	private void updateMessageField(StringField field, JLabel lbl, String identifier)
 	{
 		field.setText(identifier);
 
-		PMString msg = editor.getMessage(identifier);
+		PMString msg = editor.strings.getMessage(identifier);
 		if (msg == null) {
 			field.setForeground(SwingUtils.getRedTextColor());
 			lbl.setForeground(SwingUtils.getRedTextColor());
@@ -360,7 +347,7 @@ public class ItemTab extends SingleListTab<ItemRecord>
 		chooseNameButton.addActionListener((e) -> {
 			if (hasSelected()) {
 				ItemRecord item = getSelected();
-				PMString msg = chooseMessage("Choose Name");
+				PMString msg = editor.strings.chooseMessage("Choose Name");
 				if (msg != null) {
 					String s = msg.getIdentifier();
 					if (!s.equals(item.msgName)) {
@@ -376,7 +363,7 @@ public class ItemTab extends SingleListTab<ItemRecord>
 		chooseFullDescButton.addActionListener((e) -> {
 			if (hasSelected()) {
 				ItemRecord item = getSelected();
-				PMString msg = chooseMessage("Choose Full Description");
+				PMString msg = editor.strings.chooseMessage("Choose Full Description");
 				if (msg != null) {
 					String s = msg.getIdentifier();
 					if (!s.equals(item.msgFullDesc)) {
@@ -392,7 +379,7 @@ public class ItemTab extends SingleListTab<ItemRecord>
 		chooseShortDescButton.addActionListener((e) -> {
 			if (hasSelected()) {
 				ItemRecord item = getSelected();
-				PMString msg = chooseMessage("Choose Short Description");
+				PMString msg = editor.strings.chooseMessage("Choose Short Description");
 				if (msg != null) {
 					String s = msg.getIdentifier();
 					if (!s.equals(item.msgShortDesc)) {

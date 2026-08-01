@@ -11,6 +11,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
+import game.map.marker.NpcComponent;
+import game.string.PMString;
 import org.apache.commons.io.FileUtils;
 
 import app.Resource;
@@ -90,26 +92,44 @@ public class ScriptGenerator
 		this.map = map;
 		this.index = new MapIndex(map);
 
+		List<Marker> npcList = new ArrayList<>();
+		List<String> npcNames = new ArrayList<>();
+
 		List<Marker> entityList = new ArrayList<>();
 		List<String> entityNames = new ArrayList<>();
+
 		for (Marker m : map.markerTree) {
-			if (m.getType() == MarkerType.Entity) {
-				String entityName = m.getName();
-				if (entityNames.contains(entityName))
-					throw new InvalidInputException("Entity name is not unique: " + entityName);
-				entityNames.add(entityName);
+			switch (m.getType()) {
+				case NPC: {
+					String npcName = m.getName();
+					if (npcNames.contains(npcName))
+						throw new InvalidInputException("NPC name is not unique: " + npcName);
+					npcNames.add(npcName);
 
-				if (m.entityComponent.type.get() == EntityType.SavePoint)
-					checkForSavePoint = true;
+					if (m.npcComponent.genDefaultGroup.get()) {
+						npcList.add(m);
+					}
+					break;
+				}
+				case Entity: {
+					String entityName = m.getName();
+					if (entityNames.contains(entityName))
+						throw new InvalidInputException("Entity name is not unique: " + entityName);
+					entityNames.add(entityName);
 
-				entityList.add(m);
+					if (m.entityComponent.type.get() == EntityType.SavePoint)
+						checkForSavePoint = true;
+
+					entityList.add(m);
+					break;
+				}
 			}
 		}
 
 		List<String> lines = new LinkedList<>();
 
 		addInitScript(lines);
-		// NPCs
+		addNPCs(npcList, lines);
 		addEntities(entityList, lines);
 		addCameraTargets(lines);
 		addMusic(lines);
@@ -678,6 +698,124 @@ public class ScriptGenerator
 			lines.add("}");
 			lines.add("");
 		}
+	}
+
+	private void addNPCs(List<Marker> npcs, List<String> lines) throws InvalidInputException
+	{
+		if (npcs.isEmpty())
+			return;
+
+		mainHooks.add("Call  MakeNpcs  ( .False $NpcGroupList_Main )");
+
+		lines.add("#new:NpcGroupList $NpcGroupList_Main");
+		lines.add("{");
+		lines.add(String.format("\t%d` $NpcGroup_Default 00000000", npcs.size()));
+		lines.add("\t00000000 00000000 00000000");
+		lines.add("}");
+		lines.add("");
+
+		lines.add("#new:NpcGroup $NpcGroup_Default");
+		lines.add("{");
+
+		for (int i = 0; i < npcs.size(); i++) {
+			Marker npc = npcs.get(i);
+
+			NpcComponent npcComponent = npc.npcComponent;
+			String name = npc.getName();
+
+			if (name.contains(" "))
+				throw new InvalidInputException("NPC " + name + " contains a space");
+
+			defineLines.add(String.format("#define .NpcID:%s %d`", name, i));
+
+			String initScript = npcComponent.hasInitScript()
+					? String.format("$Script_Init_%s", name)
+					: "0000000";
+
+			String tattleString = npcComponent.tattleString.get();
+			int tattleStringID = 0;
+			if (tattleString != null && !tattleString.isEmpty() && !"00-000".equals(tattleString)) {
+				PMString string = ProjectDatabase.gameStrings.getMessage(tattleString);
+
+				if (string == null)
+					throw new InvalidInputException("NPC " + name + " has an invalid tattle string ('" + tattleString + "')");
+
+				tattleStringID = string.getID();
+			}
+
+			lines.add(String.format("\t.NpcID:%s $NpcSettings_%s ~Vec3f:%s", name, name, name));
+			lines.add(String.format("\t%08X %s 00000000 00000000 %08X", npcComponent.flags.get(), initScript, (int) npc.yaw.getAngle()));
+			lines.add("\t~NoDrops");
+			lines.add(String.format("\t~Movement:%s", name));
+			lines.add(String.format("\t~AnimationTable:%s", name));
+			lines.add(String.format("\t00000000 00000000 00000000 %08X", tattleStringID));
+
+			if (npcs.get(npcs.size() - 1) != npc)
+				lines.add("");
+		}
+
+		lines.add("}");
+		lines.add("");
+
+		for (Marker npc : npcs) {
+			String name = npc.getName();
+			NpcComponent npcComponent = npc.npcComponent;
+
+			lines.add(String.format("#new:NpcSettings $NpcSettings_%s", name));
+			lines.add("{");
+			lines.add(String.format(
+					"\t00000000 %04Xs %04Xs 00000000 00000000 00000000 00000000 00000000",
+					npcComponent.height.get(), npcComponent.radius.get()));
+			lines.add(String.format("\t00000000 00000000 00000000 %04Xs 0000s", npcComponent.level.get()));
+			lines.add("}");
+			lines.add("");
+
+			if (npcComponent.hasInitScript()) {
+				lines.add(String.format("#new:Script $Script_Init_%s", name));
+				lines.add("{");
+
+				if (npcComponent.hasInteract.get())
+					lines.add(String.format("\tCall  BindNpcInteract   ( .Npc:Self $Script_Interact_%s )", name));
+				if (npcComponent.hasIdle.get())
+					lines.add(String.format("\tCall  BindNpcIdle       ( .Npc:Self $Script_Idle_%s )", name));
+				if (npcComponent.hasAI.get())
+					lines.add(String.format("\tCall  BindNpcAI         ( .Npc:Self $Script_AI_%s )", name));
+				if (npcComponent.hasHit.get())
+					lines.add(String.format("\tCall  BindNpcHit        ( .Npc:Self $Script_Hit_%s )", name));
+				if (npcComponent.hasDefeat.get())
+					lines.add(String.format("\tCall  BindNpcDefeat     ( .Npc:Self $Script_Defeat_%s )", name));
+				if (npcComponent.hasAux.get())
+					lines.add(String.format("\tCall  BindNpcAux        ( .Npc:Self $Script_Aux_%s )", name));
+
+				lines.add("\tReturn");
+				lines.add("\tEnd");
+				lines.add("}");
+				lines.add("");
+
+				if (npcComponent.hasInteract.get())
+					addEmptyScript(String.format("Script_Interact_%s", name), lines);
+				if (npcComponent.hasIdle.get())
+					addEmptyScript(String.format("Script_Idle_%s", name), lines);
+				if (npcComponent.hasAI.get())
+					addEmptyScript(String.format("Script_AI_%s", name), lines);
+				if (npcComponent.hasHit.get())
+					addEmptyScript(String.format("Script_Hit_%s", name), lines);
+				if (npcComponent.hasDefeat.get())
+					addEmptyScript(String.format("Script_Defeat_%s", name), lines);
+				if (npcComponent.hasAux.get())
+					addEmptyScript(String.format("Script_Aux_%s", name), lines);
+			}
+		}
+	}
+
+	private void addEmptyScript(String name, List<String> lines)
+	{
+		lines.add(String.format("#new:Script $%s", name));
+		lines.add("{");
+		lines.add("\tReturn");
+		lines.add("\tEnd");
+		lines.add("}");
+		lines.add("");
 	}
 
 	private void addCameraTargets(List<String> camLines) throws InvalidInputException

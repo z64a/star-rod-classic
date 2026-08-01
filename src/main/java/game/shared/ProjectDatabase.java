@@ -15,6 +15,7 @@ import java.util.Map.Entry;
 
 import javax.swing.JComboBox;
 
+import game.globals.editor.GameStrings;
 import org.apache.commons.io.FilenameUtils;
 import org.w3c.dom.Element;
 
@@ -57,6 +58,7 @@ public class ProjectDatabase
 
 	public static ImageDatabase images;
 	public static GlobalsData globalsData;
+	public static GameStrings gameStrings;
 
 	public static DualHashMap<Integer, String> EffectType;
 
@@ -221,6 +223,9 @@ public class ProjectDatabase
 
 	public static void loadGlobals(boolean fromProject)
 	{
+		gameStrings = new GameStrings();
+		gameStrings.loadStrings();
+
 		globalsData = new GlobalsData();
 		globalsData.loadDataStrict(fromProject);
 

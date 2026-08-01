@@ -35,6 +35,11 @@ public class FlagEditorPanel extends JPanel
 
 	public FlagEditorPanel(int digits, Flag[] flags)
 	{
+		this(digits, 1, flags);
+	}
+
+	public FlagEditorPanel(int digits, int columns, Flag[] flags)
+	{
 		this.flagBits = new int[flags.length];
 
 		valueField = new HexTextField(digits, true, (newValue) -> {
@@ -46,8 +51,8 @@ public class FlagEditorPanel extends JPanel
 
 		checkBoxes = new JCheckBox[flags.length];
 
-		setLayout(new MigLayout("fillx, ins 8 0 8 8, wrap"));
-		add(valueField, "w 80!, gapbottom 8");
+		setLayout(new MigLayout("fillx, ins 8 0 8 8"));
+		add(valueField, "w 90!, gapbottom 8, wrap");
 
 		for (int i = 0; i < flags.length; i++) {
 			flagBits[i] = flags[i].bits;
@@ -66,7 +71,9 @@ public class FlagEditorPanel extends JPanel
 				changingIndex = -1;
 			});
 
-			add(checkBoxes[i], "growx, sg checkbox");
+			add(checkBoxes[i], i % columns == columns - 1
+					? "growx, sg checkbox, wrap"
+					: "growx, sg checkbox");
 		}
 	}
 

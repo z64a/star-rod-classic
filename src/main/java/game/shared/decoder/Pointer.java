@@ -66,9 +66,12 @@ public class Pointer
 
 	public boolean isAPI; // for functions
 
-	// for scripts assigned to an entity
+	// for scripts assigned to an entity via `Call AssignScript`
 	public EntityType assignedToType = null;
 	public Marker assignedToMarker = null;
+
+	// struct declarations that reference a Marker, like NpcGroup
+	public Marker associatedMarker = null;
 
 	/*
 	private ArrayList<Property> properties = new ArrayList<>();
