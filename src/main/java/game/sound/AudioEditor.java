@@ -23,7 +23,6 @@ import app.SwingUtils;
 import common.BaseEditor;
 import common.BaseEditorSettings;
 import common.BasicCamera;
-import common.KeyboardInput.KeyInputEvent;
 import common.MouseInput.MouseManagerListener;
 import common.MousePixelRead;
 import game.map.editor.render.PresetColor;
@@ -76,7 +75,8 @@ public class AudioEditor extends BaseEditor implements MouseManagerListener
 
 	public AudioEditor()
 	{
-		super(EDITOR_SETTINGS);
+		super(EDITOR_SETTINGS, new AudioKeyConfig());
+		registerKeyboardInputs(AudioInput.class, this::inputPressed);
 
 		cam = new BasicCamera(
 			0.0f, 0.0f, 0.5f,
@@ -202,29 +202,19 @@ public class AudioEditor extends BaseEditor implements MouseManagerListener
 		cam.handleInput(mouse, keyboard, deltaTime, glCanvasWidth(), glCanvasHeight());
 	}
 
-	@Override
-	public void keyPress(KeyInputEvent key)
+	private void inputPressed(AudioInput input)
 	{
-		boolean ctrl = keyboard.isCtrlDown();
-		boolean shift = keyboard.isShiftDown();
-		boolean alt = keyboard.isAltDown();
-
-		switch (key.code) {
-			case KeyEvent.VK_SPACE:
-				if (!shift && !ctrl && !alt)
-					resetCam();
+		switch (input) {
+			case RESET_CAMERA:
+				resetCam();
 				break;
-			case KeyEvent.VK_G:
-				if (!shift && !ctrl && !alt) {
-					bDrawGrid = !bDrawGrid;
-					cbGrid.setSelected(bDrawGrid);
-				}
+			case TOGGLE_GRID:
+				bDrawGrid = !bDrawGrid;
+				cbGrid.setSelected(bDrawGrid);
 				break;
-			case KeyEvent.VK_B:
-				if (!shift && !ctrl && !alt) {
-					bDrawBackground = !bDrawBackground;
-					cbBackground.setSelected(bDrawBackground);
-				}
+			case TOGGLE_BACKGROUND:
+				bDrawBackground = !bDrawBackground;
+				cbBackground.setSelected(bDrawBackground);
 				break;
 			default:
 		}
