@@ -16,12 +16,20 @@ public class AudioEngine
 		public void write(byte[] data, int offset, int length);
 	}
 
+	public interface AudioMonitor
+	{
+		// buffers are reused by the engine; samples must be consumed or copied before this method returns
+		public void accept(float[] left, float[] right, int start, int end);
+	}
+
 	public static final int TARGET_FPS = 60; // PM audio thread
 	public static final double FRAME_TIME = 1.0 / TARGET_FPS;
 
 	public static final int OUTPUT_RATE = 32000;
 	public static final int MAX_MASTER_VOLUME = 256;
 	public static final int FRAME_SAMPLES = 184;
+	// Rounds up to exactly one mixer block in renderFrame().
+	public static final double MIXER_BLOCK_TIME = (FRAME_SAMPLES - 0.5) / OUTPUT_RATE;
 	public static final int NUM_EFFECT_BUSES = 2;
 
 	private static final int NUM_CHANNELS = 2; // stereo
@@ -32,6 +40,7 @@ public class AudioEngine
 
 	private final SourceDataLine line;
 	private final PcmOutput output;
+	private volatile AudioMonitor audioMonitor;
 	private final EffectBus[] effectBuses;
 	private final List<Voice> voices;
 
@@ -84,13 +93,7 @@ public class AudioEngine
 			line = null;
 		}
 		if (line != null) {
-			this.output = new PcmOutput() {
-				@Override
-				public void write(byte[] data, int offset, int length)
-				{
-					line.write(data, offset, length);
-				}
-			};
+			this.output = (data, offset, length) -> line.write(data, offset, length);
 		}
 		else {
 			this.output = output;
@@ -134,7 +137,8 @@ public class AudioEngine
 
 	public void addClient(AudioClient client)
 	{
-		clients.add(client);
+		if (!clients.contains(client))
+			clients.add(client);
 	}
 
 	public void removeClient(AudioClient client)
@@ -147,11 +151,9 @@ public class AudioEngine
 		voices.add(voice);
 	}
 
-	public Voice getVoice()
+	public void setAudioMonitor(AudioMonitor audioMonitor)
 	{
-		Voice voice = new Voice();
-		voices.add(voice);
-		return voice;
+		this.audioMonitor = audioMonitor;
 	}
 
 	public void setMasterVolume(int volume)
@@ -216,8 +218,11 @@ public class AudioEngine
 
 		if (overflowSamples > 0) {
 			int startPos = FRAME_SAMPLES - overflowSamples; // where the last frame left off and overflow began
-			if (!fastForward && output != null)
-				writeSamples(output, mixedBufferL, mixedBufferR, outBuffer, startPos, FRAME_SAMPLES);
+			if (!fastForward) {
+				monitorSamples(mixedBufferL, mixedBufferR, startPos, FRAME_SAMPLES);
+				if (output != null)
+					writeSamples(output, mixedBufferL, mixedBufferR, outBuffer, startPos, FRAME_SAMPLES);
+			}
 			processed += overflowSamples;
 			overflowSamples = 0;
 		}
@@ -289,9 +294,30 @@ public class AudioEngine
 				writeSamples = FRAME_SAMPLES;
 			}
 
-			if (!fastForward && output != null)
-				writeSamples(output, mixedBufferL, mixedBufferR, outBuffer, 0, writeSamples);
+			if (!fastForward) {
+				monitorSamples(mixedBufferL, mixedBufferR, 0, writeSamples);
+				if (output != null)
+					writeSamples(output, mixedBufferL, mixedBufferR, outBuffer, 0, writeSamples);
+			}
 		}
+	}
+
+	public void prepareForSeek()
+	{
+		padLine(0.050);
+	}
+
+	public void finishSeek()
+	{
+		flush();
+		padLine(0.020);
+	}
+
+	private void monitorSamples(float[] left, float[] right, int start, int end)
+	{
+		AudioMonitor monitor = audioMonitor;
+		if (monitor != null)
+			monitor.accept(left, right, start, end);
 	}
 
 	private static void writeSamples(PcmOutput output, float[] mixedL, float[] mixedR, byte[] outBuffer, int start, int end)

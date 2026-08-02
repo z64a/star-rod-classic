@@ -29,6 +29,7 @@ public class Voice
 
 	private boolean allowLooping;
 	private int loopIterations;
+	private int renderedSamples;
 
 	public Voice()
 	{
@@ -49,6 +50,7 @@ public class Voice
 
 		state = VoiceState.READY;
 		loopIterations = 0;
+		renderedSamples = 0;
 	}
 
 	public void setEnvelope(EnvelopePair env)
@@ -101,6 +103,23 @@ public class Voice
 	public void setLoopingAllowed(boolean enabled)
 	{
 		allowLooping = enabled;
+	}
+
+	int getRenderedSamples()
+	{
+		return renderedSamples;
+	}
+
+	int getOutputDuration()
+	{
+		return getOutputDuration(ins, pitch);
+	}
+
+	static int getOutputDuration(Instrument instrument, float pitch)
+	{
+		if (instrument == null || instrument.samples.size() < 2)
+			return 0;
+		return (int) Math.ceil((instrument.samples.size() - 1) / getResampleRatio(instrument, pitch));
 	}
 
 	public void play()
@@ -168,8 +187,7 @@ public class Voice
 		float dryAmt = (float) Math.cos(dryAngle);
 		float wetAmt = (float) Math.sin(dryAngle);
 
-		float resampleRatio = pitch * ((float) ins.sampleRate / AudioEngine.OUTPUT_RATE);
-		resampleRatio = Math.min(resampleRatio, 1.99996f);
+		float resampleRatio = getResampleRatio();
 		float voiceVolumeStart = volume * envVolumeStart;
 		float voiceVolumeEnd = volume * envVolumeEnd;
 		float gainStart = voiceVolumeStart * voiceVolumeStart;
@@ -211,10 +229,23 @@ public class Voice
 			wetBufferR[i] += scaled * panR * wetAmt;
 
 			readPos += resampleRatio;
+			if (renderedSamples < Integer.MAX_VALUE)
+				renderedSamples++;
 		}
 
 		if (envelopeDone)
 			state = VoiceState.DONE;
+	}
+
+	private float getResampleRatio()
+	{
+		return getResampleRatio(ins, pitch);
+	}
+
+	private static float getResampleRatio(Instrument instrument, float pitch)
+	{
+		float ratio = pitch * ((float) instrument.sampleRate / AudioEngine.OUTPUT_RATE);
+		return Math.min(ratio, 1.99996f);
 	}
 
 	private boolean canLoop()

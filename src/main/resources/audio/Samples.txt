@@ -485,8 +485,8 @@ SYS1_00	SYS1_00_MenuBack
 SYS1_01	SYS1_01_MenuChangeSelection
 SYS1_02	SYS1_02_MenuChangeTab
 SYS1_03	SYS1_03_MsgWait
-SYS1_04	SYS1_04_JumpCombo4
-SYS1_04_Loop	SYS1_04_JumpCombo4_Loop
+SYS1_04	SYS1_04_Beep
+SYS1_04_Loop	SYS1_04_Beep_Loop
 SYS1_05	SYS1_05_OpenPopup1
 SYS1_06	SYS1_06_HitBones
 SYS1_07	SYS1_07_StarPointPickup

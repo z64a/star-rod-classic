@@ -97,6 +97,11 @@ public class SoundBank
 		return true;
 	}
 
+	public List<Bank> getBanks()
+	{
+		return List.copyOf(bankNameMap.values());
+	}
+
 	public record InstrumentQueryResult(Instrument instrument, EnvelopePair envelope)
 	{}
 

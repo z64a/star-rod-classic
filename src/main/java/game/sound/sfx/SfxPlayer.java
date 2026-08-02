@@ -14,6 +14,7 @@ import game.sound.engine.AudioEngine;
 import game.sound.engine.Envelope.EnvelopePair;
 import game.sound.engine.EnvelopeProgram;
 import game.sound.engine.Instrument;
+import game.sound.engine.PlaybackSession;
 import game.sound.engine.SoundBank;
 import game.sound.engine.SoundBank.InstrumentQueryResult;
 import game.sound.engine.Voice;
@@ -31,7 +32,7 @@ import game.sound.sfx.SfxArchive.SpawnedEffect;
 import game.sound.sfx.SfxArchive.Track;
 import util.Logger;
 
-public class SfxPlayer implements AudioClient
+public class SfxPlayer implements AudioClient, PlaybackSession
 {
 	private static final int MAX_COMMANDS_PER_FRAME = 65536;
 	private static final int MAX_TIMELINE_FRAMES =
@@ -41,10 +42,6 @@ public class SfxPlayer implements AudioClient
 	private static final int TRIGGER_ALTERNATIVE_VOLUME = 2;
 	private static final int UPDATE_STEP = 312500;
 	private static final int UPDATE_INTERVAL = 434782;
-	// Rounds up to exactly one mixer block in AudioEngine.renderFrame().
-	private static final double AUDIO_BLOCK_TIME =
-		(AudioEngine.FRAME_SAMPLES - 0.5) / AudioEngine.OUTPUT_RATE;
-
 	private static final EnvelopePair SFX_ENVELOPE_FAST = new EnvelopePair(
 		new int[] {
 			60, 127,
@@ -79,6 +76,7 @@ public class SfxPlayer implements AudioClient
 
 	private final AudioEngine engine;
 	private final SoundBank bank;
+	private boolean attached;
 
 	private final Map<Sequence, SfxProgram> programs = new IdentityHashMap<>();
 	private final Map<String, int[]> pressEnvelopes = new HashMap<>();
@@ -101,13 +99,23 @@ public class SfxPlayer implements AudioClient
 	{
 		this.engine = engine;
 		this.bank = bank;
+	}
 
-		engine.addClient(this);
+	@Override
+	public void attach()
+	{
+		if (!attached) {
+			engine.addClient(this);
+			attached = true;
+		}
 	}
 
 	public void setArchive(SfxArchive archive)
 	{
 		stop();
+		selectedSound = null;
+		duration = 0;
+		initialTrigger = TRIGGER_NONE;
 		SfxValidator.validate(archive);
 
 		this.archive = archive;
@@ -151,6 +159,8 @@ public class SfxPlayer implements AudioClient
 	private void play(int soundID, int trigger)
 	{
 		stop();
+		selectedSound = null;
+		duration = 0;
 		if (archive == null)
 			return;
 
@@ -166,8 +176,7 @@ public class SfxPlayer implements AudioClient
 		initialTrigger = trigger;
 		engine.resetRenderState();
 		duration = calculateDuration(sound);
-		beginPlayback(sound);
-		engine.resetRenderState();
+		restart();
 	}
 
 	private int calculateDuration(Sound sound)
@@ -177,7 +186,7 @@ public class SfxPlayer implements AudioClient
 
 		beginPlayback(sound);
 		while (currentSound != null && currentTime < MAX_TIMELINE_FRAMES)
-			engine.renderFrame(AUDIO_BLOCK_TIME, true);
+			engine.renderFrame(AudioEngine.MIXER_BLOCK_TIME, true);
 
 		int result = currentTime;
 		if (currentSound != null) {
@@ -201,11 +210,20 @@ public class SfxPlayer implements AudioClient
 		setTrigger(initialTrigger);
 	}
 
+	@Override
 	public void stop()
 	{
 		clearActivePlayback();
-		selectedSound = null;
-		duration = 0;
+	}
+
+	@Override
+	public void restart()
+	{
+		if (selectedSound == null)
+			return;
+		engine.resetRenderState();
+		beginPlayback(selectedSound);
+		engine.resetRenderState();
 	}
 
 	private void clearActivePlayback()
@@ -221,26 +239,31 @@ public class SfxPlayer implements AudioClient
 		requestedTime = -1;
 	}
 
+	@Override
 	public boolean isPlaying()
 	{
 		return currentSound != null;
 	}
 
-	public boolean getPaused()
+	@Override
+	public boolean isPaused()
 	{
 		return paused;
 	}
 
+	@Override
 	public int getTime()
 	{
-		return Math.min(currentTime, duration);
+		return Math.min(currentTime, duration) * AudioEngine.FRAME_SAMPLES;
 	}
 
+	@Override
 	public int getDuration()
 	{
-		return duration;
+		return duration * AudioEngine.FRAME_SAMPLES;
 	}
 
+	@Override
 	public int getTimelineLoopCount()
 	{
 		int count = 0;
@@ -249,12 +272,13 @@ public class SfxPlayer implements AudioClient
 		return count;
 	}
 
+	@Override
 	public void seekTime(int seekTime)
 	{
-		if (selectedSound == null || duration == 0)
+		if (selectedSound == null || getDuration() == 0)
 			return;
 
-		if (seekTime < 0 || seekTime >= duration)
+		if (seekTime < 0 || seekTime >= getDuration())
 			return;
 
 		if (seekTime == getTime())
@@ -263,9 +287,9 @@ public class SfxPlayer implements AudioClient
 		boolean wasPaused = paused;
 		beginPlayback(selectedSound);
 
-		engine.padLine(0.050);
-		while (currentTime < seekTime && currentSound != null)
-			engine.renderFrame(AUDIO_BLOCK_TIME, true);
+		engine.prepareForSeek();
+		while (getTime() < seekTime && currentSound != null)
+			engine.renderFrame(AudioEngine.MIXER_BLOCK_TIME, true);
 
 		for (SfxTrackPlayer player : trackPlayers)
 			player.resumeNormalPlayback();
@@ -273,10 +297,10 @@ public class SfxPlayer implements AudioClient
 		if (wasPaused)
 			setPaused(true);
 
-		engine.flush();
-		engine.padLine(0.020);
+		engine.finishSeek();
 	}
 
+	@Override
 	public void setPaused(boolean paused)
 	{
 		if (currentSound == null || this.paused == paused)
@@ -310,6 +334,16 @@ public class SfxPlayer implements AudioClient
 	public int getActiveTrackCount()
 	{
 		return trackPlayers.size();
+	}
+
+	@Override
+	public void close()
+	{
+		stop();
+		if (attached) {
+			engine.removeClient(this);
+			attached = false;
+		}
 	}
 
 	@Override

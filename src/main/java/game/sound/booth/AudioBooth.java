@@ -1,0 +1,714 @@
+package game.sound.booth;
+
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.JSpinner;
+import javax.swing.JTabbedPane;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
+import app.Environment;
+import app.SwingUtils;
+import common.FrameLimiter;
+import game.sound.AudioExporter;
+import game.sound.engine.AudioEngine;
+import game.sound.engine.PlaybackSession;
+import game.sound.engine.SoundBank;
+import net.miginfocom.swing.MigLayout;
+import util.Logger;
+import util.ui.ThemedIcon;
+
+public class AudioBooth
+{
+	private static final int VOLUME_SLIDER_MAX = 100;
+
+	private final Object threadLock = new Object();
+
+	public static void main(String[] args) throws Exception
+	{
+		Environment.initialize();
+
+		CountDownLatch guiClosedSignal = new CountDownLatch(1);
+		new AudioBooth(guiClosedSignal);
+		guiClosedSignal.await();
+
+		Environment.exit();
+	}
+
+	private final AudioEngine engine;
+	private final CountDownLatch guiClosedSignal;
+	public boolean exitToMainMenu;
+	private AudioExporter audioExporter;
+	private List<AudioBoothTab> boothTabs;
+	private AudioBoothTab selectionOwner;
+
+	private final JLabel statusLabel;
+	private final JLabel timeLabel;
+	private final JButton pauseButton;
+	private final JButton restartButton;
+	private final JButton stopButton;
+	private final JMenuItem reloadItem;
+	private final JMenuItem exportItem;
+	private final JSlider timeSlider;
+	private final JSlider masterVolumeSlider;
+	private final JButton muteButton;
+	private final JTabbedPane assetTabs;
+
+	private boolean ignoreSliderUpdate;
+	private volatile boolean running = true;
+	private volatile int seekTime = -1;
+	private int timelineDuration;
+	private PlaybackSession playbackSession;
+	private boolean playbackWasActive;
+	private boolean exporting;
+	private int unmutedVolume = VOLUME_SLIDER_MAX;
+
+	public AudioBooth(CountDownLatch guiClosedSignal) throws Exception
+	{
+		this.guiClosedSignal = guiClosedSignal;
+		engine = new AudioEngine();
+		SoundBank initialBank = createSoundBank();
+		audioExporter = new AudioExporter(initialBank);
+		boothTabs = createTabs(initialBank);
+		attachTabs(boothTabs);
+
+		JFrame frame = new JFrame(Environment.decorateTitle("Audio Booth"));
+		frame.setIconImage(Environment.getDefaultIconImage());
+		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		frame.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e)
+			{
+				close(frame, false);
+			}
+		});
+
+		frame.setLayout(new MigLayout("fill, ins 12", "[grow,fill]", "[grow][][]"));
+
+		masterVolumeSlider = new JSlider(0, VOLUME_SLIDER_MAX,
+			gainToVolumeSlider(engine.getMasterVolume()));
+		if (masterVolumeSlider.getValue() > 0)
+			unmutedVolume = masterVolumeSlider.getValue();
+
+		muteButton = new JButton(ThemedIcon.VOLUME_UP_16);
+		muteButton.setMargin(new Insets(0, 2, 0, 2));
+		muteButton.addActionListener((e) -> toggleMute());
+		masterVolumeSlider.addChangeListener((e) -> updateMasterVolume());
+		updateMasterVolume();
+
+		statusLabel = new JLabel("Select an audio asset.");
+		statusLabel.setVerticalAlignment(SwingConstants.CENTER);
+		timeLabel = new JLabel(formatTime(0) + " / " + formatTime(0));
+
+		timeSlider = new JSlider(0, 1, 0);
+		timeSlider.setEnabled(false);
+		timeSlider.addChangeListener((e) -> {
+			if (!ignoreSliderUpdate)
+				seekTime = timeSlider.getValue();
+		});
+
+		Insets playbackButtonInsets = new Insets(0, 2, 0, 2);
+
+		pauseButton = new JButton(ThemedIcon.PAUSE_24);
+		pauseButton.setToolTipText("Pause");
+		pauseButton.setMargin(playbackButtonInsets);
+		pauseButton.setEnabled(false);
+		pauseButton.addActionListener((e) -> {
+			boolean restart = false;
+			boolean paused = false;
+			synchronized (threadLock) {
+				if (playbackSession == null || !playbackSession.isPlaying()) {
+					restart = true;
+				}
+				else {
+					playbackSession.setPaused(!playbackSession.isPaused());
+					paused = playbackSession.isPaused();
+				}
+			}
+			if (restart)
+				restartPlayback();
+			else
+				setPlaybackPaused(paused);
+		});
+
+		restartButton = new JButton(ThemedIcon.REWIND_24);
+		restartButton.setToolTipText("Restart");
+		restartButton.setMargin(playbackButtonInsets);
+		restartButton.setEnabled(false);
+		restartButton.addActionListener((e) -> restartPlayback());
+
+		stopButton = new JButton(ThemedIcon.STOP_24);
+		stopButton.setToolTipText("Stop");
+		stopButton.setMargin(playbackButtonInsets);
+		stopButton.setEnabled(false);
+		stopButton.addActionListener((e) -> stopPlayback());
+
+		JMenuBar menuBar = new JMenuBar();
+		JMenu fileMenu = new JMenu("File");
+		JMenuItem switchToolsItem = new JMenuItem("Switch Tools");
+		switchToolsItem.addActionListener((e) -> close(frame, true));
+		JMenuItem exitItem = new JMenuItem("Exit");
+		exitItem.addActionListener((e) -> close(frame, false));
+		fileMenu.add(switchToolsItem);
+		fileMenu.add(exitItem);
+		menuBar.add(fileMenu);
+
+		JMenu selectedMenu = new JMenu("Selected");
+		reloadItem = new JMenuItem("Reload");
+		reloadItem.setEnabled(false);
+		reloadItem.addActionListener((e) -> reloadSelected());
+		exportItem = new JMenuItem("Export");
+		exportItem.setEnabled(false);
+		exportItem.addActionListener((e) -> chooseExport());
+		selectedMenu.add(reloadItem);
+		selectedMenu.add(exportItem);
+		menuBar.add(selectedMenu);
+		frame.setJMenuBar(menuBar);
+
+		assetTabs = new JTabbedPane();
+		populateAssetTabs();
+
+		JPanel playbackPanel = new JPanel(new MigLayout(
+			"ins 0 8 0 8, fillx", "[][][][grow,fill][]", "[]"));
+		playbackPanel.add(restartButton, "sg playbackButton, h 24!");
+		playbackPanel.add(stopButton, "sg playbackButton, h 24!");
+		playbackPanel.add(pauseButton, "sg playbackButton, h 24!");
+		playbackPanel.add(timeSlider, "growx");
+		playbackPanel.add(timeLabel);
+
+		int volumeSliderWidth = timeLabel.getPreferredSize().width;
+		JPanel footerPanel = new JPanel(new MigLayout(
+			"ins 0 8 0 8, fillx", "[grow,fill][][" + volumeSliderWidth + "!,fill]", "[grow,fill]"));
+		footerPanel.add(statusLabel, "grow");
+		footerPanel.add(muteButton, "h 24!");
+		footerPanel.add(masterVolumeSlider, "growx");
+
+		frame.add(assetTabs, "grow, push, wrap");
+		frame.add(playbackPanel, "growx, wrap");
+		frame.add(footerPanel, "growx");
+
+		frame.setMinimumSize(new Dimension(640, 360));
+		frame.pack();
+		frame.setLocationRelativeTo(null);
+		frame.setVisible(true);
+
+		Thread audioThread = new Thread(() -> {
+			try {
+				run();
+			}
+			catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+			catch (Exception e) {
+				Logger.logError("Audio Booth playback thread failed");
+				Logger.printStackTrace(e);
+			}
+		}, "Audio Booth");
+		audioThread.start();
+	}
+
+	private static SoundBank createSoundBank() throws IOException
+	{
+		SoundBank soundBank = new SoundBank();
+		// required for radio songs, just keep this always loaded
+		soundBank.installAuxBank("SPC3", 2);
+		return soundBank;
+	}
+
+	private List<AudioBoothTab> createTabs(SoundBank soundBank) throws IOException
+	{
+		List<AudioBoothTab> tabs = new ArrayList<>();
+		tabs.add(new SamplesTab(this, engine, soundBank));
+		tabs.add(new SfxTab(this, engine, soundBank));
+		tabs.add(new MseqTab(this, engine, soundBank));
+		tabs.add(new BgmTab(this, engine, soundBank));
+		return tabs;
+	}
+
+	private void populateAssetTabs()
+	{
+		assetTabs.removeAll();
+		for (AudioBoothTab tab : boothTabs)
+			addAssetTab(tab);
+	}
+
+	private void addAssetTab(AudioBoothTab tab)
+	{
+		JLabel label = SwingUtils.getLabel(tab.getTitle(), 12);
+		label.setHorizontalAlignment(SwingConstants.CENTER);
+		label.setPreferredSize(new Dimension(60, 20));
+
+		assetTabs.addTab(tab.getTitle(), tab);
+		assetTabs.setTabComponentAt(assetTabs.getTabCount() - 1, label);
+	}
+
+	private void reloadSelected()
+	{
+		if (exporting || selectionOwner == null || !selectionOwner.hasSelection())
+			return;
+
+		List<AudioBoothTab> oldTabs = boothTabs;
+		AudioBoothTab oldSelectionOwner = selectionOwner;
+		int selectedIndex = oldTabs.indexOf(oldSelectionOwner);
+
+		try {
+			SoundBank replacementBank = createSoundBank();
+			AudioExporter replacementExporter = new AudioExporter(replacementBank);
+			List<AudioBoothTab> replacementTabs = createTabs(replacementBank);
+			AudioBoothTab replacementOwner = replacementTabs.get(selectedIndex);
+			AudioBoothTab.PreparedSelection preparedSelection = oldSelectionOwner.prepareReload(replacementOwner);
+
+			synchronized (threadLock) {
+				closeTabs(oldTabs);
+				attachTabs(replacementTabs);
+				seekTime = -1;
+				playbackSession = null;
+			}
+
+			audioExporter = replacementExporter;
+			boothTabs = replacementTabs;
+			selectionOwner = null;
+
+			populateAssetTabs();
+			updateTimeline(0);
+			setPlaybackPaused(false);
+			updatePlaybackControls();
+			if (preparedSelection == null) {
+				statusLabel.setText("The selected audio asset is no longer available.");
+			}
+			else {
+				assetTabs.setSelectedIndex(selectedIndex);
+				preparedSelection.restore();
+			}
+		}
+		catch (Exception e) {
+			Logger.logError("Could not reload the selected audio asset");
+			Logger.printStackTrace(e);
+			updatePlaybackControls();
+			statusLabel.setText("Could not reload the selected audio asset.");
+		}
+	}
+
+	boolean startPlayback(AudioBoothTab owner, PlaybackSession session, Runnable action)
+	{
+		if (owner.getSession() != session)
+			throw new IllegalArgumentException("Playback session does not belong to the requesting Audio Booth tab");
+
+		int duration;
+		boolean playing;
+		synchronized (threadLock) {
+			stopAllTabs();
+			seekTime = -1;
+			action.run();
+			selectionOwner = owner;
+			playing = session.isPlaying();
+			playbackSession = playing ? session : null;
+			duration = session.getDuration();
+		}
+		updateTimeline(duration);
+		setPlaybackPaused(false);
+		updatePlaybackControls();
+		return playing;
+	}
+
+	void selectWithoutPlayback(AudioBoothTab owner)
+	{
+		synchronized (threadLock) {
+			stopAllTabs();
+			seekTime = -1;
+			selectionOwner = owner;
+			playbackSession = null;
+		}
+		updateTimeline(0);
+		setPlaybackPaused(false);
+		updatePlaybackControls();
+	}
+
+	void clearSelection(AudioBoothTab owner)
+	{
+		if (selectionOwner != owner)
+			return;
+		synchronized (threadLock) {
+			stopAllTabs();
+			seekTime = -1;
+			selectionOwner = null;
+			playbackSession = null;
+		}
+		updateTimeline(0);
+		setPlaybackPaused(false);
+		updatePlaybackControls();
+	}
+
+	boolean ownsSelection(AudioBoothTab owner)
+	{
+		return selectionOwner == owner;
+	}
+
+	boolean isCurrentSession(PlaybackSession session)
+	{
+		return playbackSession == session;
+	}
+
+	void runAudioAction(Runnable action)
+	{
+		synchronized (threadLock) {
+			action.run();
+		}
+	}
+
+	void refreshTimeline(PlaybackSession session)
+	{
+		if (playbackSession != session)
+			return;
+		int time;
+		int duration;
+		synchronized (threadLock) {
+			time = session.getTime();
+			duration = session.getDuration();
+		}
+		updateTimeline(duration, time);
+	}
+
+	void setStatus(String status)
+	{
+		statusLabel.setText(status);
+	}
+
+	void updatePlaybackControls()
+	{
+		boolean hasPlayback = playbackSession != null;
+		restartButton.setEnabled(hasPlayback);
+		pauseButton.setEnabled(hasPlayback);
+		stopButton.setEnabled(isPlaybackActive());
+		reloadItem.setEnabled(selectionOwner != null && selectionOwner.hasSelection() && !exporting);
+		exportItem.setEnabled(hasPlayback && selectionOwner != null && selectionOwner.getExportSource() != null && !exporting);
+		for (AudioBoothTab tab : boothTabs)
+			tab.updatePlaybackState(playbackSession, exporting);
+	}
+
+	private void updateTimeline(int duration)
+	{
+		updateTimeline(duration, 0);
+	}
+
+	private void updateTimeline(int duration, int time)
+	{
+		timelineDuration = duration;
+		ignoreSliderUpdate = true;
+		timeSlider.setMaximum(Math.max(1, duration));
+		timeSlider.setValue(Math.max(0, Math.min(time, duration)));
+		ignoreSliderUpdate = false;
+		timeSlider.setEnabled(duration > 0);
+		updateTimeLabel(time);
+	}
+
+	private boolean isPlaybackActive()
+	{
+		return playbackSession != null && playbackSession.isPlaying();
+	}
+
+	private void setPlaybackPaused(boolean paused)
+	{
+		pauseButton.setIcon(paused ? ThemedIcon.PLAY_24 : ThemedIcon.PAUSE_24);
+		pauseButton.setToolTipText(paused ? "Play" : "Pause");
+	}
+
+	private void toggleMute()
+	{
+		if (masterVolumeSlider.getValue() == 0)
+			masterVolumeSlider.setValue(unmutedVolume);
+		else {
+			unmutedVolume = masterVolumeSlider.getValue();
+			masterVolumeSlider.setValue(0);
+		}
+	}
+
+	private void updateMasterVolume()
+	{
+		int volume = masterVolumeSlider.getValue();
+		engine.setMasterVolume(volumeSliderToGain(volume));
+		if (volume == 0) {
+			muteButton.setIcon(ThemedIcon.VOLUME_OFF_16);
+			muteButton.setToolTipText("Unmute");
+		}
+		else {
+			unmutedVolume = volume;
+			muteButton.setIcon(ThemedIcon.VOLUME_UP_16);
+			muteButton.setToolTipText("Mute");
+		}
+	}
+
+	private void stopPlayback()
+	{
+		synchronized (threadLock) {
+			if (playbackSession != null)
+				playbackSession.stop();
+			seekTime = -1;
+		}
+
+		ignoreSliderUpdate = true;
+		timeSlider.setValue(0);
+		ignoreSliderUpdate = false;
+		timeSlider.setEnabled(false);
+		updateTimeLabel(0);
+		setPlaybackPaused(true);
+		updatePlaybackControls();
+		statusLabel.setText("Playback stopped.");
+	}
+
+	private void restartPlayback()
+	{
+		int duration;
+		boolean playing;
+		synchronized (threadLock) {
+			if (playbackSession == null)
+				return;
+			seekTime = -1;
+			playbackSession.restart();
+			duration = playbackSession.getDuration();
+			playing = playbackSession.isPlaying();
+		}
+		updateTimeline(duration);
+		setPlaybackPaused(false);
+		updatePlaybackControls();
+		statusLabel.setText(playing ? "Playback restarted." : "Could not restart playback.");
+	}
+
+	private void updateTimeLabel(int playbackTime)
+	{
+		timeLabel.setText(formatTime(playbackTime) + " / " + formatTime(timelineDuration));
+	}
+
+	private static String formatTime(int time)
+	{
+		long milliseconds = Math.round(time * 1000.0 / AudioEngine.OUTPUT_RATE);
+		long minutes = milliseconds / 60000;
+		long seconds = (milliseconds / 1000) % 60;
+		long millis = milliseconds % 1000;
+		return String.format("%d:%02d.%03d", minutes, seconds, millis);
+	}
+
+	private static int gainToVolumeSlider(int gain)
+	{
+		double ratio = Math.max(0.0, Math.min(1.0,
+			gain / (double) AudioEngine.MAX_MASTER_VOLUME));
+		return (int) Math.round(Math.sqrt(ratio) * VOLUME_SLIDER_MAX);
+	}
+
+	private static int volumeSliderToGain(int volume)
+	{
+		double ratio = volume / (double) VOLUME_SLIDER_MAX;
+		return (int) Math.round(ratio * ratio * AudioEngine.MAX_MASTER_VOLUME);
+	}
+
+	private void chooseExport()
+	{
+		if (playbackSession == null || selectionOwner == null)
+			return;
+		BoothExportSource source = selectionOwner.getExportSource();
+		if (source == null)
+			return;
+
+		int loopRepetitions = 0;
+		if (source.hasInfiniteLoop()) {
+			JSpinner spinner = new JSpinner(new SpinnerNumberModel(2, 1, 100, 1));
+			SwingUtils.centerSpinnerText(spinner);
+			JPanel panel = new JPanel(new MigLayout("ins 0", "[][grow]", "[]"));
+			panel.add(SwingUtils.getLabel("Loop repetitions:", 12));
+			panel.add(spinner, "growx");
+			int choice = JOptionPane.showConfirmDialog(assetTabs, panel,
+				"Export Looping Audio", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+			if (choice != JOptionPane.OK_OPTION)
+				return;
+			loopRepetitions = (Integer) spinner.getValue();
+		}
+
+		File sourceFile = source.getSourceFile();
+		File defaultFile = new File(sourceFile.getParentFile(), source.getDefaultFileName());
+		JFileChooser chooser = new JFileChooser(sourceFile.getParentFile());
+		chooser.setDialogTitle("Export Audio as WAV");
+		chooser.setFileFilter(new FileNameExtensionFilter("WAV audio (*.wav)", "wav"));
+		chooser.setSelectedFile(defaultFile);
+		if (chooser.showSaveDialog(assetTabs) != JFileChooser.APPROVE_OPTION)
+			return;
+
+		File outputFile = chooser.getSelectedFile();
+		if (!outputFile.getName().toLowerCase(Locale.ROOT).endsWith(".wav"))
+			outputFile = new File(outputFile.getParentFile(), outputFile.getName() + ".wav");
+		if (outputFile.isFile()) {
+			int choice = SwingUtils.getConfirmDialog()
+				.setParent(assetTabs)
+				.setTitle("Replace WAV File")
+				.setMessage(outputFile.getName() + " already exists. Replace it?")
+				.setOptionsType(JOptionPane.YES_NO_OPTION)
+				.choose();
+			if (choice != JOptionPane.YES_OPTION)
+				return;
+		}
+
+		startExport(source.createRequest(outputFile, engine.getMasterVolume(), loopRepetitions));
+	}
+
+	private void startExport(BoothExportRequest request)
+	{
+		exporting = true;
+		updatePlaybackControls();
+		statusLabel.setText("Exporting " + request.getOutputFile().getName() + "...");
+
+		SwingWorker<AudioExporter.Result, Void> worker = new SwingWorker<>() {
+			@Override
+			protected AudioExporter.Result doInBackground() throws Exception
+			{
+				return request.render(audioExporter);
+			}
+
+			@Override
+			protected void done()
+			{
+				exporting = false;
+				updatePlaybackControls();
+				try {
+					AudioExporter.Result result = get();
+					if (result.truncated()) {
+						statusLabel.setText("Export reached the safety limit: "
+							+ request.getOutputFile().getName());
+					}
+					else {
+						statusLabel.setText("Exported " + request.getOutputFile().getName()
+							+ " (" + formatSampleTime(result.samples()) + ").");
+					}
+				}
+				catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+				catch (ExecutionException e) {
+					Logger.logfError("Could not export WAV file %s", request.getOutputFile().getName());
+					Logger.printStackTrace(e.getCause());
+					statusLabel.setText("Could not export " + request.getOutputFile().getName());
+				}
+			}
+		};
+		worker.execute();
+	}
+
+	private static String formatSampleTime(long samples)
+	{
+		long milliseconds = Math.round(samples * 1000.0 / AudioEngine.OUTPUT_RATE);
+		long minutes = milliseconds / 60000;
+		long seconds = (milliseconds / 1000) % 60;
+		long millis = milliseconds % 1000;
+		return String.format("%d:%02d.%03d", minutes, seconds, millis);
+	}
+
+	private static void attachTabs(List<AudioBoothTab> tabs)
+	{
+		for (AudioBoothTab tab : tabs)
+			tab.attach();
+	}
+
+	private static void closeTabs(List<AudioBoothTab> tabs)
+	{
+		for (AudioBoothTab tab : tabs)
+			tab.close();
+	}
+
+	private void stopAllTabs()
+	{
+		for (AudioBoothTab tab : boothTabs)
+			tab.stop();
+	}
+
+	private void close(JFrame frame, boolean returnToMainMenu)
+	{
+		if (!running)
+			return;
+
+		running = false;
+		synchronized (threadLock) {
+			closeTabs(boothTabs);
+			engine.shutdown();
+		}
+		exitToMainMenu = returnToMainMenu;
+		frame.dispose();
+		guiClosedSignal.countDown();
+	}
+
+	private void run() throws InterruptedException
+	{
+		double deltaTime = AudioEngine.FRAME_TIME;
+		FrameLimiter limiter = new FrameLimiter();
+
+		while (running) {
+			long startTime = System.nanoTime();
+			int playbackTime;
+			boolean playbackActiveBeforeRender;
+			boolean playbackActive;
+			boolean playbackPaused;
+
+			synchronized (threadLock) {
+				if (seekTime >= 0 && playbackSession != null) {
+					playbackSession.seekTime(seekTime);
+					seekTime = -1;
+				}
+
+				playbackActiveBeforeRender = playbackSession != null && playbackSession.isPlaying();
+				engine.renderFrame(deltaTime, false);
+				if (playbackSession == null) {
+					playbackTime = 0;
+					playbackActive = false;
+					playbackPaused = false;
+				}
+				else {
+					playbackTime = playbackSession.getTime();
+					playbackActive = playbackSession.isPlaying();
+					playbackPaused = playbackSession.isPaused();
+				}
+			}
+
+			boolean playbackFinished = (playbackWasActive || playbackActiveBeforeRender) && !playbackActive;
+			playbackWasActive = playbackActive;
+			updateTimeSlider(playbackTime, playbackPaused, playbackFinished);
+			limiter.sync(AudioEngine.TARGET_FPS);
+			deltaTime = (System.nanoTime() - startTime) / 1e9;
+		}
+	}
+
+	private void updateTimeSlider(int playbackTime, boolean playbackPaused, boolean refreshPlaybackControls)
+	{
+		SwingUtilities.invokeLater(() -> {
+			if (!running)
+				return;
+			ignoreSliderUpdate = true;
+			timeSlider.setValue(playbackTime);
+			ignoreSliderUpdate = false;
+			updateTimeLabel(playbackTime);
+			if (refreshPlaybackControls) {
+				setPlaybackPaused(playbackPaused || !isPlaybackActive());
+				updatePlaybackControls();
+			}
+		});
+	}
+}

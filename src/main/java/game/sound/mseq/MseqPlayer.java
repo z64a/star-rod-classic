@@ -5,6 +5,7 @@ import game.sound.engine.AudioClient;
 import game.sound.engine.AudioEngine;
 import game.sound.engine.Envelope.EnvelopePair;
 import game.sound.engine.Instrument;
+import game.sound.engine.PlaybackSession;
 import game.sound.engine.SoundBank;
 import game.sound.engine.SoundBank.DrumQueryResult;
 import game.sound.engine.SoundBank.InstrumentQueryResult;
@@ -26,7 +27,7 @@ import game.sound.mseq.Mseq.TrackRamp;
 import game.sound.mseq.Mseq.TrackRampType;
 import util.Logger;
 
-public class MseqPlayer implements AudioClient
+public class MseqPlayer implements AudioClient, PlaybackSession
 {
 	private static final int NUM_VOICES = 16;
 	public static final int SAMPLES_PER_TICK = 2 * AudioEngine.FRAME_SAMPLES;
@@ -42,6 +43,7 @@ public class MseqPlayer implements AudioClient
 
 	private final AudioEngine engine;
 	private final SoundBank bank;
+	private boolean attached;
 
 	private PlayerState state;
 
@@ -137,15 +139,24 @@ public class MseqPlayer implements AudioClient
 	{
 		this.engine = engine;
 		this.bank = bank;
-
-		engine.addClient(this);
 	}
 
-	public boolean getPaused()
+	@Override
+	public void attach()
+	{
+		if (!attached) {
+			engine.addClient(this);
+			attached = true;
+		}
+	}
+
+	@Override
+	public boolean isPaused()
 	{
 		return state == PlayerState.PAUSED;
 	}
 
+	@Override
 	public boolean isPlaying()
 	{
 		return state == PlayerState.PLAYING || state == PlayerState.PAUSED;
@@ -171,6 +182,7 @@ public class MseqPlayer implements AudioClient
 		}
 	}
 
+	@Override
 	public int getTimelineLoopCount()
 	{
 		if (timelineLoopCounts == null)
@@ -178,6 +190,7 @@ public class MseqPlayer implements AudioClient
 		return Math.max(timelineLoopCounts[0], timelineLoopCounts[1]);
 	}
 
+	@Override
 	public void stop()
 	{
 		if (voices != null) {
@@ -189,6 +202,14 @@ public class MseqPlayer implements AudioClient
 		state = PlayerState.DONE;
 	}
 
+	@Override
+	public void restart()
+	{
+		if (mseq != null)
+			setMseq(mseq);
+	}
+
+	@Override
 	public void setPaused(boolean pause)
 	{
 		boolean changed = false;
@@ -211,20 +232,31 @@ public class MseqPlayer implements AudioClient
 		}
 	}
 
+	@Override
 	public int getTime()
 	{
-		return curTime + (curDuration - delayTime);
+		long time = (long) (curTime + (curDuration - delayTime)) * SAMPLES_PER_TICK;
+		return (int) Math.min(Integer.MAX_VALUE, time);
 	}
 
+	@Override
+	public int getDuration()
+	{
+		if (mseq == null)
+			return 0;
+		return (int) Math.min(Integer.MAX_VALUE, (long) mseq.duration * SAMPLES_PER_TICK);
+	}
+
+	@Override
 	public void seekTime(int seekTime)
 	{
 		if (mseq == null || mseq.commands.isEmpty())
 			return;
 
-		if (seekTime < 0 || seekTime >= mseq.duration)
+		if (seekTime < 0 || seekTime >= getDuration())
 			return;
 
-		if (seekTime == curTime)
+		if (seekTime == getTime())
 			return;
 
 		boolean wasPaused = (state == PlayerState.PAUSED);
@@ -232,16 +264,11 @@ public class MseqPlayer implements AudioClient
 		// hard reset playback to the very start
 		setMseq(this.mseq);
 
-		// don't let the data line run dry while we work -- create 50ms of blank audio
-		engine.padLine(0.050);
+		engine.prepareForSeek();
 
 		// silently fast forward through everything until seek time
-		long t0 = System.nanoTime();
-		while (getTime() < seekTime && state != PlayerState.DONE) {
-			engine.renderFrame(AudioEngine.FRAME_TIME, true);
-		}
-		long t1 = System.nanoTime();
-		// System.out.println("Seek took " + (t1 - t0) / 1e6 + " ms");
+		while (getTime() < seekTime && state != PlayerState.DONE)
+			engine.renderFrame(AudioEngine.MIXER_BLOCK_TIME, true);
 
 		// resume audible playback (or not)
 		if (wasPaused) {
@@ -256,11 +283,17 @@ public class MseqPlayer implements AudioClient
 			state = PlayerState.PLAYING;
 		}
 
-		// flush any queued output or overflow samples
-		engine.flush();
+		engine.finishSeek();
+	}
 
-		// add just over a frame of blank audio to smooth over the transition to the next frame
-		engine.padLine(0.020);
+	@Override
+	public void close()
+	{
+		stop();
+		if (attached) {
+			engine.removeClient(this);
+			attached = false;
+		}
 	}
 
 	public void setMseq(Mseq mseq)

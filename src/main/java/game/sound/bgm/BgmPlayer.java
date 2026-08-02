@@ -54,6 +54,7 @@ import game.sound.engine.EffectBus.EffectPreset;
 import game.sound.engine.Envelope.EnvelopePair;
 import game.sound.engine.EnvelopeProgram;
 import game.sound.engine.Instrument;
+import game.sound.engine.PlaybackSession;
 import game.sound.engine.SoundBank;
 import game.sound.engine.SoundBank.DrumQueryResult;
 import game.sound.engine.SoundBank.InstrumentQueryResult;
@@ -61,7 +62,7 @@ import game.sound.engine.SoundBank.PresetQueryResult;
 import game.sound.engine.Voice;
 import util.Logger;
 
-public class BgmPlayer implements AudioClient
+public class BgmPlayer implements AudioClient, PlaybackSession
 {
 	private static final int NUM_TRACKS = 16;
 	private static final int DEFAULT_BPM = 156;
@@ -73,9 +74,6 @@ public class BgmPlayer implements AudioClient
 	private static final int PROXIMITY_OVERRIDE_FADE_TICKS = 72;
 	private static final int MAX_TIMELINE_FRAMES =
 		30 * 60 * AudioEngine.OUTPUT_RATE / AudioEngine.FRAME_SAMPLES;
-	private static final double AUDIO_BLOCK_TIME =
-		(AudioEngine.FRAME_SAMPLES - 0.5) / AudioEngine.OUTPUT_RATE;
-
 	private static final int[] CUSTOM_ENV_TIMES = {
 		0x5E, 0x5D, 0x5C, 0x5B, 0x5A, 0x58, 0x56, 0x53,
 		0x51, 0x4F, 0x4A, 0x45, 0x40, 0x3B, 0x37, 0x35,
@@ -93,6 +91,7 @@ public class BgmPlayer implements AudioClient
 
 	private final AudioEngine engine;
 	private final SoundBank bank;
+	private boolean attached;
 	private final BgmTrackPlayer[] tracks = new BgmTrackPlayer[NUM_TRACKS];
 	private final List<BgmVoice> voices = new ArrayList<>();
 	private final int[][] customPressEnvelopes = new int[8][18];
@@ -142,8 +141,15 @@ public class BgmPlayer implements AudioClient
 			tracks[i] = new BgmTrackPlayer(i);
 		for (int i = 0; i < compLoops.length; i++)
 			compLoops[i] = new LoopState();
+	}
 
-		engine.addClient(this);
+	@Override
+	public void attach()
+	{
+		if (!attached) {
+			engine.addClient(this);
+			attached = true;
+		}
 	}
 
 	public void setListener(Listener listener)
@@ -154,6 +160,8 @@ public class BgmPlayer implements AudioClient
 	public void play(Song song, int compositionIndex)
 	{
 		stop();
+		selectedSong = null;
+		duration = 0;
 		if (song == null)
 			return;
 		proximityMixID = 0;
@@ -174,28 +182,39 @@ public class BgmPlayer implements AudioClient
 		this.compositionIndex = compositionIndex;
 		engine.resetRenderState();
 		duration = calculateDuration(song);
-		beginPlayback(song);
-		engine.resetRenderState();
+		restart();
 	}
 
+	@Override
 	public void stop()
 	{
 		clearActivePlayback();
-		selectedSong = null;
-		duration = 0;
 		engine.resetEffects();
 	}
 
+	@Override
+	public void restart()
+	{
+		if (selectedSong == null)
+			return;
+		engine.resetRenderState();
+		beginPlayback(selectedSong);
+		engine.resetRenderState();
+	}
+
+	@Override
 	public boolean isPlaying()
 	{
 		return currentSong != null;
 	}
 
-	public boolean getPaused()
+	@Override
+	public boolean isPaused()
 	{
 		return paused;
 	}
 
+	@Override
 	public void setPaused(boolean paused)
 	{
 		if (currentSong == null || this.paused == paused)
@@ -206,14 +225,16 @@ public class BgmPlayer implements AudioClient
 			voice.setPaused(paused);
 	}
 
+	@Override
 	public int getTime()
 	{
-		return Math.min(currentTime, duration);
+		return Math.min(currentTime, duration) * AudioEngine.FRAME_SAMPLES;
 	}
 
+	@Override
 	public int getDuration()
 	{
-		return duration;
+		return duration * AudioEngine.FRAME_SAMPLES;
 	}
 
 	public int getCompositionIndex()
@@ -221,6 +242,7 @@ public class BgmPlayer implements AudioClient
 		return compositionIndex;
 	}
 
+	@Override
 	public int getTimelineLoopCount()
 	{
 		return timelineLoopCount;
@@ -265,26 +287,26 @@ public class BgmPlayer implements AudioClient
 		markProximityMixChanged(mixChanged);
 	}
 
+	@Override
 	public void seekTime(int seekTime)
 	{
-		if (selectedSong == null || duration == 0)
+		if (selectedSong == null || getDuration() == 0)
 			return;
-		if (seekTime < 0 || seekTime >= duration || seekTime == getTime())
+		if (seekTime < 0 || seekTime >= getDuration() || seekTime == getTime())
 			return;
 
 		boolean wasPaused = paused;
 		beginPlayback(selectedSong);
-		engine.padLine(0.050);
-		while (currentSong != null && currentTime < seekTime)
-			engine.renderFrame(AUDIO_BLOCK_TIME, true);
+		engine.prepareForSeek();
+		while (currentSong != null && getTime() < seekTime)
+			engine.renderFrame(AudioEngine.MIXER_BLOCK_TIME, true);
 
 		for (BgmVoice voice : voices)
 			voice.setLoopingAllowed(true);
 		if (wasPaused)
 			setPaused(true);
 
-		engine.flush();
-		engine.padLine(0.020);
+		engine.finishSeek();
 	}
 
 	@Override
@@ -326,7 +348,7 @@ public class BgmPlayer implements AudioClient
 		Arrays.fill(compStartTimes, -1);
 		beginPlayback(song);
 		while (currentSong != null && currentTime < MAX_TIMELINE_FRAMES)
-			engine.renderFrame(AUDIO_BLOCK_TIME, true);
+			engine.renderFrame(AudioEngine.MIXER_BLOCK_TIME, true);
 
 		int result = currentTime;
 		if (currentSong != null)
@@ -413,6 +435,16 @@ public class BgmPlayer implements AudioClient
 		phraseFinished = false;
 		currentTime = 0;
 		requestedTime = -1;
+	}
+
+	@Override
+	public void close()
+	{
+		stop();
+		if (attached) {
+			engine.removeClient(this);
+			attached = false;
+		}
 	}
 
 	private void updateTick(boolean fastForward)

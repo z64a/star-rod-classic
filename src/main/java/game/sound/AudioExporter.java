@@ -2,8 +2,6 @@ package game.sound;
 
 import java.io.File;
 import java.util.List;
-import java.util.function.BooleanSupplier;
-import java.util.function.IntSupplier;
 
 import game.sound.bgm.BgmPlayer;
 import game.sound.bgm.Composition;
@@ -11,6 +9,7 @@ import game.sound.bgm.Composition.CompCommand;
 import game.sound.bgm.Composition.EndLoopCompCommand;
 import game.sound.bgm.Song;
 import game.sound.engine.AudioEngine;
+import game.sound.engine.PlaybackSession;
 import game.sound.engine.SoundBank;
 import game.sound.engine.WavWriter;
 import game.sound.mseq.Mseq;
@@ -29,8 +28,6 @@ import game.sound.sfx.SfxPlayer;
 
 public class AudioExporter
 {
-	private static final double AUDIO_BLOCK_TIME =
-		(AudioEngine.FRAME_SAMPLES - 0.5) / AudioEngine.OUTPUT_RATE;
 	private static final int MAX_EXPORT_BLOCKS =
 		30 * 60 * AudioEngine.OUTPUT_RATE / AudioEngine.FRAME_SAMPLES;
 	private static final int MAX_TAIL_BLOCKS =
@@ -48,9 +45,10 @@ public class AudioExporter
 	{
 		return render(outputFile, volume, loopRepetitions, (engine) -> {
 			SfxPlayer player = new SfxPlayer(engine, bank);
+			player.attach();
 			player.setArchive(archive);
 			player.play(sound.id);
-			return new ExportPlayback(player);
+			return player;
 		});
 	}
 
@@ -59,8 +57,9 @@ public class AudioExporter
 	{
 		return render(outputFile, volume, loopRepetitions, (engine) -> {
 			MseqPlayer player = new MseqPlayer(engine, bank);
+			player.attach();
 			player.setMseq(mseq);
-			return new ExportPlayback(player);
+			return player;
 		});
 	}
 
@@ -70,9 +69,10 @@ public class AudioExporter
 	{
 		return render(outputFile, volume, loopRepetitions, (engine) -> {
 			BgmPlayer player = new BgmPlayer(engine, bank);
+			player.attach();
 			player.play(song, composition);
 			player.setProximityMix(proximityMixID, proximityMixVolume, proximityMixInstant);
-			return new ExportPlayback(player);
+			return player;
 		});
 	}
 
@@ -82,28 +82,33 @@ public class AudioExporter
 		try (WavWriter writer = new WavWriter(outputFile)) {
 			AudioEngine engine = new AudioEngine(writer);
 			engine.setMasterVolume(volume);
-			ExportPlayback playback = factory.create(engine);
+			PlaybackSession playback = factory.create(engine);
 
-			int blocks = 0;
-			while (playback.isPlaying() && blocks < MAX_EXPORT_BLOCKS) {
-				if (loopRepetitions != 0 && playback.getTimelineLoopCount() >= loopRepetitions)
-					break;
-				engine.renderFrame(AUDIO_BLOCK_TIME, false);
-				blocks++;
-			}
-
-			boolean truncated = blocks == MAX_EXPORT_BLOCKS && playback.isPlaying();
-			if (!playback.isPlaying()) {
-				int tailBlocks = 0;
-				while (engine.hasActiveVoices() && tailBlocks < MAX_TAIL_BLOCKS) {
-					engine.renderFrame(AUDIO_BLOCK_TIME, false);
-					tailBlocks++;
+			try {
+				int blocks = 0;
+				while (playback.isPlaying() && blocks < MAX_EXPORT_BLOCKS) {
+					if (loopRepetitions != 0 && playback.getTimelineLoopCount() >= loopRepetitions)
+						break;
+					engine.renderFrame(AudioEngine.MIXER_BLOCK_TIME, false);
+					blocks++;
 				}
-				if (tailBlocks == MAX_TAIL_BLOCKS && engine.hasActiveVoices())
-					truncated = true;
-			}
 
-			return new Result(writer.getSampleCount(), truncated);
+				boolean truncated = blocks == MAX_EXPORT_BLOCKS && playback.isPlaying();
+				if (!playback.isPlaying()) {
+					int tailBlocks = 0;
+					while (engine.hasActiveVoices() && tailBlocks < MAX_TAIL_BLOCKS) {
+						engine.renderFrame(AudioEngine.MIXER_BLOCK_TIME, false);
+						tailBlocks++;
+					}
+					if (tailBlocks == MAX_TAIL_BLOCKS && engine.hasActiveVoices())
+						truncated = true;
+				}
+
+				return new Result(writer.getSampleCount(), truncated);
+			}
+			finally {
+				playback.close();
+			}
 		}
 	}
 
@@ -156,35 +161,7 @@ public class AudioExporter
 
 	private interface PlayerFactory
 	{
-		ExportPlayback create(AudioEngine engine) throws Exception;
-	}
-
-	private record ExportPlayback(BooleanSupplier playing, IntSupplier timelineLoopCount)
-	{
-		public ExportPlayback(SfxPlayer player)
-		{
-			this(player::isPlaying, player::getTimelineLoopCount);
-		}
-
-		public ExportPlayback(MseqPlayer player)
-		{
-			this(player::isPlaying, player::getTimelineLoopCount);
-		}
-
-		public ExportPlayback(BgmPlayer player)
-		{
-			this(player::isPlaying, player::getTimelineLoopCount);
-		}
-
-		public boolean isPlaying()
-		{
-			return playing.getAsBoolean();
-		}
-
-		public int getTimelineLoopCount()
-		{
-			return timelineLoopCount.getAsInt();
-		}
+		PlaybackSession create(AudioEngine engine) throws Exception;
 	}
 
 	public record Result(long samples, boolean truncated)
