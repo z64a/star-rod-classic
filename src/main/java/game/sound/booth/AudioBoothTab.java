@@ -148,7 +148,7 @@ abstract class AudioBoothTab extends JPanel
 		filterControls.add(SwingUtils.getLabel("Filter:", 12));
 		filterControls.add(filterField, "growx");
 
-		JPanel filterPanel = new JPanel(new MigLayout("ins 0, fillx", "[grow 2,fill][grow 1,fill]", "[]"));
+		JPanel filterPanel = new JPanel(new MigLayout("ins 0, fillx", "[66.666%,fill][grow,fill]", "[]"));
 		filterPanel.add(filterControls, "growx");
 		filterPanel.add(countLabel, "growx");
 

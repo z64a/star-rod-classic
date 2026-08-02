@@ -23,6 +23,7 @@ import javax.swing.JPanel;
 
 import org.apache.commons.io.FilenameUtils;
 
+import app.SwingUtils;
 import app.input.IOUtils;
 import game.sound.AudioCatalog;
 import game.sound.AudioExporter;
@@ -88,6 +89,7 @@ final class MseqTab extends AudioBoothTab
 		JPanel listPanel = createListPanel(fileList, model, MOD_AUDIO_MSEQ.toFile(),
 			(file) -> formatName(file, names, hasRamps.get(file)));
 		rampButton = new JButton("Trigger Ramps");
+		SwingUtils.addBorderPadding(rampButton);
 		rampButton.setToolTipText("Start this MSEQ's track tune and volume ramps.");
 		rampButton.setEnabled(false);
 		rampButton.addActionListener((e) -> triggerRamps());
@@ -113,7 +115,7 @@ final class MseqTab extends AudioBoothTab
 			Logger.printStackTrace(e);
 			selectedMseq = null;
 			booth.selectWithoutPlayback(this);
-			booth.setStatus("Could not load MSEQ " + file.getName());
+			booth.setStatus("Could not load " + file.getName());
 		}
 	}
 
@@ -122,7 +124,7 @@ final class MseqTab extends AudioBoothTab
 		if (selectedMseq == null || selectedFile == null)
 			return;
 		booth.startPlayback(this, player, () -> player.setMseq(selectedMseq));
-		booth.setStatus("Playing MSEQ " + selectedFile.getName());
+		booth.setStatus("Playing ambience " + selectedFile.getName());
 	}
 
 	private void triggerRamps()
@@ -130,7 +132,7 @@ final class MseqTab extends AudioBoothTab
 		if (!booth.isCurrentSession(player) || selectedMseq == null)
 			return;
 		booth.runAudioAction(() -> player.triggerTrackRamps());
-		booth.setStatus("Triggered track ramps for MSEQ " + selectedFile.getName());
+		booth.setStatus("Triggered track ramps for " + selectedFile.getName());
 	}
 
 	@Override

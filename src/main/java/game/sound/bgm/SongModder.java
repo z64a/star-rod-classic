@@ -1,13 +1,16 @@
 package game.sound.bgm;
 
 import static app.Directories.*;
+import static game.sound.AudioModder.SongListKey.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.w3c.dom.Element;
 
 import app.Directories;
 import app.Environment;
@@ -19,6 +22,11 @@ import util.xml.XmlWrapper.XmlWriter;
 
 public abstract class SongModder
 {
+	private static final int TOAD_TOWN_SONG_ID = 0;
+	private static final List<String> TOAD_TOWN_BRANCH_NAMES = List.of(
+		"Default", "Kitchen", "Merlon", "Dojo", "Tunnels",
+		"FlowerGate", "Sinister", "RussT", "BadgeShop", "Toybox");
+
 	public static void main(String[] args) throws IOException
 	{
 		Environment.initialize();
@@ -34,12 +42,16 @@ public abstract class SongModder
 	public static void dumpAll() throws IOException
 	{
 		SoundBankCatalog catalog = SoundBankCatalog.loadDump();
+		File songListFile = DUMP_AUDIO.getFile(FN_AUDIO_SONGS);
+		String toadTownBgm = getBgmForSong(songListFile, TOAD_TOWN_SONG_ID);
 		Collection<File> files = IOUtils.getFilesWithExtension(Directories.DUMP_AUDIO_RAW, "bgm", false);
 		for (File f : files) {
 			Logger.log("Extracting " + f.getName());
 			SoundBankCatalog songCatalog = catalog.withSongBanks(
-				DUMP_AUDIO.getFile(FN_AUDIO_SONGS), f.getName());
+				songListFile, f.getName());
 			Song song = new Song(f, songCatalog);
+			if (f.getName().equals(toadTownBgm))
+				song.setBranchNames(TOAD_TOWN_BRANCH_NAMES);
 
 			String name = FilenameUtils.getBaseName(f.getName());
 
@@ -47,6 +59,27 @@ public abstract class SongModder
 				song.toXML(xmw);
 			}
 		}
+	}
+
+	private static String getBgmForSong(File songListFile, int songID) throws IOException
+	{
+		XmlReader xmr = new XmlReader(songListFile);
+		List<Element> songElements = xmr.getTags(xmr.getRootElement(), TAG_SONG);
+
+		for (int index = 0; index < songElements.size(); index++) {
+			Element songElement = songElements.get(index);
+			int currentID = xmr.hasAttribute(songElement, ATTR_ID)
+				? xmr.readHex(songElement, ATTR_ID) : index;
+			if (currentID != songID)
+				continue;
+
+			if (xmr.hasAttribute(songElement, ATTR_OLD_BGM))
+				return xmr.getAttribute(songElement, ATTR_OLD_BGM);
+			xmr.requiresAttribute(songElement, ATTR_BGM);
+			return xmr.getAttribute(songElement, ATTR_BGM);
+		}
+
+		throw new IOException(String.format("Song list does not contain song ID %X", songID));
 	}
 
 	public static void copyAll() throws IOException

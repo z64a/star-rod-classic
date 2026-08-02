@@ -10,7 +10,6 @@ public class SamplePlayer implements PlaybackSession
 	private Instrument instrument;
 	private EnvelopePair envelope;
 	private float pitch = 1.0f;
-	private boolean looping = true;
 	private boolean paused;
 	private boolean releasing;
 
@@ -30,7 +29,12 @@ public class SamplePlayer implements PlaybackSession
 	@Override
 	public void restart()
 	{
-		stop();
+		if (voice != null) {
+			voice.fadeOut();
+			voice = null;
+		}
+		paused = false;
+		releasing = false;
 		if (instrument == null || envelope == null)
 			return;
 
@@ -38,19 +42,16 @@ public class SamplePlayer implements PlaybackSession
 		voice.setInstrument(instrument);
 		voice.setEnvelope(envelope);
 		voice.setPitch(pitch);
-		voice.setLoopingAllowed(looping);
+		voice.setLoopingAllowed(true);
 		engine.addVoice(voice);
 		voice.play();
-		paused = false;
-		releasing = false;
-		engine.resetRenderState();
 	}
 
 	@Override
 	public void stop()
 	{
 		if (voice != null) {
-			voice.kill();
+			voice.fadeOut();
 			voice = null;
 		}
 		paused = false;
@@ -87,7 +88,7 @@ public class SamplePlayer implements PlaybackSession
 	{
 		if (voice == null)
 			return 0;
-		return Math.min(voice.getRenderedSamples(), getDuration());
+		return Math.min(voice.getOutputPos(), getDuration());
 	}
 
 	@Override
@@ -95,8 +96,6 @@ public class SamplePlayer implements PlaybackSession
 	{
 		if (instrument == null)
 			return 0;
-		if (voice != null)
-			return voice.getOutputDuration();
 		return Voice.getOutputDuration(instrument, pitch);
 	}
 
@@ -113,34 +112,32 @@ public class SamplePlayer implements PlaybackSession
 		boolean wasPaused = isPaused();
 		restart();
 		engine.prepareForSeek();
-		while (isPlaying() && getTime() < time)
+		while (isPlaying() && voice.getRenderedSamples() < time)
 			engine.renderFrame(AudioEngine.MIXER_BLOCK_TIME, true);
-		if (wasPaused)
-			setPaused(true);
+		if (wasPaused) {
+			paused = true;
+			voice.setPaused(true);
+		}
 		engine.finishSeek();
 	}
 
 	@Override
 	public void setPaused(boolean paused)
 	{
-		if (!isPlaying())
+		if (!isPlaying() || this.paused == paused)
 			return;
 		this.paused = paused;
-		voice.setPaused(paused);
+		if (paused)
+			voice.fadeToPause();
+		else
+			voice.fadeFromPause();
 	}
 
 	public void setPitch(float pitch)
 	{
 		this.pitch = pitch;
-		if (isPlaying())
+		if (voice != null)
 			voice.setPitch(pitch);
-	}
-
-	public void setLooping(boolean looping)
-	{
-		this.looping = looping;
-		if (isPlaying())
-			voice.setLoopingAllowed(looping);
 	}
 
 }

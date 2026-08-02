@@ -263,6 +263,23 @@ public class BgmPlayer implements AudioClient, PlaybackSession
 		setProximityMix(mixID, volume, false);
 	}
 
+	public void resetProximityMix()
+	{
+		if (selectedSong == null)
+			return;
+
+		boolean mixChanged = proximityMixID != 0;
+		proximityMixID = 0;
+		proximityMixVolume = 0;
+		proximityMixInstant = false;
+		for (BgmTrackPlayer track : tracks) {
+			if (mixChanged)
+				track.proximityMixChanged = true;
+			track.proximityValueChanged = false;
+			track.proximityVolume.setImmediate(1.0f);
+		}
+	}
+
 	public void setProximityMix(int mixID, int volume, boolean instant)
 	{
 		if (selectedSong == null)
@@ -1046,7 +1063,8 @@ public class BgmPlayer implements AudioClient, PlaybackSession
 			isDrum = option.isDrum();
 			if (proximityMixChanged) {
 				proximityMixChanged = false;
-				proximityVolume.setImmediate(0.0f);
+				proximityVolume.setImmediate(
+					proximityMixID == 0 && proximityMixVolume == 0 ? 1.0f : 0.0f);
 				resetVoices(this);
 			}
 			if (proximityValueChanged) {

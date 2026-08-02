@@ -28,6 +28,9 @@ public class Voice
 	private int effectBus;
 
 	private boolean allowLooping;
+	private float playbackGain;
+	private float playbackTarget;
+	private VoiceState fadeEndState;
 	private int loopIterations;
 	private int renderedSamples;
 
@@ -40,6 +43,8 @@ public class Voice
 		pan = 64;
 		effectBus = 0;
 		allowLooping = true;
+		playbackGain = 1.0f;
+		playbackTarget = 1.0f;
 
 		state = VoiceState.INIT;
 	}
@@ -49,6 +54,9 @@ public class Voice
 		this.ins = ins;
 
 		state = VoiceState.READY;
+		playbackGain = 1.0f;
+		playbackTarget = 1.0f;
+		fadeEndState = null;
 		loopIterations = 0;
 		renderedSamples = 0;
 	}
@@ -110,9 +118,9 @@ public class Voice
 		return renderedSamples;
 	}
 
-	int getOutputDuration()
+	int getOutputPos()
 	{
-		return getOutputDuration(ins, pitch);
+		return getOutputPos(ins, pitch, readPos);
 	}
 
 	static int getOutputDuration(Instrument instrument, float pitch)
@@ -120,6 +128,13 @@ public class Voice
 		if (instrument == null || instrument.samples.size() < 2)
 			return 0;
 		return (int) Math.ceil((instrument.samples.size() - 1) / getResampleRatio(instrument, pitch));
+	}
+
+	private static int getOutputPos(Instrument instrument, float pitch, float readPos)
+	{
+		if (instrument == null)
+			return 0;
+		return (int) Math.floor(readPos / getResampleRatio(instrument, pitch));
 	}
 
 	public void play()
@@ -152,7 +167,41 @@ public class Voice
 
 	public void kill()
 	{
+		fadeEndState = null;
 		state = VoiceState.DONE;
+	}
+
+	void fadeOut()
+	{
+		fadeTo(VoiceState.DONE);
+	}
+
+	void fadeToPause()
+	{
+		fadeTo(VoiceState.PAUSED);
+	}
+
+	void fadeFromPause()
+	{
+		if (state == VoiceState.PAUSED) {
+			state = VoiceState.PLAYING;
+			playbackGain = 0.0f;
+		}
+		if (state == VoiceState.PLAYING) {
+			playbackTarget = 1.0f;
+			fadeEndState = null;
+		}
+	}
+
+	private void fadeTo(VoiceState endState)
+	{
+		if (state == VoiceState.PLAYING) {
+			playbackTarget = 0.0f;
+			fadeEndState = endState;
+		}
+		else if (endState == VoiceState.DONE) {
+			kill();
+		}
 	}
 
 	public boolean isDone()
@@ -188,8 +237,8 @@ public class Voice
 		float wetAmt = (float) Math.sin(dryAngle);
 
 		float resampleRatio = getResampleRatio();
-		float voiceVolumeStart = volume * envVolumeStart;
-		float voiceVolumeEnd = volume * envVolumeEnd;
+		float voiceVolumeStart = volume * envVolumeStart * playbackGain;
+		float voiceVolumeEnd = volume * envVolumeEnd * playbackTarget;
 		float gainStart = voiceVolumeStart * voiceVolumeStart;
 		float gainEnd = voiceVolumeEnd * voiceVolumeEnd;
 
@@ -233,8 +282,14 @@ public class Voice
 				renderedSamples++;
 		}
 
-		if (envelopeDone)
+		playbackGain = playbackTarget;
+		if (envelopeDone) {
 			state = VoiceState.DONE;
+		}
+		else if (fadeEndState != null) {
+			state = fadeEndState;
+			fadeEndState = null;
+		}
 	}
 
 	private float getResampleRatio()

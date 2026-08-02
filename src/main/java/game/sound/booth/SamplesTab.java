@@ -1,6 +1,7 @@
 package game.sound.booth;
 
 import java.awt.Component;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -8,12 +9,12 @@ import java.util.List;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.SwingConstants;
 
 import app.SwingUtils;
 import game.sound.BankModder.Bank;
@@ -34,10 +35,8 @@ final class SamplesTab extends AudioBoothTab
 	private final JLabel sampleCountLabel;
 	private final JComboBox<Integer> envelopeBox;
 	private final JSlider pitchSlider;
-	private final JLabel pitchLabel;
-	private final JCheckBox loopBox;
-	private final JButton playButton;
-	private final JButton releaseButton;
+	private final JLabel pitchAmountLabel;
+	private final JButton playbackButton;
 
 	private Bank browsedBank;
 	private Bank selectedBank;
@@ -101,7 +100,11 @@ final class SamplesTab extends AudioBoothTab
 				playSample();
 		});
 
-		pitchLabel = SwingUtils.getLabel("Pitch: native", 12);
+		pitchAmountLabel = SwingUtils.getLabel("native", SwingConstants.RIGHT, 12);
+		Dimension pitchAmountSize = pitchAmountLabel.getPreferredSize();
+		pitchAmountSize.width = Math.max(pitchAmountSize.width,
+			SwingUtils.getLabel("-12 st", 12).getPreferredSize().width);
+		pitchAmountLabel.setPreferredSize(pitchAmountSize);
 		pitchSlider = new JSlider(-12, 12, 0);
 		pitchSlider.setEnabled(false);
 		pitchSlider.setMajorTickSpacing(12);
@@ -110,19 +113,14 @@ final class SamplesTab extends AudioBoothTab
 		pitchSlider.setToolTipText("Pitch offset from the sample's native tuning, in semitones.");
 		pitchSlider.addChangeListener((e) -> updatePitch());
 
-		loopBox = new JCheckBox("Loop");
-		loopBox.setEnabled(false);
-		loopBox.setToolTipText("Use the loop points stored in the sound bank.");
-		loopBox.addActionListener((e) -> updateLooping());
-
-		playButton = new JButton("Play");
-		playButton.setEnabled(false);
-		playButton.addActionListener((e) -> playSample());
-
-		releaseButton = new JButton("Release");
-		releaseButton.setEnabled(false);
-		releaseButton.setToolTipText("Apply the selected bank envelope's release program.");
-		releaseButton.addActionListener((e) -> releaseSample());
+		playbackButton = new JButton("Release");
+		SwingUtils.addBorderPadding(playbackButton);
+		Dimension playbackButtonSize = playbackButton.getPreferredSize();
+		playbackButton.setText("Play");
+		playbackButton.setPreferredSize(playbackButtonSize);
+		playbackButton.setEnabled(false);
+		playbackButton.setToolTipText("Play the selected sample with the selected bank envelope.");
+		playbackButton.addActionListener((e) -> toggleSamplePlayback());
 
 		bankList.addListSelectionListener((e) -> {
 			if (!suppressEvents && !e.getValueIsAdjusting())
@@ -139,15 +137,19 @@ final class SamplesTab extends AudioBoothTab
 		lists.add(createUnfilteredListPanel(bankList, "Banks", bankCountLabel), "grow, push");
 		lists.add(createUnfilteredListPanel(sampleList, "Samples", sampleCountLabel), "grow, push");
 
-		JPanel controls = new JPanel(new MigLayout(
-			"ins 0 8 8 8, fillx", "[][grow,fill][][72!][][]", "[]"));
-		controls.add(pitchLabel);
-		controls.add(pitchSlider, "growx");
-		controls.add(SwingUtils.getLabel("Envelope:", 12));
-		controls.add(envelopeBox, "w 72!");
-		controls.add(loopBox);
-		controls.add(playButton, "split 2");
-		controls.add(releaseButton);
+		JPanel pitchControls = new JPanel(new MigLayout("ins 0 0 0 8, fillx", "[][grow,fill][]", "[]"));
+		pitchControls.add(SwingUtils.getLabel("Pitch", 12), "aligny center");
+		pitchControls.add(pitchSlider, "growx");
+		pitchControls.add(pitchAmountLabel, "aligny center");
+
+		JPanel envelopeControls = new JPanel(new MigLayout("ins 0 8 0 0, fillx", "[][grow,fill][]", "[]"));
+		envelopeControls.add(SwingUtils.getLabel("Envelope", 12));
+		envelopeControls.add(envelopeBox, "growx");
+		envelopeControls.add(playbackButton);
+
+		JPanel controls = new JPanel(new MigLayout("ins 0 8 8 8, fillx", "[50%,fill][50%,fill]", "[]"));
+		controls.add(pitchControls, "growx");
+		controls.add(envelopeControls, "growx");
 
 		setLayout(new MigLayout("fill, ins 0", "[grow,fill]", "[grow][]"));
 		add(lists, "grow, push, wrap");
@@ -178,14 +180,11 @@ final class SamplesTab extends AudioBoothTab
 		envelopeBox.removeAllItems();
 		envelopeBox.setEnabled(false);
 		pitchSlider.setEnabled(false);
-		loopBox.setSelected(false);
-		loopBox.setEnabled(false);
-		playButton.setEnabled(false);
-		releaseButton.setEnabled(false);
+		playbackButton.setText("Play");
+		playbackButton.setEnabled(false);
 		updatingControls = false;
 
 		if (clearedSample && ownedSelection) {
-			booth.setStatus("Select a sample from bank " + selected.name + ".");
 			booth.updatePlaybackControls();
 		}
 	}
@@ -206,12 +205,18 @@ final class SamplesTab extends AudioBoothTab
 			envelopeBox.setSelectedIndex(0);
 		envelopeBox.setEnabled(envelopeBox.getItemCount() > 1);
 		pitchSlider.setEnabled(true);
-		loopBox.setSelected(instrument.hasLoop);
-		loopBox.setEnabled(instrument.hasLoop);
-		playButton.setEnabled(true);
+		playbackButton.setEnabled(true);
 		updatingControls = false;
 
 		if (audition)
+			playSample();
+	}
+
+	private void toggleSamplePlayback()
+	{
+		if (booth.isCurrentSession(player) && player.isPlaying() && !player.isReleasing())
+			releaseSample();
+		else
 			playSample();
 	}
 
@@ -225,11 +230,9 @@ final class SamplesTab extends AudioBoothTab
 
 		booth.startPlayback(this, player, () -> {
 			player.setPitch(AudioEngine.detuneToPitchRatio(pitchSlider.getValue() * 100));
-			player.setLooping(loopBox.isSelected());
 			player.play(selectedInstrument, selectedInstrument.envelope.get(envelopeIndex));
 		});
-		booth.setStatus(String.format("Playing bank %s sample %s with envelope %d at %s.",
-			selectedBank.name, selectedInstrument.name, envelopeIndex, formatPitch()));
+		booth.setStatus("Playing sample " + selectedInstrument.name + ".");
 	}
 
 	private void releaseSample()
@@ -238,12 +241,12 @@ final class SamplesTab extends AudioBoothTab
 			return;
 		booth.runAudioAction(() -> player.release());
 		booth.updatePlaybackControls();
-		booth.setStatus("Released bank sample " + selectedInstrument.name + ".");
+		booth.setStatus("Released sample " + selectedInstrument.name + ".");
 	}
 
 	private void updatePitch()
 	{
-		pitchLabel.setText("Pitch: " + formatPitch());
+		pitchAmountLabel.setText(formatPitch());
 		if (booth.isCurrentSession(player)) {
 			booth.runAudioAction(() -> player.setPitch(AudioEngine.detuneToPitchRatio(pitchSlider.getValue() * 100)));
 			booth.refreshTimeline(player);
@@ -256,13 +259,6 @@ final class SamplesTab extends AudioBoothTab
 		if (semitones == 0)
 			return "native";
 		return String.format("%+d st", semitones);
-	}
-
-	private void updateLooping()
-	{
-		if (updatingControls || !booth.isCurrentSession(player))
-			return;
-		booth.runAudioAction(() -> player.setLooping(loopBox.isSelected()));
 	}
 
 	@Override
@@ -299,11 +295,10 @@ final class SamplesTab extends AudioBoothTab
 		Integer selectedEnvelope = (Integer) envelopeBox.getSelectedItem();
 		int envelope = selectedEnvelope == null ? 0 : selectedEnvelope;
 		int pitch = pitchSlider.getValue();
-		boolean looping = loopBox.isSelected();
-		return () -> samplesTab.restoreSelection(restoredBank, restoredInstrument, envelope, pitch, looping);
+		return () -> samplesTab.restoreSelection(restoredBank, restoredInstrument, envelope, pitch);
 	}
 
-	private void restoreSelection(Bank restoredBank, Instrument restoredInstrument, int envelope, int pitch, boolean looping)
+	private void restoreSelection(Bank restoredBank, Instrument restoredInstrument, int envelope, int pitch)
 	{
 		suppressEvents = true;
 		bankList.setSelectedValue(restoredBank, true);
@@ -314,7 +309,6 @@ final class SamplesTab extends AudioBoothTab
 		pitchSlider.setValue(pitch);
 		if (envelope >= 0 && envelope < envelopeBox.getItemCount())
 			envelopeBox.setSelectedIndex(envelope);
-		loopBox.setSelected(looping && restoredInstrument.hasLoop);
 		updatingControls = false;
 		suppressEvents = false;
 		playSample();
@@ -323,6 +317,11 @@ final class SamplesTab extends AudioBoothTab
 	@Override
 	public void updatePlaybackState(PlaybackSession currentSession, boolean exporting)
 	{
-		releaseButton.setEnabled(currentSession == player && player.isPlaying() && !player.isReleasing());
+		boolean canRelease = currentSession == player && player.isPlaying() && !player.isReleasing();
+		playbackButton.setText(canRelease ? "Release" : "Play");
+		playbackButton.setToolTipText(canRelease
+			? "Apply the selected bank envelope's release program."
+			: "Play the selected sample with the selected bank envelope.");
+		playbackButton.setEnabled(selectedInstrument != null);
 	}
 }

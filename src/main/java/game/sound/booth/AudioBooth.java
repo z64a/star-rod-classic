@@ -34,6 +34,7 @@ import app.Environment;
 import app.SwingUtils;
 import common.FrameLimiter;
 import game.sound.AudioExporter;
+import game.sound.WaveformPanel;
 import game.sound.engine.AudioEngine;
 import game.sound.engine.PlaybackSession;
 import game.sound.engine.SoundBank;
@@ -44,6 +45,7 @@ import util.ui.ThemedIcon;
 public class AudioBooth
 {
 	private static final int VOLUME_SLIDER_MAX = 100;
+	private static final int WAVEFORM_SAMPLE_COUNT = 8192;
 
 	private final Object threadLock = new Object();
 
@@ -76,6 +78,7 @@ public class AudioBooth
 	private final JSlider masterVolumeSlider;
 	private final JButton muteButton;
 	private final JTabbedPane assetTabs;
+	private final WaveformPanel waveformPanel;
 
 	private boolean ignoreSliderUpdate;
 	private volatile boolean running = true;
@@ -90,6 +93,8 @@ public class AudioBooth
 	{
 		this.guiClosedSignal = guiClosedSignal;
 		engine = new AudioEngine();
+		waveformPanel = new WaveformPanel(WAVEFORM_SAMPLE_COUNT);
+		engine.setAudioMonitor(waveformPanel);
 		SoundBank initialBank = createSoundBank();
 		audioExporter = new AudioExporter(initialBank);
 		boothTabs = createTabs(initialBank);
@@ -106,7 +111,7 @@ public class AudioBooth
 			}
 		});
 
-		frame.setLayout(new MigLayout("fill, ins 12", "[grow,fill]", "[grow][][]"));
+		frame.setLayout(new MigLayout("fill, ins 12", "[grow,fill]", "[grow][]"));
 
 		masterVolumeSlider = new JSlider(0, VOLUME_SLIDER_MAX,
 			gainToVolumeSlider(engine.getMasterVolume()));
@@ -191,24 +196,23 @@ public class AudioBooth
 		assetTabs = new JTabbedPane();
 		populateAssetTabs();
 
+		int volumeSliderWidth = timeLabel.getPreferredSize().width;
 		JPanel playbackPanel = new JPanel(new MigLayout(
-			"ins 0 8 0 8, fillx", "[][][][grow,fill][]", "[]"));
+			"ins 0 8 0 8, fillx", "[][][][grow,fill][][" + volumeSliderWidth + "!,fill]"));
 		playbackPanel.add(restartButton, "sg playbackButton, h 24!");
 		playbackPanel.add(stopButton, "sg playbackButton, h 24!");
 		playbackPanel.add(pauseButton, "sg playbackButton, h 24!");
-		playbackPanel.add(timeSlider, "growx");
-		playbackPanel.add(timeLabel);
+		playbackPanel.add(timeSlider, "span 2, pushx, growx");
+		playbackPanel.add(timeLabel, "growx, wrap");
 
-		int volumeSliderWidth = timeLabel.getPreferredSize().width;
-		JPanel footerPanel = new JPanel(new MigLayout(
-			"ins 0 8 0 8, fillx", "[grow,fill][][" + volumeSliderWidth + "!,fill]", "[grow,fill]"));
-		footerPanel.add(statusLabel, "grow");
-		footerPanel.add(muteButton, "h 24!");
-		footerPanel.add(masterVolumeSlider, "growx");
+		waveformPanel.setPreferredSize(new Dimension(100, 24));
+		playbackPanel.add(waveformPanel, "span 3, growx, h 24!");
+		playbackPanel.add(statusLabel, "growx");
+		playbackPanel.add(muteButton, "h 24!, gapright 0");
+		playbackPanel.add(masterVolumeSlider, "growx, gapleft 0");
 
 		frame.add(assetTabs, "grow, push, wrap");
-		frame.add(playbackPanel, "growx, wrap");
-		frame.add(footerPanel, "growx");
+		frame.add(playbackPanel, "growx");
 
 		frame.setMinimumSize(new Dimension(640, 360));
 		frame.pack();
@@ -536,7 +540,7 @@ public class AudioBooth
 		if (source.hasInfiniteLoop()) {
 			JSpinner spinner = new JSpinner(new SpinnerNumberModel(2, 1, 100, 1));
 			SwingUtils.centerSpinnerText(spinner);
-			JPanel panel = new JPanel(new MigLayout("ins 0", "[][grow]", "[]"));
+			JPanel panel = new JPanel(new MigLayout("ins 0", "[][grow]"));
 			panel.add(SwingUtils.getLabel("Loop repetitions:", 12));
 			panel.add(spinner, "growx");
 			int choice = JOptionPane.showConfirmDialog(assetTabs, panel,
@@ -648,6 +652,7 @@ public class AudioBooth
 
 		running = false;
 		synchronized (threadLock) {
+			engine.setAudioMonitor(null);
 			closeTabs(boothTabs);
 			engine.shutdown();
 		}
@@ -701,6 +706,7 @@ public class AudioBooth
 		SwingUtilities.invokeLater(() -> {
 			if (!running)
 				return;
+			waveformPanel.refresh();
 			ignoreSliderUpdate = true;
 			timeSlider.setValue(playbackTime);
 			ignoreSliderUpdate = false;

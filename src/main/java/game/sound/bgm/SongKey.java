@@ -8,6 +8,7 @@ public enum SongKey implements XmlKey
 	TAG_SONG            	("Song"),
     ATTR_MEASURE			("measure"),
     ATTR_BRANCHES			("branches"),
+	ATTR_BRANCH_NAMES		("branchNames"),
 	TAG_INS_LIST			("Instruments"),
 	TAG_DRUM_LIST			("Drums"),
 	TAG_COMP_LIST			("Compositions"),

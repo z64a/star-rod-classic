@@ -2,9 +2,7 @@ package game.sound.tests;
 
 import static app.Directories.MOD_AUDIO_MSEQ;
 
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -14,7 +12,6 @@ import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JList;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.ListSelectionModel;
@@ -24,6 +21,7 @@ import javax.swing.Timer;
 import app.Environment;
 import app.input.IOUtils;
 import common.FrameLimiter;
+import game.sound.WaveformPanel;
 import game.sound.engine.AudioEngine;
 import game.sound.engine.Instrument;
 import game.sound.engine.SoundBank;
@@ -37,7 +35,6 @@ public class AudioTest5
 	private static final int WAVEFORM_SAMPLE_COUNT = 8192;
 
 	private final Object threadLock = new Object();
-	private final WaveformBuffer waveformBuffer = new WaveformBuffer(WAVEFORM_SAMPLE_COUNT);
 
 	public static void main(String[] args) throws Exception
 	{
@@ -61,7 +58,8 @@ public class AudioTest5
 	private AudioTest5() throws Exception
 	{
 		engine = new AudioEngine();
-		engine.setAudioMonitor(waveformBuffer::append);
+		WaveformPanel waveformPanel = new WaveformPanel(WAVEFORM_SAMPLE_COUNT);
+		engine.setAudioMonitor(waveformPanel);
 		bank = new SoundBank();
 		player = new MseqPlayer(engine, bank);
 		player.attach();
@@ -154,7 +152,6 @@ public class AudioTest5
 			}
 		});
 
-		WaveformPanel waveformPanel = new WaveformPanel();
 		waveformPanel.setPreferredSize(new Dimension(400, 120));
 
 		frame.add(playButton);
@@ -165,7 +162,7 @@ public class AudioTest5
 		frame.add(timeSlider, "grow");
 
 		uiTimer = new Timer(33, (evt) -> {
-			waveformPanel.updateSamples(waveformBuffer.snapshot());
+			waveformPanel.refresh();
 
 			synchronized (threadLock) {
 				ignoreSliderUpdate = true;
@@ -214,79 +211,4 @@ public class AudioTest5
 		}
 	}
 
-	private static class WaveformBuffer
-	{
-		private final float[] samples;
-		private int writePos;
-		private int sampleCount;
-
-		private WaveformBuffer(int capacity)
-		{
-			samples = new float[capacity];
-		}
-
-		private synchronized void append(float[] left, float[] right, int start, int end)
-		{
-			for (int i = start; i < end; i++) {
-				samples[writePos] = (left[i] + right[i]) * 0.5f;
-				writePos = (writePos + 1) % samples.length;
-				if (sampleCount < samples.length)
-					sampleCount++;
-			}
-		}
-
-		private synchronized float[] snapshot()
-		{
-			float[] snapshot = new float[sampleCount];
-			int readPos = (writePos - sampleCount + samples.length) % samples.length;
-			for (int i = 0; i < sampleCount; i++)
-				snapshot[i] = samples[(readPos + i) % samples.length];
-			return snapshot;
-		}
-	}
-
-	private static class WaveformPanel extends JPanel
-	{
-		private float[] samples = new float[0];
-
-		public void updateSamples(float[] samples)
-		{
-			this.samples = samples;
-			repaint(); // trigger repaint on UI thread
-		}
-
-		@Override
-		protected void paintComponent(Graphics g)
-		{
-			super.paintComponent(g);
-
-			int w = getWidth();
-			int h = getHeight();
-
-			g.setColor(Color.BLACK);
-			g.fillRect(0, 0, w, h);
-
-			if (samples.length == 0 || w == 0)
-				return;
-
-			g.setColor(Color.GREEN);
-			int midY = h / 2;
-
-			for (int x = 0; x < w; x++) {
-				int start = x * samples.length / w;
-				int end = Math.max(start + 1, (x + 1) * samples.length / w);
-				float min = 0.0f;
-				float max = 0.0f;
-				for (int i = start; i < end && i < samples.length; i++) {
-					min = Math.min(min, samples[i]);
-					max = Math.max(max, samples[i]);
-				}
-				min = Math.max(-1.0f, min);
-				max = Math.min(1.0f, max);
-				int y1 = midY - (int) (max * midY);
-				int y2 = midY - (int) (min * midY);
-				g.drawLine(x, y1, x, y2);
-			}
-		}
-	}
 }

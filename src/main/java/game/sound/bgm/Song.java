@@ -47,6 +47,7 @@ public class Song implements XmlSerializable
 
 	public int branchMeasure = DEFAULT_MEASURE_TICKS;
 	public int branchOptions = 1;
+	private final ArrayList<String> branchNames = new ArrayList<>();
 
 	private ArrayList<BGMPart> parts;
 	private HashMap<Integer, BGMPart> partMap;
@@ -505,6 +506,28 @@ public class Song implements XmlSerializable
 		return Collections.unmodifiableList(drums);
 	}
 
+	public String getBranchName(int mixID)
+	{
+		if (mixID < 0 || mixID >= branchNames.size())
+			return null;
+		return branchNames.get(mixID);
+	}
+
+	public void setBranchNames(List<String> names)
+	{
+		if (names.size() != branchOptions) {
+			throw new IllegalArgumentException(String.format(
+				"Expected %d branch names, found %d", branchOptions, names.size()));
+		}
+
+		branchNames.clear();
+		for (String branchName : names) {
+			if (branchName == null || branchName.isBlank())
+				throw new IllegalArgumentException("Branch names cannot be blank");
+			branchNames.add(branchName.trim());
+		}
+	}
+
 	SoundBankCatalog getSoundBankCatalog()
 	{
 		return soundBankCatalog;
@@ -540,6 +563,16 @@ public class Song implements XmlSerializable
 		branchOptions = xmr.readInt(root, ATTR_BRANCHES);
 
 		branchOptions = MathUtil.clamp(branchOptions, 0, MAX_BRANCH_OPTIONS);
+		branchNames.clear();
+		if (xmr.hasAttribute(root, ATTR_BRANCH_NAMES)) {
+			List<String> names = xmr.readStringList(root, ATTR_BRANCH_NAMES);
+			try {
+				setBranchNames(names);
+			}
+			catch (IllegalArgumentException e) {
+				xmr.complain(e.getMessage());
+			}
+		}
 
 		Element insListElem = xmr.getUniqueRequiredTag(root, TAG_INS_LIST);
 
@@ -596,6 +629,8 @@ public class Song implements XmlSerializable
 		xmw.addInt(root, ATTR_TIMING, timingPreset);
 		xmw.addInt(root, ATTR_MEASURE, branchMeasure);
 		xmw.addInt(root, ATTR_BRANCHES, branchOptions);
+		if (!branchNames.isEmpty())
+			xmw.addStringList(root, ATTR_BRANCH_NAMES, branchNames);
 		xmw.openTag(root);
 
 		XmlTag insListTag = xmw.createTag(TAG_INS_LIST, false);

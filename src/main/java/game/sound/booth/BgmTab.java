@@ -130,6 +130,18 @@ final class BgmTab extends AudioBoothTab
 		proximityMixBox = new JComboBox<>();
 		proximityMixBox.setEnabled(false);
 		proximityMixBox.setToolTipText("Proximity-mix ID used by the song's branch tables.");
+		proximityMixBox.setRenderer(new DefaultListCellRenderer() {
+			@Override
+			public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+				boolean isSelected, boolean cellHasFocus)
+			{
+				Component component = super.getListCellRendererComponent(
+					list, value, index, isSelected, cellHasFocus);
+				if (value instanceof Integer mixID)
+					setText(formatBranchName(mixID));
+				return component;
+			}
+		});
 		SwingUtils.centerComboBoxText(proximityMixBox);
 		SwingUtils.addBorderPadding(proximityMixBox);
 		proximityMixBox.addActionListener((e) -> updateProximityMix());
@@ -147,11 +159,11 @@ final class BgmTab extends AudioBoothTab
 		instantBox.addActionListener((e) -> updateProximityMix());
 
 		JPanel controls = new JPanel(new MigLayout(
-			"ins 0 8 8 8, fillx", "[][72!][grow,fill][][72!][112!][]", "[]"));
+			"ins 0 8 8 8, fillx", "[][72!][grow,fill][][128!][112!][]", "[]"));
 		controls.add(SwingUtils.getLabel("Composition:", 12));
 		controls.add(compositionBox, "w 72!");
 		controls.add(SwingUtils.getLabel("Branch:", 12), "cell 3 0");
-		controls.add(proximityMixBox, "w 72!");
+		controls.add(proximityMixBox, "w 128!");
 		controls.add(proximityAmountBox, "w 112!");
 		controls.add(instantBox);
 
@@ -174,7 +186,7 @@ final class BgmTab extends AudioBoothTab
 			Logger.printStackTrace(e);
 			selectedSong = null;
 			booth.selectWithoutPlayback(this);
-			booth.setStatus("Could not load BGM " + file.getName());
+			booth.setStatus("Could not load " + file.getName());
 		}
 	}
 
@@ -187,19 +199,23 @@ final class BgmTab extends AudioBoothTab
 				player.play(selectedSong, composition);
 				Integer mixID = (Integer) proximityMixBox.getSelectedItem();
 				ProximityAmount amount = (ProximityAmount) proximityAmountBox.getSelectedItem();
-				if (mixID != null && amount != null)
-					player.setProximityMix(mixID, amount.value, instantBox.isSelected());
+				if (mixID != null && amount != null) {
+					if (mixID == 0)
+						player.resetProximityMix();
+					else
+						player.setProximityMix(mixID, amount.value, instantBox.isSelected());
+				}
 			});
 			if (playing)
-				booth.setStatus("Playing BGM " + selectedFile.getName());
+				booth.setStatus("Playing song " + selectedFile.getName());
 			else
-				booth.setStatus("BGM " + selectedFile.getName() + " has an empty composition at index " + composition + ".");
+				booth.setStatus(selectedFile.getName() + " composition " + composition + " is empty.");
 		}
 		catch (Exception e) {
 			Logger.logfError("Could not play BGM asset %s", selectedFile.getName());
 			Logger.printStackTrace(e);
 			booth.selectWithoutPlayback(this);
-			booth.setStatus("Could not play BGM " + selectedFile.getName());
+			booth.setStatus("Could not play " + selectedFile.getName());
 		}
 	}
 
@@ -218,12 +234,19 @@ final class BgmTab extends AudioBoothTab
 			proximityMixBox.addItem(i);
 		boolean hasProximityMixes = proximityMixBox.getItemCount() > 1;
 		proximityMixBox.setEnabled(hasProximityMixes);
-		proximityAmountBox.setEnabled(hasProximityMixes);
-		instantBox.setEnabled(hasProximityMixes);
 		proximityMixBox.setSelectedIndex(0);
-		proximityAmountBox.setSelectedItem(ProximityAmount.FULL);
+		proximityAmountBox.setSelectedItem(ProximityAmount.NONE);
 		instantBox.setSelected(false);
+		updateProximityControlState(0);
 		updatingControls = false;
+	}
+
+	private String formatBranchName(int mixID)
+	{
+		String branchName = selectedSong == null ? null : selectedSong.getBranchName(mixID);
+		if (branchName == null)
+			return Integer.toString(mixID);
+		return branchName;
 	}
 
 	private void updateProximityMix()
@@ -234,7 +257,26 @@ final class BgmTab extends AudioBoothTab
 		ProximityAmount amount = (ProximityAmount) proximityAmountBox.getSelectedItem();
 		if (mixID == null || amount == null)
 			return;
-		booth.runAudioAction(() -> player.setProximityMix(mixID, amount.value, instantBox.isSelected()));
+
+		if (mixID == 0) {
+			updatingControls = true;
+			proximityAmountBox.setSelectedItem(ProximityAmount.NONE);
+			instantBox.setSelected(false);
+			updatingControls = false;
+			updateProximityControlState(mixID);
+			booth.runAudioAction(player::resetProximityMix);
+		}
+		else {
+			updateProximityControlState(mixID);
+			booth.runAudioAction(() -> player.setProximityMix(mixID, amount.value, instantBox.isSelected()));
+		}
+	}
+
+	private void updateProximityControlState(int mixID)
+	{
+		boolean enabled = proximityMixBox.isEnabled() && mixID != 0;
+		proximityAmountBox.setEnabled(enabled);
+		instantBox.setEnabled(enabled);
 	}
 
 	@Override
