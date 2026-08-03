@@ -18,6 +18,7 @@ import game.sound.sfx.SfxArchive.Envelope;
 import game.sound.sfx.SfxArchive.Label;
 import game.sound.sfx.SfxArchive.Node;
 import game.sound.sfx.SfxArchive.OneShot;
+import game.sound.sfx.SfxArchive.Op;
 import game.sound.sfx.SfxArchive.Routing;
 import game.sound.sfx.SfxArchive.Sequence;
 import game.sound.sfx.SfxArchive.Sound;
@@ -483,11 +484,25 @@ public final class SfxValidator
 				}
 			}
 
+			boolean loopActive = false;
 			for (int i = 0; i < sequence.nodes.size(); i++) {
 				Node node = sequence.nodes.get(i);
-				if (node instanceof Command command)
+				if (node instanceof Command command) {
 					validateCommand(command, context + " command " + i, labels, spawnedNames);
+					if (command.op == Op.START_LOOP) {
+						if (loopActive)
+							error(context + " command " + i + " starts a nested loop, but the engine has one sequence loop register");
+						loopActive = true;
+					}
+					else if (command.op == Op.END_LOOP) {
+						if (!loopActive)
+							error(context + " command " + i + " ends a loop before one is started");
+						loopActive = false;
+					}
+				}
 			}
+			if (loopActive)
+				error(context + " has a StartLoop without a matching EndLoop");
 		}
 
 		private void validateCommand(Command command, String context, Set<String> labels, Set<String> spawnedNames)

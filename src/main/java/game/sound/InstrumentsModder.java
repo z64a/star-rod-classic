@@ -1,6 +1,11 @@
 package game.sound;
 
-import static app.Directories.*;
+import static app.Directories.DUMP_AUDIO;
+import static app.Directories.DUMP_AUDIO_RAW;
+import static app.Directories.FN_AUDIO_PRESETS;
+import static app.Directories.MOD_AUDIO;
+import static app.Directories.MOD_AUDIO_BUILD;
+import static game.sound.InstrumentPreset.InstrumentKey.TAG_INSTRUMENT;
 import static game.sound.InstrumentPreset.InstrumentKey.TAG_LIST;
 
 import java.io.File;
@@ -20,7 +25,7 @@ import util.xml.XmlWrapper.XmlReader;
 import util.xml.XmlWrapper.XmlTag;
 import util.xml.XmlWrapper.XmlWriter;
 
-//interface for the SET1.prg instrument program(?) file
+// compiler for the global BGM instrument presets stored in SET1.prg
 public class InstrumentsModder
 {
 	private static final String FN_BIN = "SET1.prg";
@@ -46,6 +51,11 @@ public class InstrumentsModder
 
 	public static void build() throws IOException
 	{
+		if (AudioModder.hasOverride(FN_BIN)) {
+			Logger.log("Using audio override for " + FN_BIN);
+			return;
+		}
+
 		ArrayList<InstrumentPreset> instruments = load(MOD_AUDIO.getFile(FN_AUDIO_PRESETS));
 		SoundBankCatalog catalog = SoundBankCatalog.loadMod();
 		for (InstrumentPreset instrument : instruments)
@@ -69,7 +79,7 @@ public class InstrumentsModder
 
 	private static void encode(List<InstrumentPreset> instruments, File outFile) throws IOException
 	{
-		DynamicByteBuffer dbb = new DynamicByteBuffer();
+		DynamicByteBuffer dbb = new DynamicByteBuffer(0x10);
 
 		dbb.position(0x10);
 
@@ -112,7 +122,7 @@ public class InstrumentsModder
 		XmlReader xmr = new XmlReader(xmlFile);
 		Element rootElem = xmr.getRootElement();
 
-		for (Element insElem : xmr.getTags(rootElem, TAG_LIST)) {
+		for (Element insElem : xmr.getTags(rootElem, TAG_INSTRUMENT)) {
 			instruments.add(new InstrumentPreset(xmr, insElem));
 		}
 

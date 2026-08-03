@@ -9,6 +9,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
+import game.sound.SoundXml;
 import util.xml.XmlKey;
 import util.xml.XmlWrapper.XmlReader;
 import util.xml.XmlWrapper.XmlTag;
@@ -26,7 +27,9 @@ public final class EnvelopeXml
 		TAG_END_LOOP   ("EndLoop"),
 		TAG_END        ("End"),
 		ATTR_DURATION  ("duration"),
-		ATTR_VALUE     ("value"),
+		ATTR_VOLUME    ("volume"),
+		ATTR_SCALE     ("scale"),
+		ATTR_AMOUNT    ("amount"),
 		ATTR_COUNT     ("count");
 		// @formatter:on
 
@@ -76,9 +79,9 @@ public final class EnvelopeXml
 			EnvelopeCommand command;
 			switch (key) {
 				case TAG_POINT:
-					checkAttributes(reader, element, Key.ATTR_DURATION, Key.ATTR_VALUE);
+					checkAttributes(reader, element, Key.ATTR_DURATION, Key.ATTR_VOLUME);
 					command = new EnvelopeCommand(EnvelopeOp.POINT,
-						readInt(reader, element, Key.ATTR_VALUE, 0, EnvelopeProgram.MAX_VOLUME));
+						SoundXml.readHex(reader, element, Key.ATTR_VOLUME, 0, EnvelopeProgram.MAX_VOLUME));
 					reader.requiresAttribute(element, Key.ATTR_DURATION);
 					try {
 						command.durationIndex = EnvelopeTimes.indexForToken(reader.getAttribute(element, Key.ATTR_DURATION));
@@ -88,14 +91,14 @@ public final class EnvelopeXml
 					}
 					break;
 				case TAG_SET_SCALE:
-					checkAttributes(reader, element, Key.ATTR_VALUE);
+					checkAttributes(reader, element, Key.ATTR_SCALE);
 					command = new EnvelopeCommand(EnvelopeOp.SET_SCALE,
-						readInt(reader, element, Key.ATTR_VALUE, 0, EnvelopeProgram.MAX_SCALE));
+						SoundXml.readHex(reader, element, Key.ATTR_SCALE, 0, EnvelopeProgram.MAX_SCALE));
 					break;
 				case TAG_ADD_SCALE:
-					checkAttributes(reader, element, Key.ATTR_VALUE);
+					checkAttributes(reader, element, Key.ATTR_AMOUNT);
 					command = new EnvelopeCommand(EnvelopeOp.ADD_SCALE,
-						readInt(reader, element, Key.ATTR_VALUE, -128, 127));
+						SoundXml.readHex(reader, element, Key.ATTR_AMOUNT, -128, 127));
 					break;
 				case TAG_START_LOOP:
 					checkAttributes(reader, element, Key.ATTR_COUNT);
@@ -142,15 +145,15 @@ public final class EnvelopeXml
 				case POINT:
 					tag = writer.createTag(Key.TAG_POINT, true);
 					writer.addAttribute(tag, Key.ATTR_DURATION, EnvelopeTimes.tokenForIndex(command.durationIndex));
-					writer.addInt(tag, Key.ATTR_VALUE, command.value);
+					SoundXml.addHex(writer, tag, Key.ATTR_VOLUME, 2, command.value);
 					break;
 				case SET_SCALE:
 					tag = writer.createTag(Key.TAG_SET_SCALE, true);
-					writer.addInt(tag, Key.ATTR_VALUE, command.value);
+					SoundXml.addHex(writer, tag, Key.ATTR_SCALE, 2, command.value);
 					break;
 				case ADD_SCALE:
 					tag = writer.createTag(Key.TAG_ADD_SCALE, true);
-					writer.addInt(tag, Key.ATTR_VALUE, command.value);
+					SoundXml.addHex(writer, tag, Key.ATTR_AMOUNT, 2, command.value);
 					break;
 				case START_LOOP:
 					tag = writer.createTag(Key.TAG_START_LOOP, true);

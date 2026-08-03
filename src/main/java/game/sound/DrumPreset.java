@@ -121,31 +121,24 @@ public class DrumPreset implements XmlSerializable
 		wav = xmr.getAttribute(insElem, ATTR_WAV);
 
 		if (xmr.hasAttribute(insElem, ATTR_ENVELOPE))
-			envelope = xmr.readHex(insElem, ATTR_ENVELOPE);
+			envelope = SoundXml.readInt(xmr, insElem, ATTR_ENVELOPE, 0, 3);
 
-		xmr.requiresAttribute(insElem, ATTR_KEY_BASE);
-		keybase = xmr.readInt(insElem, ATTR_KEY_BASE);
-
-		xmr.requiresAttribute(insElem, ATTR_VOLUME);
-		volume = xmr.readInt(insElem, ATTR_VOLUME);
-
-		xmr.requiresAttribute(insElem, ATTR_PAN);
-		pan = xmr.readInt(insElem, ATTR_PAN);
-
-		xmr.requiresAttribute(insElem, ATTR_REVERB);
-		reverb = xmr.readInt(insElem, ATTR_REVERB);
+		keybase = SoundXml.readInt(xmr, insElem, ATTR_KEY_BASE, 0, 0xFFFF);
+		volume = SoundXml.readHex(xmr, insElem, ATTR_VOLUME, 0, 255);
+		pan = SoundXml.readInt(xmr, insElem, ATTR_PAN, -128, 127);
+		reverb = SoundXml.readInt(xmr, insElem, ATTR_REVERB, 0, 255);
 
 		if (xmr.hasAttribute(insElem, ATTR_RAND_TUNE))
-			randTune = xmr.readInt(insElem, ATTR_RAND_TUNE);
+			randTune = SoundXml.readInt(xmr, insElem, ATTR_RAND_TUNE, 0, 255);
 
 		if (xmr.hasAttribute(insElem, ATTR_RAND_VOLUME))
-			randVolume = xmr.readInt(insElem, ATTR_RAND_VOLUME);
+			randVolume = SoundXml.readHex(xmr, insElem, ATTR_RAND_VOLUME, 0, 255);
 
 		if (xmr.hasAttribute(insElem, ATTR_RAND_PAN))
-			randPan = xmr.readInt(insElem, ATTR_RAND_PAN);
+			randPan = SoundXml.readInt(xmr, insElem, ATTR_RAND_PAN, 0, 255);
 
 		if (xmr.hasAttribute(insElem, ATTR_RAND_REVERB))
-			randReverb = xmr.readInt(insElem, ATTR_RAND_REVERB);
+			randReverb = SoundXml.readInt(xmr, insElem, ATTR_RAND_REVERB, 0, 255);
 	}
 
 	@Override
@@ -155,10 +148,10 @@ public class DrumPreset implements XmlSerializable
 
 		xmw.addAttribute(tag, ATTR_WAV, wav);
 		if (envelope != 0)
-			xmw.addHex(tag, ATTR_ENVELOPE, envelope);
+			xmw.addInt(tag, ATTR_ENVELOPE, envelope);
 
 		xmw.addInt(tag, ATTR_KEY_BASE, keybase);
-		xmw.addInt(tag, ATTR_VOLUME, volume);
+		SoundXml.addHex(xmw, tag, ATTR_VOLUME, 2, volume);
 		xmw.addInt(tag, ATTR_PAN, pan);
 		xmw.addInt(tag, ATTR_REVERB, reverb);
 
@@ -166,7 +159,7 @@ public class DrumPreset implements XmlSerializable
 			xmw.addInt(tag, ATTR_RAND_TUNE, randTune);
 
 		if (randVolume != 0)
-			xmw.addInt(tag, ATTR_RAND_VOLUME, randVolume);
+			SoundXml.addHex(xmw, tag, ATTR_RAND_VOLUME, 2, randVolume);
 
 		if (randPan != 0)
 			xmw.addInt(tag, ATTR_RAND_PAN, randPan);

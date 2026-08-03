@@ -52,8 +52,6 @@ import game.shared.ProjectDatabase.ConstEnum.EnumPair;
 import game.shared.encoder.GlobalPatchManager;
 import game.shared.struct.script.ScriptVariable;
 import game.sound.AudioModder;
-import game.sound.BankModder;
-import game.sound.DrumsModder;
 import game.sprite.SpriteLoader.SpriteSet;
 import game.sprite.SpritePatcher;
 import game.string.MessageBoxes;
@@ -111,6 +109,27 @@ public class Patcher implements IGlobalDatabase
 
 		// get build options from the mod config
 		Config cfg = Environment.project.config;
+		boolean buildAudio = cfg.getBoolean(Options.BuildAudio);
+		boolean buildSoundBanks = cfg.getBoolean(Options.BuildSoundBanks);
+		int minimumAudioHeapSize = 0;
+
+		if (buildAudio || buildSoundBanks)
+			AudioModder.prepareBuildDirectory();
+
+		if (buildSoundBanks) {
+			Logger.log("Building sound banks...", Priority.MILESTONE);
+			AudioModder.buildSoundBanks();
+			recordTime("Sound Banks Built");
+		}
+
+		if (buildAudio) {
+			Logger.log("Building audio files...", Priority.MILESTONE);
+			AudioModder.buildAudioFiles();
+			recordTime("Audio Files Built");
+		}
+
+		if (buildAudio || buildSoundBanks)
+			minimumAudioHeapSize = AudioModder.getMinimumAudioHeapSize();
 
 		if (cfg.getBoolean(Options.ClearMapCache) && MapIndex.getFile().exists())
 			FileUtils.forceDelete(MapIndex.getFile());
@@ -211,7 +230,7 @@ public class Patcher implements IGlobalDatabase
 		Logger.log("Reading direct ROM patches...", Priority.MILESTONE);
 		GlobalPatchManager gpm = new GlobalPatchManager(this);
 
-		FunctionPatcher.modifyHeaps(this, cfg, gpm, rp);
+		FunctionPatcher.modifyHeaps(this, cfg, gpm, rp, minimumAudioHeapSize);
 		gpm.readInternalPatch("ExtendedGlobals.patch",
 			cfg.getBoolean(Options.EnableDebugCode) && cfg.getBoolean(Options.EnableVarLogging) ? "LogVars" : "");
 		gpm.readInternalPatch("ExtendedScripts.patch");
@@ -398,14 +417,7 @@ public class Patcher implements IGlobalDatabase
 			recordTime("Sprite Sheets Patched");
 		}
 
-		if (cfg.getBoolean(Options.BuildSoundBanks)) {
-			Logger.log("Building sound banks...", Priority.MILESTONE);
-			BankModder.buildAll();
-			DrumsModder.build();
-			recordTime("Sound Banks Built");
-		}
-
-		if (cfg.getBoolean(Options.BuildAudio) || cfg.getBoolean(Options.BuildSoundBanks)) {
+		if (buildAudio || buildSoundBanks) {
 			Logger.log("Writing audio data...", Priority.MILESTONE);
 			AudioModder.patchAudio(this, rp);
 			recordTime("Audio Patched");

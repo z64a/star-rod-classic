@@ -21,8 +21,7 @@ public class AnalyzeSBN
 		Environment.exit();
 	}
 
-	private static final int TABLE_BASE = 0xF00000;
-	private static final int AUDIO_DATA_END = 0x1942C40;
+	private static final int SBN_BASE = 0xF00000;
 
 	private AnalyzeSBN() throws IOException
 	{
@@ -42,9 +41,9 @@ public class AnalyzeSBN
 		    0x40  SBNFileEntry entries[...];
 		*/
 
-		raf.seek(TABLE_BASE);
+		raf.seek(SBN_BASE);
 		System.out.println(IOUtils.readString(raf, 4));
-		System.out.printf("End: %X%n", TABLE_BASE + raf.readInt());
+		System.out.printf("End: %X%n", SBN_BASE + raf.readInt());
 		raf.skipBytes(8);
 
 		int fileListOffset = raf.readInt();
@@ -59,18 +58,18 @@ public class AnalyzeSBN
 		TreeSet<Integer> usedSongBanks = new TreeSet<>();
 
 		for (int i = 0; i < numEntries; i++) {
-			raf.seek(TABLE_BASE + fileListOffset + 8 * i);
+			raf.seek(SBN_BASE + fileListOffset + 8 * i);
 			int offset = raf.readInt();
 			int word2 = raf.readInt();
 			int fmt = word2 >>> 24;
 			int lenSBN = word2 & 0x00FFFFFF; // bytes from offset (includes header)
 
-			raf.seek(TABLE_BASE + offset);
+			raf.seek(SBN_BASE + offset);
 			String type = IOUtils.readString(raf, 4);
 			int len = raf.readInt();
 			String name = IOUtils.readString(raf, 4);
 
-			System.out.printf("(%2X) %7X %5X %-3s", i, TABLE_BASE + offset, len, type.trim());
+			System.out.printf("(%2X) %7X %5X %-3s", i, SBN_BASE + offset, len, type.trim());
 
 			fileIndexList.add(i);
 
@@ -94,7 +93,7 @@ public class AnalyzeSBN
 				case "BK  ": // 90 - D8
 					assert (fmt == 0x30);
 
-					raf.seek(TABLE_BASE + offset + 0x32);
+					raf.seek(SBN_BASE + offset + 0x32);
 					short len1 = raf.readShort();
 					raf.skipBytes(2);
 					short len2 = raf.readShort();
@@ -131,7 +130,7 @@ public class AnalyzeSBN
 
 		// READ INIT FILE
 
-		int initBase = TABLE_BASE + initOffset;
+		int initBase = SBN_BASE + initOffset;
 		raf.seek(initBase);
 		String type = IOUtils.readString(raf, 4);
 
@@ -146,23 +145,23 @@ public class AnalyzeSBN
 		InitBankEntry:
 			0x0  u16 fileIndex;
 			0x2  u8 bankIndex;
-			0x3  u8 bankGroup;
+			0x3  u8 bankSet;
 		 	0x4	 END
 		 */
 
 		System.out.println("----- Bank List ----- ");
 		for (int i = 0; i < 64; i++) {
 			raf.seek(initBase + 0x20 + 4 * i);
-			int bank = raf.readShort();
+			int fileIndex = raf.readShort();
 			int bankIndex = raf.readByte();
-			int bankGroup = raf.readByte();
+			int bankSet = raf.readByte();
 
-			assert (fileIndexList.remove((Integer) bank));
+			assert (fileIndexList.remove((Integer) fileIndex));
 
 			assert (bankIndex >= 0 && bankIndex <= 15);
-			assert (bankGroup >= 1 && bankGroup <= 6);
-			assert (bank >= 0x90 && bank <= 0xD8); // bank is always one of the banks
-			System.out.printf("[%02X] %2X (%4s) %2X %2X%n", i, bank, names[bank], bankIndex, bankGroup);
+			assert (bankSet >= 1 && bankSet <= 6);
+			assert (fileIndex >= 0x90 && fileIndex <= 0xD8); // file is always one of the banks
+			System.out.printf("[%02X] %2X (%4s) %2X %2X%n", i, fileIndex, names[fileIndex], bankIndex, bankSet);
 		}
 
 		System.out.println("----- Song List ----- ");
@@ -187,25 +186,25 @@ public class AnalyzeSBN
 		}
 		fileIndexList.remove((Integer) 0x2F);
 
-		System.out.println("----- Aux List ----- ");
+		System.out.println("----- Resource List ----- ");
 		for (int i = 0; i < 24; i++) {
 			raf.seek(initBase + 0x640 + 2 * i);
-			int sbnEntry = raf.readShort();
-			System.out.printf("[%02X] %2X  %s (%s)%n", i, sbnEntry, types[sbnEntry], names[sbnEntry]);
+			int fileIndex = raf.readShort();
+			System.out.printf("[%02X] %2X  %s (%s)%n", i, fileIndex, types[fileIndex], names[fileIndex]);
 
-			if (sbnEntry != 0xE5)
-				assert (fileIndexList.remove((Integer) sbnEntry));
+			if (fileIndex != 0xE5)
+				assert (fileIndexList.remove((Integer) fileIndex));
 		}
 		fileIndexList.remove((Integer) 0xE5);
 
 		System.out.println("----- Orphans ----- ");
-		for (int sbnID : fileIndexList)
-			System.out.printf("%2X  %s (%s)%n", sbnID, types[sbnID], names[sbnID]);
+		for (int fileIndex : fileIndexList)
+			System.out.printf("%2X  %s (%s)%n", fileIndex, types[fileIndex], names[fileIndex]);
 
 		System.out.println("----- Song Banks ----- ");
 		usedSongBanks.remove(0);
-		for (int sbnID : usedSongBanks)
-			System.out.printf("%2X  %s (%s)%n", sbnID, types[sbnID], names[sbnID]);
+		for (int fileIndex : usedSongBanks)
+			System.out.printf("%2X  %s (%s)%n", fileIndex, types[fileIndex], names[fileIndex]);
 
 		raf.close();
 	}

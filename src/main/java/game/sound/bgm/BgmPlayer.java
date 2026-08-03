@@ -575,9 +575,9 @@ public class BgmPlayer implements AudioClient, PlaybackSession
 
 		for (int i = 0; i < tracks.length; i++) {
 			BgmTrackPlayer track = tracks[i];
-			if (!track.enabled || track.linkedIndex == 0)
+			if (!track.enabled || track.linkedIndex < 0)
 				continue;
-			int linked = track.linkedIndex - 1;
+			int linked = track.linkedIndex;
 			if (linked < 0 || linked >= i || !tracks[linked].enabled) {
 				track.disable();
 				continue;

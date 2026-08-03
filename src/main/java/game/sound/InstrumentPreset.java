@@ -107,22 +107,13 @@ public class InstrumentPreset implements XmlSerializable
 		wav = xmr.getAttribute(elem, ATTR_WAV);
 
 		if (xmr.hasAttribute(elem, ATTR_ENVELOPE))
-			envelope = xmr.readHex(elem, ATTR_ENVELOPE);
+			envelope = SoundXml.readInt(xmr, elem, ATTR_ENVELOPE, 0, 3);
 
-		xmr.requiresAttribute(elem, ATTR_VOLUME);
-		volume = xmr.readInt(elem, ATTR_VOLUME);
-
-		xmr.requiresAttribute(elem, ATTR_PAN);
-		pan = xmr.readInt(elem, ATTR_PAN);
-
-		xmr.requiresAttribute(elem, ATTR_REVERB);
-		reverb = xmr.readInt(elem, ATTR_REVERB);
-
-		xmr.requiresAttribute(elem, ATTR_COARSE_TUNE);
-		coarseTune = xmr.readInt(elem, ATTR_COARSE_TUNE);
-
-		xmr.requiresAttribute(elem, ATTR_FINE_TUNE);
-		fineTune = xmr.readInt(elem, ATTR_FINE_TUNE);
+		volume = SoundXml.readHex(xmr, elem, ATTR_VOLUME, 0, 255);
+		pan = SoundXml.readInt(xmr, elem, ATTR_PAN, -128, 127);
+		reverb = SoundXml.readInt(xmr, elem, ATTR_REVERB, 0, 255);
+		coarseTune = SoundXml.readInt(xmr, elem, ATTR_COARSE_TUNE, -128, 127);
+		fineTune = SoundXml.readInt(xmr, elem, ATTR_FINE_TUNE, -128, 127);
 	}
 
 	@Override
@@ -132,8 +123,8 @@ public class InstrumentPreset implements XmlSerializable
 
 		xmw.addAttribute(tag, ATTR_WAV, wav);
 		if (envelope != 0)
-			xmw.addHex(tag, ATTR_ENVELOPE, envelope);
-		xmw.addInt(tag, ATTR_VOLUME, volume);
+			xmw.addInt(tag, ATTR_ENVELOPE, envelope);
+		SoundXml.addHex(xmw, tag, ATTR_VOLUME, 2, volume);
 		xmw.addInt(tag, ATTR_PAN, pan);
 		xmw.addInt(tag, ATTR_REVERB, reverb);
 		xmw.addInt(tag, ATTR_COARSE_TUNE, coarseTune);

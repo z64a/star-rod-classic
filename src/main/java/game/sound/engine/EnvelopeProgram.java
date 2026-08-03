@@ -137,6 +137,7 @@ public final class EnvelopeProgram
 		if (commands == null || commands.isEmpty())
 			throw new IllegalArgumentException("Envelope must contain commands");
 
+		boolean loopActive = false;
 		for (int i = 0; i < commands.size(); i++) {
 			EnvelopeCommand command = commands.get(i);
 			if (command == null || command.op == null)
@@ -155,8 +156,14 @@ public final class EnvelopeProgram
 					break;
 				case START_LOOP:
 					requireRange(command.value, 0, 255, "StartLoop count");
+					if (loopActive)
+						throw new IllegalArgumentException("Envelope cannot contain nested loops");
+					loopActive = true;
 					break;
 				case END_LOOP:
+					if (!loopActive)
+						throw new IllegalArgumentException("Envelope contains EndLoop without StartLoop");
+					loopActive = false;
 					break;
 				case END:
 					if (i + 1 != commands.size())
@@ -165,6 +172,8 @@ public final class EnvelopeProgram
 			}
 		}
 
+		if (loopActive)
+			throw new IllegalArgumentException("Envelope contains StartLoop without EndLoop");
 		if (commands.get(commands.size() - 1).op != EnvelopeOp.END)
 			throw new IllegalArgumentException("Envelope must end with End");
 	}

@@ -19,6 +19,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.w3c.dom.Element;
 
 import app.StarRodException;
+import game.sound.SoundXml;
 import game.sound.TableDesign;
 import game.sound.TableDesign.Table;
 import game.sound.VADPCM;
@@ -130,7 +131,7 @@ public class Instrument implements XmlSerializable
 			hasLoop = true;
 
 			if (xmr.hasAttribute(insElem, ATTR_LOOP_COUNT)) {
-				loopCount = xmr.readInt(insElem, ATTR_LOOP_COUNT);
+				loopCount = SoundXml.readInt(xmr, insElem, ATTR_LOOP_COUNT, 0, 0x7FFFFFFF);
 			}
 			else {
 				loopCount = LOOP_FOREVER;
@@ -140,11 +141,12 @@ public class Instrument implements XmlSerializable
 		xmr.requiresAttribute(insElem, ATTR_ENV_NAME);
 		envelopeName = xmr.getAttribute(insElem, ATTR_ENV_NAME);
 
-		xmr.requiresAttribute(insElem, ATTR_KEY_BASE);
-		keyBase = xmr.readInt(insElem, ATTR_KEY_BASE);
+		keyBase = SoundXml.readInt(xmr, insElem, ATTR_KEY_BASE, -32768, 32767);
 
 		if (xmr.hasAttribute(insElem, ATTR_NUM_PRED)) {
-			numPredictors = xmr.readInt(insElem, ATTR_NUM_PRED);
+			numPredictors = SoundXml.readInt(xmr, insElem, ATTR_NUM_PRED, 1, 4);
+			if (numPredictors != 1 && numPredictors != 2 && numPredictors != 4)
+				xmr.complain(ATTR_NUM_PRED + " must be 1, 2, or 4: " + numPredictors);
 		}
 		else {
 			numPredictors = 1;

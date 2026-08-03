@@ -1,9 +1,36 @@
 package game.sound;
 
-import static app.Directories.*;
-import static game.sound.AudioModder.BankListKey.*;
-import static game.sound.AudioModder.FileListKey.*;
-import static game.sound.AudioModder.SongListKey.*;
+import static app.Directories.DUMP_AUDIO;
+import static app.Directories.DUMP_AUDIO_RAW;
+import static app.Directories.FN_AUDIO_AMBIENTS;
+import static app.Directories.FN_AUDIO_BANKS;
+import static app.Directories.FN_AUDIO_FILES;
+import static app.Directories.FN_AUDIO_SONGS;
+import static app.Directories.MOD_AUDIO;
+import static app.Directories.MOD_AUDIO_BUILD;
+import static app.Directories.MOD_AUDIO_OVERRIDES;
+import static app.Directories.MOD_AUDIO_RAW;
+import static game.sound.AudioModder.BankListKey.ATTR_BANK_GROUP;
+import static game.sound.AudioModder.BankListKey.ATTR_BANK_INDEX;
+import static game.sound.AudioModder.BankListKey.ATTR_BANK_NAME;
+import static game.sound.AudioModder.BankListKey.TAG_BANK;
+import static game.sound.AudioModder.BankListKey.TAG_BANK_LIST;
+import static game.sound.AudioModder.FileListKey.ATTR_NAME;
+import static game.sound.AudioModder.FileListKey.TAG_FILE;
+import static game.sound.AudioModder.FileListKey.TAG_FILE_LIST;
+import static game.sound.AudioModder.SongListKey.ATTR_BGM;
+import static game.sound.AudioModder.SongListKey.ATTR_BK1;
+import static game.sound.AudioModder.SongListKey.ATTR_BK2;
+import static game.sound.AudioModder.SongListKey.ATTR_BK3;
+import static game.sound.AudioModder.SongListKey.ATTR_ID;
+import static game.sound.AudioModder.SongListKey.ATTR_OLD_BGM;
+import static game.sound.AudioModder.SongListKey.ATTR_SONG_NAME;
+import static game.sound.AudioModder.SongListKey.ATTR_UNUSED;
+import static game.sound.AudioModder.SongListKey.ATTR_X;
+import static game.sound.AudioModder.SongListKey.ATTR_Y;
+import static game.sound.AudioModder.SongListKey.ATTR_Z;
+import static game.sound.AudioModder.SongListKey.TAG_SONG;
+import static game.sound.AudioModder.SongListKey.TAG_SONG_LIST;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,7 +38,9 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -43,8 +72,10 @@ public class AudioModder
 		Environment.exit();
 	}
 
-	private static final int TABLE_BASE = 0xF00000;
+	private static final int SBN_BASE = 0xF00000;
 	private static final int AUDIO_DATA_END = 0x1942C40;
+	// audio heap allocations which do not depend on SBN or INIT contents
+	private static final int AUDIO_HEAP_FIXED_ALLOC_SIZE = 0x3A9A0;
 	private static final String FN_SFX_BINARY = "DAT1.sef";
 	private static final String FN_SFX_ARCHIVE = SfxXml.FN_SOUND_EFFECTS;
 
@@ -54,6 +85,22 @@ public class AudioModder
 		private int fmt;
 		private int romOffset;
 		private int size;
+		private int paddedSize;
+		private String type;
+	}
+
+	private static class AudioHeapUsage
+	{
+		private int fileList;
+		private int songList;
+		private int resourceList;
+		private int banks;
+		private int sef;
+
+		private int getTotal()
+		{
+			return fileList + songList + resourceList + banks + sef;
+		}
 	}
 
 	public enum FileListKey implements XmlKey
@@ -81,14 +128,14 @@ public class AudioModder
 	private static class SongEntry
 	{
 		private String bgmName;
-		private String x = "";
-		private String y = "";
-		private String z = "";
+		private String bk1Name = "";
+		private String bk2Name = "";
+		private String bk3Name = "";
 
-		private int bgmIndex;
-		private int xIndex;
-		private int yIndex;
-		private int zIndex;
+		private int bgmFileIndex;
+		private int bk1FileIndex;
+		private int bk2FileIndex;
+		private int bk3FileIndex;
 	}
 
 	public enum SongListKey implements XmlKey
@@ -127,15 +174,17 @@ public class AudioModder
 	public static class BankEntry
 	{
 		public final String name;
+		public final int fileIndex;
 
-		public final int group;
-		public final int index;
+		public final int bankSet;
+		public final int bankIndex;
 
-		public BankEntry(String name, int group, int index)
+		public BankEntry(String name, int fileIndex, int bankSet, int bankIndex)
 		{
 			this.name = name;
-			this.group = group;
-			this.index = index;
+			this.fileIndex = fileIndex;
+			this.bankSet = bankSet;
+			this.bankIndex = bankIndex;
 		}
 	}
 
@@ -163,17 +212,6 @@ public class AudioModder
 		}
 	}
 
-	// keep the SBN table in place, move other files wherever they can fit
-	// users supply their own files and must update the INIT file
-	// we need one source file:
-
-	// Song_List.xml
-	//	<SongList>
-	//		<Song BGM="xxx.BGM" X="" (optional) Y="" (optional) Z="" (optional)>
-	//	</SongList>
-
-	// check file names for uniqueness
-
 	private static int dumpSBN(RandomAccessFile raf, List<String> dumpedFilenames) throws IOException
 	{
 		File xmlFile = new File(DUMP_AUDIO + FN_AUDIO_FILES);
@@ -199,7 +237,7 @@ public class AudioModder
 			} SBNHeader; // size = 0x40
 			*/
 
-			raf.seek(TABLE_BASE);
+			raf.seek(SBN_BASE);
 			raf.skipBytes(16);
 
 			int tableStart = raf.readInt();
@@ -208,13 +246,13 @@ public class AudioModder
 			initOffset = raf.readInt();
 
 			for (int i = 0; i < numEntries; i++) {
-				raf.seek(TABLE_BASE + tableStart + 8 * i);
+				raf.seek(SBN_BASE + tableStart + 8 * i);
 				int offset = raf.readInt();
 				//	int word2 = raf.readInt();
 				//	int fmt = word2 >>> 24;
 				//	int lenX = word2 & 0x00FFFFFF; // bytes from offset (includes header)
 
-				raf.seek(TABLE_BASE + offset);
+				raf.seek(SBN_BASE + offset);
 				String ext = IOUtils.readString(raf, 4).trim().toLowerCase();
 				int len = raf.readInt();
 				String name = IOUtils.readString(raf, 4);
@@ -233,7 +271,7 @@ public class AudioModder
 
 				byte[] fileBytes = new byte[len + 0xF & 0xFFFFFFF0];
 
-				raf.seek(TABLE_BASE + offset);
+				raf.seek(SBN_BASE + offset);
 				raf.read(fileBytes);
 				File out = new File(DUMP_AUDIO_RAW + fileName);
 				FileUtils.writeByteArrayToFile(out, fileBytes);
@@ -242,7 +280,7 @@ public class AudioModder
 				xmw.addAttribute(fileTag, ATTR_NAME, fileName);
 				xmw.printTag(fileTag);
 
-				Logger.logf("Dumped %s from %X", fileName, TABLE_BASE + offset);
+				Logger.logf("Dumped %s from %X", fileName, SBN_BASE + offset);
 			}
 
 			xmw.closeTag(listTag);
@@ -260,18 +298,18 @@ public class AudioModder
 			XmlTag listTag = xmw.createTag(TAG_BANK_LIST, false);
 			xmw.openTag(listTag);
 
-			raf.seek(TABLE_BASE + initOffset + 0x20);
+			raf.seek(SBN_BASE + initOffset + 0x20);
 			while (true) {
-				int sbnID = raf.readShort();
+				int fileIndex = raf.readShort();
 				int bankIndex = raf.readByte();
-				int bankGroup = raf.readByte();
+				int bankSet = raf.readByte();
 
-				if (sbnID == -1)
+				if (fileIndex == -1)
 					break;
 
 				XmlTag bankTag = xmw.createTag(TAG_BANK, true);
-				xmw.addAttribute(bankTag, ATTR_BANK_NAME, dumpedFilenames.get(sbnID));
-				xmw.addHex(bankTag, ATTR_BANK_GROUP, bankGroup);
+				xmw.addAttribute(bankTag, ATTR_BANK_NAME, dumpedFilenames.get(fileIndex));
+				xmw.addHex(bankTag, ATTR_BANK_GROUP, bankSet);
 				xmw.addHex(bankTag, ATTR_BANK_INDEX, bankIndex);
 				xmw.printTag(bankTag);
 			}
@@ -284,32 +322,32 @@ public class AudioModder
 			XmlTag listTag = xmw.createTag(TAG_SONG_LIST, false);
 			xmw.openTag(listTag);
 
-			raf.seek(TABLE_BASE + initOffset + 0x130);
+			raf.seek(SBN_BASE + initOffset + 0x130);
 			int songID = 0;
 			while (true) {
-				int sbnID = raf.readShort();
-				int bk1 = raf.readShort();
-				int bk2 = raf.readShort();
-				int bk3 = raf.readShort();
+				int bgmFileIndex = raf.readShort();
+				int bk1FileIndex = raf.readShort();
+				int bk2FileIndex = raf.readShort();
+				int bk3FileIndex = raf.readShort();
 
-				if (sbnID == -1)
+				if (bgmFileIndex == -1)
 					break;
 
 				XmlTag songTag = xmw.createTag(TAG_SONG, true);
 
-				xmw.addHex(songTag, ATTR_ID, songID);
+				xmw.addHex(songTag, ATTR_ID, "%02X", songID);
 				if (songEnum.has(songID))
 					xmw.addAttribute(songTag, ATTR_SONG_NAME, songEnum.getName(songID));
 				if (AudioCatalog.isVanillaUnusedSongID(songID))
 					xmw.addBoolean(songTag, ATTR_UNUSED, true);
-				xmw.addAttribute(songTag, ATTR_BGM, dumpedFilenames.get(sbnID));
+				xmw.addAttribute(songTag, ATTR_BGM, dumpedFilenames.get(bgmFileIndex));
 
-				if (bk1 != 0)
-					xmw.addAttribute(songTag, ATTR_BK1, dumpedFilenames.get(bk1));
-				if (bk2 != 0)
-					xmw.addAttribute(songTag, ATTR_BK2, dumpedFilenames.get(bk2));
-				if (bk3 != 0)
-					xmw.addAttribute(songTag, ATTR_BK3, dumpedFilenames.get(bk3));
+				if (bk1FileIndex != 0)
+					xmw.addAttribute(songTag, ATTR_BK1, dumpedFilenames.get(bk1FileIndex));
+				if (bk2FileIndex != 0)
+					xmw.addAttribute(songTag, ATTR_BK2, dumpedFilenames.get(bk2FileIndex));
+				if (bk3FileIndex != 0)
+					xmw.addAttribute(songTag, ATTR_BK3, dumpedFilenames.get(bk3FileIndex));
 
 				xmw.printTag(songTag);
 
@@ -320,31 +358,31 @@ public class AudioModder
 			xmw.save();
 		}
 
-		List<String> extraFiles = readExtraFileNames(raf, initOffset, dumpedFilenames);
+		List<String> resourceFileNames = readResourceFileNames(raf, initOffset, dumpedFilenames);
 		AudioCatalog.writeAmbientSounds(
-			DUMP_AUDIO.getFile(FN_AUDIO_AMBIENTS), extraFiles);
+			DUMP_AUDIO.getFile(FN_AUDIO_AMBIENTS), resourceFileNames);
 	}
 
-	private static List<String> readExtraFileNames(RandomAccessFile raf, int initOffset,
+	private static List<String> readResourceFileNames(RandomAccessFile raf, int initOffset,
 		List<String> dumpedFilenames) throws IOException
 	{
-		raf.seek(TABLE_BASE + initOffset + 0x10);
+		raf.seek(SBN_BASE + initOffset + 0x10);
 		int listOffset = raf.readUnsignedShort();
 		int listSize = raf.readUnsignedShort();
 		if ((listSize & 1) != 0)
-			throw new IOException("INIT extra-file list has an invalid size");
+			throw new IOException("INIT resource list has an invalid size");
 
-		List<String> extraFiles = new ArrayList<>();
-		raf.seek(TABLE_BASE + initOffset + listOffset);
+		List<String> resourceFileNames = new ArrayList<>();
+		raf.seek(SBN_BASE + initOffset + listOffset);
 		for (int i = 0; i < listSize / 2; i++) {
-			int sbnID = raf.readUnsignedShort();
-			if (sbnID == 0xFFFF)
+			int fileIndex = raf.readUnsignedShort();
+			if (fileIndex == 0xFFFF)
 				break;
-			if (sbnID >= dumpedFilenames.size())
-				throw new IOException("INIT extra-file list references an invalid SBN file ID");
-			extraFiles.add(dumpedFilenames.get(sbnID));
+			if (fileIndex >= dumpedFilenames.size())
+				throw new IOException("INIT resource list references an invalid SBN file index");
+			resourceFileNames.add(dumpedFilenames.get(fileIndex));
 		}
-		return extraFiles;
+		return resourceFileNames;
 	}
 
 	public static void dumpAudio() throws IOException
@@ -376,9 +414,83 @@ public class AudioModder
 		raf.close();
 	}
 
-	private static List<FileEntry> readFileListXML(File xmlFile, HashMap<String, Integer> sbnLookup) throws IOException
+	public static void prepareBuildDirectory() throws IOException
+	{
+		FileUtils.forceMkdir(MOD_AUDIO_BUILD.toFile());
+		FileUtils.cleanDirectory(MOD_AUDIO_BUILD.toFile());
+	}
+
+	public static void buildSoundBanks() throws IOException
+	{
+		BankModder.buildAll();
+		DrumsModder.build();
+		InstrumentsModder.build();
+	}
+
+	public static void buildAudioFiles() throws IOException
+	{
+		SongModder.buildAll();
+		Mseq.buildAll();
+
+		File sfxArchive = MOD_AUDIO.getFile(FN_SFX_ARCHIVE);
+		if (sfxArchive.isFile() && hasOverride(FN_SFX_BINARY)) {
+			Logger.log("Using audio override for " + FN_SFX_BINARY);
+		}
+		else if (sfxArchive.isFile()) {
+			File output = MOD_AUDIO_BUILD.getFile(FN_SFX_BINARY);
+			try {
+				SoundBankCatalog soundBankCatalog = SoundBankCatalog.loadMod();
+				SfxModder.BuildSummary summary = SfxModder.build(
+					sfxArchive.toPath(), output.toPath(), soundBankCatalog);
+				Logger.logf("Built SFX archive: %X bytes.", summary.size());
+				for (String warning : summary.warnings())
+					Logger.logWarning(warning);
+			}
+			catch (SfxFormatException e) {
+				throw new InputFileException(sfxArchive, e);
+			}
+		}
+	}
+
+	public static boolean hasOverride(String fileName)
+	{
+		return MOD_AUDIO_OVERRIDES.getFile(fileName).isFile();
+	}
+
+	private static File resolveAudioFile(String fileName)
+	{
+		File file = MOD_AUDIO_OVERRIDES.getFile(fileName);
+		if (file.isFile())
+			return file;
+
+		file = MOD_AUDIO_BUILD.getFile(fileName);
+		if (file.isFile())
+			return file;
+
+		file = MOD_AUDIO_RAW.getFile(fileName);
+		if (file.isFile())
+			return file;
+
+		return null;
+	}
+
+	private static void validateOverrides(File xmlFile, HashMap<String, Integer> sbnFileIndices) throws IOException
+	{
+		File overrideDir = MOD_AUDIO_OVERRIDES.toFile();
+		File[] overrideFiles = overrideDir.listFiles(File::isFile);
+		if (overrideFiles == null)
+			return;
+
+		for (File override : overrideFiles) {
+			if (!sbnFileIndices.containsKey(override.getName()))
+				throw new InputFileException(xmlFile, "Audio override is not registered in the file list: " + override.getName());
+		}
+	}
+
+	private static List<FileEntry> readFileListXML(File xmlFile, HashMap<String, Integer> sbnFileIndices) throws IOException
 	{
 		List<FileEntry> fileList = new ArrayList<>(256);
+		Set<String> filenames = new HashSet<>();
 
 		XmlReader xmr = new XmlReader(xmlFile);
 
@@ -390,27 +502,27 @@ public class AudioModder
 
 			xmr.requiresAttribute(fileElem, ATTR_NAME);
 			String fileName = xmr.getAttribute(fileElem, ATTR_NAME);
-
-			FileEntry af = new FileEntry();
-			af.file = MOD_AUDIO_BUILD.getFile(fileName);
-
-			if (!af.file.exists())
-				af.file = MOD_AUDIO_RAW.getFile(fileName);
-
-			if (!af.file.exists())
-				throw new InputFileException(xmlFile, "Missing audio file: " + fileName);
-
-			if (sbnLookup.containsKey(fileName))
+			if (!new File(fileName).getName().equals(fileName))
+				throw new InputFileException(xmlFile, "Audio filenames may not contain a path: " + fileName);
+			if (!filenames.add(fileName.toLowerCase()))
 				throw new InputFileException(xmlFile, "File is listed multiple times: " + fileName);
 
+			FileEntry af = new FileEntry();
+			af.file = resolveAudioFile(fileName);
+
+			if (af.file == null)
+				throw new InputFileException(xmlFile, "Missing audio file: " + fileName);
+
 			fileList.add(af);
-			sbnLookup.put(fileName, index);
+			sbnFileIndices.put(fileName, index);
 		}
+
+		validateOverrides(xmlFile, sbnFileIndices);
 
 		return fileList;
 	}
 
-	private static List<SongEntry> readSongListXML(File xmlFile, HashMap<String, Integer> sbnLookup) throws IOException
+	private static List<SongEntry> readSongListXML(File xmlFile, HashMap<String, Integer> sbnFileIndices) throws IOException
 	{
 		List<SongEntry> songList = new ArrayList<>(256);
 
@@ -424,7 +536,7 @@ public class AudioModder
 
 			xmr.requiresAttribute(songElem, ATTR_ID);
 			xmr.requiresAttribute(songElem, ATTR_SONG_NAME);
-			int id = xmr.readHex(songElem, ATTR_ID);
+			int id = SoundXml.readHex(xmr, songElem, ATTR_ID, 0, 0xFF);
 
 			if (id != index)
 				throw new InputFileException(xmlFile, TAG_SONG + " ID is out of order! Do not skip song IDs.");
@@ -437,59 +549,60 @@ public class AudioModder
 				s.bgmName = xmr.getAttribute(songElem, ATTR_OLD_BGM);
 
 				if (xmr.hasAttribute(songElem, ATTR_X))
-					s.x = xmr.getAttribute(songElem, ATTR_X);
+					s.bk1Name = xmr.getAttribute(songElem, ATTR_X);
 
 				if (xmr.hasAttribute(songElem, ATTR_Y))
-					s.y = xmr.getAttribute(songElem, ATTR_Y);
+					s.bk2Name = xmr.getAttribute(songElem, ATTR_Y);
 
 				if (xmr.hasAttribute(songElem, ATTR_Z))
-					s.z = xmr.getAttribute(songElem, ATTR_Z);
+					s.bk3Name = xmr.getAttribute(songElem, ATTR_Z);
 			}
 			else {
 				xmr.requiresAttribute(songElem, ATTR_BGM);
 				s.bgmName = xmr.getAttribute(songElem, ATTR_BGM);
 
 				if (xmr.hasAttribute(songElem, ATTR_BK1))
-					s.x = xmr.getAttribute(songElem, ATTR_BK1);
+					s.bk1Name = xmr.getAttribute(songElem, ATTR_BK1);
 
 				if (xmr.hasAttribute(songElem, ATTR_BK2))
-					s.y = xmr.getAttribute(songElem, ATTR_BK2);
+					s.bk2Name = xmr.getAttribute(songElem, ATTR_BK2);
 
 				if (xmr.hasAttribute(songElem, ATTR_BK3))
-					s.z = xmr.getAttribute(songElem, ATTR_BK3);
+					s.bk3Name = xmr.getAttribute(songElem, ATTR_BK3);
 			}
 
 			songList.add(s);
 
-			if (!sbnLookup.containsKey(s.bgmName))
+			if (!sbnFileIndices.containsKey(s.bgmName))
 				throw new InputFileException(xmlFile, "Song references unregistered file: " + s.bgmName);
-			s.bgmIndex = sbnLookup.get(s.bgmName);
+			s.bgmFileIndex = sbnFileIndices.get(s.bgmName);
 
-			if (!s.x.isEmpty()) {
-				if (!sbnLookup.containsKey(s.x))
-					throw new InputFileException(xmlFile, "Song references unregistered file: " + s.x);
-				s.xIndex = sbnLookup.get(s.x);
+			if (!s.bk1Name.isEmpty()) {
+				if (!sbnFileIndices.containsKey(s.bk1Name))
+					throw new InputFileException(xmlFile, "Song references unregistered file: " + s.bk1Name);
+				s.bk1FileIndex = sbnFileIndices.get(s.bk1Name);
 			}
 
-			if (!s.y.isEmpty()) {
-				if (!sbnLookup.containsKey(s.y))
-					throw new InputFileException(xmlFile, "Song references unregistered file: " + s.y);
-				s.yIndex = sbnLookup.get(s.y);
+			if (!s.bk2Name.isEmpty()) {
+				if (!sbnFileIndices.containsKey(s.bk2Name))
+					throw new InputFileException(xmlFile, "Song references unregistered file: " + s.bk2Name);
+				s.bk2FileIndex = sbnFileIndices.get(s.bk2Name);
 			}
 
-			if (!s.z.isEmpty()) {
-				if (!sbnLookup.containsKey(s.z))
-					throw new InputFileException(xmlFile, "Song references unregistered file: " + s.z);
-				s.zIndex = sbnLookup.get(s.z);
+			if (!s.bk3Name.isEmpty()) {
+				if (!sbnFileIndices.containsKey(s.bk3Name))
+					throw new InputFileException(xmlFile, "Song references unregistered file: " + s.bk3Name);
+				s.bk3FileIndex = sbnFileIndices.get(s.bk3Name);
 			}
 		}
 
 		return songList;
 	}
 
-	private static List<BankEntry> readBankListXML(File xmlFile, HashMap<String, Integer> sbnLookup) throws IOException
+	private static List<BankEntry> readBankListXML(File xmlFile, HashMap<String, Integer> sbnFileIndices) throws IOException
 	{
 		List<BankEntry> bankList = new ArrayList<>(256);
+		Set<Integer> bankSlots = new HashSet<>();
 
 		XmlReader xmr = new XmlReader(xmlFile);
 
@@ -504,14 +617,17 @@ public class AudioModder
 			xmr.requiresAttribute(bankElem, ATTR_BANK_INDEX);
 
 			String name = xmr.getAttribute(bankElem, ATTR_BANK_NAME);
-			int group = xmr.readHex(bankElem, ATTR_BANK_GROUP);
-			int index = xmr.readHex(bankElem, ATTR_BANK_INDEX);
+			int bankSet = SoundXml.readHex(xmr, bankElem, ATTR_BANK_GROUP, 1, 6);
+			int bankIndex = SoundXml.readHex(xmr, bankElem, ATTR_BANK_INDEX, 0, 0xF);
 
-			BankEntry bank = new BankEntry(name, group, index);
-			bankList.add(bank);
+			if (!sbnFileIndices.containsKey(name))
+				throw new InputFileException(xmlFile, "Bank not found in file list: " + name);
 
-			if (!sbnLookup.containsKey(bank.name))
-				throw new InputFileException(xmlFile, "Bank not found in file list: " + bank.name);
+			int slot = bankSet << 4 | bankIndex;
+			if (!bankSlots.add(slot))
+				throw new InputFileException(xmlFile, String.format("Bank group %X index %X is listed multiple times", bankSet, bankIndex));
+
+			bankList.add(new BankEntry(name, sbnFileIndices.get(name), bankSet, bankIndex));
 		}
 
 		return bankList;
@@ -534,137 +650,163 @@ public class AudioModder
 		sbnBuffer.putInt(0);
 		sbnBuffer.putInt(sbnSize); // init file offset, we put it first
 
-		/*
-		rp.write("STAR ROD".getBytes());
-		rp.writeInt(0);
-		rp.writeInt(0);
-		
-		int sbnSize = 8 * fileList.size();
-		sbnSize = (sbnSize + 0xF) & 0xFFFFFFF0;
-		sbnSize += 0x40;
-		
-		rp.writeInt(0x40);
-		rp.writeInt(fileList.size());
-		rp.writeInt(sbnSize);	// seems odd but okay
-		rp.writeInt(sbnSize);	// seems odd but okay
-		
-		rp.writeInt(0);
-		rp.writeInt(sbnSize);	// init file offset, we put it first
-		rp.writeInt(0);
-		rp.writeInt(0);
-		
-		rp.writeInt(0);
-		rp.writeInt(0);
-		rp.writeInt(0);
-		rp.writeInt(0);
-		
-		// write placeholder SBN table
-		for(int i = 0; i < fileList.size(); i++)
-		{
-			rp.writeInt(0);
-			rp.writeInt(0);
-		}
-		
-		rp.padOut(16);
-		*/
-
 		return sbnBuffer;
+	}
+
+	private static int align16(int size)
+	{
+		return (size + 0xF) & -0x10;
+	}
+
+	private static byte[] inspectAudioFile(FileEntry af) throws IOException
+	{
+		byte[] fileBytes = FileUtils.readFileToByteArray(af.file);
+		if (fileBytes.length < 8)
+			throw new InputFileException(af.file, "Audio file is too short to contain a valid header");
+
+		int declaredSize = ByteBuffer.wrap(fileBytes).getInt(4);
+		if (declaredSize < 8 || declaredSize > fileBytes.length)
+			throw new InputFileException(af.file, String.format("Invalid declared audio file size: %X", declaredSize));
+
+		byte[] typeBytes = new byte[] { fileBytes[0], fileBytes[1], fileBytes[2], fileBytes[3] };
+		af.type = new String(typeBytes).trim();
+		String ext = FilenameUtils.getExtension(af.file.getName());
+		if (ext.isEmpty())
+			ext = af.type;
+
+		if (!af.type.equalsIgnoreCase(ext))
+			throw new InputFileException(af.file, "Header of " + af.file + " does not match extension!");
+
+		af.paddedSize = align16(fileBytes.length);
+		switch (af.type) {
+			case "BGM":
+				af.fmt = 0x10;
+				break;
+			case "SEF":
+				af.fmt = 0x20;
+				break;
+			case "BK":
+				af.fmt = 0x30;
+				break;
+			case "PER":
+			case "PRG":
+			case "MSEQ":
+				af.fmt = 0x40;
+				break;
+			default:
+				throw new InputFileException(af.file, "Unsupported audio file type: " + af.type);
+		}
+
+		if (af.type.equals("BK")) {
+			if (fileBytes.length < 0x40)
+				throw new InputFileException(af.file, "Sound bank is too short to contain a valid header");
+			ByteBuffer fileBB = IOUtils.getDirectBuffer(fileBytes);
+
+			fileBB.position(0x32);
+			int instrumentsSize = fileBB.getShort() & 0xFFFF;
+			fileBB.getShort();
+			int loopsSize = fileBB.getShort() & 0xFFFF;
+			fileBB.getShort();
+			int predictorsSize = fileBB.getShort() & 0xFFFF;
+			fileBB.getShort();
+			int envelopesSize = fileBB.getShort() & 0xFFFF;
+
+			af.size = 0x40 + align16(instrumentsSize) + align16(loopsSize) + align16(predictorsSize) + align16(envelopesSize);
+			if (af.size > fileBytes.length)
+				throw new InputFileException(af.file, "Sound bank header sections exceed the file size");
+		}
+		else {
+			af.size = af.paddedSize;
+		}
+
+		if (af.size > 0xFFFFFF)
+			throw new InputFileException(af.file, "Audio file is too large for the SBN file table");
+
+		return fileBytes;
+	}
+
+	public static int getMinimumAudioHeapSize() throws IOException
+	{
+		HashMap<String, Integer> sbnFileIndices = new HashMap<>(250);
+		List<FileEntry> fileList = readFileListXML(MOD_AUDIO.getFile(FN_AUDIO_FILES), sbnFileIndices);
+		List<SongEntry> songList = readSongListXML(MOD_AUDIO.getFile(FN_AUDIO_SONGS), sbnFileIndices);
+		List<BankEntry> bankList = readBankListXML(MOD_AUDIO.getFile(FN_AUDIO_BANKS), sbnFileIndices);
+		AudioHeapUsage modUsage = new AudioHeapUsage();
+
+		modUsage.fileList = align16(fileList.size() * 8);
+		modUsage.songList = align16((songList.size() + 1) * 8);
+
+		File ambientSounds = MOD_AUDIO.getFile(FN_AUDIO_AMBIENTS);
+		int[] resourceFileIndices = AudioCatalog.buildInitResourceList(ambientSounds, sbnFileIndices);
+		modUsage.resourceList = align16((resourceFileIndices.length + 1) * 2);
+
+		for (BankEntry bank : bankList) {
+			FileEntry af = fileList.get(bank.fileIndex);
+			inspectAudioFile(af);
+			if (!af.type.equals("BK"))
+				throw new InputFileException(af.file, "Bank list entry is not a sound bank");
+			modUsage.banks += af.size;
+		}
+
+		for (FileEntry af : fileList) {
+			if (!af.file.getName().equalsIgnoreCase(FN_SFX_BINARY))
+				continue;
+
+			inspectAudioFile(af);
+			if (!af.type.equals("SEF"))
+				throw new InputFileException(af.file, FN_SFX_BINARY + " is not a sound effect archive");
+			if (af.paddedSize > 0xFFFF)
+				throw new InputFileException(af.file, "DAT1 is too large for its allocation instruction");
+			modUsage.sef = af.paddedSize;
+			break;
+		}
+
+		if (modUsage.sef == 0)
+			throw new InputFileException(MOD_AUDIO.getFile(FN_AUDIO_FILES), "Missing audio file: " + FN_SFX_BINARY);
+
+		int requiredSize = AUDIO_HEAP_FIXED_ALLOC_SIZE + modUsage.getTotal();
+		int minimumSize = (requiredSize + 0x7FF) & -0x800;
+		Logger.logf("Audio heap requires %X bytes; minimum heap size is %X.", requiredSize, minimumSize);
+		return minimumSize;
 	}
 
 	private static void writeAudioFiles(RomPatcher rp, List<FileEntry> fileList) throws IOException
 	{
-		int tableEnd = AUDIO_DATA_END;
+		int regionEnd = AUDIO_DATA_END;
 		int nextOffset = rp.getCurrentOffset();
+		int sefAllocSize = 0;
 
 		for (FileEntry af : fileList) {
-			String ext = FilenameUtils.getExtension(af.file.getName());
-
-			byte[] fileBytes = FileUtils.readFileToByteArray(af.file);
-			byte[] typeBytes = new byte[] { fileBytes[0], fileBytes[1], fileBytes[2], fileBytes[3] };
-
-			String type = new String(typeBytes).trim();
-
-			if (ext.isEmpty())
-				ext = type;
-
-			if (!type.equalsIgnoreCase(ext))
-				throw new InputFileException(af.file, "Header of " + af.file + " does not match extension!");
-
-			int paddedSize = (fileBytes.length + 0xF) & 0xFFFFFFF0;
-
-			if (nextOffset + paddedSize > tableEnd)
-				rp.seek(af.file.getName() + " Data", rp.nextAlignedOffset());
-			else
-				nextOffset += paddedSize;
-
-			af.romOffset = rp.getCurrentOffset();
-
-			switch (type) {
-				case "BGM":
-					af.fmt = 0x10;
-					break;
-				case "SEF":
-					af.fmt = 0x20;
-					break;
-				case "BK":
-					af.fmt = 0x30;
-					break;
-				case "PER":
-					af.fmt = 0x40;
-					break;
-				case "PRG":
-					af.fmt = 0x40;
-					break;
-				case "MSEQ":
-					af.fmt = 0x40;
-					break;
+			byte[] fileBytes = inspectAudioFile(af);
+			if (af.file.getName().equalsIgnoreCase(FN_SFX_BINARY)) {
+				if (af.paddedSize > 0xFFFF)
+					throw new InputFileException(af.file, "DAT1 is too large for its allocation instruction");
+				sefAllocSize = af.paddedSize;
 			}
 
+			if (nextOffset + af.paddedSize > regionEnd)
+				rp.seek(af.file.getName() + " Data", rp.nextAlignedOffset());
+			else
+				nextOffset += af.paddedSize;
+
+			af.romOffset = rp.getCurrentOffset();
 			Logger.logf("Writing %s to %X", af.file.getName(), af.romOffset);
 
 			rp.seek(FilenameUtils.getBaseName(af.file.getName()), af.romOffset);
 			rp.write(fileBytes);
 			rp.padOut(16);
-
-			if (type.equals("BK")) {
-				ByteBuffer fileBB = IOUtils.getDirectBuffer(fileBytes);
-
-				fileBB.position(0x32);
-				short len1 = fileBB.getShort();
-				fileBB.getShort();
-				short len2 = fileBB.getShort();
-				fileBB.getShort();
-				short len3 = fileBB.getShort();
-				fileBB.getShort();
-				short len4 = fileBB.getShort();
-
-				af.size = ((len1 + len2 + len3 + len4 + 0x40) + 0xF) & 0xFFFFFFF0;
-			}
-			else {
-				af.size = rp.getCurrentOffset() - af.romOffset;
-			}
 		}
+
+		if (sefAllocSize == 0)
+			throw new InputFileException(MOD_AUDIO.getFile(FN_AUDIO_FILES), "Missing audio file: " + FN_SFX_BINARY);
+
+		rp.seek("SEF Allocation Size", 0x2E3A0);
+		rp.writeInt(0x34060000 | sefAllocSize); // ORI A2, R0, size
 	}
 
-	private static void writeINIT(RomPatcher rp, List<SongEntry> songList,
-		int[] extraFileList) throws IOException
+	private static void writeINIT(RomPatcher rp, List<BankEntry> bankList, List<SongEntry> songList,
+		int[] resourceFileIndices) throws IOException
 	{
-		byte[] bankListBytes = new byte[0x110];
-		byte[] list3Bytes = null;
-
-		//XXX take parts from the original INIT
-		RandomAccessFile raf_original = Environment.getBaseRomReader();
-		raf_original.seek(0x19425E0);
-		raf_original.read(bankListBytes);
-		if (extraFileList == null) {
-			list3Bytes = new byte[0x40];
-			raf_original.seek(0x1942C00);
-			raf_original.read(list3Bytes);
-		}
-		raf_original.close();
-		int numBanks = 64;
-		int numList3 = extraFileList == null ? 24 : extraFileList.length;
-
 		int initStartPosition = rp.getCurrentOffset();
 		rp.write("INIT".getBytes());
 		rp.skip(0x10);
@@ -673,28 +815,31 @@ public class AudioModder
 		rp.writeInt(0);
 
 		int bankListPosition = rp.getCurrentOffset();
-		rp.write(bankListBytes); // XXX
+		for (BankEntry bank : bankList) {
+			rp.writeShort(bank.fileIndex);
+			rp.writeByte(bank.bankIndex);
+			rp.writeByte(bank.bankSet);
+		}
+		rp.writeShort(0xFFFF);
+		rp.writeShort(0);
+		rp.padOut(16);
 
 		int songListPosition = rp.getCurrentOffset();
 		for (SongEntry song : songList) {
-			rp.writeShort(song.bgmIndex);
-			rp.writeShort(song.xIndex);
-			rp.writeShort(song.yIndex);
-			rp.writeShort(song.zIndex);
+			rp.writeShort(song.bgmFileIndex);
+			rp.writeShort(song.bk1FileIndex);
+			rp.writeShort(song.bk2FileIndex);
+			rp.writeShort(song.bk3FileIndex);
 		}
 		rp.writeInt(0xFFFF0000);
+		rp.writeInt(0);
 		rp.padOut(16);
 
-		int list3Position = rp.getCurrentOffset();
-		if (extraFileList == null) {
-			rp.write(list3Bytes); //XXX
-		}
-		else {
-			for (int fileID : extraFileList)
-				rp.writeShort(fileID);
-			rp.writeShort(0xFFFF);
-			rp.padOut(16);
-		}
+		int resourceListPosition = rp.getCurrentOffset();
+		for (int fileIndex : resourceFileIndices)
+			rp.writeShort(fileIndex);
+		rp.writeShort(0xFFFF);
+		rp.padOut(16);
 
 		int initEndPosition = rp.getCurrentOffset();
 		rp.padOut(16);
@@ -704,9 +849,9 @@ public class AudioModder
 
 		rp.writeInt(initEndPosition - initStartPosition);
 
-		int bankListSize = 4 * (numBanks + 1);
+		int bankListSize = 4 * (bankList.size() + 1);
 		int songListSize = 8 * (songList.size() + 1);
-		int list3Size = 2 * (numList3 + 1);
+		int resourceListSize = 2 * (resourceFileIndices.length + 1);
 
 		rp.writeShort(bankListPosition - initStartPosition);
 		rp.writeShort(bankListSize);
@@ -714,73 +859,56 @@ public class AudioModder
 		rp.writeShort(songListPosition - initStartPosition);
 		rp.writeShort(songListSize);
 
-		rp.writeShort(list3Position - initStartPosition);
-		rp.writeShort(list3Size);
+		rp.writeShort(resourceListPosition - initStartPosition);
+		rp.writeShort(resourceListSize);
 
 		rp.seek("After INIT", initEndPadded);
 	}
 
 	public static List<BankEntry> getBankEntries() throws IOException
 	{
-		HashMap<String, Integer> sbnLookup = new HashMap<>(250);
+		HashMap<String, Integer> sbnFileIndices = new HashMap<>(250);
 		List<FileEntry> fileList;
 		List<BankEntry> bankList;
 
-		fileList = readFileListXML(MOD_AUDIO.getFile(FN_AUDIO_FILES), sbnLookup);
-		bankList = readBankListXML(MOD_AUDIO.getFile(FN_AUDIO_BANKS), sbnLookup);
+		fileList = readFileListXML(MOD_AUDIO.getFile(FN_AUDIO_FILES), sbnFileIndices);
+		bankList = readBankListXML(MOD_AUDIO.getFile(FN_AUDIO_BANKS), sbnFileIndices);
 
 		return bankList;
 	}
 
 	public static void patchAudio(Patcher patcher, RomPatcher rp) throws IOException
 	{
-		HashMap<String, Integer> sbnLookup = new HashMap<>(250);
+		HashMap<String, Integer> sbnFileIndices = new HashMap<>(250);
 		List<FileEntry> fileList;
 		List<SongEntry> songList;
 		List<BankEntry> bankList;
-		int[] extraFileList = null;
+		int[] resourceFileIndices;
 
-		File sfxArchive = MOD_AUDIO.getFile(FN_SFX_ARCHIVE);
-		if (sfxArchive.exists()) {
-			File output = MOD_AUDIO_BUILD.getFile(FN_SFX_BINARY);
-			try {
-				SoundBankCatalog soundBankCatalog = SoundBankCatalog.loadMod();
-				SfxModder.BuildSummary summary = SfxModder.build(
-					sfxArchive.toPath(), output.toPath(), soundBankCatalog);
-				Logger.logf("Built SFX archive: %X bytes.", summary.size());
-				for (String warning : summary.warnings())
-					Logger.logWarning(warning);
-			}
-			catch (SfxFormatException e) {
-				throw new InputFileException(sfxArchive, e);
-			}
-		}
-
-		fileList = readFileListXML(MOD_AUDIO.getFile(FN_AUDIO_FILES), sbnLookup);
-		songList = readSongListXML(MOD_AUDIO.getFile(FN_AUDIO_SONGS), sbnLookup);
-		bankList = readBankListXML(MOD_AUDIO.getFile(FN_AUDIO_BANKS), sbnLookup);
+		fileList = readFileListXML(MOD_AUDIO.getFile(FN_AUDIO_FILES), sbnFileIndices);
+		songList = readSongListXML(MOD_AUDIO.getFile(FN_AUDIO_SONGS), sbnFileIndices);
+		bankList = readBankListXML(MOD_AUDIO.getFile(FN_AUDIO_BANKS), sbnFileIndices);
 		File ambientSounds = MOD_AUDIO.getFile(FN_AUDIO_AMBIENTS);
-		if (ambientSounds.isFile())
-			extraFileList = AudioCatalog.readAmbientExtraFiles(ambientSounds, sbnLookup);
+		resourceFileIndices = AudioCatalog.buildInitResourceList(ambientSounds, sbnFileIndices);
 
 		ByteBuffer sbnBuffer = createBufferForSBN(fileList);
 
-		rp.seek("INIT", TABLE_BASE + sbnBuffer.capacity());
+		rp.seek("INIT", SBN_BASE + sbnBuffer.capacity());
 
 		// write INIT
-		writeINIT(rp, songList, extraFileList);
+		writeINIT(rp, bankList, songList, resourceFileIndices);
 
 		// write other files
 		writeAudioFiles(rp, fileList);
 
 		sbnBuffer.position(0x40);
 		for (FileEntry af : fileList) {
-			sbnBuffer.putInt(af.romOffset - TABLE_BASE);
+			sbnBuffer.putInt(af.romOffset - SBN_BASE);
 			sbnBuffer.putInt((af.fmt << 24) | (af.size & 0x00FFFFFF));
 		}
 
 		// update SBN
-		rp.seek("SBN", TABLE_BASE);
+		rp.seek("SBN", SBN_BASE);
 		rp.write(sbnBuffer);
 
 		// an instruction at 800544B8 in GetSBNEntry ANDs the offset with 00FFFFFF
@@ -792,166 +920,4 @@ public class AudioModder
 		rp.writeInt(0); // NOP
 	}
 
-	// sound data 0x0F00000-0x1942C40
-
-	/*
-		 SBN Header (0x40 bytes at 0xF00000)
-		 00		'SBN '
-		 04		00A42C40	(offset) end of data
-		 10		00000040	(offset) table start
-		 14		000000EC	number of entries
-		 18		000007C0	(offset) first file
-		 1C		000007A0	(offset) timestamp string '20001104163016'
-		 24		00A425C0	(offset) INIT file
-	 */
-
-	/*
-		 INIT Header (0x20 bytes at 0x19425C0)
-		 00		'INIT'
-		 04		00000672	file length
-		 08		0020/0104	list 1 offset/length
-		 0C		0130/0508	list 2 offset/length -- A0 entries...
-		 10		0640/0032	list 3 offset/length
-	 */
-
-	/*
-		 BGM Header (0x20 bytes)
-		 00		'BGM '
-		 04		file length
-		 08		ASCII name
-	 */
-
-	private AudioModder() throws IOException
-	{
-		RandomAccessFile raf = Environment.getBaseRomReader();
-
-		raf.seek(TABLE_BASE);
-		System.out.println(IOUtils.readString(raf, 4));
-		System.out.printf("End: %X%n", TABLE_BASE + raf.readInt());
-		raf.skipBytes(8);
-
-		int tableStart = raf.readInt();
-		int numEntries = raf.readInt();
-		raf.skipBytes(12);
-		int initOffset = raf.readInt();
-
-		String[] types = new String[numEntries];
-		String[] names = new String[numEntries];
-
-		for (int i = 0; i < numEntries; i++) {
-			raf.seek(TABLE_BASE + tableStart + 8 * i);
-			int offset = raf.readInt();
-			int word2 = raf.readInt();
-			int fmt = word2 >>> 24;
-			int lenSBN = word2 & 0x00FFFFFF; // bytes from offset (includes header)
-
-			raf.seek(TABLE_BASE + offset);
-			String type = IOUtils.readString(raf, 4);
-			int len = raf.readInt();
-			String name = IOUtils.readString(raf, 4);
-
-			System.out.printf("(%2X) %7X %5X %-3s", i, TABLE_BASE + offset, len, type.trim());
-
-			types[i] = type;
-			names[i] = name;
-
-			if (!type.equals("BK  "))
-				assert (len == lenSBN);
-			System.out.print(" -- '" + name + "'");
-
-			switch (type) {
-				case "BGM ": // 00 - 8E
-					assert (fmt == 0x10);
-					break;
-
-				case "SEF ": // 8F
-					assert (fmt == 0x20);
-					break;
-
-				case "BK  ": // 90 - D8
-					assert (fmt == 0x30);
-
-					raf.seek(TABLE_BASE + offset + 0x32);
-					short len1 = raf.readShort();
-					raf.skipBytes(2);
-					short len2 = raf.readShort();
-					raf.skipBytes(2);
-					short len3 = raf.readShort();
-					raf.skipBytes(2);
-					short len4 = raf.readShort();
-
-					int sumLen = ((len1 + len2 + len3 + len4 + 0x40) + 0xF) & 0xFFFFFFF0;
-
-					assert (sumLen == lenSBN);
-					assert (len1 % 0x30 == 0);
-
-					break;
-
-				case "PER ": // D9
-					assert (fmt == 0x40);
-					break;
-
-				case "PRG ": // DA
-					assert (fmt == 0x40);
-					break;
-
-				case "MSEQ": // DB - EB
-					assert (fmt == 0x40);
-					break;
-
-				default:
-					throw new RuntimeException("Unknown file type " + type);
-			}
-
-			System.out.println();
-		}
-
-		int initBase = TABLE_BASE + initOffset;
-		raf.seek(initBase);
-		String type = IOUtils.readString(raf, 4);
-
-		ConstEnum songEnum = ProjectDatabase.getFromLibraryName("songID");
-		System.out.printf("     %7X %s", initBase, type.trim());
-		System.out.println();
-
-		System.out.println("");
-		System.out.println("Reading INIT file:");
-
-		// list 1
-		System.out.println("----- List 1 ----- ");
-		for (int i = 0; i < 64; i++) {
-			raf.seek(initBase + 0x20 + 4 * i);
-			int bank = raf.readShort();
-			int a = raf.readByte();
-			int b = raf.readByte();
-
-			assert (bank >= 0x90 && bank <= 0xD8); // bank is always one of the banks
-			System.out.printf("[%02X] %2X (%4s) %2X %2X%n", i, bank, names[bank], a, b);
-		}
-
-		// list 2
-		System.out.println("----- Song List ----- ");
-		for (int i = 0; i < 0xA0; i++) {
-			raf.seek(initBase + 0x130 + 8 * i);
-			int bgm = raf.readShort();
-			int bank1 = raf.readShort();
-			int bank2 = raf.readShort();
-			int bank3 = raf.readShort();
-			System.out.printf("%07X [%02X] %2X %2X %2X %2X  %s%n", initBase + 0x130 + 8 * i, i, bgm, bank1, bank2, bank3, songEnum.getName(i));
-			assert (bgm >= 0x00 && bgm <= 0x8E);
-			assert (bank1 == 0 || (bank1 >= 0x90 && bank1 <= 0xD8));
-			assert (bank2 == 0 || (bank2 >= 0x90 && bank2 <= 0xD8));
-			assert (bank3 == 0 || (bank3 >= 0x90 && bank3 <= 0xD8));
-		}
-
-		// list 3
-		System.out.println("----- List 3 ----- ");
-		for (int i = 0; i < 24; i++) {
-			raf.seek(initBase + 0x640 + 2 * i);
-			int sbnEntry = raf.readShort();
-			System.out.printf("[%02X] %2X  %s (%s)%n", i, sbnEntry, types[sbnEntry], names[sbnEntry]);
-		}
-
-		raf.close();
-	}
 }

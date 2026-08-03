@@ -34,6 +34,9 @@ public final class AudioCatalog
 	private static final int LAST_AMBIENT_ID = 0xF;
 	private static final int RADIO_ID = 0x10;
 	private static final int RADIO_PLAYER_COUNT = 4;
+	private static final int FIRST_RADIO_MSEQ_RESOURCE_INDEX = 0x13;
+	private static final int RADIO_BANK_RESOURCE_INDEX = 0x17;
+	private static final int INIT_RESOURCE_COUNT = 0x18;
 	private static final Pattern IDENTIFIER = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
 	private static final Set<Integer> VANILLA_UNUSED_SONG_IDS = Set.of(
 		0x01, 0x06, 0x23, 0x2D, 0x2E, 0x2F, 0x36, 0x43,
@@ -42,22 +45,22 @@ public final class AudioCatalog
 	private static final Set<Integer> VANILLA_UNUSED_AMBIENT_IDS = Set.of(
 		0x06, 0x0D, 0x0E, 0x0F);
 
-	private static final int[] AMBIENT_EXTRA_INDICES = {
-		0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
-		0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10,
-		0x11, 0x12
+	private static final int[] AMBIENT_RESOURCE_INDICES = {
+			0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
+			0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10,
+			0x11, 0x12
 	};
 
 	private static final String[] DEFAULT_AMBIENT_MSEQS = {
-		"DB_501.mseq", "DC_502.mseq", "E5_511.mseq", "E6_512.mseq",
-		"DD_503.mseq", "DE_504.mseq", "DF_505.mseq", "E0_506.mseq",
-		"E1_507.mseq", "E2_508.mseq", "E3_509.mseq", "E4_510.mseq",
-		"E7_513.mseq", "E5_511.mseq", "E5_511.mseq", "E5_511.mseq"
+			"DB_501.mseq", "DC_502.mseq", "E5_511.mseq", "E6_512.mseq",
+			"DD_503.mseq", "DE_504.mseq", "DF_505.mseq", "E0_506.mseq",
+			"E1_507.mseq", "E2_508.mseq", "E3_509.mseq", "E4_510.mseq",
+			"E7_513.mseq", "E5_511.mseq", "E5_511.mseq", "E5_511.mseq"
 	};
 
 	private static final int[] RADIO_SONG_IDS = { 0x2D, 0x2E, 0x2F, 0x2D };
 	private static final String[] DEFAULT_RADIO_MSEQS = {
-		"E8_521.mseq", "E9_522.mseq", "EA_523.mseq", "EB_521.mseq"
+			"E8_521.mseq", "E9_522.mseq", "EA_523.mseq", "EB_521.mseq"
 	};
 
 	public enum Key implements XmlKey
@@ -90,10 +93,10 @@ public final class AudioCatalog
 		}
 	}
 
-	public static void writeAmbientSounds(File xmlFile, List<String> extraFiles) throws IOException
+	public static void writeAmbientSounds(File xmlFile, List<String> resourceFileNames) throws IOException
 	{
-		if (extraFiles.size() <= 0x17)
-			throw new IOException("Audio extra-file list is too short for ambience data");
+		if (resourceFileNames.size() < INIT_RESOURCE_COUNT)
+			throw new IOException("INIT resource list is too short for ambience data");
 
 		ConstEnum ambientNames = ProjectDatabase.getFromNamespace("AmbientSounds");
 
@@ -108,14 +111,14 @@ public final class AudioCatalog
 				if (isVanillaUnusedAmbientID(id))
 					xmw.addBoolean(ambientTag, Key.ATTR_UNUSED, true);
 				xmw.addAttribute(ambientTag, Key.ATTR_MSEQ,
-					extraFiles.get(AMBIENT_EXTRA_INDICES[id]));
+					resourceFileNames.get(AMBIENT_RESOURCE_INDICES[id]));
 				xmw.printTag(ambientTag);
 			}
 
 			XmlTag radioTag = xmw.createTag(Key.TAG_RADIO, false);
 			xmw.addHex(radioTag, Key.ATTR_ID, "%02X", RADIO_ID);
 			xmw.addAttribute(radioTag, Key.ATTR_NAME, ambientNames.getName(RADIO_ID));
-			xmw.addAttribute(radioTag, Key.ATTR_BANK, extraFiles.get(0x17));
+			xmw.addAttribute(radioTag, Key.ATTR_BANK, resourceFileNames.get(RADIO_BANK_RESOURCE_INDEX));
 			xmw.openTag(radioTag);
 
 			for (int player = 0; player < RADIO_PLAYER_COUNT; player++) {
@@ -124,7 +127,7 @@ public final class AudioCatalog
 				xmw.addHex(stationTag, Key.ATTR_SONG, "%02X", RADIO_SONG_IDS[player]);
 				if (player == RADIO_PLAYER_COUNT - 1)
 					xmw.addBoolean(stationTag, Key.ATTR_UNUSED, true);
-				xmw.addAttribute(stationTag, Key.ATTR_MSEQ, extraFiles.get(0x13 + player));
+				xmw.addAttribute(stationTag, Key.ATTR_MSEQ, resourceFileNames.get(FIRST_RADIO_MSEQ_RESOURCE_INDEX + player));
 				xmw.printTag(stationTag);
 			}
 
@@ -145,7 +148,7 @@ public final class AudioCatalog
 			Element songElement = songElements.get(index);
 			int id = index;
 			if (xmr.hasAttribute(songElement, ATTR_ID))
-				id = xmr.readHex(songElement, ATTR_ID);
+				id = SoundXml.readHex(xmr, songElement, ATTR_ID, 0, 0xFF);
 			String name = songNames.get(id);
 			if (name == null)
 				continue;
@@ -204,7 +207,7 @@ public final class AudioCatalog
 		for (Element element : xmr.getTags(root, TAG_SONG)) {
 			xmr.requiresAttribute(element, ATTR_ID);
 			xmr.requiresAttribute(element, AudioModder.SongListKey.ATTR_SONG_NAME);
-			int id = xmr.readHex(element, ATTR_ID);
+			int id = SoundXml.readHex(xmr, element, ATTR_ID, 0, 0xFF);
 			if (!ids.add(id))
 				throw new InputFileException(xmlFile, String.format("Song ID %X is defined more than once", id));
 			readUnused(xmr, element, ATTR_UNUSED);
@@ -234,27 +237,25 @@ public final class AudioCatalog
 		return names;
 	}
 
-	public static int[] readAmbientExtraFiles(File xmlFile, Map<String, Integer> sbnLookup)
+	public static int[] buildInitResourceList(File xmlFile, Map<String, Integer> sbnFileIndices)
 	{
 		AmbientData data = readAmbientSounds(xmlFile);
-		int[] extraFiles = new int[0x18];
+		int[] resourceFileIndices = new int[INIT_RESOURCE_COUNT];
 
-		extraFiles[0] = getFileIndex(xmlFile, sbnLookup, "DAT1.sef");
-		extraFiles[1] = getFileIndex(xmlFile, sbnLookup, "SET1.per");
-		extraFiles[2] = getFileIndex(xmlFile, sbnLookup, "SET1.prg");
+		resourceFileIndices[0] = getFileIndex(xmlFile, sbnFileIndices, "DAT1.sef");
+		resourceFileIndices[1] = getFileIndex(xmlFile, sbnFileIndices, "SET1.per");
+		resourceFileIndices[2] = getFileIndex(xmlFile, sbnFileIndices, "SET1.prg");
 
 		for (int id = 0; id <= LAST_AMBIENT_ID; id++) {
-			extraFiles[AMBIENT_EXTRA_INDICES[id]] =
-				getFileIndex(xmlFile, sbnLookup, data.ambientMseqs[id]);
+			resourceFileIndices[AMBIENT_RESOURCE_INDICES[id]] = getFileIndex(xmlFile, sbnFileIndices, data.ambientMseqs[id]);
 		}
 
 		for (int player = 0; player < RADIO_PLAYER_COUNT; player++) {
-			extraFiles[0x13 + player] =
-				getFileIndex(xmlFile, sbnLookup, data.radioMseqs[player]);
+			resourceFileIndices[FIRST_RADIO_MSEQ_RESOURCE_INDEX + player] = getFileIndex(xmlFile, sbnFileIndices, data.radioMseqs[player]);
 		}
-		extraFiles[0x17] = getFileIndex(xmlFile, sbnLookup, data.radioBank);
+		resourceFileIndices[RADIO_BANK_RESOURCE_INDEX] = getFileIndex(xmlFile, sbnFileIndices, data.radioBank);
 
-		return extraFiles;
+		return resourceFileIndices;
 	}
 
 	public static String getName(Map<String, String> names, String filename)
@@ -280,7 +281,7 @@ public final class AudioCatalog
 			xmr.requiresAttribute(ambientElement, Key.ATTR_ID);
 			xmr.requiresAttribute(ambientElement, Key.ATTR_NAME);
 			xmr.requiresAttribute(ambientElement, Key.ATTR_MSEQ);
-			int id = xmr.readHex(ambientElement, Key.ATTR_ID);
+			int id = SoundXml.readHex(xmr, ambientElement, Key.ATTR_ID, 0, LAST_AMBIENT_ID);
 			if (id != index)
 				xmr.complain(Key.TAG_AMBIENT_SOUND + " ID is out of order; do not skip IDs");
 			data.ambientNames[id] = readIdentifier(xmr, xmlFile, ambientElement, Key.ATTR_NAME);
@@ -292,7 +293,7 @@ public final class AudioCatalog
 		xmr.requiresAttribute(radioElement, Key.ATTR_ID);
 		xmr.requiresAttribute(radioElement, Key.ATTR_NAME);
 		xmr.requiresAttribute(radioElement, Key.ATTR_BANK);
-		if (xmr.readHex(radioElement, Key.ATTR_ID) != RADIO_ID)
+		if (SoundXml.readHex(xmr, radioElement, Key.ATTR_ID, 0, 0xFF) != RADIO_ID)
 			xmr.complain(Key.TAG_RADIO + " must use ambient sound ID 10");
 		data.radioName = readIdentifier(xmr, xmlFile, radioElement, Key.ATTR_NAME);
 		data.radioBank = xmr.getAttribute(radioElement, Key.ATTR_BANK);
@@ -331,10 +332,10 @@ public final class AudioCatalog
 		xmr.requiresAttribute(element, Key.ATTR_MSEQ);
 		readUnused(xmr, element, Key.ATTR_UNUSED);
 
-		int player = xmr.readInt(element, Key.ATTR_PLAYER);
+		int player = SoundXml.readInt(xmr, element, Key.ATTR_PLAYER, 0, RADIO_PLAYER_COUNT - 1);
 		if (player != index)
 			xmr.complain(element.getTagName() + " player is out of order; do not skip players");
-		data.radioSongIDs[player] = xmr.readHex(element, Key.ATTR_SONG);
+		data.radioSongIDs[player] = SoundXml.readHex(xmr, element, Key.ATTR_SONG, 0, 0xFF);
 		data.radioMseqs[player] = xmr.getAttribute(element, Key.ATTR_MSEQ);
 	}
 
@@ -355,11 +356,11 @@ public final class AudioCatalog
 		return joinNames(names);
 	}
 
-	private static int getFileIndex(File xmlFile, Map<String, Integer> sbnLookup, String filename)
+	private static int getFileIndex(File xmlFile, Map<String, Integer> sbnFileIndices, String filename)
 	{
-		Integer index = sbnLookup.get(filename);
+		Integer index = sbnFileIndices.get(filename);
 		if (index == null)
-			throw new InputFileException(xmlFile, "Ambient sound references unregistered file: " + filename);
+			throw new InputFileException(xmlFile, "INIT resource list references unregistered file: " + filename);
 		return index;
 	}
 

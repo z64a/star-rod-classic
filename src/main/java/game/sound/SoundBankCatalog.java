@@ -1,9 +1,27 @@
 package game.sound;
 
-import static app.Directories.*;
-import static game.sound.AudioModder.BankListKey.*;
-import static game.sound.AudioModder.SongListKey.*;
-import static game.sound.BankModder.BankKey.*;
+import static app.Directories.DUMP_AUDIO;
+import static app.Directories.DUMP_AUDIO_BANK;
+import static app.Directories.FN_AUDIO_BANKS;
+import static app.Directories.FN_SOUND_BANK;
+import static app.Directories.MOD_AUDIO;
+import static app.Directories.MOD_AUDIO_BANK;
+import static game.sound.AudioModder.BankListKey.ATTR_BANK_GROUP;
+import static game.sound.AudioModder.BankListKey.ATTR_BANK_INDEX;
+import static game.sound.AudioModder.BankListKey.ATTR_BANK_NAME;
+import static game.sound.AudioModder.BankListKey.TAG_BANK;
+import static game.sound.AudioModder.SongListKey.ATTR_BGM;
+import static game.sound.AudioModder.SongListKey.ATTR_BK1;
+import static game.sound.AudioModder.SongListKey.ATTR_BK2;
+import static game.sound.AudioModder.SongListKey.ATTR_BK3;
+import static game.sound.AudioModder.SongListKey.ATTR_OLD_BGM;
+import static game.sound.AudioModder.SongListKey.ATTR_X;
+import static game.sound.AudioModder.SongListKey.ATTR_Y;
+import static game.sound.AudioModder.SongListKey.ATTR_Z;
+import static game.sound.AudioModder.SongListKey.TAG_SONG;
+import static game.sound.BankModder.BankKey.ATTR_WAV;
+import static game.sound.BankModder.BankKey.TAG_INSTRUMENT;
+import static game.sound.BankModder.BankKey.TAG_INS_LIST;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -23,21 +41,18 @@ public final class SoundBankCatalog
 	private static final int MAX_ENVELOPE = 3;
 
 	private final Map<String, BankInfo> banks;
-	private final Map<Integer, BankInfo> permanentBanks;
-	private final Map<Integer, BankInfo> auxiliaryBanks;
+	private final Map<Integer, BankInfo> assignedBanks;
 
 	public SoundBankCatalog(File bankDirectory, File bankListFile)
 	{
 		banks = readBanks(bankDirectory);
-		permanentBanks = readBankList(bankListFile);
-		auxiliaryBanks = new HashMap<>();
+		assignedBanks = readBankList(bankListFile);
 	}
 
 	private SoundBankCatalog(SoundBankCatalog other)
 	{
 		banks = other.banks;
-		permanentBanks = other.permanentBanks;
-		auxiliaryBanks = new HashMap<>(other.auxiliaryBanks);
+		assignedBanks = new HashMap<>(other.assignedBanks);
 	}
 
 	public static SoundBankCatalog loadDump()
@@ -57,7 +72,7 @@ public final class SoundBankCatalog
 
 		SoundBankCatalog context = new SoundBankCatalog(this);
 		BankInfo bank = getBank(bankFilename);
-		context.auxiliaryBanks.put(index, bank);
+		context.assignedBanks.put(bankKey(1, index), bank);
 		return context;
 	}
 
@@ -105,28 +120,23 @@ public final class SoundBankCatalog
 		SoundBankCatalog context = new SoundBankCatalog(this);
 		for (int i = 0; i < bankNames.length; i++) {
 			if (bankNames[i] != null)
-				context.auxiliaryBanks.put(i, getBank(bankNames[i]));
+				context.assignedBanks.put(bankKey(1, i), getBank(bankNames[i]));
 		}
 		return context;
 	}
 
 	public WavReference getWav(int bank, int patch)
 	{
-		int bankSet = (bank >> 4) & 0xF;
+		int bankSetIndex = (bank >> 4) & 0xF;
 		int envelope = bank & MAX_ENVELOPE;
 		int bankIndex = (patch >> 4) & 0xF;
 		int instrumentIndex = patch & 0xF;
 
-		if (bankSet == 7)
-			bankSet = 0;
-
-		BankInfo bankInfo;
-		if (bankSet == 0)
-			bankInfo = auxiliaryBanks.get(bankIndex);
-		else if (bankSet == 2)
+		if (bankSetIndex == 2)
 			throw new StarRodException("The default instrument at %02X-%02X has no WAV name", bank, patch);
-		else
-			bankInfo = permanentBanks.get(bankKey(bankSet, bankIndex));
+
+		int bankSet = bankSetForIndex(bankSetIndex);
+		BankInfo bankInfo = assignedBanks.get(bankKey(bankSet, bankIndex));
 
 		if (bankInfo == null) {
 			throw new StarRodException("No sound bank is assigned to bank/patch %02X-%02X", bank, patch);
@@ -147,12 +157,11 @@ public final class SoundBankCatalog
 			throw new StarRodException("Envelope index for %s is out of range: %X", wav, envelope);
 
 		List<InstrumentAddress> matches = new ArrayList<>();
-		for (Map.Entry<Integer, BankInfo> entry : permanentBanks.entrySet()) {
+		for (Map.Entry<Integer, BankInfo> entry : assignedBanks.entrySet()) {
 			int key = entry.getKey();
-			findAddresses(matches, entry.getValue(), (key >> 4) & 0xF, key & 0xF, wav, envelope);
+			int bankSet = (key >> 4) & 0xF;
+			findAddresses(matches, entry.getValue(), bankSetIndexForSet(bankSet), key & 0xF, wav, envelope);
 		}
-		for (Map.Entry<Integer, BankInfo> entry : auxiliaryBanks.entrySet())
-			findAddresses(matches, entry.getValue(), 0, entry.getKey(), wav, envelope);
 
 		if (matches.isEmpty())
 			throw new StarRodException("No bank instrument uses WAV name %s", wav);
@@ -161,13 +170,13 @@ public final class SoundBankCatalog
 		return matches.get(0);
 	}
 
-	private void findAddresses(List<InstrumentAddress> matches, BankInfo bank, int bankSet,
+	private void findAddresses(List<InstrumentAddress> matches, BankInfo bank, int bankSetIndex,
 		int bankIndex, String wav, int envelope)
 	{
 		for (int i = 0; i < bank.wavs.size(); i++) {
 			if (!bank.wavs.get(i).equals(wav))
 				continue;
-			matches.add(new InstrumentAddress((bankSet << 4) | envelope, (bankIndex << 4) | i));
+			matches.add(new InstrumentAddress((bankSetIndex << 4) | envelope, (bankIndex << 4) | i));
 		}
 	}
 
@@ -218,20 +227,14 @@ public final class SoundBankCatalog
 			xmr.requiresAttribute(elem, ATTR_BANK_INDEX);
 
 			String filename = xmr.getAttribute(elem, ATTR_BANK_NAME);
-			int group = xmr.readHex(elem, ATTR_BANK_GROUP);
-			int index = xmr.readHex(elem, ATTR_BANK_INDEX);
-			int bankSet = group == 2 ? 1 : group;
-
-			if (bankSet < 1 || bankSet > 6 || bankSet == 2)
-				throw new InputFileException(bankListFile, "Unsupported sound bank group: " + group);
-			if (index < 0 || index > 0xF)
-				throw new InputFileException(bankListFile, "Sound bank index is out of range: " + index);
+			int bankSet = SoundXml.readHex(xmr, elem, ATTR_BANK_GROUP, 1, 6);
+			int bankIndex = SoundXml.readHex(xmr, elem, ATTR_BANK_INDEX, 0, 0xF);
 
 			BankInfo bank = getBank(filename);
-			int key = bankKey(bankSet, index);
+			int key = bankKey(bankSet, bankIndex);
 			if (bankMap.put(key, bank) != null) {
 				throw new InputFileException(bankListFile,
-					"Multiple sound banks use group %X index %X", group, index);
+					"Multiple sound banks use group %X index %X", bankSet, bankIndex);
 			}
 		}
 
@@ -250,6 +253,36 @@ public final class SoundBankCatalog
 	private static int bankKey(int bankSet, int bankIndex)
 	{
 		return (bankSet << 4) | bankIndex;
+	}
+
+	private static int bankSetForIndex(int bankSetIndex)
+	{
+		switch (bankSetIndex) {
+			case 0:
+			case 7:
+				return 1;
+			case 1:
+				return 2;
+			case 3:
+			case 4:
+			case 5:
+			case 6:
+				return bankSetIndex;
+			default:
+				return -1;
+		}
+	}
+
+	private static int bankSetIndexForSet(int bankSet)
+	{
+		switch (bankSet) {
+			case 1:
+				return 0;
+			case 2:
+				return 1;
+			default:
+				return bankSet;
+		}
 	}
 
 	private static String readOptional(XmlReader xmr, Element elem, AudioModder.SongListKey key)

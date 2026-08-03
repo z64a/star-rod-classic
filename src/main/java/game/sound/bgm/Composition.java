@@ -12,6 +12,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import app.StarRodException;
+import game.sound.SoundXml;
 import game.sound.bgm.Song.BGMPart;
 import util.DynamicByteBuffer;
 import util.xml.XmlWrapper.XmlReader;
@@ -127,7 +128,7 @@ public class Composition implements XmlSerializable
 	@Override
 	public void fromXML(XmlReader xmr, Element elem)
 	{
-		index = xmr.readInt(elem, ATTR_INDEX);
+		index = SoundXml.readInt(xmr, elem, ATTR_INDEX, 0, 3);
 
 		for (Node child = elem.getFirstChild(); child != null; child = child.getNextSibling()) {
 			if (child instanceof Element cmd) {
@@ -217,7 +218,7 @@ public class Composition implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			phraseID = xmr.readInt(elem, ATTR_SERIAL_ID);
+			phraseID = SoundXml.readInt(xmr, elem, ATTR_SERIAL_ID, 1, 0x7FFFFFFF);
 		}
 
 		@Override
@@ -274,7 +275,7 @@ public class Composition implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			loopIndex = xmr.readInt(elem, ATTR_COMP_LOOP_INDEX);
+			loopIndex = SoundXml.readInt(xmr, elem, ATTR_COMP_LOOP_INDEX, 0, 31);
 		}
 
 		@Override
@@ -328,8 +329,8 @@ public class Composition implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			loopIndex = xmr.readInt(elem, ATTR_COMP_LOOP_INDEX);
-			loopCount = xmr.readInt(elem, ATTR_COMP_LOOP_COUNT);
+			loopIndex = SoundXml.readInt(xmr, elem, ATTR_COMP_LOOP_INDEX, 0, 31);
+			loopCount = SoundXml.readInt(xmr, elem, ATTR_COMP_LOOP_COUNT, 0, 127);
 		}
 
 		@Override

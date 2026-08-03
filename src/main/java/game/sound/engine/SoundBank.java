@@ -1,6 +1,10 @@
 package game.sound.engine;
 
-import static app.Directories.*;
+import static app.Directories.FN_AUDIO_DRUMS;
+import static app.Directories.FN_AUDIO_PRESETS;
+import static app.Directories.FN_SOUND_BANK;
+import static app.Directories.MOD_AUDIO;
+import static app.Directories.MOD_AUDIO_BANK;
 
 import java.io.File;
 import java.io.IOException;
@@ -70,10 +74,10 @@ public class SoundBank
 			if (bank == null)
 				throw new StarRodException("Could not find bank %s", bankName);
 
-			int key = (e.group & 0xF) << 4 | (e.index & 0xF);
+			int key = (e.bankSet & 0xF) << 4 | (e.bankIndex & 0xF);
 
 			if (bankRefMap.containsKey(key))
-				throw new StarRodException("Duplicate key for sound bank, group %X with index %X", e.group, e.index);
+				throw new StarRodException("Duplicate sound bank assignment for bank set %X index %X", e.bankSet, e.bankIndex);
 
 			bankRefMap.put(key, bank);
 		}
@@ -91,7 +95,7 @@ public class SoundBank
 			return false;
 		}
 
-		int key = (index & 0xF);
+		int key = 0x10 | (index & 0xF);
 
 		bankRefMap.put(key, bank);
 		return true;
@@ -120,20 +124,20 @@ public class SoundBank
 		return getInstrument(ins, envelope);
 	}
 
-	public InstrumentQueryResult getInstrument(int groupEnv, int index)
+	public InstrumentQueryResult getInstrument(int bank, int patch)
 	{
-		int groupIndex = groupEnv >> 4;
-		int envIndex = groupEnv & 3;
+		int bankSetIndex = (bank >> 4) & 0xF;
+		int envelopeIndex = bank & 3;
+		int bankSet;
 
 		// see: au_get_instrument
-		switch (groupIndex) {
+		switch (bankSetIndex) {
 			case 0:
 			case 7:
-				// aux
-				groupIndex = 0;
+				bankSet = 1;
 				break;
 			case 1:
-				groupIndex = 2;
+				bankSet = 2;
 				break;
 			case 2:
 				// default instrument
@@ -142,32 +146,32 @@ public class SoundBank
 			case 4:
 			case 5:
 			case 6:
-				// no remapping
+				bankSet = bankSetIndex;
 				break;
 			default:
-				// invalid group
+				// invalid bank set index
 				return null;
 		}
 
 		// have to split bank index from instrument index
-		int bankIndex = (index >> 4) & 0xF;
-		int insIndex = index & 0xF;
+		int bankIndex = (patch >> 4) & 0xF;
+		int instrumentIndex = patch & 0xF;
 
-		int key = (groupIndex & 0xF) << 4 | (bankIndex & 0xF);
+		int key = (bankSet & 0xF) << 4 | (bankIndex & 0xF);
 
-		Bank bank = bankRefMap.get(key);
-		if (bank == null) {
-			Logger.logfError("Could not find a bank with group %X and index %X", groupEnv, bankIndex);
+		Bank soundBank = bankRefMap.get(key);
+		if (soundBank == null) {
+			Logger.logfError("Could not find a bank in bank set %X at index %X", bankSet, bankIndex);
 			return null;
 		}
 
-		if (bank.instruments.size() <= insIndex) {
-			Logger.logfError("Bank %s has no instrument with index %X", bank.name, insIndex);
+		if (soundBank.instruments.size() <= instrumentIndex) {
+			Logger.logfError("Bank %s has no instrument with index %X", soundBank.name, instrumentIndex);
 			return null;
 		}
 
-		Instrument ins = bank.instruments.get(insIndex);
-		return getInstrument(ins, envIndex);
+		Instrument ins = soundBank.instruments.get(instrumentIndex);
+		return getInstrument(ins, envelopeIndex);
 	}
 
 	private InstrumentQueryResult getInstrument(Instrument ins, int envIndex)

@@ -11,6 +11,7 @@ import org.w3c.dom.Node;
 
 import app.StarRodException;
 import game.sound.SoundBankCatalog;
+import game.sound.SoundXml;
 import game.sound.bgm.CommandStream.StreamType;
 import game.sound.bgm.Song.BGMPart;
 import util.DynamicByteBuffer;
@@ -57,15 +58,16 @@ public class Track implements XmlSerializable
 	protected ArrayList<TrackDetour> detours = new ArrayList<>();
 	protected ArrayList<TrackBranch> branches = new ArrayList<>();
 
-	// map serialID/filePos --> TrackDetour during dump and deserialization
+	// map serialID/binary position --> TrackDetour during dump and deserialization
 	private transient HashMap<Integer, TrackDetour> detourLookup = new HashMap<>();
 	private transient HashMap<Integer, TrackBranch> branchLookup = new HashMap<>();
 
 	public int index;
+	public boolean defined;
 	public boolean enabled;
 	public boolean unkFlag;
 
-	public int linkedIndex;
+	public int linkedIndex = -1;
 	public int polyphonicIndex = 1;
 	public int polyphonicVoiceCount = PolyphonicVoiceCounts[polyphonicIndex];
 
@@ -87,7 +89,10 @@ public class Track implements XmlSerializable
 
 		info |= ((commands.filePos - phrase.filePos) & 0xFFFF) << 16;
 		info |= (polyphonicIndex & 7) << 13;
-		info |= (linkedIndex & 0xF) << 9;
+		if (linkedIndex < -1 || linkedIndex >= index)
+			throw new StarRodException("Track %d can only link to an earlier track", index);
+		if (linkedIndex >= 0)
+			info |= ((linkedIndex + 1) & 0xF) << 9;
 		if (!unkFlag)
 			info |= 1 << 8;
 		if (commands.isDrum)
@@ -122,6 +127,7 @@ public class Track implements XmlSerializable
 		this(phrase);
 
 		enabled = (trackInfo != 0);
+		defined = enabled;
 		index = i;
 
 		if (!enabled) {
@@ -131,7 +137,8 @@ public class Track implements XmlSerializable
 		// unpack track info
 		int offset = (trackInfo >> 16) & 0xFFFF;
 		polyphonicIndex = (trackInfo >> 13) & 0x7;
-		linkedIndex = (trackInfo >> 9) & 0xF;
+		int linkedID = (trackInfo >> 9) & 0xF;
+		linkedIndex = linkedID == 0 ? -1 : linkedID - 1;
 		unkFlag = ((trackInfo >> 8) & 1) == 0;
 		commands.isDrum = ((trackInfo >> 7) & 1) != 0;
 
@@ -444,13 +451,18 @@ public class Track implements XmlSerializable
 	@Override
 	public void fromXML(XmlReader xmr, Element elem)
 	{
-		index = xmr.readInt(elem, ATTR_INDEX);
-		copyOf = xmr.readInt(elem, ATTR_COPY_OF, -1);
-		linkedIndex = xmr.readInt(elem, ATTR_LINKED, 0);
-		polyphonicIndex = xmr.readInt(elem, ATTR_POLYPHONY, 1);
-		enabled = xmr.readBoolean(elem, ATTR_ENABLED, false);
+		defined = true;
+		index = SoundXml.readInt(xmr, elem, ATTR_INDEX, 0, 15);
+		copyOf = SoundXml.readInt(xmr, elem, ATTR_COPY_OF, -1, -1, 15);
+		linkedIndex = SoundXml.readInt(xmr, elem, ATTR_LINKED, -1, -1, 14);
+		polyphonicIndex = SoundXml.readInt(xmr, elem, ATTR_POLYPHONY, 1, 0, PolyphonicVoiceCounts.length - 1);
+		enabled = xmr.readBoolean(elem, ATTR_ENABLED, true);
 		unkFlag = xmr.readBoolean(elem, ATTR_UNK_FLAG, true);
 		commands.isDrum = xmr.readBoolean(elem, ATTR_IS_DRUM, false);
+		if (copyOf == index)
+			xmr.complain("Track cannot copy itself: " + index);
+		if (enabled && linkedIndex >= index)
+			xmr.complain("Track " + index + " can only link to an earlier track");
 
 		polyphonicVoiceCount = PolyphonicVoiceCounts[polyphonicIndex];
 
@@ -463,6 +475,8 @@ public class Track implements XmlSerializable
 			for (Element detourElem : xmr.getTags(detoursElem, TAG_DETOUR)) {
 				TrackDetour detour = new TrackDetour(this);
 				detour.fromXML(xmr, detourElem);
+				if (detourLookup.containsKey(detour.serialID))
+					xmr.complain("Detour serialID is defined more than once: " + detour.serialID);
 				detourLookup.put(detour.serialID, detour);
 				detours.add(detour);
 			}
@@ -474,6 +488,8 @@ public class Track implements XmlSerializable
 			for (Element branchElem : xmr.getTags(branchesElem, TAG_BRANCH)) {
 				TrackBranch branch = new TrackBranch(this);
 				branch.fromXML(xmr, branchElem);
+				if (branchLookup.containsKey(branch.serialID))
+					xmr.complain("Branch serialID is defined more than once: " + branch.serialID);
 				branchLookup.put(branch.serialID, branch);
 				branches.add(branch);
 			}
@@ -491,9 +507,11 @@ public class Track implements XmlSerializable
 		xmw.addInt(tag, ATTR_INDEX, index);
 		if (copyOf >= 0)
 			xmw.addInt(tag, ATTR_COPY_OF, copyOf);
-		xmw.addInt(tag, ATTR_LINKED, linkedIndex);
+		if (linkedIndex >= 0)
+			xmw.addInt(tag, ATTR_LINKED, linkedIndex);
 		xmw.addInt(tag, ATTR_POLYPHONY, polyphonicIndex);
-		xmw.addBoolean(tag, ATTR_ENABLED, enabled);
+		if (!enabled)
+			xmw.addBoolean(tag, ATTR_ENABLED, false);
 		xmw.addBoolean(tag, ATTR_UNK_FLAG, unkFlag);
 		xmw.addBoolean(tag, ATTR_IS_DRUM, commands.isDrum);
 
@@ -544,7 +562,7 @@ public class Track implements XmlSerializable
 				}
 				else if (cmd instanceof Branch branch) {
 					branch.branch = track.branchLookup.get(branch.serialID);
-					time += track.phrase.song.branchMeasure;
+					time += track.phrase.song.branchTicks;
 					commands.all.add(cmd);
 				}
 				else {
@@ -637,10 +655,7 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			serialID = xmr.readInt(elem, ATTR_SERIAL_ID);
-
-			if (xmr.hasAttribute(elem, ATTR_FILE_POS))
-				commands.filePos = xmr.readHex(elem, ATTR_FILE_POS);
+			serialID = SoundXml.readInt(xmr, elem, ATTR_SERIAL_ID, 1, 0x7FFFFFFF);
 
 			Element commandsElem = xmr.getUniqueRequiredTag(elem, TAG_COMMANDS);
 			readCommandList(xmr, commandsElem, track, commands);
@@ -651,8 +666,6 @@ public class Track implements XmlSerializable
 		{
 			XmlTag tag = xmw.createTag(TAG_DETOUR, false);
 			xmw.addInt(tag, ATTR_SERIAL_ID, serialID);
-			if (commands.filePos != 0)
-				xmw.addHex(tag, ATTR_FILE_POS, commands.filePos);
 			xmw.openTag(tag);
 
 			XmlTag commandsTag = xmw.createTag(TAG_COMMANDS, false);
@@ -690,27 +703,28 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			serialID = xmr.readInt(elem, ATTR_SERIAL_ID);
-
-			if (xmr.hasAttribute(elem, ATTR_FILE_POS))
-				tablePos = xmr.readHex(elem, ATTR_FILE_POS);
+			serialID = SoundXml.readInt(xmr, elem, ATTR_SERIAL_ID, 1, 0x7FFFFFFF);
+			boolean[] defined = new boolean[track.phrase.song.branchOptions];
 
 			for (Element optionElem : xmr.getTags(elem, TAG_OPTION)) {
-				int index = xmr.readInt(optionElem, ATTR_INDEX);
+				int index = SoundXml.readInt(xmr, optionElem, ATTR_INDEX, 0, defined.length - 1);
+				if (defined[index])
+					xmr.complain("Branch option is defined more than once: " + index);
+				defined[index] = true;
 				boolean isDrum = xmr.readBoolean(optionElem, ATTR_IS_DRUM, false);
-
-				if (index > options.length)
-					xmr.complain("Branch has too many options, maximum is " + options.length);
 
 				options[index].isDrum = isDrum;
 				readCommandList(xmr, optionElem, track, options[index]);
 
 				int duration = options[index].duration;
-				int expected = track.phrase.song.branchMeasure;
+				int expected = track.phrase.song.branchTicks;
 				if (duration != expected)
 					xmr.complain(String.format("Branch has duration: %d (expected %d)", duration, expected));
 
-				index++;
+			}
+			for (int i = 0; i < defined.length; i++) {
+				if (!defined[i])
+					xmr.complain("Branch is missing option: " + i);
 			}
 		}
 
@@ -721,8 +735,6 @@ public class Track implements XmlSerializable
 
 			XmlTag branchTag = xmw.createTag(TAG_BRANCH, false);
 			xmw.addInt(branchTag, ATTR_SERIAL_ID, serialID);
-			if (tablePos != 0)
-				xmw.addHex(branchTag, ATTR_FILE_POS, tablePos);
 			xmw.openTag(branchTag);
 
 			for (int i = 0; i < song.branchOptions; i++) {
@@ -802,9 +814,9 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			pitch = xmr.readInt(elem, ATTR_NOTE_PITCH);
-			velocity = xmr.readInt(elem, ATTR_NOTE_VELOCITY);
-			length = xmr.readInt(elem, ATTR_NOTE_LENGTH);
+			pitch = SoundXml.readInt(xmr, elem, ATTR_NOTE_PITCH, 0, 0x53);
+			velocity = SoundXml.readInt(xmr, elem, ATTR_NOTE_VELOCITY, 0, 127);
+			length = SoundXml.readInt(xmr, elem, ATTR_NOTE_LENGTH, 0, 0x40BF);
 		}
 
 		@Override
@@ -858,7 +870,7 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			ticks = xmr.readInt(elem, ATTR_TICKS);
+			ticks = SoundXml.readInt(xmr, elem, ATTR_TICKS, 1, 0x877);
 		}
 
 		@Override
@@ -911,7 +923,7 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			bpm = xmr.readInt(elem, ATTR_BPM);
+			bpm = SoundXml.readInt(xmr, elem, ATTR_BPM, 1, 0xFFFF);
 		}
 
 		@Override
@@ -954,14 +966,14 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			value = xmr.readInt(elem, ATTR_VALUE);
+			value = SoundXml.readHex(xmr, elem, ATTR_VOLUME, 0, 127);
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_CMD_MASTER_VOLUME, true);
-			xmw.addInt(tag, ATTR_VALUE, value);
+			SoundXml.addHex(xmw, tag, ATTR_VOLUME, 2, value);
 			xmw.printTag(tag);
 		}
 
@@ -997,7 +1009,7 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			cents = xmr.readInt(elem, ATTR_CENTS);
+			cents = SoundXml.readInt(xmr, elem, ATTR_CENTS, -128, 127);
 		}
 
 		@Override
@@ -1039,7 +1051,7 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader x, Element e)
 		{
-			effectType = x.readInt(e, ATTR_EFFECT_TYPE);
+			effectType = SoundXml.readInt(x, e, ATTR_EFFECT_TYPE, 0, 255);
 		}
 
 		@Override
@@ -1084,8 +1096,8 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			time = xmr.readInt(elem, ATTR_TICKS);
-			bpm = xmr.readInt(elem, ATTR_BPM);
+			time = SoundXml.readInt(xmr, elem, ATTR_TICKS, 0, 0xFFFF);
+			bpm = SoundXml.readInt(xmr, elem, ATTR_BPM, 1, 0xFFFF);
 		}
 
 		@Override
@@ -1132,8 +1144,8 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			time = xmr.readInt(elem, ATTR_TICKS);
-			value = xmr.readInt(elem, ATTR_VALUE);
+			time = SoundXml.readInt(xmr, elem, ATTR_TICKS, 0, 0xFFFF);
+			value = SoundXml.readHex(xmr, elem, ATTR_TARGET, 0, 127);
 		}
 
 		@Override
@@ -1141,7 +1153,7 @@ public class Track implements XmlSerializable
 		{
 			XmlTag tag = xmw.createTag(TAG_CMD_MASTER_VOLUME_LERP, true);
 			xmw.addInt(tag, ATTR_TICKS, time);
-			xmw.addInt(tag, ATTR_VALUE, value);
+			SoundXml.addHex(xmw, tag, ATTR_TARGET, 2, value);
 			xmw.printTag(tag);
 		}
 
@@ -1180,8 +1192,8 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			index = xmr.readInt(elem, ATTR_INDEX);
-			value = xmr.readInt(elem, ATTR_VALUE);
+			index = SoundXml.readInt(xmr, elem, ATTR_INDEX, 0, 3);
+			value = SoundXml.readInt(xmr, elem, ATTR_EFFECT_TYPE, 0, 255);
 		}
 
 		@Override
@@ -1189,7 +1201,7 @@ public class Track implements XmlSerializable
 		{
 			XmlTag tag = xmw.createTag(TAG_CMD_MASTER_EFFECT, true);
 			xmw.addInt(tag, ATTR_INDEX, index);
-			xmw.addInt(tag, ATTR_VALUE, value);
+			xmw.addInt(tag, ATTR_EFFECT_TYPE, value);
 			xmw.printTag(tag);
 		}
 
@@ -1240,7 +1252,7 @@ public class Track implements XmlSerializable
 			xmr.requiresAttribute(elem, ATTR_WAV);
 			wav = xmr.getAttribute(elem, ATTR_WAV);
 			if (xmr.hasAttribute(elem, ATTR_ENVELOPE))
-				envelope = xmr.readHex(elem, ATTR_ENVELOPE);
+				envelope = SoundXml.readInt(xmr, elem, ATTR_ENVELOPE, 0, 3);
 		}
 
 		@Override
@@ -1249,7 +1261,7 @@ public class Track implements XmlSerializable
 			XmlTag tag = xmw.createTag(TAG_CMD_OVERRIDE_PATCH, true);
 			xmw.addAttribute(tag, ATTR_WAV, wav);
 			if (envelope != 0)
-				xmw.addHex(tag, ATTR_ENVELOPE, envelope);
+				xmw.addInt(tag, ATTR_ENVELOPE, envelope);
 			xmw.printTag(tag);
 		}
 
@@ -1294,14 +1306,14 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			value = xmr.readInt(elem, ATTR_VALUE);
+			value = SoundXml.readHex(xmr, elem, ATTR_VOLUME, 0, 127);
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_CMD_INSTRUMENT_VOLUME, true);
-			xmw.addInt(tag, ATTR_VALUE, value);
+			SoundXml.addHex(xmw, tag, ATTR_VOLUME, 2, value);
 			xmw.printTag(tag);
 		}
 
@@ -1336,14 +1348,14 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			value = xmr.readInt(elem, ATTR_VALUE);
+			value = SoundXml.readInt(xmr, elem, ATTR_PAN, 0, 127);
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_CMD_INSTRUMENT_PAN, true);
-			xmw.addInt(tag, ATTR_VALUE, value);
+			xmw.addInt(tag, ATTR_PAN, value);
 			xmw.printTag(tag);
 		}
 
@@ -1378,14 +1390,14 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			value = xmr.readInt(elem, ATTR_VALUE);
+			value = SoundXml.readInt(xmr, elem, ATTR_REVERB, 0, 127);
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_CMD_INSTRUMENT_REVERB, true);
-			xmw.addInt(tag, ATTR_VALUE, value);
+			xmw.addInt(tag, ATTR_REVERB, value);
 			xmw.printTag(tag);
 		}
 
@@ -1420,14 +1432,14 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			value = xmr.readInt(elem, ATTR_VALUE);
+			value = SoundXml.readHex(xmr, elem, ATTR_VOLUME, 0, 127);
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_CMD_TRACK_VOLUME, true);
-			xmw.addInt(tag, ATTR_VALUE, value);
+			SoundXml.addHex(xmw, tag, ATTR_VOLUME, 2, value);
 			xmw.printTag(tag);
 		}
 
@@ -1462,7 +1474,7 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			semitones = xmr.readInt(elem, ATTR_SEMITONES);
+			semitones = SoundXml.readInt(xmr, elem, ATTR_SEMITONES, -128, 127);
 		}
 
 		@Override
@@ -1504,7 +1516,7 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			cents = xmr.readInt(elem, ATTR_CENTS);
+			cents = SoundXml.readInt(xmr, elem, ATTR_CENTS, -128, 127);
 		}
 
 		@Override
@@ -1546,7 +1558,7 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			cents = xmr.readInt(elem, ATTR_CENTS);
+			cents = SoundXml.readInt(xmr, elem, ATTR_CENTS, -32768, 32767);
 		}
 
 		@Override
@@ -1593,9 +1605,9 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			delay = xmr.readInt(elem, ATTR_DELAY);
-			speed = xmr.readInt(elem, ATTR_SPEED);
-			depth = xmr.readInt(elem, ATTR_DEPTH);
+			delay = SoundXml.readInt(xmr, elem, ATTR_DELAY, 0, 255);
+			speed = SoundXml.readInt(xmr, elem, ATTR_SPEED, 0, 255);
+			depth = SoundXml.readInt(xmr, elem, ATTR_DEPTH, 0, 255);
 		}
 
 		@Override
@@ -1642,7 +1654,7 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			value = xmr.readInt(elem, ATTR_SPEED);
+			value = SoundXml.readInt(xmr, elem, ATTR_SPEED, 0, 255);
 		}
 
 		@Override
@@ -1684,7 +1696,7 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmw, Element elem)
 		{
-			value = xmw.readInt(elem, ATTR_DEPTH);
+			value = SoundXml.readInt(xmw, elem, ATTR_DEPTH, 0, 255);
 		}
 
 		@Override
@@ -1763,8 +1775,8 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			pan1 = xmr.readInt(elem, ATTR_PAN1);
-			pan2 = xmr.readInt(elem, ATTR_PAN2);
+			pan1 = SoundXml.readInt(xmr, elem, ATTR_PAN1, 0, 127);
+			pan2 = SoundXml.readInt(xmr, elem, ATTR_PAN2, 0, 127);
 		}
 
 		@Override
@@ -1816,7 +1828,7 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			index = xmr.readInt(elem, ATTR_INDEX);
+			index = SoundXml.readInt(xmr, elem, ATTR_INDEX, 0, 127);
 			useGlobal = xmr.readBoolean(elem, ATTR_USE_GLOBAL);
 		}
 
@@ -1867,8 +1879,8 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			time = xmr.readInt(elem, ATTR_TICKS);
-			value = xmr.readInt(elem, ATTR_VALUE);
+			time = SoundXml.readInt(xmr, elem, ATTR_TICKS, 0, 0xFFFF);
+			value = SoundXml.readHex(xmr, elem, ATTR_TARGET, 0, 127);
 		}
 
 		@Override
@@ -1876,7 +1888,7 @@ public class Track implements XmlSerializable
 		{
 			XmlTag tag = xmw.createTag(TAG_CMD_INSTR_VOL_LERP, true);
 			xmw.addInt(tag, ATTR_TICKS, time);
-			xmw.addInt(tag, ATTR_VALUE, value);
+			SoundXml.addHex(xmw, tag, ATTR_TARGET, 2, value);
 			xmw.printTag(tag);
 		}
 
@@ -1913,7 +1925,7 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmw, Element elem)
 		{
-			index = xmw.readInt(elem, ATTR_INDEX);
+			index = SoundXml.readInt(xmw, elem, ATTR_INDEX, 0, 3);
 		}
 
 		@Override
@@ -1990,7 +2002,7 @@ public class Track implements XmlSerializable
 				bb.position(offsets[0]);
 				int length = bb.get() & 0xFF;
 				assert (bb.get() == 0);
-				assert (length == song.branchMeasure);
+				assert (length == song.branchTicks);
 
 				for (int i = 0; i < count; i++) {
 					if (debugPrint)
@@ -2001,7 +2013,7 @@ public class Track implements XmlSerializable
 					branch.options[i] = stream;
 
 					readStream(branchReader, stream);
-					assert (stream.duration == song.branchMeasure);
+					assert (stream.duration == song.branchTicks);
 
 					song.addPart(new BGMPart(offsets[i], bb.position(), "Branch Option " + i));
 				}
@@ -2014,7 +2026,7 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			serialID = xmr.readInt(elem, ATTR_SERIAL_ID);
+			serialID = SoundXml.readInt(xmr, elem, ATTR_SERIAL_ID, 1, 0x7FFFFFFF);
 		}
 
 		@Override
@@ -2071,14 +2083,14 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			eventInfo = xmr.readHex(elem, ATTR_EVENT_INFO);
+			eventInfo = SoundXml.readHex(xmr, elem, ATTR_EVENT_INFO, 0, 0xFFFFFF);
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_CMD_EVENT_TRIGGER, true);
-			xmw.addHex(tag, ATTR_EVENT_INFO, eventInfo);
+			xmw.addHex(tag, ATTR_EVENT_INFO, "%06X", eventInfo);
 			xmw.printTag(tag);
 		}
 
@@ -2154,7 +2166,7 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			serialID = xmr.readInt(elem, ATTR_SERIAL_ID);
+			serialID = SoundXml.readInt(xmr, elem, ATTR_SERIAL_ID, 1, 0x7FFFFFFF);
 		}
 
 		@Override
@@ -2216,9 +2228,9 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			index = xmr.readInt(elem, ATTR_INDEX);
-			length = xmr.readInt(elem, ATTR_TIME);
-			side = xmr.readInt(elem, ATTR_SIDE);
+			index = SoundXml.readInt(xmr, elem, ATTR_INDEX, 0, 255);
+			length = SoundXml.readInt(xmr, elem, ATTR_TIME, 0, 15);
+			side = SoundXml.readInt(xmr, elem, ATTR_SIDE, 1, 2);
 		}
 
 		@Override
@@ -2269,7 +2281,7 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			index = xmr.readInt(elem, ATTR_INDEX);
+			index = SoundXml.readInt(xmr, elem, ATTR_INDEX, 0, 255);
 		}
 
 		@Override
@@ -2314,14 +2326,14 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			value = xmr.readHex(elem, ATTR_VALUE);
+			value = SoundXml.readHex(xmr, elem, ATTR_DATA, 0, 0xFFFF);
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_CMD_WRITE_CUSTOM_ENV, true);
-			xmw.addHex(tag, ATTR_VALUE, value);
+			xmw.addHex(tag, ATTR_DATA, "%04X", value);
 			xmw.printTag(tag);
 		}
 
@@ -2359,7 +2371,7 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			index = xmr.readInt(elem, ATTR_INDEX);
+			index = SoundXml.readInt(xmr, elem, ATTR_INDEX, 0, 255);
 		}
 
 		@Override
@@ -2405,7 +2417,7 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			index = xmr.readInt(elem, ATTR_INDEX);
+			index = SoundXml.readInt(xmr, elem, ATTR_INDEX, 0, 255);
 		}
 
 		@Override
@@ -2452,16 +2464,16 @@ public class Track implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			vol1 = xmr.readInt(elem, ATTR_VOL1);
-			vol2 = xmr.readInt(elem, ATTR_VOL2);
+			vol1 = SoundXml.readHex(xmr, elem, ATTR_VOL1, 0, 127);
+			vol2 = SoundXml.readHex(xmr, elem, ATTR_VOL2, 0, 127);
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_CMD_PROX_MIX_OVERRIDE, true);
-			xmw.addInt(tag, ATTR_VOL1, vol1);
-			xmw.addInt(tag, ATTR_VOL2, vol2);
+			SoundXml.addHex(xmw, tag, ATTR_VOL1, 2, vol1);
+			SoundXml.addHex(xmw, tag, ATTR_VOL2, 2, vol2);
 			xmw.printTag(tag);
 		}
 

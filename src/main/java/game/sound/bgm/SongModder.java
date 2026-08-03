@@ -15,7 +15,9 @@ import org.w3c.dom.Element;
 import app.Directories;
 import app.Environment;
 import app.input.IOUtils;
+import game.sound.AudioModder;
 import game.sound.SoundBankCatalog;
+import game.sound.SoundXml;
 import util.Logger;
 import util.xml.XmlWrapper.XmlReader;
 import util.xml.XmlWrapper.XmlWriter;
@@ -69,7 +71,7 @@ public abstract class SongModder
 		for (int index = 0; index < songElements.size(); index++) {
 			Element songElement = songElements.get(index);
 			int currentID = xmr.hasAttribute(songElement, ATTR_ID)
-				? xmr.readHex(songElement, ATTR_ID) : index;
+				? SoundXml.readHex(xmr, songElement, ATTR_ID, 0, 0xFF) : index;
 			if (currentID != songID)
 				continue;
 
@@ -98,19 +100,24 @@ public abstract class SongModder
 		SoundBankCatalog catalog = SoundBankCatalog.loadMod();
 		Collection<File> files = IOUtils.getFilesWithExtension(MOD_AUDIO_BGM, "xml", false);
 		for (File f : files) {
+			String filename = FilenameUtils.getBaseName(f.getName());
+			String outputName = filename + ".bgm";
+			if (AudioModder.hasOverride(outputName)) {
+				Logger.log("Using audio override for " + outputName);
+				continue;
+			}
+
 			Logger.log("Building " + f.getName());
 
 			SoundBankCatalog songCatalog = catalog.withSongBanks(
-				MOD_AUDIO.getFile(FN_AUDIO_SONGS), FilenameUtils.getBaseName(f.getName()) + ".bgm");
+				MOD_AUDIO.getFile(FN_AUDIO_SONGS), outputName);
 			Song song = new Song();
 			song.setSoundBankCatalog(songCatalog);
 
 			XmlReader xmr = new XmlReader(f);
 			song.fromXML(xmr, xmr.getRootElement());
 
-			String filename = FilenameUtils.getBaseName(f.getName());
-
-			File outFile = MOD_AUDIO_BUILD.getFile(filename + ".bgm");
+			File outFile = MOD_AUDIO_BUILD.getFile(outputName);
 			song.build(outFile);
 		}
 	}

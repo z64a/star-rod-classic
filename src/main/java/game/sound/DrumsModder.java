@@ -1,6 +1,10 @@
 package game.sound;
 
-import static app.Directories.*;
+import static app.Directories.DUMP_AUDIO;
+import static app.Directories.DUMP_AUDIO_RAW;
+import static app.Directories.FN_AUDIO_DRUMS;
+import static app.Directories.MOD_AUDIO;
+import static app.Directories.MOD_AUDIO_BUILD;
 import static game.sound.DrumPreset.DrumKey.TAG_DRUM;
 import static game.sound.DrumPreset.DrumKey.TAG_LIST;
 
@@ -21,7 +25,7 @@ import util.xml.XmlWrapper.XmlReader;
 import util.xml.XmlWrapper.XmlTag;
 import util.xml.XmlWrapper.XmlWriter;
 
-// interface for the SET1.per percussion file
+// compiler for the global BGM drum definitions stored in SET1.per
 public class DrumsModder
 {
 	private static final String FN_BIN = "SET1.per";
@@ -47,6 +51,11 @@ public class DrumsModder
 
 	public static void build() throws IOException
 	{
+		if (AudioModder.hasOverride(FN_BIN)) {
+			Logger.log("Using audio override for " + FN_BIN);
+			return;
+		}
+
 		ArrayList<DrumPreset> drums = load(MOD_AUDIO.getFile(FN_AUDIO_DRUMS));
 		SoundBankCatalog catalog = SoundBankCatalog.loadMod();
 		for (DrumPreset drum : drums)

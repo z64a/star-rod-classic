@@ -6,7 +6,7 @@ public enum SongKey implements XmlKey
 {
 	// @formatter:off
 	TAG_SONG            	("Song"),
-    ATTR_MEASURE			("measure"),
+	ATTR_BRANCH_TICKS		("branchTicks"),
     ATTR_BRANCHES			("branches"),
 	ATTR_BRANCH_NAMES		("branchNames"),
 	TAG_INS_LIST			("Instruments"),
@@ -28,7 +28,6 @@ public enum SongKey implements XmlKey
 	TAG_BRANCH				("Branch"),
     TAG_OPTION              ("Option"),
 	ATTR_SERIAL_ID			("id"),
-	ATTR_FILE_POS			("offset"),
 
 	TAG_CMD_NOTE			("Note"),
 	ATTR_NOTE_PITCH			("pitch"),
@@ -75,15 +74,17 @@ public enum SongKey implements XmlKey
     ATTR_UNK_FLAG		("flag"),
     ATTR_IS_DRUM		("isDrum"),
 
-    ATTR_TABLE_POS 		("tablePos"),
-
 	ATTR_NAME		   	("name"),
 	ATTR_ID				("id"),
 	ATTR_INDEX			("index"),
 	ATTR_COPY_OF		("copyOf"),
 	ATTR_TIMING			("timing"),
 	ATTR_BPM			("bpm"),
-	ATTR_VALUE			("value"),
+	ATTR_VOLUME			("volume"),
+	ATTR_PAN			("pan"),
+	ATTR_REVERB			("reverb"),
+	ATTR_TARGET			("target"),
+	ATTR_DATA			("data"),
 	ATTR_CENTS			("cents"),
 	ATTR_SEMITONES		("semitones"),
 	ATTR_TICKS			("ticks"),
@@ -94,8 +95,6 @@ public enum SongKey implements XmlKey
 
 	ATTR_EFFECT_TYPE	("effectType"),
 
-    ATTR_OFFSET       	("offset"),
-    ATTR_TABLE_COUNT  	("tableCount"),
     ATTR_EVENT_INFO   	("eventInfo"),
     ATTR_LENGTH       	("length"),
     ATTR_TYPE         	("type"),

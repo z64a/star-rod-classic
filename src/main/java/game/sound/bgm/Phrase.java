@@ -7,6 +7,7 @@ import java.util.HashMap;
 
 import org.w3c.dom.Element;
 
+import game.sound.SoundXml;
 import game.sound.bgm.Song.BGMPart;
 import util.DynamicByteBuffer;
 import util.xml.XmlWrapper.XmlReader;
@@ -31,6 +32,7 @@ public class Phrase implements XmlSerializable
 		for (int i = 0; i < NUM_TRACKS; i++) {
 			tracks[i] = new Track(this);
 			tracks[i].index = i;
+			tracks[i].defined = false;
 			tracks[i].enabled = false;
 		}
 	}
@@ -62,7 +64,7 @@ public class Phrase implements XmlSerializable
 		for (int i = 0; i < NUM_TRACKS; i++) {
 			tracks[i] = new Track(this, i, bb, trackInfo[i]);
 
-			if (firstSeen[i] != i)
+			if (trackInfo[i] != 0 && firstSeen[i] != i)
 				tracks[i].copyOf = firstSeen[i];
 		}
 
@@ -79,7 +81,8 @@ public class Phrase implements XmlSerializable
 	public void beforeBuild()
 	{
 		for (Track track : tracks) {
-			track.beforeBuild();
+			if (track.enabled)
+				track.beforeBuild();
 		}
 	}
 
@@ -113,7 +116,9 @@ public class Phrase implements XmlSerializable
 		// track table
 		dbb.position(filePos);
 		for (Track track : tracks) {
-			if (track.copyOf < 0)
+			if (!track.enabled)
+				dbb.putInt(0);
+			else if (track.copyOf < 0)
 				dbb.putInt(track.getTrackInfo());
 			else
 				dbb.putInt(tracks[track.copyOf].getTrackInfo());
@@ -130,22 +135,20 @@ public class Phrase implements XmlSerializable
 	@Override
 	public void fromXML(XmlReader xmr, Element elem)
 	{
-		serialID = xmr.readInt(elem, ATTR_SERIAL_ID);
-
-		if (xmr.hasAttribute(elem, ATTR_FILE_POS))
-			filePos = xmr.readHex(elem, ATTR_FILE_POS);
+		serialID = SoundXml.readInt(xmr, elem, ATTR_SERIAL_ID, 1, 0x7FFFFFFF);
 
 		for (Element child : xmr.getTags(elem, TAG_TRACK)) {
 			Track track = new Track(this);
 			track.fromXML(xmr, child);
-			track.enabled = true;
 
-			if (track.index >= 0 && track.index < NUM_TRACKS) {
-				tracks[track.index] = track;
-			}
-			else {
-				xmr.complain("Track has invalid index: " + track.index);
-			}
+			if (tracks[track.index].defined)
+				xmr.complain("Track index is defined more than once: " + track.index);
+			tracks[track.index] = track;
+		}
+
+		for (Track track : tracks) {
+			if (track.enabled && track.linkedIndex >= 0 && !tracks[track.linkedIndex].enabled)
+				xmr.complain("Track " + track.index + " links to missing track " + track.linkedIndex);
 		}
 	}
 
@@ -155,15 +158,13 @@ public class Phrase implements XmlSerializable
 		XmlTag tag = xmw.createTag(TAG_PHRASE, false);
 
 		xmw.addInt(tag, ATTR_SERIAL_ID, serialID);
-		if (filePos > 0)
-			xmw.addHex(tag, ATTR_FILE_POS, filePos);
 
 		xmw.openTag(tag);
 
 		for (int i = 0; i < NUM_TRACKS; i++) {
 			Track track = tracks[i];
 
-			if (track.enabled) {
+			if (track.defined) {
 				track.index = i;
 				track.toXML(xmw);
 			}

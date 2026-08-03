@@ -252,7 +252,7 @@ public class FunctionPatcher
 		rp.writeInt(0); // NOP
 	}
 
-	public static void modifyHeaps(Patcher p, Config cfg, GlobalPatchManager gpm, RomPatcher rp) throws IOException
+	public static void modifyHeaps(Patcher p, Config cfg, GlobalPatchManager gpm, RomPatcher rp, int minimumAudioHeapSize) throws IOException
 	{
 		int worldHeapSize = 0x54000;
 		int collisionHeapSize = 0x18000;
@@ -266,13 +266,21 @@ public class FunctionPatcher
 		int battleHeapBase = 0x803DA800;
 		int audioHeapBase = 0x801AA000;
 
-		if (cfg.getBoolean(Options.IncreaseHeapSizes)) {
+		boolean increaseHeapSizes = cfg.getBoolean(Options.IncreaseHeapSizes);
+		if (increaseHeapSizes) {
 			worldHeapSize = cfg.getHex(Options.HeapSizeWorld);
 			collisionHeapSize = cfg.getHex(Options.HeapSizeCollision);
 			spriteHeapSize = cfg.getHex(Options.HeapSizeSprite);
 			battleHeapSize = cfg.getHex(Options.HeapSizeBattle);
 			audioHeapSize = cfg.getHex(Options.HeapSizeAudio);
+		}
 
+		if (minimumAudioHeapSize > audioHeapSize) {
+			Logger.logfWarning("Increasing audio heap from %X to %X to fit compiled audio assets.", audioHeapSize, minimumAudioHeapSize);
+			audioHeapSize = minimumAudioHeapSize;
+		}
+
+		if (increaseHeapSizes || audioHeapSize > 0x56000) {
 			if ((worldHeapSize & 0x7FF) != 0)
 				throw new StarRodException("Invalid world heap size: %X %nSize must be multiple of 800.", worldHeapSize);
 

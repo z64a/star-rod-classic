@@ -92,6 +92,12 @@ public class BankModder
 	public static void buildBank(File bankDir) throws IOException
 	{
 		String bankName = FilenameUtils.getBaseName(bankDir.getName());
+		String outputName = bankName + EXT_BANK;
+
+		if (AudioModder.hasOverride(outputName)) {
+			Logger.log("Using audio override for " + outputName);
+			return;
+		}
 
 		if (!bankDir.isDirectory())
 			throw new StarRodException(bankDir.getName() + " is not a directory!");
@@ -100,7 +106,7 @@ public class BankModder
 		if (!xmlFile.exists())
 			throw new StarRodException("Could not find %s for sound bank %s", xmlFile.getName(), bankName);
 
-		File outFile = MOD_AUDIO_BUILD.getFile(bankName + EXT_BANK);
+		File outFile = MOD_AUDIO_BUILD.getFile(outputName);
 
 		Bank bank = new Bank(bankName, xmlFile);
 		bank.build(bankDir, outFile);

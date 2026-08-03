@@ -19,11 +19,10 @@ import app.input.IOUtils;
 import game.sound.DrumPreset;
 import game.sound.InstrumentPreset;
 import game.sound.SoundBankCatalog;
+import game.sound.SoundXml;
 import game.sound.bgm.Composition.CompCommand;
 import game.sound.bgm.Track.TrackBranch;
 import util.DynamicByteBuffer;
-import util.Logger;
-import util.MathUtil;
 import util.xml.XmlWrapper.XmlReader;
 import util.xml.XmlWrapper.XmlSerializable;
 import util.xml.XmlWrapper.XmlTag;
@@ -38,14 +37,14 @@ public class Song implements XmlSerializable
 			48, 56, 64, 48,
 	};
 
-	private static final int DEFAULT_MEASURE_TICKS = 96; // 24 ticks per beat x 4 beats per measure
+	private static final int DEFAULT_BRANCH_TICKS = 96; // 24 ticks per beat x 4 beats per measure
 
 	public static final int MAX_BRANCH_OPTIONS = 16; // chosen for star rod, not required by the game engine
 
 	public String name;
 	private int timingPreset;
 
-	public int branchMeasure = DEFAULT_MEASURE_TICKS;
+	public int branchTicks = DEFAULT_BRANCH_TICKS;
 	public int branchOptions = 1;
 	private final ArrayList<String> branchNames = new ArrayList<>();
 
@@ -279,7 +278,8 @@ public class Song implements XmlSerializable
 
 		for (Phrase phrase : phrases) {
 			for (Track track : phrase.tracks) {
-				branches.addAll(track.branches);
+				if (track.enabled)
+					branches.addAll(track.branches);
 			}
 		}
 
@@ -297,7 +297,7 @@ public class Song implements XmlSerializable
 		emptyBranchOffset = dbb.position();
 
 		//TODO support measures which require 2-byte delay length
-		dbb.putByte(branchMeasure);
+		dbb.putByte(branchTicks);
 		dbb.putByte(0);
 		emptyBranchLength = 2;
 
@@ -552,17 +552,15 @@ public class Song implements XmlSerializable
 	@Override
 	public void fromXML(XmlReader xmr, Element root)
 	{
+		xmr.requiresAttribute(root, ATTR_NAME);
 		name = xmr.getAttribute(root, ATTR_NAME);
-		if (name.length() > 4) {
-			Logger.logfWarning("Invalid name for BGM file will be truncated: " + name);
-			name = name.substring(0, 4);
-		}
+		if (name.isEmpty() || name.length() > 4)
+			xmr.complain("BGM name must contain one through four characters: " + name);
 
-		timingPreset = xmr.readInt(root, ATTR_TIMING);
-		branchMeasure = xmr.readInt(root, ATTR_MEASURE);
-		branchOptions = xmr.readInt(root, ATTR_BRANCHES);
+		timingPreset = SoundXml.readInt(xmr, root, ATTR_TIMING, 0, TIMING_PRESET_MAP.length - 1);
+		branchTicks = SoundXml.readInt(xmr, root, ATTR_BRANCH_TICKS, 1, 0x77);
+		branchOptions = SoundXml.readInt(xmr, root, ATTR_BRANCHES, 1, MAX_BRANCH_OPTIONS);
 
-		branchOptions = MathUtil.clamp(branchOptions, 0, MAX_BRANCH_OPTIONS);
 		branchNames.clear();
 		if (xmr.hasAttribute(root, ATTR_BRANCH_NAMES)) {
 			List<String> names = xmr.readStringList(root, ATTR_BRANCH_NAMES);
@@ -580,6 +578,8 @@ public class Song implements XmlSerializable
 			InstrumentPreset ins = new InstrumentPreset(xmr, elem);
 			instruments.add(ins);
 		}
+		if (instruments.size() > 128)
+			xmr.complain("BGM cannot contain more than 128 local instruments");
 
 		Element drumListElem = xmr.getUniqueRequiredTag(root, TAG_DRUM_LIST);
 
@@ -587,6 +587,8 @@ public class Song implements XmlSerializable
 			DrumPreset drum = new DrumPreset(xmr, elem);
 			drums.add(drum);
 		}
+		if (drums.size() > 12)
+			xmr.complain("BGM cannot contain more than 12 local drums");
 
 		Element compListElem = xmr.getUniqueRequiredTag(root, TAG_COMP_LIST);
 
@@ -595,12 +597,9 @@ public class Song implements XmlSerializable
 			comp.fromXML(xmr, elem);
 			comp.enabled = true;
 
-			if (comp.index >= 0 && comp.index < NUM_COMPOSITIONS) {
-				compositions[comp.index] = comp;
-			}
-			else {
-				xmr.complain("Composition has invalid index: " + comp.index);
-			}
+			if (compositions[comp.index].enabled)
+				xmr.complain("Composition index is defined more than once: " + comp.index);
+			compositions[comp.index] = comp;
 		}
 
 		Element phraseListElem = xmr.getUniqueRequiredTag(root, TAG_PHRASE_LIST);
@@ -610,6 +609,8 @@ public class Song implements XmlSerializable
 		for (Element elem : xmr.getTags(phraseListElem, TAG_PHRASE)) {
 			Phrase p = new Phrase(this);
 			p.fromXML(xmr, elem);
+			if (phraseLookup.containsKey(p.serialID))
+				xmr.complain("Phrase serialID is defined more than once: " + p.serialID);
 			phrases.add(p);
 			phraseLookup.put(p.serialID, p);
 		}
@@ -627,7 +628,7 @@ public class Song implements XmlSerializable
 		XmlTag root = xmw.createTag(TAG_SONG, false);
 		xmw.addAttribute(root, ATTR_NAME, name);
 		xmw.addInt(root, ATTR_TIMING, timingPreset);
-		xmw.addInt(root, ATTR_MEASURE, branchMeasure);
+		xmw.addInt(root, ATTR_BRANCH_TICKS, branchTicks);
 		xmw.addInt(root, ATTR_BRANCHES, branchOptions);
 		if (!branchNames.isEmpty())
 			xmw.addStringList(root, ATTR_BRANCH_NAMES, branchNames);

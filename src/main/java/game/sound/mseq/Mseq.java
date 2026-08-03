@@ -17,7 +17,9 @@ import org.w3c.dom.Node;
 
 import app.Environment;
 import app.input.IOUtils;
+import game.sound.AudioModder;
 import game.sound.SoundBankCatalog;
+import game.sound.SoundXml;
 import util.DynamicByteBuffer;
 import util.Logger;
 import util.xml.XmlKey;
@@ -34,8 +36,6 @@ public class Mseq implements XmlSerializable
 	public int firstVoiceIdx;
 	public int duration;
 	private SoundBankCatalog soundBankCatalog;
-
-	private static boolean matching = true;
 
 	public static final int NUM_TRACKS = 10;
 	public static final int DRUM_TRACK = 9;
@@ -102,6 +102,13 @@ public class Mseq implements XmlSerializable
 		SoundBankCatalog catalog = SoundBankCatalog.loadMod().withAuxiliaryBank(2, "SPC3.bk");
 		Collection<File> files = IOUtils.getFilesWithExtension(MOD_AUDIO_MSEQ, "xml", false);
 		for (File f : files) {
+			String filename = FilenameUtils.getBaseName(f.getName());
+			String outputName = filename + ".mseq";
+			if (AudioModder.hasOverride(outputName)) {
+				Logger.log("Using audio override for " + outputName);
+				continue;
+			}
+
 			Logger.log("Building " + f.getName());
 
 			Mseq mseq = new Mseq();
@@ -110,9 +117,7 @@ public class Mseq implements XmlSerializable
 			XmlReader xmr = new XmlReader(f);
 			mseq.fromXML(xmr, xmr.getRootElement());
 
-			String filename = FilenameUtils.getBaseName(f.getName());
-
-			File outFile = MOD_AUDIO_BUILD.getFile(filename + ".mseq");
+			File outFile = MOD_AUDIO_BUILD.getFile(outputName);
 			mseq.build(outFile);
 		}
 	}
@@ -217,11 +222,11 @@ public class Mseq implements XmlSerializable
 						int arg2 = bb.get() & 0xFF;
 						switch (arg) {
 							case MSEQ_CMD_SUB_66_START_LOOP: // (loopID [0 or 1])
-								commands.add(new StartLoopCommand(arg2));
+								commands.add(new StartLoopCommand(arg2 & 1));
 								break;
 							case MSEQ_CMD_SUB_67_END_LOOP: // (loopID [0 or 1], count [0 = forever])
 								int count = (arg2 & 0x7C) >> 2; // bit pattern suggests up to 4 loops were considered
-								commands.add(new EndLoopCommand(arg2, count));
+								commands.add(new EndLoopCommand(arg2 & 1, count));
 								break;
 							case MSEQ_CMD_SUB_68_SET_REVERB: // (preset)
 								commands.add(new SetReverbCommand(track, arg2));
@@ -326,20 +331,21 @@ public class Mseq implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			track = xmr.readHex(elem, ATTR_TRACK);
+			track = SoundXml.readInt(xmr, elem, ATTR_TRACK, 0, NUM_TRACKS - 1);
+			xmr.requiresAttribute(elem, ATTR_TYPE);
 			type = TrackRampType.fromName(xmr.getAttribute(elem, ATTR_TYPE));
 			if (type == null) {
 				xmr.complain("Unknown track ramp type: " + xmr.getAttribute(elem, ATTR_TYPE));
 				return;
 			}
-			time = xmr.readHex(elem, ATTR_TIME);
+			time = SoundXml.readInt(xmr, elem, ATTR_TIME, 1, 32767);
 			if (type == TrackRampType.TUNE) {
-				delta = (short) xmr.readInt(elem, ATTR_DELTA);
-				goal = (short) xmr.readInt(elem, ATTR_GOAL);
+				delta = (short) SoundXml.readInt(xmr, elem, ATTR_DELTA, -32768, 32767);
+				goal = (short) SoundXml.readInt(xmr, elem, ATTR_GOAL, -32768, 32767);
 			}
 			else {
-				delta = (short) xmr.readHex(elem, ATTR_DELTA);
-				goal = (short) xmr.readHex(elem, ATTR_GOAL);
+				delta = (short) SoundXml.readHex(xmr, elem, ATTR_DELTA, -32768, 32767);
+				goal = (short) SoundXml.readHex(xmr, elem, ATTR_GOAL, 0, 32767);
 			}
 		}
 
@@ -347,16 +353,16 @@ public class Mseq implements XmlSerializable
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_RAMP, true);
-			xmw.addHex(tag, ATTR_TRACK, track);
+			xmw.addInt(tag, ATTR_TRACK, track);
 			xmw.addAttribute(tag, ATTR_TYPE, type.name);
-			xmw.addHex(tag, ATTR_TIME, time);
+			xmw.addInt(tag, ATTR_TIME, time);
 			if (type == TrackRampType.TUNE) {
 				xmw.addInt(tag, ATTR_DELTA, delta);
 				xmw.addInt(tag, ATTR_GOAL, goal);
 			}
 			else {
-				addSignedHex(xmw, tag, ATTR_DELTA, delta);
-				addSignedHex(xmw, tag, ATTR_GOAL, goal);
+				SoundXml.addHex(xmw, tag, ATTR_DELTA, 4, delta);
+				SoundXml.addHex(xmw, tag, ATTR_GOAL, 4, goal);
 			}
 			xmw.printTag(tag);
 		}
@@ -393,14 +399,6 @@ public class Mseq implements XmlSerializable
 			}
 			return null;
 		}
-	}
-
-	private static void addSignedHex(XmlWriter xmw, XmlTag tag, XmlKey key, int value)
-	{
-		if (value < 0)
-			xmw.addAttribute(tag, key, String.format("-%X", -value));
-		else
-			xmw.addHex(tag, key, value);
 	}
 
 	public static enum MseqKey implements XmlKey
@@ -478,16 +476,17 @@ public class Mseq implements XmlSerializable
 	@Override
 	public void fromXML(XmlReader xmr, Element root)
 	{
+		xmr.requiresAttribute(root, ATTR_NAME);
 		name = xmr.getAttribute(root, ATTR_NAME);
-		if (name.length() > 4) {
-			Logger.logfWarning("Invalid name for MSEQ file will be truncated: " + name);
-			name = name.substring(0, 4);
-		}
-		firstVoiceIdx = xmr.readHex(root, ATTR_FIRST_VOICE);
+		if (name.isEmpty() || name.length() > 4)
+			xmr.complain("MSEQ name must contain one through four characters: " + name);
+		firstVoiceIdx = SoundXml.readInt(xmr, root, ATTR_FIRST_VOICE, 0, 23);
 
 		Element rampsElem = xmr.getUniqueRequiredTag(root, TAG_RAMP_LIST);
 
 		for (Element elem : xmr.getTags(rampsElem, TAG_RAMP)) {
+			if (trackRamps.size() == 0xFF)
+				xmr.complain("MSEQ cannot contain more than 255 track ramps");
 			TrackRamp ramp = new TrackRamp();
 			ramp.fromXML(xmr, elem);
 			trackRamps.add(ramp);
@@ -507,7 +506,7 @@ public class Mseq implements XmlSerializable
 	{
 		XmlTag root = xmw.createTag(TAG_MSEQ, false);
 		xmw.addAttribute(root, ATTR_NAME, name);
-		xmw.addHex(root, ATTR_FIRST_VOICE, firstVoiceIdx);
+		xmw.addInt(root, ATTR_FIRST_VOICE, firstVoiceIdx);
 		xmw.openTag(root);
 
 		XmlTag rampListTag = xmw.createTag(TAG_RAMP_LIST, false);
@@ -579,14 +578,14 @@ public class Mseq implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			duration = xmr.readHex(elem, ATTR_DURATION);
+			duration = SoundXml.readInt(xmr, elem, ATTR_DURATION, 1, 0x877);
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_DELAY, true);
-			xmw.addHex(tag, ATTR_DURATION, duration);
+			xmw.addInt(tag, ATTR_DURATION, duration);
 			xmw.printTag(tag);
 		}
 
@@ -643,21 +642,21 @@ public class Mseq implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			track = xmr.readHex(elem, ATTR_TRACK);
+			track = SoundXml.readInt(xmr, elem, ATTR_TRACK, 0, DRUM_TRACK - 1);
 			xmr.requiresAttribute(elem, ATTR_WAV);
 			wav = xmr.getAttribute(elem, ATTR_WAV);
 			if (xmr.hasAttribute(elem, ATTR_ENVELOPE))
-				envelope = xmr.readHex(elem, ATTR_ENVELOPE);
+				envelope = SoundXml.readInt(xmr, elem, ATTR_ENVELOPE, 0, 3);
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_SET_INSTRUMENT, true);
-			xmw.addHex(tag, ATTR_TRACK, track);
+			xmw.addInt(tag, ATTR_TRACK, track);
 			xmw.addAttribute(tag, ATTR_WAV, wav);
 			if (envelope != 0)
-				xmw.addHex(tag, ATTR_ENVELOPE, envelope);
+				xmw.addInt(tag, ATTR_ENVELOPE, envelope);
 			xmw.printTag(tag);
 		}
 
@@ -688,16 +687,16 @@ public class Mseq implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			drumID = xmr.readHex(elem, ATTR_DRUM);
-			volume = xmr.readHex(elem, ATTR_VOLUME);
+			drumID = SoundXml.readInt(xmr, elem, ATTR_DRUM, 0, 127);
+			volume = SoundXml.readHex(xmr, elem, ATTR_VOLUME, 0, 127);
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_PLAY_DRUM, true);
-			xmw.addHex(tag, ATTR_DRUM, drumID);
-			xmw.addHex(tag, ATTR_VOLUME, volume);
+			xmw.addInt(tag, ATTR_DRUM, drumID);
+			SoundXml.addHex(xmw, tag, ATTR_VOLUME, 2, volume);
 			xmw.printTag(tag);
 		}
 
@@ -729,18 +728,18 @@ public class Mseq implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			track = xmr.readHex(elem, ATTR_TRACK);
-			pitch = xmr.readHex(elem, ATTR_PITCH);
-			volume = xmr.readHex(elem, ATTR_VOLUME);
+			track = SoundXml.readInt(xmr, elem, ATTR_TRACK, 0, DRUM_TRACK - 1);
+			pitch = SoundXml.readInt(xmr, elem, ATTR_PITCH, 0, 255);
+			volume = SoundXml.readHex(xmr, elem, ATTR_VOLUME, 0, 127);
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_PLAY_SOUND, true);
-			xmw.addHex(tag, ATTR_TRACK, track);
-			xmw.addHex(tag, ATTR_PITCH, pitch);
-			xmw.addHex(tag, ATTR_VOLUME, volume);
+			xmw.addInt(tag, ATTR_TRACK, track);
+			xmw.addInt(tag, ATTR_PITCH, pitch);
+			SoundXml.addHex(xmw, tag, ATTR_VOLUME, 2, volume);
 			xmw.printTag(tag);
 		}
 
@@ -770,16 +769,16 @@ public class Mseq implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			track = xmr.readHex(elem, ATTR_TRACK);
-			pitch = xmr.readHex(elem, ATTR_PITCH);
+			track = SoundXml.readInt(xmr, elem, ATTR_TRACK, 0, NUM_TRACKS - 1);
+			pitch = SoundXml.readInt(xmr, elem, ATTR_PITCH, 0, 255);
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_STOP_SOUND, true);
-			xmw.addHex(tag, ATTR_TRACK, track);
-			xmw.addHex(tag, ATTR_PITCH, pitch);
+			xmw.addInt(tag, ATTR_TRACK, track);
+			xmw.addInt(tag, ATTR_PITCH, pitch);
 			xmw.printTag(tag);
 		}
 
@@ -808,16 +807,16 @@ public class Mseq implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			track = xmr.readHex(elem, ATTR_TRACK);
-			volume = xmr.readHex(elem, ATTR_VOLUME);
+			track = SoundXml.readInt(xmr, elem, ATTR_TRACK, 0, NUM_TRACKS - 1);
+			volume = SoundXml.readHex(xmr, elem, ATTR_VOLUME, 0, 127);
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_SET_VOL, true);
-			xmw.addHex(tag, ATTR_TRACK, track);
-			xmw.addHex(tag, ATTR_VOLUME, volume);
+			xmw.addInt(tag, ATTR_TRACK, track);
+			SoundXml.addHex(xmw, tag, ATTR_VOLUME, 2, volume);
 			xmw.printTag(tag);
 		}
 
@@ -846,16 +845,16 @@ public class Mseq implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			track = xmr.readHex(elem, ATTR_TRACK);
-			pan = xmr.readHex(elem, ATTR_PAN);
+			track = SoundXml.readInt(xmr, elem, ATTR_TRACK, 0, NUM_TRACKS - 1);
+			pan = SoundXml.readInt(xmr, elem, ATTR_PAN, 0, 127);
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_SET_PAN, true);
-			xmw.addHex(tag, ATTR_TRACK, track);
-			xmw.addHex(tag, ATTR_PAN, pan);
+			xmw.addInt(tag, ATTR_TRACK, track);
+			xmw.addInt(tag, ATTR_PAN, pan);
 			xmw.printTag(tag);
 		}
 
@@ -884,15 +883,15 @@ public class Mseq implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			track = xmr.readHex(elem, ATTR_TRACK);
-			value = (short) xmr.readInt(elem, ATTR_TUNE);
+			track = SoundXml.readInt(xmr, elem, ATTR_TRACK, 0, DRUM_TRACK - 1);
+			value = SoundXml.readInt(xmr, elem, ATTR_TUNE, -32768, 32767);
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_SET_TUNE, true);
-			xmw.addHex(tag, ATTR_TRACK, track);
+			xmw.addInt(tag, ATTR_TRACK, track);
 			xmw.addInt(tag, ATTR_TUNE, value);
 			xmw.printTag(tag);
 		}
@@ -923,16 +922,16 @@ public class Mseq implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			track = xmr.readHex(elem, ATTR_TRACK);
-			reverb = xmr.readHex(elem, ATTR_REVERB);
+			track = SoundXml.readInt(xmr, elem, ATTR_TRACK, 0, NUM_TRACKS - 1);
+			reverb = SoundXml.readInt(xmr, elem, ATTR_REVERB, 0, 255);
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_SET_REVERB, true);
-			xmw.addHex(tag, ATTR_TRACK, track);
-			xmw.addHex(tag, ATTR_REVERB, reverb);
+			xmw.addInt(tag, ATTR_TRACK, track);
+			xmw.addInt(tag, ATTR_REVERB, reverb);
 			xmw.printTag(tag);
 		}
 
@@ -962,7 +961,7 @@ public class Mseq implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			track = xmr.readHex(elem, ATTR_TRACK);
+			track = SoundXml.readInt(xmr, elem, ATTR_TRACK, 0, NUM_TRACKS - 1);
 			resumable = xmr.readBoolean(elem, ATTR_RESUMABLE);
 		}
 
@@ -970,7 +969,7 @@ public class Mseq implements XmlSerializable
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_SET_RESUMABLE, true);
-			xmw.addHex(tag, ATTR_TRACK, track);
+			xmw.addInt(tag, ATTR_TRACK, track);
 			xmw.addBoolean(tag, ATTR_RESUMABLE, resumable);
 			xmw.printTag(tag);
 		}
@@ -999,14 +998,14 @@ public class Mseq implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			loopID = xmr.readHex(elem, ATTR_LOOP_ID);
+			loopID = SoundXml.readInt(xmr, elem, ATTR_LOOP_ID, 0, 1);
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_START_LOOP, true);
-			xmw.addHex(tag, ATTR_LOOP_ID, loopID);
+			xmw.addInt(tag, ATTR_LOOP_ID, loopID);
 			xmw.printTag(tag);
 		}
 
@@ -1016,11 +1015,7 @@ public class Mseq implements XmlSerializable
 			dbb.putByte(MSEQ_CMD_B0_MULTI << 4);
 			dbb.putByte(MSEQ_CMD_SUB_66_START_LOOP);
 
-			// E8_521 uses loopID of 7F, which is way out of range and the engine will treat as 1
-			if (matching)
-				dbb.putByte(loopID);
-			else
-				dbb.putByte(loopID & 1);
+			dbb.putByte(loopID);
 		}
 	}
 
@@ -1041,16 +1036,16 @@ public class Mseq implements XmlSerializable
 		@Override
 		public void fromXML(XmlReader xmr, Element elem)
 		{
-			loopID = xmr.readHex(elem, ATTR_LOOP_ID);
-			count = xmr.readHex(elem, ATTR_LOOP_COUNT);
+			loopID = SoundXml.readInt(xmr, elem, ATTR_LOOP_ID, 0, 1);
+			count = SoundXml.readInt(xmr, elem, ATTR_LOOP_COUNT, 0, 31);
 		}
 
 		@Override
 		public void toXML(XmlWriter xmw)
 		{
 			XmlTag tag = xmw.createTag(TAG_END_LOOP, true);
-			xmw.addHex(tag, ATTR_LOOP_ID, loopID);
-			xmw.addHex(tag, ATTR_LOOP_COUNT, count);
+			xmw.addInt(tag, ATTR_LOOP_ID, loopID);
+			xmw.addInt(tag, ATTR_LOOP_COUNT, count);
 			xmw.printTag(tag);
 		}
 
@@ -1060,11 +1055,7 @@ public class Mseq implements XmlSerializable
 			dbb.putByte(MSEQ_CMD_B0_MULTI << 4);
 			dbb.putByte(MSEQ_CMD_SUB_67_END_LOOP);
 
-			// E8_521 uses loopID of 3, which is out of range and the engine will treat as 1
-			if (matching)
-				dbb.putByte(((count & 0x1F) << 2) | (loopID & 3));
-			else
-				dbb.putByte(((count & 0x1F) << 2) | (loopID & 1));
+			dbb.putByte((count << 2) | loopID);
 		}
 	}
 }

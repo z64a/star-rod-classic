@@ -26,6 +26,7 @@ import org.w3c.dom.Node;
 import app.StarRodException;
 import app.input.InputFileException;
 import game.sound.SoundBankCatalog;
+import game.sound.SoundXml;
 import game.sound.engine.EnvelopeCommand;
 import game.sound.engine.EnvelopeOp;
 import game.sound.engine.EnvelopeTimes;
@@ -415,9 +416,6 @@ public final class SfxXml
 				case TAG_SEQUENCE:
 					definition = readSequence(reader, source, child, catalog);
 					break;
-				case TAG_SHARED_SEQUENCE:
-					throw error(source, child,
-						"Shared.xml and SharedSequence are not supported by the prototype");
 				default:
 					throw unknownElement(source, element, child);
 			}
@@ -440,7 +438,7 @@ public final class SfxXml
 		SoundBankCatalog.InstrumentAddress address = readWavAddress(reader, source, element, catalog);
 		oneShot.bank = address.bank;
 		oneShot.patch = address.patch;
-		oneShot.volume = readRangedInt(reader, source, element, ATTR_VOLUME, 0, 255, false);
+		oneShot.volume = SoundXml.readHex(reader, element, ATTR_VOLUME, 0, 255);
 		oneShot.pan = readRangedInt(reader, source, element, ATTR_PAN, 0, 255, true, 64);
 		oneShot.reverb = readRangedInt(reader, source, element, ATTR_REVERB, 0, 255, true, 0);
 		oneShot.pitch = readRangedInt(reader, source, element, ATTR_PITCH, 0, 127, true, 48);
@@ -513,10 +511,10 @@ public final class SfxXml
 					readRangedInt(reader, source, element, ATTR_LENGTH, 0, 16575, false));
 			case TAG_SET_VOLUME:
 				return new Command(Op.SET_VOLUME,
-					decimalAttribute(reader, source, element, ATTR_VALUE, 0, 255));
+					hexAttribute(reader, source, element, ATTR_VOLUME, 0, 255));
 			case TAG_SET_PAN:
 				return new Command(Op.SET_PAN,
-					decimalAttribute(reader, source, element, ATTR_VALUE, 0, 255));
+					decimalAttribute(reader, source, element, ATTR_PAN, 0, 255));
 			case TAG_SET_INSTRUMENT:
 				checkAttributes(source, element, ATTR_WAV, ATTR_ENVELOPE);
 				requireNoChildren(source, element);
@@ -525,7 +523,7 @@ public final class SfxXml
 				return new Command(Op.SET_INSTRUMENT, instrument.bank, instrument.patch);
 			case TAG_SET_REVERB:
 				return new Command(Op.SET_REVERB,
-					decimalAttribute(reader, source, element, ATTR_VALUE, 0, 255));
+					decimalAttribute(reader, source, element, ATTR_REVERB, 0, 255));
 			case TAG_SET_ENVELOPE:
 				return new Command(Op.SET_ENVELOPE,
 					decimalAttribute(reader, source, element, ATTR_PRESET, 0, 255));
@@ -552,13 +550,13 @@ public final class SfxXml
 				return noArgCommand(reader, source, element, Op.WAIT_FOR_RELEASE);
 			case TAG_SET_CURRENT_VOLUME:
 				return new Command(Op.SET_CURRENT_VOLUME,
-					decimalAttribute(reader, source, element, ATTR_VALUE, 0, 255));
+					hexAttribute(reader, source, element, ATTR_VOLUME, 0, 255));
 			case TAG_VOLUME_RAMP:
-				checkAttributes(source, element, ATTR_TICKS, ATTR_VALUE);
+				checkAttributes(source, element, ATTR_TICKS, ATTR_TARGET);
 				requireNoChildren(source, element);
 				return new Command(Op.VOLUME_RAMP,
 					readRangedInt(reader, source, element, ATTR_TICKS, 0, 65535, false),
-					readRangedInt(reader, source, element, ATTR_VALUE, 0, 255, false));
+					SoundXml.readHex(reader, element, ATTR_TARGET, 0, 255));
 			case TAG_SET_ALTERNATIVE:
 				checkAttributes(source, element, ATTR_TYPE, ATTR_TARGET);
 				requireNoChildren(source, element);
@@ -605,10 +603,7 @@ public final class SfxXml
 				return Command.reference(Op.SPAWN, ref);
 			case TAG_SET_ALTERNATIVE_VOLUME:
 				return new Command(Op.SET_ALTERNATIVE_VOLUME,
-					decimalAttribute(reader, source, element, ATTR_VALUE, 0, 255));
-			case TAG_SHARED_SEQUENCE:
-				throw error(source, element,
-					"Shared.xml and SharedSequence are not supported by the prototype");
+					hexAttribute(reader, source, element, ATTR_VOLUME, 0, 255));
 			default:
 				throw error(source, element, "unknown sequence command element: " + element.getTagName());
 		}
@@ -627,6 +622,14 @@ public final class SfxXml
 		checkAttributes(source, element, name);
 		requireNoChildren(source, element);
 		return readRangedInt(reader, source, element, name, min, max, false);
+	}
+
+	private static int hexAttribute(XmlReader reader, Path source, Element element,
+		SfxXmlKey name, int min, int max)
+	{
+		checkAttributes(source, element, name);
+		requireNoChildren(source, element);
+		return SoundXml.readHex(reader, element, name, min, max);
 	}
 
 	private static Routing readRouting(XmlReader reader, Path source, Element element, int trackCount)
@@ -1266,7 +1269,7 @@ public final class SfxXml
 	private static void writeOneShot(XmlWriter writer, OneShot oneShot, SoundBankCatalog catalog)
 	{
 		Map<SfxXmlKey, String> attributes = wavAttributes(catalog, oneShot.bank, oneShot.patch);
-		attributes.put(ATTR_VOLUME, Integer.toString(oneShot.volume));
+		attributes.put(ATTR_VOLUME, SoundXml.formatHex(2, oneShot.volume));
 		putNonDefault(attributes, ATTR_PAN, oneShot.pan, 64);
 		putNonDefault(attributes, ATTR_REVERB, oneShot.reverb, 0);
 		putNonDefault(attributes, ATTR_PITCH, oneShot.pitch, 48);
@@ -1327,16 +1330,16 @@ public final class SfxXml
 					ATTR_LENGTH, Integer.toString(command.c)));
 				break;
 			case SET_VOLUME:
-				printTag(writer, TAG_SET_VOLUME, attributes(ATTR_VALUE, Integer.toString(command.a)));
+				printTag(writer, TAG_SET_VOLUME, attributes(ATTR_VOLUME, SoundXml.formatHex(2, command.a)));
 				break;
 			case SET_PAN:
-				printTag(writer, TAG_SET_PAN, attributes(ATTR_VALUE, Integer.toString(command.a)));
+				printTag(writer, TAG_SET_PAN, attributes(ATTR_PAN, Integer.toString(command.a)));
 				break;
 			case SET_INSTRUMENT:
 				printTag(writer, TAG_SET_INSTRUMENT, wavAttributes(catalog, command.a, command.b));
 				break;
 			case SET_REVERB:
-				printTag(writer, TAG_SET_REVERB, attributes(ATTR_VALUE, Integer.toString(command.a)));
+				printTag(writer, TAG_SET_REVERB, attributes(ATTR_REVERB, Integer.toString(command.a)));
 				break;
 			case SET_ENVELOPE:
 				printTag(writer, TAG_SET_ENVELOPE, attributes(ATTR_PRESET, Integer.toString(command.a)));
@@ -1366,11 +1369,11 @@ public final class SfxXml
 				break;
 			case SET_CURRENT_VOLUME:
 				printTag(writer, TAG_SET_CURRENT_VOLUME,
-					attributes(ATTR_VALUE, Integer.toString(command.a)));
+					attributes(ATTR_VOLUME, SoundXml.formatHex(2, command.a)));
 				break;
 			case VOLUME_RAMP:
 				printTag(writer, TAG_VOLUME_RAMP, attributes(
-					ATTR_TICKS, Integer.toString(command.a), ATTR_VALUE, Integer.toString(command.b)));
+					ATTR_TICKS, Integer.toString(command.a), ATTR_TARGET, SoundXml.formatHex(2, command.b)));
 				break;
 			case SET_ALTERNATIVE:
 				printTag(writer, TAG_SET_ALTERNATIVE, attributes(
@@ -1409,7 +1412,7 @@ public final class SfxXml
 				break;
 			case SET_ALTERNATIVE_VOLUME:
 				printTag(writer, TAG_SET_ALTERNATIVE_VOLUME,
-					attributes(ATTR_VALUE, Integer.toString(command.a)));
+					attributes(ATTR_VOLUME, SoundXml.formatHex(2, command.a)));
 				break;
 		}
 	}
@@ -1503,41 +1506,18 @@ public final class SfxXml
 		return reference;
 	}
 
-	private static int readHexByte(XmlReader reader, Path source, Element element,
-		SfxXmlKey name, boolean optional)
-	{
-		if (!optional || reader.hasAttribute(element, name)) {
-			reader.requiresAttribute(element, name);
-			if (!reader.getAttribute(element, name).matches("[0-9A-F]{2}"))
-				throw error(source, element, name + " must be exactly two uppercase hexadecimal digits");
-		}
-		return readRangedHex(reader, source, element, name, 0, 255, optional);
-	}
-
 	private static SoundBankCatalog.InstrumentAddress readWavAddress(XmlReader reader,
 		Path source, Element element, SoundBankCatalog catalog)
 	{
 		reader.requiresAttribute(element, ATTR_WAV);
 		String wav = reader.getAttribute(element, ATTR_WAV);
-		int envelope = readRangedHex(reader, source, element, ATTR_ENVELOPE, 0, 3, true);
+		int envelope = readRangedInt(reader, source, element, ATTR_ENVELOPE, 0, 3, true);
 		try {
 			return catalog.getAddress(wav, envelope);
 		}
 		catch (StarRodException e) {
 			throw error(source, element, e.getMessage());
 		}
-	}
-
-	private static int readRangedHex(XmlReader reader, Path source, Element element,
-		SfxXmlKey name, int min, int max, boolean optional)
-	{
-		if (optional && !reader.hasAttribute(element, name))
-			return min;
-		reader.requiresAttribute(element, name);
-		int parsed = reader.readHex(element, name);
-		if (parsed < min || parsed > max)
-			throw error(source, element, name + " must be " + min + " through " + max);
-		return parsed;
 	}
 
 	private static int readRangedInt(XmlReader reader, Path source, Element element,
@@ -1730,7 +1710,7 @@ public final class SfxXml
 			SoundBankCatalog.WavReference reference = catalog.getWav(bank, patch);
 			Map<SfxXmlKey, String> attributes = attributes(ATTR_WAV, reference.wav);
 			if (reference.envelope != 0)
-				attributes.put(ATTR_ENVELOPE, Integer.toHexString(reference.envelope).toUpperCase(Locale.ROOT));
+				attributes.put(ATTR_ENVELOPE, Integer.toString(reference.envelope));
 			return attributes;
 		}
 		catch (StarRodException e) {
