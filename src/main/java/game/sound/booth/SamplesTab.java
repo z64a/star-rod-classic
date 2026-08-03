@@ -232,7 +232,7 @@ final class SamplesTab extends AudioBoothTab
 			player.setPitch(AudioEngine.detuneToPitchRatio(pitchSlider.getValue() * 100));
 			player.play(selectedInstrument, selectedInstrument.envelope.get(envelopeIndex));
 		});
-		booth.setStatus("Playing sample " + selectedInstrument.name + ".");
+		booth.setStatus("Playing sample " + selectedInstrument.name);
 	}
 
 	private void releaseSample()

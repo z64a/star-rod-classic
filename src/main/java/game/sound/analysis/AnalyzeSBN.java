@@ -145,7 +145,7 @@ public class AnalyzeSBN
 		InitBankEntry:
 			0x0  u16 fileIndex;
 			0x2  u8 bankIndex;
-			0x3  u8 bankSet;
+			0x3  u8 bankGroup;
 		 	0x4	 END
 		 */
 
@@ -154,14 +154,14 @@ public class AnalyzeSBN
 			raf.seek(initBase + 0x20 + 4 * i);
 			int fileIndex = raf.readShort();
 			int bankIndex = raf.readByte();
-			int bankSet = raf.readByte();
+			int bankGroup = raf.readByte();
 
 			assert (fileIndexList.remove((Integer) fileIndex));
 
 			assert (bankIndex >= 0 && bankIndex <= 15);
-			assert (bankSet >= 1 && bankSet <= 6);
+			assert (bankGroup >= 1 && bankGroup <= 6);
 			assert (fileIndex >= 0x90 && fileIndex <= 0xD8); // file is always one of the banks
-			System.out.printf("[%02X] %2X (%4s) %2X %2X%n", i, fileIndex, names[fileIndex], bankIndex, bankSet);
+			System.out.printf("[%02X] %2X (%4s) %2X %2X%n", i, fileIndex, names[fileIndex], bankIndex, bankGroup);
 		}
 
 		System.out.println("----- Song List ----- ");

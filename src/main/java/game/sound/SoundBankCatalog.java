@@ -135,8 +135,8 @@ public final class SoundBankCatalog
 		if (bankSetIndex == 2)
 			throw new StarRodException("The default instrument at %02X-%02X has no WAV name", bank, patch);
 
-		int bankSet = bankSetForIndex(bankSetIndex);
-		BankInfo bankInfo = assignedBanks.get(bankKey(bankSet, bankIndex));
+		int bankGroup = bankGroupForBankSetIndex(bankSetIndex);
+		BankInfo bankInfo = assignedBanks.get(bankKey(bankGroup, bankIndex));
 
 		if (bankInfo == null) {
 			throw new StarRodException("No sound bank is assigned to bank/patch %02X-%02X", bank, patch);
@@ -159,8 +159,8 @@ public final class SoundBankCatalog
 		List<InstrumentAddress> matches = new ArrayList<>();
 		for (Map.Entry<Integer, BankInfo> entry : assignedBanks.entrySet()) {
 			int key = entry.getKey();
-			int bankSet = (key >> 4) & 0xF;
-			findAddresses(matches, entry.getValue(), bankSetIndexForSet(bankSet), key & 0xF, wav, envelope);
+			int bankGroup = (key >> 4) & 0xF;
+			findAddresses(matches, entry.getValue(), bankSetIndexForBankGroup(bankGroup), key & 0xF, wav, envelope);
 		}
 
 		if (matches.isEmpty())
@@ -227,14 +227,14 @@ public final class SoundBankCatalog
 			xmr.requiresAttribute(elem, ATTR_BANK_INDEX);
 
 			String filename = xmr.getAttribute(elem, ATTR_BANK_NAME);
-			int bankSet = SoundXml.readHex(xmr, elem, ATTR_BANK_GROUP, 1, 6);
+			int bankGroup = SoundXml.readHex(xmr, elem, ATTR_BANK_GROUP, 1, 6);
 			int bankIndex = SoundXml.readHex(xmr, elem, ATTR_BANK_INDEX, 0, 0xF);
 
 			BankInfo bank = getBank(filename);
-			int key = bankKey(bankSet, bankIndex);
+			int key = bankKey(bankGroup, bankIndex);
 			if (bankMap.put(key, bank) != null) {
 				throw new InputFileException(bankListFile,
-					"Multiple sound banks use group %X index %X", bankSet, bankIndex);
+					"Multiple sound banks use group %X index %X", bankGroup, bankIndex);
 			}
 		}
 
@@ -250,12 +250,12 @@ public final class SoundBankCatalog
 		return bank;
 	}
 
-	private static int bankKey(int bankSet, int bankIndex)
+	private static int bankKey(int bankGroup, int bankIndex)
 	{
-		return (bankSet << 4) | bankIndex;
+		return (bankGroup << 4) | bankIndex;
 	}
 
-	private static int bankSetForIndex(int bankSetIndex)
+	private static int bankGroupForBankSetIndex(int bankSetIndex)
 	{
 		switch (bankSetIndex) {
 			case 0:
@@ -273,15 +273,15 @@ public final class SoundBankCatalog
 		}
 	}
 
-	private static int bankSetIndexForSet(int bankSet)
+	private static int bankSetIndexForBankGroup(int bankGroup)
 	{
-		switch (bankSet) {
+		switch (bankGroup) {
 			case 1:
 				return 0;
 			case 2:
 				return 1;
 			default:
-				return bankSet;
+				return bankGroup;
 		}
 	}
 

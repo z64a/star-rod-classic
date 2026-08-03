@@ -74,6 +74,7 @@ public enum SongKey implements XmlKey
     ATTR_UNK_FLAG		("flag"),
     ATTR_IS_DRUM		("isDrum"),
 
+	ATTR_CODE		   	("code"),
 	ATTR_NAME		   	("name"),
 	ATTR_ID				("id"),
 	ATTR_INDEX			("index"),

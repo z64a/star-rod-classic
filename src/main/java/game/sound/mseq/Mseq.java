@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -17,6 +18,7 @@ import org.w3c.dom.Node;
 
 import app.Environment;
 import app.input.IOUtils;
+import game.sound.AudioCatalog;
 import game.sound.AudioModder;
 import game.sound.SoundBankCatalog;
 import game.sound.SoundXml;
@@ -33,6 +35,7 @@ public class Mseq implements XmlSerializable
 	public final List<TrackRamp> trackRamps = new ArrayList<>();
 	public final List<MseqCommand> commands = new ArrayList<>();
 	public String name;
+	public String code;
 	public int firstVoiceIdx;
 	public int duration;
 	private SoundBankCatalog soundBankCatalog;
@@ -70,6 +73,8 @@ public class Mseq implements XmlSerializable
 	public static void dumpAll() throws IOException
 	{
 		SoundBankCatalog catalog = SoundBankCatalog.loadDump().withAuxiliaryBank(2, "SPC3.bk");
+		Map<String, String> names = AudioCatalog.readMseqNames(
+			DUMP_AUDIO.getFile(FN_AUDIO_AMBIENTS), DUMP_AUDIO.getFile(FN_AUDIO_SONGS));
 		Collection<File> files = IOUtils.getFilesWithExtension(DUMP_AUDIO_RAW, "mseq", false);
 		for (File f : files) {
 			Logger.log("Extracting " + f.getName());
@@ -77,10 +82,12 @@ public class Mseq implements XmlSerializable
 			Mseq mseq = new Mseq();
 			mseq.soundBankCatalog = catalog;
 			mseq.decode(f);
+			String predefinedName = AudioCatalog.getName(names, f.getName());
+			mseq.name = predefinedName == null ? FilenameUtils.getBaseName(f.getName()) : predefinedName;
 
-			String name = FilenameUtils.getBaseName(f.getName());
+			String fileBaseName = FilenameUtils.getBaseName(f.getName());
 
-			try (XmlWriter xmw = new XmlWriter(DUMP_AUDIO_MSEQ.getFile(name + ".xml"))) {
+			try (XmlWriter xmw = new XmlWriter(DUMP_AUDIO_MSEQ.getFile(fileBaseName + ".xml"))) {
 				mseq.toXML(xmw);
 			}
 		}
@@ -167,7 +174,8 @@ public class Mseq implements XmlSerializable
 		assert (signature.equals("MSEQ"));
 
 		int size = bb.getInt();
-		name = getUTF8(bb, 4).trim();
+		code = getUTF8(bb, 4).trim();
+		name = code;
 
 		firstVoiceIdx = bb.get() & 0xFF;
 		int numRamps = bb.get() & 0xFF;
@@ -282,7 +290,7 @@ public class Mseq implements XmlSerializable
 
 		dbb.putUTF8("MSEQ", false);
 		dbb.putInt(endOffset);
-		dbb.putUTF8(String.format("%-4s", name), false);
+		dbb.putUTF8(String.format("%-4s", code), false);
 		dbb.putByte(firstVoiceIdx);
 		dbb.putByte(trackRamps.size());
 		dbb.putShort(trackRampsOffset);
@@ -405,6 +413,7 @@ public class Mseq implements XmlSerializable
 	{
 		// @formatter:off
 		TAG_MSEQ            ("Mseq"),
+		ATTR_CODE		   	("code"),
 		ATTR_NAME		   	("name"),
 		ATTR_FIRST_VOICE   	("firstVoice"),
 		TAG_RAMP_LIST       ("TrackRamps"),
@@ -477,9 +486,19 @@ public class Mseq implements XmlSerializable
 	public void fromXML(XmlReader xmr, Element root)
 	{
 		xmr.requiresAttribute(root, ATTR_NAME);
-		name = xmr.getAttribute(root, ATTR_NAME);
-		if (name.isEmpty() || name.length() > 4)
-			xmr.complain("MSEQ name must contain one through four characters: " + name);
+		if (xmr.hasAttribute(root, ATTR_CODE)) {
+			name = xmr.getAttribute(root, ATTR_NAME);
+			code = xmr.getAttribute(root, ATTR_CODE);
+		}
+		else {
+			// legacy MSEQ XML used name for the binary code
+			code = xmr.getAttribute(root, ATTR_NAME);
+			name = code;
+		}
+		if (name.isBlank())
+			xmr.complain("MSEQ name must not be empty");
+		if (code.isEmpty() || code.length() > 4)
+			xmr.complain("MSEQ code must contain one through four characters: " + code);
 		firstVoiceIdx = SoundXml.readInt(xmr, root, ATTR_FIRST_VOICE, 0, 23);
 
 		Element rampsElem = xmr.getUniqueRequiredTag(root, TAG_RAMP_LIST);
@@ -505,6 +524,7 @@ public class Mseq implements XmlSerializable
 	public void toXML(XmlWriter xmw)
 	{
 		XmlTag root = xmw.createTag(TAG_MSEQ, false);
+		xmw.addAttribute(root, ATTR_CODE, code);
 		xmw.addAttribute(root, ATTR_NAME, name);
 		xmw.addInt(root, ATTR_FIRST_VOICE, firstVoiceIdx);
 		xmw.openTag(root);

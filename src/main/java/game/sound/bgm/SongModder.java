@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -15,6 +16,7 @@ import org.w3c.dom.Element;
 import app.Directories;
 import app.Environment;
 import app.input.IOUtils;
+import game.sound.AudioCatalog;
 import game.sound.AudioModder;
 import game.sound.SoundBankCatalog;
 import game.sound.SoundXml;
@@ -45,6 +47,7 @@ public abstract class SongModder
 	{
 		SoundBankCatalog catalog = SoundBankCatalog.loadDump();
 		File songListFile = DUMP_AUDIO.getFile(FN_AUDIO_SONGS);
+		Map<String, String> names = AudioCatalog.readSongNames(songListFile);
 		String toadTownBgm = getBgmForSong(songListFile, TOAD_TOWN_SONG_ID);
 		Collection<File> files = IOUtils.getFilesWithExtension(Directories.DUMP_AUDIO_RAW, "bgm", false);
 		for (File f : files) {
@@ -52,12 +55,14 @@ public abstract class SongModder
 			SoundBankCatalog songCatalog = catalog.withSongBanks(
 				songListFile, f.getName());
 			Song song = new Song(f, songCatalog);
+			String predefinedName = AudioCatalog.getName(names, f.getName());
+			song.name = predefinedName == null ? FilenameUtils.getBaseName(f.getName()) : predefinedName;
 			if (f.getName().equals(toadTownBgm))
 				song.setBranchNames(TOAD_TOWN_BRANCH_NAMES);
 
-			String name = FilenameUtils.getBaseName(f.getName());
+			String fileBaseName = FilenameUtils.getBaseName(f.getName());
 
-			try (XmlWriter xmw = new XmlWriter(Directories.DUMP_AUDIO_BGM.getFile(name + ".xml"))) {
+			try (XmlWriter xmw = new XmlWriter(Directories.DUMP_AUDIO_BGM.getFile(fileBaseName + ".xml"))) {
 				song.toXML(xmw);
 			}
 		}

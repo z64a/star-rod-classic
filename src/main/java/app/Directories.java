@@ -221,7 +221,7 @@ public enum Directories
 
 	MOD_AUDIO			(Root.MOD,				"/audio/"),
 	MOD_AUDIO_BUILD		(Root.MOD,	MOD_AUDIO,		"/build/"),
-	MOD_AUDIO_OVERRIDES	(Root.MOD,	MOD_AUDIO,		"/overrides/"),
+	MOD_AUDIO_OVERRIDE  (Root.MOD,	MOD_AUDIO,		"/override/"),
 	MOD_AUDIO_RAW		(Root.MOD,	MOD_AUDIO,		"/raw/"),
 	MOD_AUDIO_BANK		(Root.MOD,	MOD_AUDIO,		"/bank/"),
 	MOD_AUDIO_BGM		(Root.MOD,	MOD_AUDIO,		"/bgm/"),
@@ -282,7 +282,6 @@ public enum Directories
 	public static final String FN_SPRITESHEET = "SpriteSheet.xml";
 	public static final String FN_SPRITE_CACHE = "checksums.txt";
 
-	public static final String FN_AUDIO_FILES = "Files.xml";
 	public static final String FN_AUDIO_SONGS = "Songs.xml";
 	public static final String FN_AUDIO_AMBIENTS = "AmbientSounds.xml";
 	public static final String FN_AUDIO_BANKS = "Banks.xml";

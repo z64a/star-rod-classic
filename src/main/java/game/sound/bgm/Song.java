@@ -42,6 +42,7 @@ public class Song implements XmlSerializable
 	public static final int MAX_BRANCH_OPTIONS = 16; // chosen for star rod, not required by the game engine
 
 	public String name;
+	public String code;
 	private int timingPreset;
 
 	public int branchTicks = DEFAULT_BRANCH_TICKS;
@@ -89,8 +90,9 @@ public class Song implements XmlSerializable
 		String signature = "" + (char) bb.get() + (char) bb.get() + (char) bb.get() + (char) bb.get();
 		assert (signature.equals("BGM ")) : "Signature was " + signature; // 'BGM '
 		int fileLength = bb.getInt();
-		name = "" + (char) bb.get() + (char) bb.get() + (char) bb.get() + (char) bb.get();
-		name = name.trim();
+		code = "" + (char) bb.get() + (char) bb.get() + (char) bb.get() + (char) bb.get();
+		code = code.trim();
+		name = code;
 		int unk_0C = bb.getInt();
 		assert (unk_0C == 0);
 
@@ -249,7 +251,7 @@ public class Song implements XmlSerializable
 		// 0x0
 		dbb.putUTF8("BGM ", false);
 		dbb.putInt(endOffset);
-		dbb.putUTF8(String.format("%-4s", name), false);
+		dbb.putUTF8(String.format("%-4s", code), false);
 		dbb.skip(4);
 
 		// 0x10
@@ -553,9 +555,19 @@ public class Song implements XmlSerializable
 	public void fromXML(XmlReader xmr, Element root)
 	{
 		xmr.requiresAttribute(root, ATTR_NAME);
-		name = xmr.getAttribute(root, ATTR_NAME);
-		if (name.isEmpty() || name.length() > 4)
-			xmr.complain("BGM name must contain one through four characters: " + name);
+		if (xmr.hasAttribute(root, ATTR_CODE)) {
+			name = xmr.getAttribute(root, ATTR_NAME);
+			code = xmr.getAttribute(root, ATTR_CODE);
+		}
+		else {
+			// legacy BGM XML used name for the binary code
+			code = xmr.getAttribute(root, ATTR_NAME);
+			name = code;
+		}
+		if (name.isBlank())
+			xmr.complain("BGM name must not be empty");
+		if (code.isEmpty() || code.length() > 4)
+			xmr.complain("BGM code must contain one through four characters: " + code);
 
 		timingPreset = SoundXml.readInt(xmr, root, ATTR_TIMING, 0, TIMING_PRESET_MAP.length - 1);
 		branchTicks = SoundXml.readInt(xmr, root, ATTR_BRANCH_TICKS, 1, 0x77);
@@ -626,6 +638,7 @@ public class Song implements XmlSerializable
 		reindex();
 
 		XmlTag root = xmw.createTag(TAG_SONG, false);
+		xmw.addAttribute(root, ATTR_CODE, code);
 		xmw.addAttribute(root, ATTR_NAME, name);
 		xmw.addInt(root, ATTR_TIMING, timingPreset);
 		xmw.addInt(root, ATTR_BRANCH_TICKS, branchTicks);

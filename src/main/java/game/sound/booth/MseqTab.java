@@ -22,6 +22,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 
 import org.apache.commons.io.FilenameUtils;
+import org.w3c.dom.Element;
 
 import app.SwingUtils;
 import app.input.IOUtils;
@@ -54,9 +55,9 @@ final class MseqTab extends AudioBoothTab
 
 		Map<String, String> names = loadNames();
 		Collection<File> files = IOUtils.getFilesWithExtension(MOD_AUDIO_MSEQ, "xml", false);
-		Map<File, Boolean> hasRamps = new HashMap<>();
+		Map<File, MseqSummary> summaries = new HashMap<>();
 		for (File file : files)
-			hasRamps.put(file, readHasRamps(file));
+			summaries.put(file, readSummary(file));
 
 		List<File> sortedFiles = new ArrayList<>(files);
 		sortedFiles.sort(Comparator.comparing(File::getName, String.CASE_INSENSITIVE_ORDER));
@@ -74,7 +75,7 @@ final class MseqTab extends AudioBoothTab
 				Component component = super.getListCellRendererComponent(
 					list, value, index, isSelected, cellHasFocus);
 				if (value instanceof File file)
-					setText(formatName(file, names, hasRamps.get(file)));
+					setText(formatName(file, names, summaries.get(file)));
 				return component;
 			}
 		});
@@ -87,7 +88,7 @@ final class MseqTab extends AudioBoothTab
 		});
 
 		JPanel listPanel = createListPanel(fileList, model, MOD_AUDIO_MSEQ.toFile(),
-			(file) -> formatName(file, names, hasRamps.get(file)));
+			(file) -> formatName(file, names, summaries.get(file)));
 		rampButton = new JButton("Trigger Ramps");
 		SwingUtils.addBorderPadding(rampButton);
 		rampButton.setToolTipText("Start this MSEQ's track tune and volume ramps.");
@@ -124,7 +125,7 @@ final class MseqTab extends AudioBoothTab
 		if (selectedMseq == null || selectedFile == null)
 			return;
 		booth.startPlayback(this, player, () -> player.setMseq(selectedMseq));
-		booth.setStatus("Playing ambience " + selectedFile.getName());
+		booth.setStatus("Playing ambience " + selectedMseq.name);
 	}
 
 	private void triggerRamps()
@@ -132,7 +133,7 @@ final class MseqTab extends AudioBoothTab
 		if (!booth.isCurrentSession(player) || selectedMseq == null)
 			return;
 		booth.runAudioAction(() -> player.triggerTrackRamps());
-		booth.setStatus("Triggered track ramps for " + selectedFile.getName());
+		booth.setStatus("Triggered track ramps for " + selectedMseq.name);
 	}
 
 	@Override
@@ -235,28 +236,36 @@ final class MseqTab extends AudioBoothTab
 		}
 	}
 
-	private static boolean readHasRamps(File file)
+	private static MseqSummary readSummary(File file)
 	{
 		try {
 			XmlReader xmr = new XmlReader(file);
-			return !xmr.getTags(
-				xmr.getUniqueRequiredTag(xmr.getRootElement(), MseqKey.TAG_RAMP_LIST),
-				MseqKey.TAG_RAMP).isEmpty();
+			Element root = xmr.getRootElement();
+			String predefinedName = xmr.hasAttribute(root, MseqKey.ATTR_CODE)
+				? xmr.getAttribute(root, MseqKey.ATTR_NAME) : null;
+			boolean hasRamps = !xmr.getTags(
+				xmr.getUniqueRequiredTag(root, MseqKey.TAG_RAMP_LIST), MseqKey.TAG_RAMP).isEmpty();
+			return new MseqSummary(predefinedName, hasRamps);
 		}
 		catch (Exception e) {
 			Logger.logfWarning("Could not read MSEQ summary from asset %s", file.getName());
-			return false;
+			return new MseqSummary(null, false);
 		}
 	}
 
-	private static String formatName(File file, Map<String, String> names, boolean hasRamps)
+	private static String formatName(File file, Map<String, String> names, MseqSummary summary)
 	{
 		String name = FilenameUtils.getBaseName(file.getName());
-		String canonicalName = AudioCatalog.getName(names, file.getName());
+		String canonicalName = summary.name;
+		if (canonicalName == null)
+			canonicalName = AudioCatalog.getName(names, file.getName());
 		if (canonicalName != null)
 			name += "  " + canonicalName;
-		if (hasRamps)
+		if (summary.hasRamps)
 			name += " [R]";
 		return name;
 	}
+
+	private record MseqSummary(String name, boolean hasRamps)
+	{}
 }

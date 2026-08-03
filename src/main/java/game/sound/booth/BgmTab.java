@@ -22,6 +22,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 
 import org.apache.commons.io.FilenameUtils;
+import org.w3c.dom.Element;
 
 import app.SwingUtils;
 import app.input.IOUtils;
@@ -207,7 +208,7 @@ final class BgmTab extends AudioBoothTab
 				}
 			});
 			if (playing)
-				booth.setStatus("Playing song " + selectedFile.getName());
+				booth.setStatus("Playing song " + selectedSong.name);
 			else
 				booth.setStatus(selectedFile.getName() + " composition " + composition + " is empty.");
 		}
@@ -407,23 +408,27 @@ final class BgmTab extends AudioBoothTab
 	{
 		try {
 			XmlReader xmr = new XmlReader(file);
+			Element root = xmr.getRootElement();
+			String predefinedName = xmr.hasAttribute(root, SongKey.ATTR_CODE)
+				? xmr.getAttribute(root, SongKey.ATTR_NAME) : null;
 			int compositions = xmr.getTags(
-				xmr.getUniqueRequiredTag(xmr.getRootElement(), SongKey.TAG_COMP_LIST),
+				xmr.getUniqueRequiredTag(root, SongKey.TAG_COMP_LIST),
 				SongKey.TAG_COMPOSITION).size();
-			boolean hasProximityMixes = xmr.readInt(
-				xmr.getRootElement(), SongKey.ATTR_BRANCHES) > 1;
-			return new BgmSummary(compositions, hasProximityMixes);
+			boolean hasProximityMixes = xmr.readInt(root, SongKey.ATTR_BRANCHES) > 1;
+			return new BgmSummary(predefinedName, compositions, hasProximityMixes);
 		}
 		catch (Exception e) {
 			Logger.logfWarning("Could not read BGM summary from asset %s", file.getName());
-			return new BgmSummary(0, false);
+			return new BgmSummary(null, 0, false);
 		}
 	}
 
 	private static String formatName(File file, BgmSummary summary, Map<String, String> names)
 	{
 		String name = FilenameUtils.getBaseName(file.getName());
-		String canonicalName = AudioCatalog.getName(names, file.getName());
+		String canonicalName = summary.name;
+		if (canonicalName == null)
+			canonicalName = AudioCatalog.getName(names, file.getName());
 		if (canonicalName != null)
 			name += "  " + canonicalName;
 		name += " [" + summary.compositions + "]";
@@ -432,6 +437,6 @@ final class BgmTab extends AudioBoothTab
 		return name;
 	}
 
-	private record BgmSummary(int compositions, boolean hasProximityMixes)
+	private record BgmSummary(String name, int compositions, boolean hasProximityMixes)
 	{}
 }

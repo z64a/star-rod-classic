@@ -147,7 +147,7 @@ final class SfxTab extends AudioBoothTab
 		if (sound.isEmpty())
 			booth.setStatus(String.format("Nothing to play for %04X %s.", sound.id, sound.name));
 		else if (playing)
-			booth.setStatus(String.format("Playing sound %04X %s.", sound.id, sound.name));
+			booth.setStatus(String.format("Playing sound %04X %s", sound.id, sound.name));
 		else
 			booth.setStatus(String.format("Could not play sound %04X %s.", sound.id, sound.name));
 		updateAlternativeControls();

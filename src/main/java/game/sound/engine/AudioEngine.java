@@ -18,6 +18,7 @@ public class AudioEngine
 
 	public interface AudioMonitor
 	{
+		// samples are taken after mixing and effects, but before master volume is applied
 		// buffers are reused by the engine; samples must be consumed or copied before this method returns
 		public void accept(float[] left, float[] right, int start, int end);
 	}
@@ -221,7 +222,7 @@ public class AudioEngine
 			if (!fastForward) {
 				monitorSamples(mixedBufferL, mixedBufferR, startPos, FRAME_SAMPLES);
 				if (output != null)
-					writeSamples(output, mixedBufferL, mixedBufferR, outBuffer, startPos, FRAME_SAMPLES);
+					writeSamples(output, mixedBufferL, mixedBufferR, outBuffer, startPos, FRAME_SAMPLES, masterVolumeRatio);
 			}
 			processed += overflowSamples;
 			overflowSamples = 0;
@@ -277,8 +278,6 @@ public class AudioEngine
 					mixedBufferL[i] += dryBufferL[j][i];
 					mixedBufferR[i] += dryBufferR[j][i];
 				}
-				mixedBufferL[i] *= masterVolumeRatio;
-				mixedBufferR[i] *= masterVolumeRatio;
 			}
 
 			processed += FRAME_SAMPLES;
@@ -297,7 +296,7 @@ public class AudioEngine
 			if (!fastForward) {
 				monitorSamples(mixedBufferL, mixedBufferR, 0, writeSamples);
 				if (output != null)
-					writeSamples(output, mixedBufferL, mixedBufferR, outBuffer, 0, writeSamples);
+					writeSamples(output, mixedBufferL, mixedBufferR, outBuffer, 0, writeSamples, masterVolumeRatio);
 			}
 		}
 	}
@@ -320,13 +319,13 @@ public class AudioEngine
 			monitor.accept(left, right, start, end);
 	}
 
-	private static void writeSamples(PcmOutput output, float[] mixedL, float[] mixedR, byte[] outBuffer, int start, int end)
+	private static void writeSamples(PcmOutput output, float[] mixedL, float[] mixedR, byte[] outBuffer, int start, int end, float gain)
 	{
 		int sampleCount = (end - start);
 
 		for (int i = 0; i < sampleCount; i++) {
-			short left = floatToPCM(mixedL[start + i]);
-			short right = floatToPCM(mixedR[start + i]);
+			short left = floatToPCM(mixedL[start + i] * gain);
+			short right = floatToPCM(mixedR[start + i] * gain);
 			outBuffer[4 * i + 0] = (byte) left;
 			outBuffer[4 * i + 1] = (byte) (left >> 8);
 			outBuffer[4 * i + 2] = (byte) right;

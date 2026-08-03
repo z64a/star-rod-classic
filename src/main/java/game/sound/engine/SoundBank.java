@@ -74,10 +74,10 @@ public class SoundBank
 			if (bank == null)
 				throw new StarRodException("Could not find bank %s", bankName);
 
-			int key = (e.bankSet & 0xF) << 4 | (e.bankIndex & 0xF);
+			int key = (e.bankGroup & 0xF) << 4 | (e.bankIndex & 0xF);
 
 			if (bankRefMap.containsKey(key))
-				throw new StarRodException("Duplicate sound bank assignment for bank set %X index %X", e.bankSet, e.bankIndex);
+				throw new StarRodException("Duplicate sound bank assignment for bank group %X index %X", e.bankGroup, e.bankIndex);
 
 			bankRefMap.put(key, bank);
 		}
@@ -128,16 +128,16 @@ public class SoundBank
 	{
 		int bankSetIndex = (bank >> 4) & 0xF;
 		int envelopeIndex = bank & 3;
-		int bankSet;
+		int bankGroup;
 
 		// see: au_get_instrument
 		switch (bankSetIndex) {
 			case 0:
 			case 7:
-				bankSet = 1;
+				bankGroup = 1;
 				break;
 			case 1:
-				bankSet = 2;
+				bankGroup = 2;
 				break;
 			case 2:
 				// default instrument
@@ -146,7 +146,7 @@ public class SoundBank
 			case 4:
 			case 5:
 			case 6:
-				bankSet = bankSetIndex;
+				bankGroup = bankSetIndex;
 				break;
 			default:
 				// invalid bank set index
@@ -157,11 +157,11 @@ public class SoundBank
 		int bankIndex = (patch >> 4) & 0xF;
 		int instrumentIndex = patch & 0xF;
 
-		int key = (bankSet & 0xF) << 4 | (bankIndex & 0xF);
+		int key = (bankGroup & 0xF) << 4 | (bankIndex & 0xF);
 
 		Bank soundBank = bankRefMap.get(key);
 		if (soundBank == null) {
-			Logger.logfError("Could not find a bank in bank set %X at index %X", bankSet, bankIndex);
+			Logger.logfError("Could not find a bank in bank group %X at index %X", bankGroup, bankIndex);
 			return null;
 		}
 
