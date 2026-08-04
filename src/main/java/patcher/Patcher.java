@@ -1062,6 +1062,6 @@ public class Patcher implements IGlobalDatabase
 	@Override
 	public int getPlayerAnimID(String spriteName, String animName, String palName)
 	{
-		return spritePatcher.getAnimationID(SpriteSet.Npc, spriteName, animName, palName);
+		return spritePatcher.getAnimationID(SpriteSet.Player, spriteName, animName, palName);
 	}
 }

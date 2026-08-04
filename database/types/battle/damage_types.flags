@@ -14,7 +14,7 @@ false		% reversed
 01000000 = MultiBounce
 02000000 = Unblockable
 04000000 = SpinSmash		% converts event A -> B and 20 -> 21
-08000000 = IgnoreDefense	% can be overridden if relevant defense element is 99=”immune”
+08000000 = IgnoreDefense	% can be overridden if relevant defense element is 99="immune"
 10000000 = NoContact		% does not make contact (source won't be shocked)
 20000000 = NoOtherDamagePopups	% kills any other active damage popups
 40000000 = StatusAlwaysHits

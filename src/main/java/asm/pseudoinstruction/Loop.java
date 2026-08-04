@@ -225,34 +225,34 @@ public class Loop
 			switch (mode) {
 				case EQL:
 					lines.add(startLine.createLine(getADD("AT", end, "R0")));
-					lines.add(startLine.createLine("BEQ AT, %s, ._%s_end", indexReg, name));
+					lines.add(startLine.createLine("BNE AT, %s, ._%s_end", indexReg, name));
 					lines.add(startLine.createLine("NOP"));
 					break;
 				case NEQ:
 					lines.add(startLine.createLine(getADD("AT", end, "R0")));
-					lines.add(startLine.createLine("BNE AT, %s, ._%s_end", indexReg, name));
+					lines.add(startLine.createLine("BEQ AT, %s, ._%s_end", indexReg, name));
 					lines.add(startLine.createLine("NOP"));
 					break;
 				case GT: //  index > var  --->  jump to END when index <= var
 					lines.add(startLine.createLine(getADD("AT", end, "R0")));
 					lines.add(startLine.createLine("SLT AT, AT, %s", indexReg));
-					lines.add(startLine.createLine("BEQ AT, R0, ._%s_end", indexReg, name));
+					lines.add(startLine.createLine("BEQ AT, R0, ._%s_end", name));
 					lines.add(startLine.createLine("NOP"));
 					break;
 				case GTE: // index >= var  --->  jump to END when index < var
 					lines.add(startLine.createLine(getSLT("AT", indexReg, end)));
-					lines.add(startLine.createLine("BNE AT, R0, ._%s_end", indexReg, name));
+					lines.add(startLine.createLine("BNE AT, R0, ._%s_end", name));
 					lines.add(startLine.createLine("NOP"));
 					break;
 				case LT: // index < var  --->  jump to END when index >= var
 					lines.add(startLine.createLine(getSLT("AT", indexReg, end)));
-					lines.add(startLine.createLine("BEQ AT, R0, ._%s_end", indexReg, name));
+					lines.add(startLine.createLine("BEQ AT, R0, ._%s_end", name));
 					lines.add(startLine.createLine("NOP"));
 					break;
 				case LTE: // index <= var  --->  jump to END when index > var
 					lines.add(startLine.createLine(getADD("AT", end, "R0")));
 					lines.add(startLine.createLine("SLT AT, AT, %s", indexReg));
-					lines.add(startLine.createLine("BNE AT, R0, ._%s_end", indexReg, name));
+					lines.add(startLine.createLine("BNE AT, R0, ._%s_end", name));
 					lines.add(startLine.createLine("NOP"));
 					break;
 			}

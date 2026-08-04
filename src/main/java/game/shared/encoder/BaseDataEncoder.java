@@ -2263,7 +2263,7 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 				break;
 
 			case "anim": {
-				if (exprFields.length != 2 && exprFields.length != 3)
+				if (exprFields.length != 3 && exprFields.length != 4)
 					throw new InputFileException(line, "Invalid anim: " + exp);
 
 				String palName = (exprFields.length == 4) ? exprFields[3] : "";
@@ -2279,10 +2279,10 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 				break;
 
 			case "playeranim": {
-				if (exprFields.length != 2 && exprFields.length != 3)
+				if (exprFields.length != 3 && exprFields.length != 4)
 					throw new InputFileException(line, "Invalid player anim: " + exp);
 
-				String palName = (exprFields.length == 3) ? exprFields[3] : "";
+				String palName = (exprFields.length == 4) ? exprFields[3] : "";
 				int id = globalsDatabase.getPlayerAnimID(exprFields[1], exprFields[2], palName);
 				if (id == -1)
 					throw new InputFileException(line, "Invalid player sprite name: " + exprFields[1]);

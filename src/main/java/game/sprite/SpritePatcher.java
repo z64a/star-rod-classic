@@ -314,7 +314,7 @@ public class SpritePatcher
 		if (palette.isEmpty())
 			return spriteID << 16 | animID;
 
-		Integer palID = spriteNameMap.get(spriteName + PAL_SEPARATOR + animName);
+		Integer palID = spriteNameMap.get(spriteName + PAL_SEPARATOR + palette);
 
 		if (palID == null)
 			return -3;
