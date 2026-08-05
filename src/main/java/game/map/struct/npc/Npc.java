@@ -85,9 +85,6 @@ public class Npc extends BaseStruct
 			pw.print(MapDecoder.NPC_ID_NAMESPACE + npcName + " ");
 		}
 
-		//	if(!exportMode && !markerName.equals(String.format("NPC_%08X", npcAddress)))
-		//		System.out.printf("### %s\tNPC_%08X\t%s%n", decoder.getSourceName(), npcAddress, markerName);
-
 		decoder.printHex(fileBuffer, pw, 8, 1); // ExtraNpcData pointer
 
 		int x = (int) fileBuffer.getFloat();
@@ -650,27 +647,27 @@ public class Npc extends BaseStruct
 		HP:20:70:3:50 HP:30:60:3:50 HP:50:50:3:40 HP:80:40:3:40 HP:100:30:3:30 HP:None HP:None HP:None
 		HP:20:70:4:50 HP:30:60:4:50 HP:50:50:4:40 HP:80:40:4:40 HP:100:30:4:30 HP:None HP:None HP:None
 		HP:20:70:5:50 HP:30:60:5:50 HP:50:50:5:40 HP:80:40:5:40 HP:100:30:5:30 HP:None HP:None HP:None
-
+	
 		~HP:Generous:N % N=2 only
 		HP:20:80:2:50 HP:30:70:2:50 HP:50:60:2:40 HP:80:50:2:40 HP:100:40:2:30 HP:None HP:None HP:None
 		HP:20:80:3:50 HP:30:70:3:50 HP:50:60:3:40 HP:80:50:3:40 HP:100:40:3:30 HP:None HP:None HP:None
 		      10            10            10            10             10
-
+	
 		~HP:GenerousWhenLow:N % N=2 only
 		HP:20:80:2:60 HP:30:70:2:50 HP:50:60:2:50 HP:80:50:2:40 HP:100:30:2:30 HP:None HP:None HP:None
 		      10   10       10            10            10
-
+	
 		~FP:Standard:N	% standard drop table for up to N hearts with N=2,3,4,5,6
 		FP:20:50:2:40 FP:30:40:2:40 FP:50:40:2:40 FP:80:40:2:40 FP:100:30:2:40 FP:None FP:None FP:None
 		FP:20:50:3:40 FP:30:40:3:40 FP:50:40:3:40 FP:80:40:3:40 FP:100:30:3:40 FP:None FP:None FP:None
 		FP:20:50:4:40 FP:30:40:4:40 FP:50:40:4:40 FP:80:40:4:40 FP:100:30:4:40 FP:None FP:None FP:None
 		FP:20:50:5:40 FP:30:40:5:40 FP:50:40:5:40 FP:80:40:5:40 FP:100:30:5:40 FP:None FP:None FP:None
 		FP:20:50:6:40 FP:30:40:6:40 FP:50:40:6:40 FP:80:40:6:40 FP:100:30:6:40 FP:None FP:None FP:None
-
+	
 		~FP:GenerousWhenLow:N % N=2 only
 		FP:20:70:2:50 FP:30:60:2:50 FP:50:50:2:40 FP:80:40:2:40 FP:100:30:2:40 FP:None FP:None FP:None
 		      20   10       20   10       10
-
+	
 		~FP:SlightlyReduced:N
 		FP:20:40:2:40 FP:30:40:2:40 FP:50:40:2:40 FP:80:40:2:40 FP:100:30:2:40 FP:None FP:None FP:None
 		     -10

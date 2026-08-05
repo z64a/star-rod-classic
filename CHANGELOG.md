@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - (Map Editor) Camera target override toggles now save properly
 
 ### Changed
+- JumpTable offsets dump as labels rather than hex
 - Copy Assets to Mod now copies missing assets into partially populated directories
 - Hitting escape during a "Save and Quit?" dialog now cancels the dialog rather than exiting without saving
 - (Map Editor) Improved triangle cutting to handle shared edges more reliably

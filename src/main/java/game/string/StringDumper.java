@@ -108,7 +108,6 @@ public class StringDumper
 				stringsMap.put(((i & 0xFFFF) << 16) | (j & 0xFFFF), new PMString(ByteBuffer.wrap(bytes), i, j));
 				i &= 0xFFFF;
 				j &= 0xFFFF;
-				System.out.printf("### MSG_@%02X_%04X = 0x%06X,%n", i, j, (i << 16) | j);
 			}
 			out.close();
 

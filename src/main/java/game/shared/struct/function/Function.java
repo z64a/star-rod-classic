@@ -304,7 +304,7 @@ public class Function
 		TreeSet<JumpTarget> jumpTargetSet = new TreeSet<>(jumpTargetMap.values());
 		TreeSet<JumpTarget> jumpTableTargetSet = new TreeSet<>(jumpTableTargetMap.values());
 		JumpTarget nextJumpTarget, nextJumpTableTarget;
-		int nextTargetAddress, nextJumpTargetAddress;
+		int nextTargetAddress, nextJumpTableTargetAddress;
 
 		// disregard jump targets before the function
 		while (true) {
@@ -321,12 +321,12 @@ public class Function
 		// disregard jump table targets before the function
 		while (true) {
 			nextJumpTableTarget = jumpTableTargetSet.pollFirst();
-			nextJumpTargetAddress = (nextJumpTableTarget == null) ? 0 : nextJumpTableTarget.targetAddr;
+			nextJumpTableTargetAddress = (nextJumpTableTarget == null) ? 0 : nextJumpTableTarget.targetAddr;
 
 			if (nextJumpTableTarget == null)
 				break;
 
-			if (nextJumpTargetAddress >= functionAddress)
+			if (nextJumpTableTargetAddress >= functionAddress)
 				break;
 		}
 
@@ -334,26 +334,33 @@ public class Function
 		List<String> newInstructions = PseudoInstruction.addAll(asmList, decoder);
 
 		for (int i = 0; i < newInstructions.size(); i++) {
+			boolean printLabel = false;
+
 			// check for jump table labels
-			if (functionAddress + insOffset == nextJumpTargetAddress) {
+			if (functionAddress + insOffset == nextJumpTableTargetAddress) {
 				String tableName = decoder.getVariableName(nextJumpTableTarget.jumpTableAddress);
 				StringBuilder sb = (nextJumpTableTarget.jumpTableIndicies.size() > 1) ? new StringBuilder("entries") : new StringBuilder("entry");
 				for (int index : nextJumpTableTarget.jumpTableIndicies)
 					sb.append(String.format(" %d`", index));
 				pw.println("% LBL: from " + tableName + " , " + sb.toString());
+				printLabel = true;
 
 				nextJumpTableTarget = jumpTableTargetSet.pollFirst();
-				nextJumpTargetAddress = (nextJumpTableTarget == null) ? 0 : nextJumpTableTarget.targetAddr;
+				nextJumpTableTargetAddress = (nextJumpTableTarget == null) ? 0 : nextJumpTableTarget.targetAddr;
 			}
 			// check for local branch/jump target labels
 			if (functionAddress + insOffset == nextTargetAddress) {
+				printLabel = true;
+
+				nextJumpTarget = jumpTargetSet.pollFirst();
+				nextTargetAddress = (nextJumpTarget == null) ? 0 : nextJumpTarget.targetAddr;
+			}
+
+			if (printLabel) {
 				if (decoder.printLineOffsets)
 					pw.printf("        %co%X%n", LABEL_CHAR, insOffset);
 				else
 					pw.printf("\t%co%X%n", LABEL_CHAR, insOffset);
-
-				nextJumpTarget = jumpTargetSet.pollFirst();
-				nextTargetAddress = (nextJumpTarget == null) ? 0 : nextJumpTarget.targetAddr;
 			}
 
 			String ins = newInstructions.get(i);

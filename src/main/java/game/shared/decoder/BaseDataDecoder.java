@@ -86,7 +86,7 @@ public abstract class BaseDataDecoder
 			decoder.scanJumpTable(ptr, fileBuf);
 		};
 		JumpTableT.printer = (decoder, ptr, fileBuf, pw) -> {
-			decoder.printHex(ptr, fileBuf, pw, 4);
+			decoder.printJumpTable(ptr, fileBuf, pw);
 		};
 
 		// These just use default scanning/printing implementation.
@@ -701,6 +701,27 @@ public abstract class BaseDataDecoder
 		for (int i = 0; i < ptr.listLength; i++) {
 			fileBuffer.getInt();
 		}
+	}
+
+	protected void printJumpTable(Pointer ptr, ByteBuffer fileBuffer, PrintWriter pw)
+	{
+		int wordsPerRow = (ptr.newlineHint == 0) ? 4 : ptr.newlineHint;
+
+		for (int i = 0; i < ptr.listLength; i++) {
+			int address = fileBuffer.getInt();
+			JumpTarget target = jumpTableTargetMap.get(address);
+
+			if (target == null)
+				printWord(pw, address);
+			else
+				pw.printf("%s[%co%X] ", getVariableName(target.functionAddr), Function.LABEL_CHAR, address - target.functionAddr);
+
+			if (((i + 1) % wordsPerRow) == 0)
+				pw.println();
+		}
+
+		if ((ptr.listLength % wordsPerRow) != 0)
+			pw.println();
 	}
 
 	public boolean shouldFunctionsRemoveJumps()
