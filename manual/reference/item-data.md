@@ -38,8 +38,8 @@ These bits describe categories; they do not create an effect. Setting **Usable i
 
 ## Item IDs
 
-Star Rod rebuilds the item enum from the ordered records in `Items.xml`. You should prefer using `.Item:Name` instead of using raw itemIDs.
+Star Rod rebuilds the item enum from the ordered entries in `Items.xml`. Prefer `.Item:Name` to a raw item ID.
 
-Appending a new item preserves existing IDs. Reordering or removing records changes every later ID and may break scripts, inventories, shops, and save data.
+Appending a new item preserves existing IDs. Reordering or removing entries changes every later ID and may break scripts, inventories, shops, and save data.
 
 See [Editing Items](../guides/editing-items.md) for the creation workflow and [Battle Flags](battle-flags.md#target-flags) for the target-filter bits.

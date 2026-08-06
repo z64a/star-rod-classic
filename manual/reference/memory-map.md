@@ -32,7 +32,7 @@ The region from `80200000` through `802C3000` is reused according to the current
 | World | `8028E000`–`802AE000` | Map textures. |
 | World | `802B6000`–`802C3000` | Smaller world overlays loaded as needed. |
 | Battle | `80210000`–`80218000` | Stage shape data. |
-| Battle | `80218000`–`80238000` | Battle-area and formation data. |
+| Battle | `80218000`–`80238000` | Battle-section overlay data. |
 | Battle | `80238000`–`8023E000` | Partner battle scripts. |
 | Battle | `8023E000`–`8029DA30` | Battle engine. |
 | Battle | `802A1000`–`802ACC60` | Battle menu and other load-on-demand battle code. |

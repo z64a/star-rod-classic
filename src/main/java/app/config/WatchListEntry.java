@@ -57,8 +57,7 @@ public class WatchListEntry
 		String[] fields = s.split(",");
 		if (fields.length == 1) {
 			category = Category.Variable;
-			name = fields[0]; // assume this is var
-			//XXX parseVarName();
+			name = fields[0];
 		}
 		else if (fields.length == 3) {
 			category = Category.Memory;
@@ -95,7 +94,6 @@ public class WatchListEntry
 	private int parseVarName()
 	{
 		int len;
-		int varRef;
 		ScriptVariable varType;
 
 		try {
