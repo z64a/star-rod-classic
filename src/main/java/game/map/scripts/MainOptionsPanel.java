@@ -16,7 +16,6 @@ import javax.swing.JTextField;
 
 import org.apache.commons.io.FileUtils;
 
-import app.Environment;
 import app.StarRodClassic;
 import app.SwingUtils;
 import app.input.IOUtils;
@@ -425,10 +424,7 @@ public class MainOptionsPanel extends JPanel
 		generateScripts.addActionListener((e) -> {
 			try {
 				Logger.log("Generating script for " + map.name + "...");
-				if (Environment.project.isDecomp)
-					new DecompScriptGenerator(map);
-				else
-					new ScriptGenerator(map);
+				new ScriptGenerator(map);
 				Logger.log("Successfully generated script for " + map.name);
 			}
 			catch (InvalidInputException iie) {

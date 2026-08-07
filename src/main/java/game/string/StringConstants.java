@@ -4,7 +4,6 @@ import static game.string.StringConstants.CharacterEncoding.*;
 
 import java.util.HashMap;
 
-import app.Environment;
 import util.CaseInsensitiveMap;
 import util.DualHashMap;
 
@@ -81,7 +80,7 @@ public abstract class StringConstants
 
 	public static int getMaxStringVars()
 	{
-		return (Environment.project.isDecomp) ? 3 : 8;
+		return 8;
 	}
 
 	public static enum ControlCharacter

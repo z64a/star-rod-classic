@@ -11,7 +11,6 @@ import javax.swing.tree.TreeNode;
 
 import org.apache.commons.io.FilenameUtils;
 
-import app.Environment;
 import app.input.InputFileException;
 import game.string.editor.io.FileMetadata.FileType;
 import util.Logger;
@@ -110,28 +109,17 @@ public class StringTreeModel extends DefaultTreeModel
 		rootData.stringCount = 0;
 		int resourceCount = 0;
 
-		if (Environment.project.isDecomp) {
-			for (File assetDir : Environment.project.decompConfig.assetDirectories) {
-				File msgDir = new File(assetDir, "msg");
-				if (!msgDir.exists())
-					continue;
-				resourceCount += addContentDirectory(true, resourceMap,
-					new FileMetadata(assetDir, true, new String[] { "msg" }));
-			}
-		}
-		else {
-			resourceCount += addContentDirectory(true, resourceMap,
-				new FileMetadata(MOD_STRINGS_SRC.toFile(), true, new String[] { "str", "msg" }));
-			resourceCount += addContentDirectory(true, resourceMap,
-				new FileMetadata(MOD_STRINGS_PATCH.toFile(), true, new String[] { "str", "msg" }));
+		resourceCount += addContentDirectory(true, resourceMap,
+			new FileMetadata(MOD_STRINGS_SRC.toFile(), true, new String[] { "str", "msg" }));
+		resourceCount += addContentDirectory(true, resourceMap,
+			new FileMetadata(MOD_STRINGS_PATCH.toFile(), true, new String[] { "str", "msg" }));
 
-			resourceCount += addContentDirectory(false, resourceMap,
-				new FileMetadata(MOD_MAP_PATCH.toFile(), "Map Patches", false, new String[] { "mpat" }));
-			resourceCount += addContentDirectory(false, resourceMap,
-				new FileMetadata(MOD_FORMA_PATCH.toFile(), "Battle Patches", false, new String[] { "bpat" }));
-			resourceCount += addContentDirectory(false, resourceMap,
-				new FileMetadata(MOD_PATCH.toFile(), "Global Patches", false, new String[] { "patch" }));
-		}
+		resourceCount += addContentDirectory(false, resourceMap,
+			new FileMetadata(MOD_MAP_PATCH.toFile(), "Map Patches", false, new String[] { "mpat" }));
+		resourceCount += addContentDirectory(false, resourceMap,
+			new FileMetadata(MOD_FORMA_PATCH.toFile(), "Battle Patches", false, new String[] { "bpat" }));
+		resourceCount += addContentDirectory(false, resourceMap,
+			new FileMetadata(MOD_PATCH.toFile(), "Global Patches", false, new String[] { "patch" }));
 
 		long t1 = System.nanoTime();
 		Logger.logf("Loaded %d strings from %d files in %.2fs.", rootData.stringCount, resourceCount, (t1 - t0) / 1e9);

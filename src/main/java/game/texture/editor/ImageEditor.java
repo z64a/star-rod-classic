@@ -163,7 +163,7 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 	{
 		getFrame().setTransferHandler(new FileTransferHandler(this, fileList -> openImageEDT(fileList.get(fileList.size() - 1))));
 
-		File imgDir = Environment.project.isDecomp ? Environment.project.getDirectory() : MOD_IMG.toFile();
+		File imgDir = MOD_IMG.toFile();
 		importFileChooser = new OpenFileChooser(imgDir, "Import Image", "Images", "png", "jpg", "jpeg", "gif");
 		exportFileChooser = new SaveFileChooser(imgDir, "Export Image", "Images", "png");
 
@@ -1174,7 +1174,7 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 			else
 				image.draw(mousePixelX, mousePixelY, pickedPixel);
 		}
-		
+
 		if(mouseManager.holdingRMB && mousePixelValid)
 			image.deselect(mousePixelX, mousePixelY);
 			*/

@@ -64,7 +64,7 @@ public class FontManager
 
 	public static void loadData() throws IOException
 	{
-		XmlReader xmr = new XmlReader(new File((Environment.project.isDecomp ? DUMP_STRINGS_FONT : MOD_STRINGS_FONT) + "fonts.xml"));
+		XmlReader xmr = new XmlReader(new File(MOD_STRINGS_FONT + "fonts.xml"));
 
 		List<Element> fontElems = xmr.getTags(xmr.getRootElement(), TAG_FONT);
 		if (fontElems.size() != 4)

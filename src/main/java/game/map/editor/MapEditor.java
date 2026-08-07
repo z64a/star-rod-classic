@@ -136,7 +136,6 @@ import game.map.marker.Marker;
 import game.map.marker.Marker.MarkerType;
 import game.map.mesh.Triangle;
 import game.map.mesh.Vertex;
-import game.map.scripts.DecompScriptGenerator;
 import game.map.scripts.ScriptGenerator;
 import game.map.scripts.generators.Exit;
 import game.map.scripts.generators.Generator;
@@ -1578,10 +1577,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 			case GENERATE_SCRIPT:
 				try {
 					Logger.log("Generating script for " + map.name + "...");
-					if (Environment.project.isDecomp)
-						new DecompScriptGenerator(map);
-					else
-						new ScriptGenerator(map);
+					new ScriptGenerator(map);
 					Logger.log("Successfully generated script for " + map.name);
 				}
 				catch (IOException ioe) {

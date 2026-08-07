@@ -15,7 +15,6 @@ import org.apache.commons.io.FileUtils;
 
 import app.AssetManager;
 import app.Directories;
-import app.Environment;
 import game.map.BoundingBox;
 import game.map.Map;
 import game.map.MapObject.ShapeType;
@@ -74,11 +73,9 @@ public class GeometryCompiler
 
 	public GeometryCompiler(Map map) throws IOException
 	{
-		boolean isDecomp = Environment.project.isDecomp;
-
 		File build_dec = new File(
 			AssetManager.getMapBuildDir(),
-			isDecomp ? map.name + "_shape.bin" : map.name + "_shape_dec"
+			map.name + "_shape_dec"
 		);
 
 		Logger.log("Compiling map geometry to " + build_dec.getPath());
@@ -168,12 +165,10 @@ public class GeometryCompiler
 			throw new BuildException("Build failed: " + mapType + " size exceeds engine limit.\n" + breakdown);
 		}
 
-		if (!isDecomp) {
-			byte[] encoded = Yay0Helper.encode(complete);
+		byte[] encoded = Yay0Helper.encode(complete);
 
-			File buildFile = new File(Directories.MOD_MAP_BUILD + map.name + "_shape");
-			FileUtils.writeByteArrayToFile(buildFile, encoded);
-		}
+		File buildFile = new File(Directories.MOD_MAP_BUILD + map.name + "_shape");
+		FileUtils.writeByteArrayToFile(buildFile, encoded);
 	}
 
 	private void finalizeBoundingBoxes(MapObjectNode<Model> node)

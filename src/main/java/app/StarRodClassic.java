@@ -186,7 +186,6 @@ import game.map.editor.MapEditor;
 import game.map.editor.ui.dialogs.ChooseDialogResult;
 import game.map.editor.ui.dialogs.DirChooser;
 import game.map.patching.MapDumper;
-import game.map.scripts.DecompScriptGenerator;
 import game.map.scripts.ScriptGenerator;
 import game.map.shading.SpriteShadingEditor;
 import game.requests.SpecialRequestDumper;
@@ -349,15 +348,6 @@ public class StarRodClassic extends JFrame
 	private JButton packageModButton;
 	private JButton compileOptionsButton;
 
-	private void updateButtonAvailablity()
-	{
-		boolean modButtonsEnabled = !Environment.project.isDecomp;
-		createModButton.setEnabled(modButtonsEnabled);
-		compileModButton.setEnabled(modButtonsEnabled);
-		packageModButton.setEnabled(modButtonsEnabled);
-		compileOptionsButton.setEnabled(modButtonsEnabled);
-	}
-
 	private StarRodClassic()
 	{
 		doneSignal = new CountDownLatch(1);
@@ -380,7 +370,6 @@ public class StarRodClassic extends JFrame
 				modFolderField.setText(choice.getAbsolutePath());
 				try {
 					checkVersion();
-					updateButtonAvailablity();
 				}
 				catch (Throwable t) {
 					displayStackTrace(t);
@@ -679,8 +668,6 @@ public class StarRodClassic extends JFrame
 				}
 			}
 		});
-
-		updateButtonAvailablity();
 
 		setLayout(new MigLayout("fillx, ins 16 16 n 16, hidemode 3"));
 
@@ -1245,10 +1232,7 @@ public class StarRodClassic extends JFrame
 							if (args[i].equalsIgnoreCase("-CompileMap")) {
 								new GeometryCompiler(map);
 								new CollisionCompiler(map);
-								if (Environment.project.isDecomp)
-									new DecompScriptGenerator(map);
-								else
-									new ScriptGenerator(map);
+								new ScriptGenerator(map);
 							}
 							else if (args[i].equalsIgnoreCase("-CompileShape"))
 								new GeometryCompiler(map);
@@ -1283,10 +1267,7 @@ public class StarRodClassic extends JFrame
 
 								new GeometryCompiler(map);
 								new CollisionCompiler(map);
-								if (Environment.project.isDecomp)
-									new DecompScriptGenerator(map);
-								else
-									new ScriptGenerator(map);
+								new ScriptGenerator(map);
 							}
 							catch (BuildException be) {
 								be.printStackTrace();

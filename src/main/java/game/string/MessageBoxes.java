@@ -377,18 +377,12 @@ public class MessageBoxes
 
 	private static Directories getImageDirectory()
 	{
-		if (Environment.project.isDecomp)
-			return DUMP_TXTBOX_IMG;
-		else
-			return MOD_TXTBOX_IMG;
+		return MOD_TXTBOX_IMG;
 	}
 
 	private static Directories getPaletteDirectory()
 	{
-		if (Environment.project.isDecomp)
-			return DUMP_TXTBOX_PAL;
-		else
-			return MOD_TXTBOX_PAL;
+		return MOD_TXTBOX_PAL;
 	}
 
 	public static void loadImages() throws IOException

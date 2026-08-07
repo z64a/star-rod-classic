@@ -229,9 +229,9 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		});
 
 		/* set file chooser behavior */
-		File mapDir = Environment.project.isDecomp ? Environment.project.getDirectory() : MOD_MAP_SAVE.toFile();
-		File texDir = Environment.project.isDecomp ? Environment.project.getDirectory() : MOD_IMG_TEX.toFile();
-		File bgDir = Environment.project.isDecomp ? Environment.project.getDirectory() : MOD_IMG_BG.toFile();
+		File mapDir = MOD_MAP_SAVE.toFile();
+		File texDir = MOD_IMG_TEX.toFile();
+		File bgDir = MOD_IMG_BG.toFile();
 
 		openMapChooser = new OpenFileChooser(mapDir, "Open Map", "Star Rod Maps", Map.EXTENSION.substring(1));
 		saveMapChooser = new SaveFileChooser(mapDir, "Save Map", "Star Rod Maps", Map.EXTENSION.substring(1));

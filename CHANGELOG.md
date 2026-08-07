@@ -18,12 +18,16 @@ All notable changes to this project will be documented in this file.
 - (Map Editor) Fuse vertices no longer merges vertices with different UVs or colors
 - (Map Editor) More reliable handling of sprite shading light sources
 - (Map Editor) Camera target override toggles now save properly
+- Legacy `op_15` HUD scripts parse correctly after the command was renamed to `SetVariable`
 
 ### Changed
 - JumpTable offsets dump as labels rather than hex
 - Copy Assets to Mod now copies missing assets into partially populated directories
 - Hitting escape during a "Save and Quit?" dialog now cancels the dialog rather than exiting without saving
 - (Map Editor) Improved triangle cutting to handle shared edges more reliably
+
+### Removed
+- Support for decomp projects; use the current Star Rod release for decomp-based projects
 
 ## [0.5.9] - 2025-02-07
 

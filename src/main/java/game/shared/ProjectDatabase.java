@@ -115,7 +115,7 @@ public class ProjectDatabase
 
 	public static void initialize() throws IOException
 	{
-		initialize(false); // !RunContext.currentProject.isDecomp
+		initialize(false);
 	}
 
 	public static void initialize(boolean hasProject) throws IOException
@@ -903,9 +903,6 @@ public class ProjectDatabase
 	private static HashMap<String, ByteBuffer> loadStringConstants()
 	{
 		HashMap<String, ByteBuffer> constMap = new HashMap<>();
-		if (Environment.project.isDecomp)
-			return constMap;
-
 		File f = new File(MOD_STRINGS + FN_STRING_CONSTANTS);
 		if (!f.exists())
 			return constMap;

@@ -225,7 +225,7 @@ public class StringEditor extends BaseEditor
 			Logger.printStackTrace(e);
 		}
 
-		Directories dir = Environment.project.isDecomp ? DUMP_TXTBOX_IMG : MOD_TXTBOX_IMG;
+		Directories dir = MOD_TXTBOX_IMG;
 		readVarImage(new File(dir + MessageBoxes.Graphic.Letter_Peach.filename + ".png"));
 
 		resourcePanel.fullReload();
@@ -430,21 +430,11 @@ public class StringEditor extends BaseEditor
 	public void startFileWatcher() throws IOException
 	{
 		resourceWatcher = new SourceWatcher();
-		if (Environment.project.isDecomp) {
-			for (File assetDir : Environment.project.decompConfig.assetDirectories) {
-				File msgDir = new File(assetDir, "msg");
-				if (!msgDir.exists())
-					continue;
-				resourceWatcher.registerAll(msgDir.toPath());
-			}
-		}
-		else {
-			resourceWatcher.registerAll(Directories.MOD_STRINGS_SRC.toFile().toPath());
-			resourceWatcher.registerAll(Directories.MOD_STRINGS_PATCH.toFile().toPath());
-			resourceWatcher.registerAll(Directories.MOD_MAP_PATCH.toFile().toPath());
-			resourceWatcher.registerAll(Directories.MOD_FORMA_PATCH.toFile().toPath());
-			resourceWatcher.registerAll(Directories.MOD_PATCH.toFile().toPath());
-		}
+		resourceWatcher.registerAll(Directories.MOD_STRINGS_SRC.toFile().toPath());
+		resourceWatcher.registerAll(Directories.MOD_STRINGS_PATCH.toFile().toPath());
+		resourceWatcher.registerAll(Directories.MOD_MAP_PATCH.toFile().toPath());
+		resourceWatcher.registerAll(Directories.MOD_FORMA_PATCH.toFile().toPath());
+		resourceWatcher.registerAll(Directories.MOD_PATCH.toFile().toPath());
 		resourceWatcher.run();
 	}
 
@@ -577,13 +567,7 @@ public class StringEditor extends BaseEditor
 
 		int i = 1;
 		for (SpecialCharacter sc : StringConstants.SpecialCharacter.values()) {
-			File imgFile;
-			if (Environment.project.isDecomp) {
-				imgFile = new File(DUMP_FONT_STANDARD + String.format("%02X", sc.code) + ".png");
-			}
-			else {
-				imgFile = new File(MOD_STD_FONT + String.format("%02X", sc.code) + ".png");
-			}
+			File imgFile = new File(MOD_STD_FONT + String.format("%02X", sc.code) + ".png");
 
 			JButton button = new JButton();
 			try {
@@ -615,13 +599,7 @@ public class StringEditor extends BaseEditor
 
 		ImageIcon[] paletteIcons = new ImageIcon[0x50];
 		for (int palIndex = 0; palIndex < paletteIcons.length; palIndex++) {
-			File imgFile;
-			if (Environment.project.isDecomp) {
-				imgFile = new File(DUMP_FONT_STD_PAL + String.format("%02X", palIndex) + ".png");
-			}
-			else {
-				imgFile = new File(MOD_STD_FONT_PAL + String.format("%02X", palIndex) + ".png");
-			}
+			File imgFile = new File(MOD_STD_FONT_PAL + String.format("%02X", palIndex) + ".png");
 
 			try {
 				paletteIcons[palIndex] = getButtonIcon(imgFile, false);
@@ -1105,8 +1083,7 @@ public class StringEditor extends BaseEditor
 		createTab(tabs, "Strings", stringListPanel);
 		createTab(tabs, "Variables", makeVariablesTab());
 		//TODO
-		//	if(!RunContext.project.isDecomp)
-		//		createTab(tabs, "Constants", makeConstantsTab());
+		//createTab(tabs, "Constants", makeConstantsTab());
 
 		// wrap input pane in a scroll pane to let us scroll
 		JScrollPane stringScrollPane = new JScrollPane(inputTextPane);
@@ -1192,7 +1169,7 @@ public class StringEditor extends BaseEditor
 		imgVarNameField.setEditable(false);
 		SwingUtils.addBorderPadding(imgVarNameField);
 
-		File imgDir = Environment.project.isDecomp ? new File(Environment.project.getDirectory(), "assets") : MOD_RESOURCE.toFile();
+		File imgDir = MOD_RESOURCE.toFile();
 		OpenFileChooser openImageChooser = new OpenFileChooser(imgDir, "Choose Image", "Images", "png");
 
 		JButton chooseImgVarButton = new JButton("Choose");
@@ -1265,8 +1242,7 @@ public class StringEditor extends BaseEditor
 		settingsPanel.add(imgVarNameField, "sgy row, skip 1, w 60%!, split 2");
 		settingsPanel.add(chooseImgVarButton, "grow, wrap");
 
-		if (!Environment.project.isDecomp)
-			settingsPanel.add(getCodeButton, "skip 1, sgy row, growy, w 60%!, wrap");
+		settingsPanel.add(getCodeButton, "skip 1, sgy row, growy, w 60%!, wrap");
 
 		settingsPanel.add(varImagePanel, "skip 1, grow, wrap, gaptop 8, pushy");
 

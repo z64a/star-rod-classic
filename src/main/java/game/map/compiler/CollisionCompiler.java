@@ -10,7 +10,6 @@ import org.apache.commons.io.FileUtils;
 
 import app.AssetManager;
 import app.Directories;
-import app.Environment;
 import common.Vector3f;
 import game.map.BoundingBox;
 import game.map.Map;
@@ -28,11 +27,9 @@ public class CollisionCompiler
 {
 	public CollisionCompiler(Map map) throws IOException
 	{
-		boolean isDecomp = Environment.project.isDecomp;
-
 		File build_dec = new File(
 			AssetManager.getMapBuildDir(),
-			isDecomp ? map.name + "_hit.bin" : map.name + "_hit_dec"
+			map.name + "_hit_dec"
 		);
 
 		Logger.log("Compiling map collision to " + build_dec.getPath());
@@ -53,10 +50,8 @@ public class CollisionCompiler
 		byte[] complete = FileUtils.readFileToByteArray(build_dec);
 		byte[] encoded = Yay0Helper.encode(complete);
 
-		if (!isDecomp) {
-			File build = new File(Directories.MOD_MAP_BUILD + map.name + "_hit");
-			FileUtils.writeByteArrayToFile(build, encoded);
-		}
+		File build = new File(Directories.MOD_MAP_BUILD + map.name + "_hit");
+		FileUtils.writeByteArrayToFile(build, encoded);
 	}
 
 	private int compileColliders(RandomAccessFile raf, Map map) throws IOException

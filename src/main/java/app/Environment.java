@@ -533,11 +533,7 @@ public abstract class Environment
 			romChooser.setDirectoryContaining(rom.getParentFile());
 		});
 
-		String dumpPath;
-		if (fromJar && Environment.project.isDecomp)
-			dumpPath = getWorkingDirectory() + "/dump";
-		else
-			dumpPath = rom.getParentFile().getPath() + "/dump";
+		String dumpPath = rom.getParentFile().getPath() + "/dump";
 
 		if (version == RomVersion.US)
 			dumpPath += "/";

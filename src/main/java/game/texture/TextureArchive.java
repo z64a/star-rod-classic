@@ -123,12 +123,7 @@ public class TextureArchive
 	{
 		//	File f = Paths.get(dir, name).toFile();
 
-		File f = new File(
-			dir,
-			Environment.project.isDecomp
-				? name + ".bin"
-				: name
-		);
+		File f = new File(dir, name);
 
 		int fileSize = 0;
 		for (Texture tx : textureList)

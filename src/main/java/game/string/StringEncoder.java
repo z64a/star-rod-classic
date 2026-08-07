@@ -10,7 +10,6 @@ import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import app.Environment;
 import app.StarRodException;
 import app.input.IOUtils;
 import app.input.InputFileException;
@@ -815,7 +814,7 @@ public class StringEncoder
 					if (fields.length != 2)
 						throw new TagEncodingException("Function %s has incorrect arg count: %d (expected 1).", fields[0], fields.length - 1);
 					int itemID;
-					Integer[] id = findIntArg(fields, "itemID", 1, Environment.project.isDecomp); //TODO item name enum unavailable for decomp
+					Integer[] id = findIntArg(fields, "itemID", 1, false);
 					if (id == null) {
 						String[] name = findStringArg(fields, "itemName", 1, false);
 						if (name == null)

@@ -93,8 +93,6 @@ public class PatchFileParser
 		NORMAL, SINGLE_COMMENT, MULTI_COMMENT, STRING_LITERAL
 	}
 
-	private boolean cStyleComments;
-
 	// state
 	private List<PatchUnit> units = new LinkedList<>();
 	private PatchUnit currentUnit = null;
@@ -116,8 +114,6 @@ public class PatchFileParser
 
 	private PatchFileParser(List<Line> lines, CaseInsensitiveMap<String> rules)
 	{
-		cStyleComments = Environment.project.isDecomp;
-
 		lines = removeComments(lines);
 		lines = doPreprocessor(lines, rules);
 
@@ -296,8 +292,7 @@ public class PatchFileParser
 		boolean escaping = false;
 		Line commentStartLine = null;
 
-		final char multilineCommentChar = cStyleComments ? '*' : '%';
-		final char cantLookaheadChar = '?'; // dummy character that satisfies (c != '*' && c != '%')
+		final char cantLookaheadChar = '?'; // dummy character that cannot begin or end a multiline comment
 
 		for (Line currentParseLine : in) {
 			if (beginNextLine) {
@@ -319,19 +314,13 @@ public class PatchFileParser
 				switch (state) {
 					case NORMAL:
 						// multiline comment
-						if ((c == '/') && lookahead == multilineCommentChar) {
+						if ((c == '/') && lookahead == '%') {
 							state = ScanState.MULTI_COMMENT;
 							commentStartLine = currentParseLine;
 							lineBuilder.append(" "); // treat multi-line comments as whitespace
 							i++;
 							break;
 						}
-						else if (cStyleComments && c == '/' && lookahead == '/') {
-							// can't escape c-style comments
-							state = ScanState.SINGLE_COMMENT;
-							break scan_chars;
-						}
-
 						if (escaping) {
 							escaping = false;
 							lineBuilder.append(c);
@@ -373,7 +362,7 @@ public class PatchFileParser
 
 					case MULTI_COMMENT:
 						// can't be escaped
-						if ((sourceText.length() > i + 1) && (c == multilineCommentChar) && (sourceText.charAt(i + 1) == '/')) {
+						if ((sourceText.length() > i + 1) && (c == '%') && (sourceText.charAt(i + 1) == '/')) {
 							state = ScanState.NORMAL;
 							commentStartLine = null;
 							i++;
@@ -405,8 +394,7 @@ public class PatchFileParser
 		}
 
 		if (state == ScanState.MULTI_COMMENT) {
-			String delimiter = Character.toString(multilineCommentChar) + "/";
-			throw new InputFileException(commentStartLine, "Missing %s -- comment was not closed by end of file!", delimiter);
+			throw new InputFileException(commentStartLine, "Missing %/ -- comment was not closed by end of file!");
 		}
 
 		return out;

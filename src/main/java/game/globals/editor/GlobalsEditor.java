@@ -356,19 +356,8 @@ public class GlobalsEditor
 		messageIDMap.clear();
 
 		try {
-			if (Environment.project.isDecomp) {
-				for (File assetDir : Environment.project.decompConfig.assetDirectories) {
-					File msgDir = new File(assetDir, "msg");
-					if (!msgDir.exists())
-						continue;
-
-					loadMessages(IOUtils.getFilesWithExtension(assetDir, new String[] { "msg" }, true));
-				}
-			}
-			else {
-				loadMessages(IOUtils.getFilesWithExtension(MOD_STRINGS_SRC, new String[] { "str", "msg" }, true));
-				loadMessages(IOUtils.getFilesWithExtension(MOD_STRINGS_PATCH, new String[] { "str", "msg" }, true));
-			}
+			loadMessages(IOUtils.getFilesWithExtension(MOD_STRINGS_SRC, new String[] { "str", "msg" }, true));
+			loadMessages(IOUtils.getFilesWithExtension(MOD_STRINGS_PATCH, new String[] { "str", "msg" }, true));
 		}
 		catch (IOException e) {
 			throw new StarRodException("Exception while loading strings! %n%s", e.getMessage());

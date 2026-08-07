@@ -257,8 +257,7 @@ public class SpriteEditor extends BaseEditor
 			1.0f, 0.125f, 2.0f,
 			true, true);
 
-		if (!Environment.project.isDecomp)
-			loadPlayerFiles(id); // second tab must be loaded first!
+		loadPlayerFiles(id); // second tab must be loaded first!
 		loadNpcFiles(id);
 
 		modified = true; //TODO actually track this
@@ -1012,7 +1011,7 @@ public class SpriteEditor extends BaseEditor
 	{
 		getFrame().setTransferHandler(new FileTransferHandler());
 
-		File imgDir = Environment.project.isDecomp ? Environment.project.getDirectory() : MOD_SPRITE.toFile();
+		File imgDir = MOD_SPRITE.toFile();
 		importFileChooser = new OpenFileChooser(imgDir, "Import Image", "Images", "png", "ase");
 
 		editorModeTabs = new JTabbedPane();
@@ -1035,8 +1034,7 @@ public class SpriteEditor extends BaseEditor
 
 		JTabbedPane spriteSetTabs = new JTabbedPane();
 		spriteSetTabs.addTab("NPC Sprites", npcSpriteListPanel);
-		if (!Environment.project.isDecomp)
-			spriteSetTabs.addTab("Player Sprites", playerSpriteListPanel);
+		spriteSetTabs.addTab("Player Sprites", playerSpriteListPanel);
 		spriteSetTabs.addChangeListener((e) -> {
 			JTabbedPane sourceTabbedPane = (JTabbedPane) e.getSource();
 			int index = sourceTabbedPane.getSelectedIndex();

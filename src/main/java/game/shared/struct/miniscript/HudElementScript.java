@@ -94,7 +94,7 @@ public class HudElementScript extends Miniscript
 
 			new CommandBuilder(0x13, "SetCustomSize",	new SizeXArg(), new SizeYArg()),
 			new CommandBuilder(0x14, "RandomRestart",	new DecArg(), new DecArg()), // random max, cutoff (< randmax)
-			new CommandBuilder(0x15, "SetVariable",		new HexArg()),
+			new CommandBuilder(0x15, "SetVariable",		new HexArg()).setAliases("op_15"),
 			// 16 is not used
 
 			new CommandBuilder(0x17, "RandomBranch",	VARARGS, new BranchListArg()),

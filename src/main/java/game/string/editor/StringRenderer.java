@@ -15,7 +15,6 @@ import java.util.Random;
 
 import org.lwjgl.BufferUtils;
 
-import app.Environment;
 import common.MouseInput;
 import common.Vector3f;
 import game.globals.ItemRecord;
@@ -155,44 +154,42 @@ public class StringRenderer
 
 	private void loadItemIcons() throws IOException
 	{
-		if (!Environment.project.isDecomp) {
-			try {
-				GlobalsData globals = ProjectDatabase.globalsData;
-				GlobalsListModel<ItemRecord> items = globals.items;
+		try {
+			GlobalsData globals = ProjectDatabase.globalsData;
+			GlobalsListModel<ItemRecord> items = globals.items;
 
-				glItemPreviews = new int[items.size()];
-				for (int i = 0; i < items.size(); i++) {
-					ItemRecord item = items.get(i);
+			glItemPreviews = new int[items.size()];
+			for (int i = 0; i < items.size(); i++) {
+				ItemRecord item = items.get(i);
 
-					ItemEntityRecord itemEntity = globals.itemEntities.getElement(item.itemEntityName);
-					if (itemEntity == null) {
-						Logger.logfWarning("Item %s has unknown item entity: %s",
-							item.getIdentifier(), item.itemEntityName);
-						continue;
-					}
-
-					ImageRecord image = globals.images.getElement(itemEntity.previewImageName);
-					if (itemEntity.previewImageName == null) {
-						Logger.logfWarning("Item entity %s has unknown item entity: %s",
-							itemEntity.getIdentifier(), itemEntity.previewImageName);
-						continue;
-					}
-
-					image.loadPreviews();
-					if (image.fullsize[0] == null) {
-						Logger.logfWarning("Image could not be found: " + image.getIdentifier());
-						continue;
-					}
-
-					glItemPreviews[i] = glLoadImage(image.fullsize[0]);
+				ItemEntityRecord itemEntity = globals.itemEntities.getElement(item.itemEntityName);
+				if (itemEntity == null) {
+					Logger.logfWarning("Item %s has unknown item entity: %s",
+						item.getIdentifier(), item.itemEntityName);
+					continue;
 				}
 
-				Logger.log("Loaded icon previews");
+				ImageRecord image = globals.images.getElement(itemEntity.previewImageName);
+				if (itemEntity.previewImageName == null) {
+					Logger.logfWarning("Item entity %s has unknown item entity: %s",
+						itemEntity.getIdentifier(), itemEntity.previewImageName);
+					continue;
+				}
+
+				image.loadPreviews();
+				if (image.fullsize[0] == null) {
+					Logger.logfWarning("Image could not be found: " + image.getIdentifier());
+					continue;
+				}
+
+				glItemPreviews[i] = glLoadImage(image.fullsize[0]);
 			}
-			catch (IOException e) {
-				Logger.printStackTrace(e);
-				Logger.logWarning("IOException while loading item icons!");
-			}
+
+			Logger.log("Loaded icon previews");
+		}
+		catch (IOException e) {
+			Logger.printStackTrace(e);
+			Logger.logWarning("IOException while loading item icons!");
 		}
 	}
 

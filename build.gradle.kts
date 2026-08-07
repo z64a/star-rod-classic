@@ -88,7 +88,6 @@ dependencies {
     implementation("com.alexdupre:pngj:2.1.2.1")
 
     implementation("com.google.code.gson:gson:2.10.1")
-    implementation("org.yaml:snakeyaml:2.2")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.2")

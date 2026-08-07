@@ -721,7 +721,7 @@ public class BattleEditor extends BaseEditor
 	@Override
 	protected void createGui(JPanel toolPanel, Canvas glCanvas, JMenuBar menuBar, JLabel infoLabel, ActionListener openLogAction)
 	{
-		File texDir = Environment.project.isDecomp ? Environment.project.getDirectory() : MOD_IMG_TEX.toFile();
+		File texDir = MOD_IMG_TEX.toFile();
 		texFileChooser = new OpenFileChooser(texDir, "Select Texture Archive", "Texture Archives", "txa");
 
 		JLabel spriteSpinnerLabel = new JLabel("Sprite ID");
