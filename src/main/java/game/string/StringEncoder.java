@@ -36,7 +36,7 @@ import util.MathUtil;
 
 public class StringEncoder
 {
-	private static final Pattern EndStringPattern = Pattern.compile("\\[" + ControlCharacter.END.name + "\\]");
+	private static final Pattern EndStringPattern = Pattern.compile("\\[" + ControlCharacter.END.name + "\\]", Pattern.CASE_INSENSITIVE);
 
 	// pattern for TAG_NAME:ARG:ARG:ARG
 	private static final Pattern ClassicTagPattern = Pattern.compile("(?i)[~\\w]+(?::[\\w`]+)*");
@@ -192,7 +192,7 @@ public class StringEncoder
 			for (Line line : unit.body) {
 				Matcher endStringMatcher = EndStringPattern.matcher(line.str);
 				if (endStringMatcher.find()) {
-					if (line.str.substring(endStringMatcher.end()).contains("\\S"))
+					if (line.str.substring(endStringMatcher.end()).matches(".*\\S.*"))
 						throw new InputFileException(line, "String %s has text after [END]: %n%s", name, line.trimmedInput());
 
 					line.str = line.str.substring(0, endStringMatcher.end());
@@ -229,7 +229,7 @@ public class StringEncoder
 			for (Line line : unit.body) {
 				Matcher endStringMatcher = EndStringPattern.matcher(line.str);
 				if (endStringMatcher.find()) {
-					if (line.str.substring(endStringMatcher.end()).contains("\\S"))
+					if (line.str.substring(endStringMatcher.end()).matches(".*\\S.*"))
 						throw new InputFileException(line, "String %s has text after [END]: %n%s", name, line.trimmedInput());
 
 					line.str = line.str.substring(0, endStringMatcher.end());
@@ -294,6 +294,7 @@ public class StringEncoder
 		StringEncoder builder = new StringEncoder();
 		ArrayList<Sequence> sequences = StringTokenizer.tokenize(text);
 		encode(builder, sequences, true);
+		requireEnd(builder, sequences);
 		return getBuffer(sequences, false);
 	}
 
@@ -303,6 +304,7 @@ public class StringEncoder
 		StringEncoder builder = new StringEncoder();
 		ArrayList<Sequence> sequences = StringTokenizer.tokenize(lines);
 		encode(builder, sequences, true);
+		requireEnd(builder, sequences);
 		return getBuffer(sequences, true);
 	}
 
@@ -326,6 +328,14 @@ public class StringEncoder
 	private static void encode(StringEncoder builder, ArrayList<Sequence> sequences, boolean throwExceptions)
 	{
 		for (Sequence seq : sequences) {
+			if (builder.encounteredEnd) {
+				if (!seq.srcText.isBlank())
+					seq.addError("Message has text after [End].");
+				if (seq.hasError() && throwExceptions)
+					throw new InputFileException(seq.srcLine, seq.getErrorMessage());
+				continue;
+			}
+
 			if (seq.hasError() && throwExceptions) // parse error
 				throw new InputFileException(seq.srcLine, seq.getErrorMessage());
 
@@ -342,9 +352,16 @@ public class StringEncoder
 			if (seq.hasError() && throwExceptions) // compile error
 				throw new InputFileException(seq.srcLine, seq.getErrorMessage());
 
-			if (builder.encounteredEnd)
-				break; // dont look at anything after [END]
 		}
+	}
+
+	private static void requireEnd(StringEncoder builder, ArrayList<Sequence> sequences)
+	{
+		if (builder.encounteredEnd)
+			return;
+
+		Line sourceLine = sequences.isEmpty() ? null : sequences.get(sequences.size() - 1).srcLine;
+		throw new InputFileException(sourceLine, "Message is missing [End].");
 	}
 
 	private static void encodeChars(StringEncoder builder, Sequence seq)
@@ -436,6 +453,11 @@ public class StringEncoder
 			switch (tag) {
 				case FUNC:
 					throw new TagEncodingException("Invalid tag %s: use names for functions.", fields[0]);
+				case END:
+					builder.encounteredEnd = true;
+					if (fields.length > 1)
+						throw new TagEncodingException("Control character %s can't have args.", fields[0]);
+					break;
 				case STYLE:
 					if (fields.length < 2)
 						throw new TagEncodingException("%s does not have enough args.", fields[0], fields.length - 1);
@@ -758,12 +780,11 @@ public class StringEncoder
 					break;
 
 				case SET_CURSOR: {
-					if (fields.length != 2) // [size XX,YY]
-						throw new TagEncodingException("Function %s has incorrect arg count: %d (expected 1).", fields[0], fields.length - 1);
-					String[] sizes = fields[1].split(",");
-					if (sizes.length != 2) // XX YY
-						throw new TagEncodingException("Function %s has incorrect arg format: %s (expected XX,YY)", fields[0], fields[1]);
-					builder.addArgsU8(fields[0], parseNewIntArg(sizes[0]), parseNewIntArg(sizes[1]));
+					if (fields.length != 3)
+						throw new TagEncodingException("Function %s has incorrect arg count: %d (expected 2).", fields[0], fields.length - 1);
+					int index = findIntArg(fields, "index", 1, true)[0];
+					Integer[] pos = findIntArg(fields, "pos", 2, true);
+					builder.addArgsU8(fields[0], index, pos[0], pos[1]);
 				}
 					break;
 

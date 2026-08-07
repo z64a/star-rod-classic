@@ -90,6 +90,9 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("org.yaml:snakeyaml:2.2")
 
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.2")
+
     implementation("com.formdev:flatlaf:3.4.1")
     implementation("com.formdev:flatlaf-intellij-themes:3.4.1")
     implementation("com.formdev:flatlaf-extras:3.4.1")
@@ -102,6 +105,10 @@ dependencies {
     add(manualGenerator.implementationConfigurationName, "org.commonmark:commonmark:0.29.0")
     add(manualGenerator.implementationConfigurationName, "org.commonmark:commonmark-ext-gfm-tables:0.29.0")
     add(manualGenerator.implementationConfigurationName, "org.commonmark:commonmark-ext-heading-anchor:0.29.0")
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 val licenseBuildDir = layout.buildDirectory.dir("reports/licenses/licenseReport")

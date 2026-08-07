@@ -204,6 +204,15 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 			return name.substring(0, 1) + currentNamespace + NAMESPACE_SEPERATOR + name.substring(1);
 	}
 
+	static String combineImportNamespace(String currentNamespace, String importNamespace)
+	{
+		if (currentNamespace.isEmpty())
+			return importNamespace;
+		if (importNamespace.isEmpty())
+			return currentNamespace;
+		return currentNamespace + NAMESPACE_SEPERATOR + importNamespace;
+	}
+
 	/**
 	 * Creates a new Struct declared (explictly or implicitly) in the patch file
 	 * @return new Struct or null if type was invalid
@@ -1509,7 +1518,7 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 
 		String prevNamespace = currentNamespace;
 		try {
-			currentNamespace = importNamespace;
+			currentNamespace = combineImportNamespace(prevNamespace, importNamespace);
 			readPatchFile(f, rules);
 		}
 		catch (IOException e) {

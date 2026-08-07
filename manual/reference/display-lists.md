@@ -5,7 +5,6 @@ Paper Mario uses F3DEX2 display lists to submit geometry and rendering state to 
 ```star-rod
 #new:DisplayList $ExampleDisplayList
 {
-    G_RDPPIPESYNC
     G_GEOMETRYMODE (Set, G_ZBUFFER, G_SHADE, G_SHADING_SMOOTH)
     G_VTX          ($ExampleVertices, 4`, 0`)
     G_TRI2         (0`, 1`, 2`, 0`, 2`, 3`)
@@ -37,11 +36,11 @@ The RSP has a 32-entry vertex buffer. `G_VTX` loads vertices into it, after whic
 | --- | --- |
 | `G_VTX (address, count, first)` | Load `count` vertices at `address` into the buffer beginning at `first`. `count` is 1 through 32; the loaded range must remain within the buffer. |
 | `G_MODIFYVTX (vertex, field, value)` | Replace one field of a buffered vertex. The field is `G_MWO_POINT_RGBA`, `G_MWO_POINT_ST`, `G_MWO_POINT_XYSCREEN`, or `G_MWO_POINT_ZSCREEN`. |
-| `G_CULLDL (first, last)` | End the current display list when every vertex in the inclusive buffer range is outside the viewing volume. |
-| `G_BRANCH_Z (address, vertex, z)` | Branch to another display list when the selected vertex's depth is less than `z`. |
+| `G_CULLDL (first, last)` | End the current display list when every vertex in the inclusive buffer range lies outside the same clipping plane, placing their bounding volume outside the viewing volume. |
+| `G_BRANCH_Z (address, vertex, z)` | Branch to another display list when the selected vertex's screen depth is less than the raw depth threshold `z`. |
 | `G_TRI1 (a, b, c)` | Draw one triangle using three buffered vertices. |
 | `G_TRI2 (a, b, c, d, e, f)` | Draw two triangles. |
-| `G_QUAD [word0, word1]` | Draw a quadrilateral. The structured form is not usable in the current Classic parser; retain or write its raw words. |
+| `G_QUAD (a, b, c, d)` | Draw a quadrilateral as the triangles `a, b, c` and `a, c, d`. |
 
 ## Display-List and Matrix Commands
 
@@ -54,8 +53,9 @@ The RSP has a 32-entry vertex buffer. `G_VTX` loads vertices into it, after whic
 | `G_POPMTX (count)` | Pop matrices from the model-view stack. |
 | `G_MOVEWORD (index, offset, value)` | Write a word into RSP state. Named indexes include `G_MW_MATRIX`, `G_MW_NUMLIGHT`, `G_MW_CLIP`, `G_MW_SEGMENT`, `G_MW_FOG`, `G_MW_LIGHTCOL`, `G_MW_FORCEMTX`, and `G_MW_PERSPNORM`. |
 | `G_MOVEMEM (location, offset, size, address)` | Copy memory into RSP state. Locations include `G_MV_MMTX`, `G_MV_PMTX`, `G_MV_VIEWPORT`, `G_MV_LIGHT`, `G_MV_POINT`, and `G_MV_MATRIX`. |
-| `G_LOAD_UCODE (dataAddress, dataSize, textAddress)` | Load another RSP microcode program. Ordinary Paper Mario display lists do not need this command. |
-| `G_NOOP` | RSP no-op. |
+| `G_LOAD_UCODE (dataAddress, dataSize, textAddress)` | Load another RSP microcode program. `dataSize` is the size of its data section in bytes, from 1 through 65536. Ordinary Paper Mario display lists do not need this command. |
+| `G_NOOP` | Send an RDP no-op. |
+| `G_SPNOOP` | Perform an RSP no-op without sending a command to the RDP. |
 
 ## Geometry Mode
 
@@ -65,29 +65,32 @@ The RSP has a 32-entry vertex buffer. `G_VTX` loads vertices into it, after whic
 G_GEOMETRYMODE (Set, G_ZBUFFER, G_SHADE, G_SHADING_SMOOTH)
 G_GEOMETRYMODE (Clear, G_CULL_BACK)
 G_GEOMETRYMODE (Clear, ALL)
+G_GEOMETRYMODE (Clear, G_FOG, Set, G_LIGHTING)
 ```
+
+The final form clears and sets flags with a single F3DEX2 command.
 
 | Flag | Effect |
 | --- | --- |
-| `G_ZBUFFER` | Enable depth comparisons for geometry. |
+| `G_ZBUFFER` | Include depth values in the triangle data sent to the RDP. `Z_CMP` and `Z_UPD` in the RDP render mode control depth comparison and depth-buffer updates. |
 | `G_SHADE` | Use vertex colors or lighting results. |
 | `G_CULL_FRONT` | Cull front-facing triangles. |
 | `G_CULL_BACK` | Cull back-facing triangles. |
-| `G_FOG` | Enable fog in the geometry pipeline. |
+| `G_FOG` | Write the calculated fog factor to vertex alpha. The combiner and blender must also be configured to produce visible fog. |
 | `G_LIGHTING` | Calculate vertex colors from normals and lights. |
 | `G_TEXTURE_GEN` | Generate texture coordinates from normals. |
 | `G_TEXTURE_GEN_LINEAR` | Use linear texture-coordinate generation. |
-| `G_LOD` | Enable geometry level-of-detail calculations. |
-| `G_SHADING_SMOOTH` | Interpolate shade values across triangles. |
-| `G_CLIPPING` | Enable clipping. |
+| `G_LOD` | Reserved by the SDK but not implemented by F3DEX2. This flag has no effect; texture LOD is controlled by the RDP other modes. |
+| `G_SHADING_SMOOTH` | Interpolate shade values across triangles when `G_SHADE` is enabled. |
+| `G_CLIPPING` | Accepted by Classic, but not a functional F3DEX2 toggle. Clipping behavior is fixed by the microcode. |
 
 ## Texture Commands
 
-Tile descriptor `0` may be written as `G_TX_RENDERTILE`; descriptor `7` may be written as `G_TX_LOADTILE`. Image formats are `I-4`, `I-8`, `IA-4`, `IA-8`, `IA-16`, `CI-4`, `CI-8`, `RGBA-16`, and `RGBA-32`.
+Tile descriptor `0` may be written as `G_TX_RENDERTILE`; descriptor `7` may be written as `G_TX_LOADTILE`. Image formats recognized by display-list commands are `I-4`, `I-8`, `IA-4`, `IA-8`, `IA-16`, `CI-4`, `CI-8`, `YUV-16`, `RGBA-16`, and `RGBA-32`. Star Rod's texture-editing tools do not support YUV textures.
 
 | Command | Purpose |
 | --- | --- |
-| `G_TEXTURE (tile, scaleS, scaleT, levels, enabled)` | Enable or disable texturing and set its scale, tile, and maximum mipmap level. `enabled` is `true` or `false`. |
+| `G_TEXTURE (tile, scaleS, scaleT, levels, enabled)` | Enable or disable texturing and set its scale and tile. `levels` is the number of additional mipmap levels, from 0 through 7; `enabled` is `true` or `false`. |
 | `G_SETIMG (format, width, address)` | Select the source texture image. The alternate numeric form is `G_SETIMG (type, depth, width, address)`. |
 | `G_SETTILE (tile, format, line, tmem, palette, cmT, maskT, shiftT, cmS, maskS, shiftS)` | Configure a tile descriptor. The alternate numeric form supplies `type, depth` in place of `format`. |
 | `G_SETTILESIZE (tile, startS, startT, width, height)` | Set a tile's texture-coordinate bounds. |
@@ -95,7 +98,9 @@ Tile descriptor `0` may be written as `G_TX_RENDERTILE`; descriptor `7` may be w
 | `G_LOADTILE (tile, ulS, ulT, lrS, lrT)` | Load a rectangular portion of the source image into texture memory. |
 | `G_LOADTLUT (tile, colors)` | Load a color-indexed texture palette into texture memory. |
 
-The `cmS` and `cmT` arguments are numeric bitfields: `0` selects wrap, `1` selects mirror and wrap, `2` selects clamp, and `3` selects mirror and clamp. `maskS` and `maskT` set the wrap mask; zero disables wrapping on that axis. `shiftS` and `shiftT` scale texture coordinates by powers of two.
+The `cmS` and `cmT` arguments are numeric bitfields: `0` selects wrap, `1` selects mirror and wrap, `2` selects clamp, and `3` selects mirror and clamp. A nonzero mask `n` wraps the corresponding texture coordinate every `2^n` texels. A zero mask causes implicit clamping to the tile bounds, regardless of the clamp bit.
+
+Texture shifts from `0` through `10` shift a coordinate right by that many places. Values from `11` through `15` shift it left by `16 - shift` places.
 
 ## Rectangle and Buffer Commands
 
@@ -104,9 +109,9 @@ The `cmS` and `cmT` arguments are numeric bitfields: `0` selects wrap, `1` selec
 | `G_TEXRECT (tile, ulX, ulY, lrX, lrY, ulS, ulT, dSdX, dTdY)` | Draw a texture rectangle. |
 | `G_TEXRECTFLIP (tile, ulX, ulY, lrX, lrY, ulS, ulT, dSdX, dTdY)` | Draw a texture rectangle with the S and T axes exchanged. |
 | `G_FILLRECT (ulX, ulY, lrX, lrY)` | Draw a filled rectangle. |
-| `G_SETSCISSOR (G_SC_NON_INTERLACE, ulX, ulY, lrX, lrY)` | Set the scissor rectangle. The structured Classic form currently supports only `G_SC_NON_INTERLACE`; use raw words to preserve an interlaced command. |
+| `G_SETSCISSOR (mode, ulX, ulY, lrX, lrY)` | Set the scissor rectangle. `mode` is `G_SC_NON_INTERLACE`, `G_SC_EVEN_INTERLACE`, or `G_SC_ODD_INTERLACE`. |
 | `G_SETZIMG (address)` | Set the depth-buffer address. |
-| `G_SETCIMG (address)` | Set the color-buffer address. |
+| `G_SETCIMG (format, width, address)` | Set the color image used as the framebuffer. The alternate numeric form is `G_SETCIMG (type, depth, width, address)`. |
 
 Coordinates accepted as decimal values by the rectangle commands are converted to the fixed-point fields used by F3DEX2. The scissor command takes its encoded 10.2 fixed-point coordinate fields as integers.
 
@@ -123,13 +128,12 @@ Coordinates accepted as decimal values by the rectangle commands are converted t
 | `G_SETKEYGB (widthG, widthB, centerG, scaleG, centerB, scaleB)` | Set green and blue chroma-key parameters. |
 | `G_SETKEYR (widthR, centerR, scaleR)` | Set red chroma-key parameters. |
 | `G_SETCONVERT (k0, k1, k2, k3, k4, k5)` | Set the texture-conversion coefficients. |
-| `G_NOOP_RDP` | RDP no-op. |
 
-Color components are integers from 0 through 255. `minLOD`, `fracLOD`, and the chroma-key widths use the decimal forms accepted by Classic.
+Color components are integers from 0 through 255. `minLOD`, `fracLOD`, and the chroma-key widths use the decimal forms accepted by Classic. The chroma-key fields are part of the command format, but chroma keying is not supported by the Nintendo 64 RDP and does not produce a usable effect.
 
 ## Combiner
 
-`G_SETCOMBINE` configures the color combiner for two cycles. Each cycle evaluates:
+`G_SETCOMBINE` stores the color-combiner inputs for both cycles. Each cycle evaluates:
 
 ```text
 (a - b) * c + d
@@ -145,6 +149,8 @@ G_SETCOMBINE (colorA1, colorB1, colorC1, colorD1, ...
 ```
 
 Color selectors use the `G_CCMUX_` prefix and alpha selectors use `G_ACMUX_`. Classic accepts the selectors emitted in dumped display lists, including combined color or alpha, texels 0 and 1, primitive, shade, environment, center, scale, LOD fraction, primitive LOD fraction, noise, `K4`, `K5`, `1`, and `0`. The valid choices depend on the input position; preserve the arrangement of a mechanically similar display list when adapting a combiner.
+
+`G_MDSFT_CYCLETYPE` determines whether the RDP executes one or two combiner cycles. `G_SETCOMBINE` does not select two-cycle mode by itself. Use the same inputs for both cycles when configuring one-cycle rendering.
 
 ## Other Modes
 
@@ -183,7 +189,7 @@ See [Map Render Modes](map-render-modes.md) for the predefined render modes used
 
 | Command | Purpose |
 | --- | --- |
-| `G_RDPLOADSYNC` | Wait until a preceding texture load is safe to replace. |
+| `G_RDPLOADSYNC` | Wait for a preceding texture load to finish before starting another load. |
 | `G_RDPPIPESYNC` | Wait until earlier primitives no longer depend on RDP state which is about to change. |
 | `G_RDPTILESYNC` | Wait until a tile descriptor is no longer in use before changing it. |
 | `G_RDPFULLSYNC` | Wait for all preceding RDP work and signal completion to the CPU. |

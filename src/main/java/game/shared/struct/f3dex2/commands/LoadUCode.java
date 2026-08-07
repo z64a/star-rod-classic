@@ -14,7 +14,7 @@ import game.shared.struct.f3dex2.DisplayList.CommandType;
 
 	d points to the start of the data section
 	t to the start of the text section,
-	s specifying the size of the data section
+	s specifying the size of the data section minus one
  */
 public class LoadUCode extends BaseF3DEX2
 {
@@ -26,15 +26,15 @@ public class LoadUCode extends BaseF3DEX2
 	{
 		super(cmd, args, 4);
 
-		if (args[0] != 0xE1000000)
+		if (args[2] != 0xE1000000)
 			throw new InvalidInputException("%s expected %08X, found %08X", getName(), 0xE1000000, args[2]);
 
-		if ((args[2] & 0xFFFF0000) != 0xDD000000)
-			throw new InvalidInputException("Invalid %s command %08X", getName(), args[2]);
+		if ((args[0] & 0xFFFF0000) != 0xDD000000)
+			throw new InvalidInputException("Invalid %s command %08X", getName(), args[0]);
 
-		dstart = args[1];
-		dsize = args[2] & 0xFFFF;
-		tstart = args[3];
+		dstart = args[3];
+		dsize = (args[0] & 0xFFFF) + 1;
+		tstart = args[1];
 	}
 
 	public LoadUCode(CommandType cmd, String ... params) throws InvalidInputException
@@ -44,6 +44,9 @@ public class LoadUCode extends BaseF3DEX2
 		dstart = DataUtils.parseIntString(params[0]);
 		dsize = DataUtils.parseIntString(params[1]);
 		tstart = DataUtils.parseIntString(params[2]);
+
+		if (dsize < 1 || dsize > 0x10000)
+			throw new InvalidInputException("%s data size is out of range (1-65536): %d", getName(), dsize);
 	}
 
 	@Override
@@ -55,7 +58,7 @@ public class LoadUCode extends BaseF3DEX2
 		encoded[1] = dstart;
 
 		encoded[2] = opField;
-		encoded[2] |= dsize & 0xFFFF;
+		encoded[2] |= (dsize - 1) & 0xFFFF;
 
 		encoded[3] = tstart;
 

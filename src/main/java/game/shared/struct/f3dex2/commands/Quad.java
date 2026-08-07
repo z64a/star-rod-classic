@@ -6,7 +6,7 @@ import game.shared.decoder.BaseDataDecoder;
 import game.shared.struct.f3dex2.BaseF3DEX2;
 import game.shared.struct.f3dex2.DisplayList.CommandType;
 
-// 06 [AA] [BB] [CC] 00 [AA] [CC] [DD]
+// 07 [AA] [BB] [CC] 00 [AA] [CC] [DD]
 
 public class Quad extends BaseF3DEX2
 {
@@ -28,11 +28,13 @@ public class Quad extends BaseF3DEX2
 
 		if (v3 != v3b)
 			throw new InvalidInputException("%s third and fifth vertices must match: %X and %X", getName(), v3, v3b);
+
+		checkRanges();
 	}
 
 	public Quad(CommandType cmd, String ... params) throws InvalidInputException
 	{
-		super(cmd, params, 3);
+		super(cmd, params, 4);
 
 		v1 = DataUtils.parseIntString(params[0]);
 		v2 = DataUtils.parseIntString(params[1]);

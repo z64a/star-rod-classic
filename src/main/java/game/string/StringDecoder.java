@@ -385,6 +385,11 @@ public class StringDecoder
 					msg.appendMarkup(" fadeAmount=%d", buffer.get() & 0xFF);
 					break;
 
+				case SET_CURSOR:
+					msg.appendMarkup(func.name);
+					msg.appendMarkup(" index=%d pos=%d,%d", buffer.get() & 0xFF, buffer.get() & 0xFF, buffer.get() & 0xFF);
+					break;
+
 				case SET_REWIND:
 					int v = buffer.get();
 					if (v == 0)

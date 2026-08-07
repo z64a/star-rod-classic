@@ -136,7 +136,7 @@ public class DisplayList extends BaseStruct
 		G_LOAD_UCODE		(0xDD, 4, LoadUCode.class),
 		G_DL				(0xDE, NewDL.class),
 		G_ENDDL				(0xDF, NoArg.class),
-		G_NOOP_RDP			(0xE0, NoArg.class),
+		G_SPNOOP			(0xE0, NoArg.class),
 		G_RDPHALF_1			(0xE1), // should not be seen by user
 		G_SetOtherMode_L	(0xE2, SetOtherModeL.class),
 		G_SetOtherMode_H	(0xE3, SetOtherModeH.class),
@@ -167,7 +167,7 @@ public class DisplayList extends BaseStruct
 		G_SETCOMBINE		(0xFC, SetCombine.class),
 		G_SETIMG			(0xFD, SetImg.class),
 		G_SETZIMG			(0xFE, SetBuffer.class),
-		G_SETCIMG			(0xFF, SetBuffer.class);
+		G_SETCIMG			(0xFF, SetImg.class);
 		// @formatter:on
 
 		public final int opcode;

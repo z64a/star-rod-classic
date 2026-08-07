@@ -246,7 +246,7 @@ public class EffectGfxDecoder extends BaseDataDecoder
 						//	case G_MOVEMEM:
 						//	case G_LOAD_UCODE:
 					case G_DL:
-						//	case G_NOOP_RDP:
+						//	case G_SPNOOP:
 						//	case G_RDPHALF_1:
 					case G_SetOtherMode_L:
 					case G_SetOtherMode_H:

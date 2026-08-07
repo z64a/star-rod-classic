@@ -38,7 +38,9 @@ public class SetBuffer extends BaseF3DEX2
 	@Override
 	public String getString(BaseDataDecoder decoder)
 	{
-		if (decoder.isLocalAddress(addr))
+		if (decoder == null)
+			return String.format("%-16s (%08X)", getName(), addr);
+		else if (decoder.isLocalAddress(addr))
 			return String.format("%-16s (%s)", getName(), decoder.getPointer(addr).getPointerName());
 		else
 			return String.format("%-16s (%08X)", getName(), addr);
