@@ -3,40 +3,41 @@ type: ram
 size: 168
 fields:
 {
-	  0 : state              : ubyte
-	  1 : currentArgc        : ubyte
-	  2 : currentOpcode      : ubyte
+	  0 : stateFlags         : ubyte
+	  1 : curArgc            : ubyte
+	  2 : curOpcode          : ubyte
 	  3 : priority           : ubyte
 	  4 : groupFlags         : ubyte
-	  5 : blocked            : ubyte      % 1 = blocking
-	  6 : loopDepth          : ubyte      % how many nested loops we are in, >= 8 hangs forever
-	  7 : switchDepth        : ubyte      % how many nested switches we are in, max = 8
+	  5 : blocked            : byte       % execution is blocked by Wait or a blocking Call
+	  6 : loopDepth          : byte       % loop stack top; must remain below 8
+	  7 : switchDepth        : byte       % switch stack top; must remain below 8
 	  8 : ptrNextLine        : bytecode*
 	  C : ptrReadPos         : bytecode*
-	 10 : labelIndices       : uchar[16`]
+	 10 : labelIndices       : byte[16`]
 	 20 : labelPositions     : ptr[16`]
-	 60 : deleted            : int        % set to zero in KillScript when malloc'd
-	 64 : blockingParent?    : script_context* % parent?
-	 68 : childScript        : script_context*
-	 6C : parentScript       : script_context* % brother?
+	 60 : userData           : ptr        % heap data automatically freed when the script is killed
+	 64 : blockingParent     : script_context*
+	 68 : blockingChild      : script_context*
+	 6C : threadParent       : script_context*
 	 70 : functionTemp       : int[4`]
-	 80 : callFunction       : ptr
-	 84 : varTable           : uint[16`]
+	 80 : callFunction       : code
+	 84 : varTable           : int[16`]
 	 C4 : varFlags           : int[3`]
 	 D0 : loopStartTable     : int[8`]
 	 F0 : loopCounterTable   : int[8`]
-	110 : switchBlockState   : uchar[8`]
+	110 : switchBlockState   : byte[8`]
 	118 : switchBlockValue   : int[8`]
-	138 : buffer             : ptr
-	13C : array              : ptr
-	140 : flagArray          : ptr
-	144 : uniqueID           : int
-	148 : ownerActorID       : enemy*     % controller*, battle ID, trigger*
-	14C : ownerID            : uint       % can be an npcID, a triggerID, a trigger ptr
+	138 : buffer             : int*
+	13C : array              : int*
+	140 : flagArray          : int*
+	144 : id                 : int
+	148 : owner1             : int        % enemy/actor ID or pointer, depending on script scope
+	14C : owner2             : int        % NPC/trigger ID or pointer, depending on script scope
 	150 : timeScale          : float
 	154 : frameCounter       : float
+	158 : unk_158            : int
 	15C : ptrFirstLine       : bytecode*
-	160 : ptrSavedPosition   : bytecode*
-	164 : ptrCurrentLine     : bytecode*
+	160 : ptrSavedPos        : bytecode*
+	164 : ptrCurLine         : bytecode*
 }
 

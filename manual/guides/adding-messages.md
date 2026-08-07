@@ -1,6 +1,8 @@
 # Adding and Modifying Messages
 
-Paper Mario calls these resources messages, while Star Rod Classic calls them strings. Copied original sources live under `$mod/strings/src/`. Authored files which add or replace project messages belong under `$mod/strings/patch/`.
+Paper Mario calls these resources messages, while Star Rod Classic calls them strings. String sources live under `$mod/strings/src/`. Files which add or replace project messages belong under `$mod/strings/patch/`.
+
+The contents of a string may be indented with tabs. Do not indent them with spaces: leading spaces are encoded as part of the message and will appear in-game.
 
 ## Replace a Message
 
@@ -8,8 +10,8 @@ To replace message `001C0002`, the Paragoomba tattle, create `$mod/strings/patch
 
 ```star-rod
 #string:1C:02 {
-    [Style Right]
-    New Paragoomba tattle![Wait][End]
+	[Style Right]
+	New Paragoomba tattle![Wait][End]
 }
 ```
 
@@ -21,8 +23,8 @@ Section `2F` is reserved for custom project strings. A name in parentheses lets 
 
 ```star-rod
 #string:2F:(MyStringName) {
-    [Style Right]
-    This string has a useful name.[Wait][End]
+	[Style Right]
+	This string has a useful name.[Wait][End]
 }
 ```
 
@@ -34,8 +36,8 @@ A message used by only one patch may be declared directly in that patch:
 
 ```star-rod
 #string $MyExampleString {
-    [Style Right]
-    This is an embedded string.[Wait][End]
+	[Style Right]
+	This is an embedded string.[Wait][End]
 }
 
 #new:Script $ShowExample {
@@ -56,8 +58,8 @@ The engine has three message-variable buffers, referenced by `[Var 0]` through `
 
 ```star-rod
 #string $CoinMessage {
-    [Style Narrate]
-    You got [Var 0] coins![Wait][End]
+	[Style Narrate]
+	You got [Var 0] coins![Wait][End]
 }
 
 #new:Script $ShowCoinMessage {
@@ -76,16 +78,16 @@ A choice normally uses one message for the question and another for its options.
 
 ```star-rod
 #string $TrialQuestion {
-    [Style Right]
-    Are you ready for a trial?[Yield][End]
+	[Style Right]
+	Are you ready for a trial?[Yield][End]
 }
 
 #string $TrialChoices {
-    [Style Choice pos=96,112 size=128,62][StartChoice]
-    [Option 0]Yes[BR]
-    [Option 1]No[BR]
-    [Option 2]Tell me more
-    [EndChoice cancel=1][End]
+	[Style Choice pos=96,112 size=128,62][StartChoice]
+	[Option 0]Yes[BR]
+	[Option 1]No[BR]
+	[Option 2]Tell me more
+	[EndChoice cancel=1][End]
 }
 ```
 
@@ -93,18 +95,18 @@ Display the question normally, then call `ShowChoice` with the options message. 
 
 ```star-rod
 #string $TrialReady {
-    [Next]
-    Then let us begin![Wait][End]
+	[Next]
+	Then let us begin![Wait][End]
 }
 
 #string $TrialLater {
-    [Next]
-    Come back when you are ready.[Wait][End]
+	[Next]
+	Come back when you are ready.[Wait][End]
 }
 
 #string $TrialMore {
-    [Next]
-    The trial has three rounds.[Wait][End]
+	[Next]
+	The trial has three rounds.[Wait][End]
 }
 
 #new:Script $AskAboutTrial {
@@ -141,9 +143,9 @@ Message image tags use an array of `MessageImageData` entries. Each entry is fiv
 }
 
 #string $ShowImageString {
-    [Style Right]
-    [Image index=0 pos=85,97 hasBorder=1 alpha=255 fadeAmount=15]
-    Look at this![Wait][End]
+	[Style Right]
+	[Image index=0 pos=85,97 hasBorder=1 alpha=255 fadeAmount=15]
+	Look at this![Wait][End]
 }
 
 #new:Script $ShowImage {

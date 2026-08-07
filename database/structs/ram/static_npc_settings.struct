@@ -1,18 +1,20 @@
-% StaticNpcSettings
+% NpcSettings (legacy Star Rod type name: static_npc_settings)
 type: ram
 size: 2C
 fields:
 {
+	  0 : defaultAnim        : animID
 	  4 : height             : short
 	  6 : radius             : short
-	  8 : otherAI?           : ptr
-	  C : interactScript     : bytecode*
-	 10 : aiScript           : bytecode*
-	 14 : hitScript          : bytecode*
-	 18 : auxScript          : bytecode*
-	 1C : defeatScript       : bytecode*
+	  8 : onCreate           : bytecode*
+	  C : onInteract         : bytecode*
+	 10 : doAI               : bytecode*
+	 14 : onHit              : bytecode*
+	 18 : doAux              : bytecode*
+	 1C : onDefeat           : bytecode*
 	 20 : flags              : int
+	 24 : unk_24             : int        % removed from DX's compacted NpcSettings
 	 28 : level              : short
-	 2A : unkFlags           : short
+	 2A : actionFlags        : short
 }
 

@@ -34,7 +34,7 @@ If PNGs were placed in `image/assets/` by hand, use **Actions → Import Missing
 Open **Globals Editor → HUD Elements**, choose the load group where the element is needed, and click **Add Script**. A complete source for a simple static 32×32 element is:
 
 ```star-rod
-SetVisible
+EnableCI4
 SetTileSize ( .IconSize:32x32 )
 Loop
     SetIcon ( 60` ~ImageIcon:item/Mushroom )

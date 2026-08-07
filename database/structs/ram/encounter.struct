@@ -8,5 +8,6 @@ fields:
 	 44 : battle             : short
 	 46 : stage              : short
 	 48 : encounterID        : short
+	 4A : pad_4A             : ubyte[2`]
 }
 

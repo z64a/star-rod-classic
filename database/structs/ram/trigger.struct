@@ -3,15 +3,18 @@ type: ram
 size: 38
 fields:
 {
-	  0 : genericFlagIndex   : short
-	  4 : crateFlagIndex     : short
-	  6 : panelFlagIndex     : short
-	  8 : colliderID         : int
-	  C : functionHandler    : code
-	 10 : scriptStart        : bytecode*
-	 14 : runningScript      : script_context*
-	 18 : priority           : int
-	 1C : scriptVars         : int[3`]
-	 34 : runningScriptID    : int
+	  0 : flags                    : int
+	  4 : varIndex                 : int
+	  8 : location                 : int        % colliderID or BombTrigger pointer
+	  C : onActivateFunc           : code
+	 10 : onTriggerEvt             : bytecode*
+	 14 : runningScript            : script_context*
+	 18 : priority                 : int
+	 1C : varTable                 : int[3`]
+	 28 : itemList                 : int*
+	 2C : tattleMsg                : stringID
+	 30 : hasPlayerInteractPrompt  : ubyte
+	 31 : pad_31                   : ubyte[3`]
+	 34 : runningScriptID          : int
 }
 

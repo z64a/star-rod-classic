@@ -1,6 +1,6 @@
 # Writing a Patch
 
-Patch files replace or add structures. Map overlay patches normally use `.mpat`; battle overlay patches use `.bpat`. Global patches live outside the overlays and use `.patch`. Structure bodies use the same syntax as dumped source files, so a working vanilla structure is usually the best place to begin.
+Patch files replace or add structures. Map overlay patches normally use `.mpat`; battle overlay patches use `.bpat`. Global patches live outside the overlays and use `.patch`. Structure bodies use the same syntax as files under `src/`, so a working vanilla structure is usually the best place to begin.
 
 | Patch target | Extension | Project directory |
 | --- | --- | --- |
@@ -17,7 +17,7 @@ Reusable files loaded with `#import` belong under `$mod/map/import/` for map pat
 
 ## Replace Existing Data
 
-Suppose a dumped source contains this table:
+Suppose a source under the project's `src/` directories contains this table:
 
 ```star-rod
 $DataTable_80241C00 {
@@ -51,7 +51,7 @@ or, equivalently:
 @ $DataTable_80241C00 { [8] 8899AABB }
 ```
 
-A patch with an offset leaves the rest of the structure unaltered; a patch without an offset replaces the entire structure. If the replacement is larger than the original, Star Rod may move it to a free part of the overlay. Its relocation pass scans the existing overlay data and native functions for pointers to the old address rather than relying on a stored list of references from the dump.
+A patch with an offset leaves the rest of the structure unaltered; a patch without an offset replaces the entire structure. If the replacement is larger than the original, Star Rod may move it to a free part of the overlay. Its relocation pass scans the existing overlay data and native functions for pointers to the old address rather than relying on a stored list of pointer locations.
 
 ## Add a Structure
 
@@ -116,6 +116,6 @@ Constants, enums, pointers, script variables, and expressions may be used in pla
 
 ## Find a Working Example
 
-Inspect the dumped sources before writing a new structure from scratch. Find a map, enemy, move, or item which already does something similar, copy the smallest relevant structure into the appropriate patch, and change it one piece at a time. Keeping the first build small makes missing imports and wrong overlay assumptions much easier to diagnose.
+Inspect the corresponding sources under the project's `src/` directories before writing a new structure from scratch. Find a map, enemy, move, or item which already does something similar, copy the smallest relevant structure into the appropriate patch, and change it one piece at a time. Keeping the first build small makes missing imports and wrong overlay assumptions much easier to diagnose.
 
 See [Patch Files](../reference/patch-files.md), [Patch Expressions](../reference/patch-expressions.md), and [Script Variables](../reference/script-variables.md) for the exact syntax.

@@ -332,6 +332,10 @@ public class Instrument implements XmlSerializable
 
 			AudioFormat format = audioInputStream.getFormat();
 
+			if (format.getChannels() != 1) {
+				throw new StarRodException("Only mono WAV files are supported: %s has %d channels.", wavFile.getName(), format.getChannels());
+			}
+
 			// require 16-bit PCM samples
 			if (format.getEncoding() != AudioFormat.Encoding.PCM_SIGNED ||
 				format.getSampleSizeInBits() != 16) {

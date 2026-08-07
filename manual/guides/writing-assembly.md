@@ -54,7 +54,7 @@ Use `#UNDEF ALL` when several active register names should be cleared together. 
 
 ## Modify Existing Code
 
-Dumped functions provide the best examples of the calling convention and data layout used in a particular subsystem. A named local function may be patched like any other decoded structure:
+Functions in the project sources provide the best examples of the calling convention and data layout used in a particular subsystem. A named local function may be patched like any other decoded structure:
 
 ```mipsasm
 @ $Function_ExistingName {
@@ -62,7 +62,7 @@ Dumped functions provide the best examples of the calling convention and data la
 }
 ```
 
-Copy the entire dumped function when the replacement is meant to own all of its behavior. For a small instruction change, patch the relevant offset and preserve the surrounding control flow. Pay particular attention to branch and jump delay slots: the instruction after a branch or jump still executes unless a branch-likely instruction skips it.
+Copy the entire function from the corresponding project source when the replacement is meant to own all of its behavior. For a small instruction change, patch the relevant offset and preserve the surrounding control flow. Pay particular attention to branch and jump delay slots: the instruction after a branch or jump still executes unless a branch-likely instruction skips it.
 
 Build after each small change and test from before the affected overlay or subsystem is initialized. An assembled function can still fail at runtime if it calls a function from the wrong context, uses a stale pointer, corrupts the stack, or changes a register the caller expected to survive.
 

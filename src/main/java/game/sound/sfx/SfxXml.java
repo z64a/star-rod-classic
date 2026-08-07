@@ -581,8 +581,8 @@ public final class SfxXml
 			case TAG_SET_RANDOM_VELOCITY:
 				return new Command(Op.SET_RANDOM_VELOCITY,
 					decimalAttribute(reader, source, element, ATTR_AMOUNT, 0, 255));
-			case TAG_SET_RANDOM_UNUSED:
-				return new Command(Op.SET_RANDOM_UNUSED,
+			case TAG_SET_RANDOM_PAN:
+				return new Command(Op.SET_RANDOM_PAN,
 					decimalAttribute(reader, source, element, ATTR_AMOUNT, 0, 255));
 			case TAG_SET_PRESS_ENVELOPE:
 				checkAttributes(source, element, ATTR_REF);
@@ -977,7 +977,7 @@ public final class SfxXml
 			case SET_CURRENT_VOLUME:
 			case SET_RANDOM_PITCH:
 			case SET_RANDOM_VELOCITY:
-			case SET_RANDOM_UNUSED:
+			case SET_RANDOM_PAN:
 			case SET_ALTERNATIVE_VOLUME:
 				requireRange(command.a, 0, 255, command.op, "value", source);
 				break;
@@ -1399,8 +1399,8 @@ public final class SfxXml
 				printTag(writer, TAG_SET_RANDOM_VELOCITY,
 					attributes(ATTR_AMOUNT, Integer.toString(command.a)));
 				break;
-			case SET_RANDOM_UNUSED:
-				printTag(writer, TAG_SET_RANDOM_UNUSED,
+			case SET_RANDOM_PAN:
+				printTag(writer, TAG_SET_RANDOM_PAN,
 					attributes(ATTR_AMOUNT, Integer.toString(command.a)));
 				break;
 			case SET_PRESS_ENVELOPE:

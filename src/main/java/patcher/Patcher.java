@@ -231,6 +231,7 @@ public class Patcher implements IGlobalDatabase
 		GlobalPatchManager gpm = new GlobalPatchManager(this);
 
 		FunctionPatcher.modifyHeaps(this, cfg, gpm, rp, minimumAudioHeapSize);
+		gpm.readInternalPatch("ExtendedSoundBanks.patch");
 		gpm.readInternalPatch("ExtendedGlobals.patch",
 			cfg.getBoolean(Options.EnableDebugCode) && cfg.getBoolean(Options.EnableVarLogging) ? "LogVars" : "");
 		gpm.readInternalPatch("ExtendedScripts.patch");

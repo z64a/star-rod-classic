@@ -32,6 +32,6 @@ matrix4f	float[4][4]
 matrix3d	int[3][3]
 matrix4d	int[4][4]
 % matrix3s	short[3][3][2]
-% matrix4s	short[4][4][2]
+matrix4s	short[4][4][2]
 
 NUScMsg		short

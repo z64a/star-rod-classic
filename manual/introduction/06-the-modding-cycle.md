@@ -40,8 +40,8 @@ When the mod is ready to distribute, **Package Mod** creates a patch which anoth
 
 You now have the broad model needed to navigate Star Rod: the game is divided by contexts and loading boundaries; a project represents its data through sources, patches, and assets; editors own some of those sources; and the build combines them with a clean original ROM.
 
-The remainder of this manual is organized by use. The guides walk through individual tasks, beginning with creating a project, while the reference collects the syntax, formats, names, and limits which are easier to consult than to memorize.
+The remainder of this manual is organized by use. The tutorials follow larger changes through several parts of a project. The guides cover individual tasks, while the reference collects the syntax, formats, names, and limits which are easier to consult than to memorize.
 
 ---
 
-[← Previous: Editors and Asset Pipelines](05-editors-and-asset-pipelines.md) · [Next: Creating a Mod →](../guides/creating-a-mod.md)
+[← Previous: Editors and Asset Pipelines](05-editors-and-asset-pipelines.md) · [Next: Your First Change →](../tutorials/your-first-change.md)

@@ -42,7 +42,7 @@ enum SfxXmlKey implements XmlKey
 	TAG_NOP                        ("Nop"),
 	TAG_SET_RANDOM_PITCH           ("SetRandomPitch"),
 	TAG_SET_RANDOM_VELOCITY        ("SetRandomVelocity"),
-	TAG_SET_RANDOM_UNUSED          ("SetRandomUnused"),
+	TAG_SET_RANDOM_PAN             ("SetRandomPan"),
 	TAG_SET_PRESS_ENVELOPE         ("SetPressEnvelope"),
 	TAG_SPAWN                      ("Spawn"),
 	TAG_SET_ALTERNATIVE_VOLUME     ("SetAlternativeVolume"),

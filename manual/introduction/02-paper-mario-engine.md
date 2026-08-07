@@ -71,7 +71,7 @@ The engine calls ordinary exploration the **world** context. The world is divide
 
 Loading a map selects its entry in the map table, loads its overlay and assets, and starts its **MainScript**. This is the unique entry point for the map which is responsible for setting up its NPCs, entities, exits, and anything else needed by the map.
 
-By default, assets are resolved using the map's name. A map named `mac_00` uses `mac_00_shape` and `mac_00_hit` for its map geometry while loading its area's texture archive, `mac_tex`. Maps may optionally provide a native `map_init` function, shown as `$Function_Init` in dumped Star Rod sources. It runs before these assets are loaded and can substitute different asset names or skip the default geometry and texture loads. Level Editor may also configure maps to share or reuse resources other than the defaults.
+By default, assets are resolved using the map's name. A map named `mac_00` uses `mac_00_shape` and `mac_00_hit` for its map geometry while loading its area's texture archive, `mac_tex`. Maps may optionally provide a native `map_init` function, shown as `$Function_Init` in Star Rod map sources. It runs before these assets are loaded and can substitute different asset names or skip the default geometry and texture loads. Level Editor may also configure maps to share or reuse resources other than the defaults.
 
 NPCs are organized into groups, each with an associated **encounter**. For hostile NPCs, called **enemies**, the encounter selects the battle to initiate when they make contact with the player. NPC behavior is usually delegated to native AI functions. Enemies use these to detect and chase the player. Passive NPCs can use these functions for simple movement without initiating battles.
 

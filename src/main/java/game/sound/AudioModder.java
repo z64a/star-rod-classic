@@ -654,7 +654,7 @@ public class AudioModder
 			xmr.requiresAttribute(bankElem, ATTR_BANK_INDEX);
 
 			String name = xmr.getAttribute(bankElem, ATTR_BANK_NAME);
-			int bankGroup = SoundXml.readHex(xmr, bankElem, ATTR_BANK_GROUP, 1, 6);
+			int bankGroup = SoundXml.readHex(xmr, bankElem, ATTR_BANK_GROUP, 2, 6);
 			int bankIndex = SoundXml.readHex(xmr, bankElem, ATTR_BANK_INDEX, 0, 0xF);
 
 			if (!sbnFileIndices.containsKey(name))
@@ -666,6 +666,9 @@ public class AudioModder
 
 			bankList.add(new BankEntry(name, sbnFileIndices.get(name), bankGroup, bankIndex));
 		}
+
+		if (bankList.size() > 79)
+			throw new InputFileException(xmlFile, "Bank list contains more than 79 entries");
 
 		return bankList;
 	}

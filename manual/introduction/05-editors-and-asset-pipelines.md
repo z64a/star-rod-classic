@@ -6,7 +6,7 @@ A Star Rod project is not one uniform collection of source files. Patch files ar
 
 A map provides a clear example of how those pipelines meet. Map Editor maintains the map geometry, along with its markers and other editor data. Level Editor organizes maps into areas and controls the project configuration and resources associated with each map.
 
-For an original map, Star Rod uses the copy under `map/src/` until an edited version has been saved under `map/save/`. This choice concerns the map geometry and marker data. The map's event scripts and supporting structures instead belong to its overlay and are modified by `.mpat` files.
+For an original map, Star Rod uses the geometry and marker data under `map/src/` until an edited version has been saved under `map/save/`. The map's event scripts and supporting structures instead belong to its overlay and are modified by `.mpat` files.
 
 During a build, Star Rod encodes the geometry, patches the overlay, and updates the map tables which connect them. The geometry shown in Map Editor and the script data addressed by a patch belong to the same map without being part of the same file. This mirrors their separate loading by the engine.
 
@@ -18,7 +18,7 @@ Related pieces are often kept separate. An item definition may refer to a HUD el
 
 ## 5.3. Asset Conversion
 
-Editable assets are not necessarily stored in the format used by the engine. Images may begin as PNG files, sprites as sheets and XML descriptions, and map geometry as editor data. Messages and drawing scripts use readable markup of their own. Star Rod validates and encodes each of these sources while building the project.
+Editable assets are not necessarily stored in the format used by the engine. Images may begin as PNG files, audio instruments as WAV samples, sprites as sheets and XML descriptions, and map geometry as editor data. Messages and drawing scripts use readable markup of their own. Star Rod validates and encodes each of these sources while building the project.
 
 This conversion is also where engine restrictions become important. Texture formats have palette and size requirements, tables have finite capacities, and an encoded asset still has to fit the memory or ROM arrangement expected by its loader. Editors can prevent many invalid combinations, but they do not remove the underlying limits described in chapter 2.
 

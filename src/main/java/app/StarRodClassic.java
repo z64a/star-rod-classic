@@ -1,7 +1,113 @@
 package app;
 
-import static app.Directories.*;
-import static app.config.Options.*;
+import static app.Directories.DATABASE;
+import static app.Directories.DATABASE_TYPES;
+import static app.Directories.DEFAULTS;
+import static app.Directories.DEFAULTS_ALLY;
+import static app.Directories.DEFAULTS_FORM;
+import static app.Directories.DEFAULTS_ITEM;
+import static app.Directories.DEFAULTS_MAP;
+import static app.Directories.DEFAULTS_MOVE;
+import static app.Directories.DEFAULTS_STARS;
+import static app.Directories.DUMP_ALLY_SRC;
+import static app.Directories.DUMP_ASSIST_SRC;
+import static app.Directories.DUMP_AUDIO;
+import static app.Directories.DUMP_BATTLE;
+import static app.Directories.DUMP_FORMA_ENEMY;
+import static app.Directories.DUMP_FORMA_SRC;
+import static app.Directories.DUMP_GLOBALS;
+import static app.Directories.DUMP_HUD_SCRIPTS;
+import static app.Directories.DUMP_IMG;
+import static app.Directories.DUMP_IMG_ASSETS;
+import static app.Directories.DUMP_IMG_BG;
+import static app.Directories.DUMP_IMG_COMP;
+import static app.Directories.DUMP_IMG_TEX;
+import static app.Directories.DUMP_ITEM;
+import static app.Directories.DUMP_ITEM_SCRIPTS;
+import static app.Directories.DUMP_ITEM_SRC;
+import static app.Directories.DUMP_MAP;
+import static app.Directories.DUMP_MAP_SRC;
+import static app.Directories.DUMP_MAP_THUMBNAIL;
+import static app.Directories.DUMP_MINIGAME_SRC;
+import static app.Directories.DUMP_MOVE;
+import static app.Directories.DUMP_MOVE_SRC;
+import static app.Directories.DUMP_REPORTS;
+import static app.Directories.DUMP_REQUESTS;
+import static app.Directories.DUMP_SPRITE;
+import static app.Directories.DUMP_SPR_NPC_SRC;
+import static app.Directories.DUMP_SPR_PLR_SRC;
+import static app.Directories.DUMP_STARS_SRC;
+import static app.Directories.DUMP_STRINGS_FONT;
+import static app.Directories.DUMP_STRINGS_SRC;
+import static app.Directories.DUMP_TXTBOX_IMG;
+import static app.Directories.FN_BATTLE_ACTORS;
+import static app.Directories.FN_BATTLE_ITEMS;
+import static app.Directories.FN_BATTLE_MOVES;
+import static app.Directories.FN_BATTLE_SECTIONS;
+import static app.Directories.FN_GAME_BYTES;
+import static app.Directories.FN_GAME_FLAGS;
+import static app.Directories.FN_HUD_SCRIPTS;
+import static app.Directories.FN_IMAGE_ASSETS;
+import static app.Directories.FN_ITEM_SCRIPTS;
+import static app.Directories.FN_MAP_TABLE;
+import static app.Directories.FN_MOD_BYTES;
+import static app.Directories.FN_MOD_FLAGS;
+import static app.Directories.FN_SPRITE_SHADING;
+import static app.Directories.FN_SPRITE_TABLE;
+import static app.Directories.FN_STRING_CONSTANTS;
+import static app.Directories.LOGS;
+import static app.Directories.MOD_ALLY_PATCH;
+import static app.Directories.MOD_ALLY_SRC;
+import static app.Directories.MOD_ASSIST_SRC;
+import static app.Directories.MOD_AUDIO;
+import static app.Directories.MOD_BATTLE;
+import static app.Directories.MOD_ENUMS;
+import static app.Directories.MOD_FORMA;
+import static app.Directories.MOD_FORMA_ENEMY;
+import static app.Directories.MOD_FORMA_PATCH;
+import static app.Directories.MOD_FORMA_SRC;
+import static app.Directories.MOD_GLOBALS;
+import static app.Directories.MOD_HUD_SCRIPTS;
+import static app.Directories.MOD_IMG;
+import static app.Directories.MOD_IMG_ASSETS;
+import static app.Directories.MOD_IMG_BG;
+import static app.Directories.MOD_IMG_COMP;
+import static app.Directories.MOD_IMG_TEX;
+import static app.Directories.MOD_ITEM;
+import static app.Directories.MOD_ITEM_PATCH;
+import static app.Directories.MOD_ITEM_SCRIPTS;
+import static app.Directories.MOD_ITEM_SRC;
+import static app.Directories.MOD_MAP;
+import static app.Directories.MOD_MAP_PATCH;
+import static app.Directories.MOD_MAP_SRC;
+import static app.Directories.MOD_MAP_THUMBNAIL;
+import static app.Directories.MOD_MINIGAME_SRC;
+import static app.Directories.MOD_MOVE;
+import static app.Directories.MOD_MOVE_PATCH;
+import static app.Directories.MOD_MOVE_SRC;
+import static app.Directories.MOD_SPRITE;
+import static app.Directories.MOD_SPR_NPC_SRC;
+import static app.Directories.MOD_SPR_PLR_SRC;
+import static app.Directories.MOD_STARS_PATCH;
+import static app.Directories.MOD_STARS_SRC;
+import static app.Directories.MOD_STRINGS;
+import static app.Directories.MOD_STRINGS_FONT;
+import static app.Directories.MOD_STRINGS_SRC;
+import static app.Directories.MOD_TXTBOX_IMG;
+import static app.config.Options.CleanDump;
+import static app.config.Options.DumpAudio;
+import static app.config.Options.DumpBattles;
+import static app.config.Options.DumpLibrary;
+import static app.config.Options.DumpMaps;
+import static app.config.Options.DumpMessages;
+import static app.config.Options.DumpMoves;
+import static app.config.Options.DumpPartners;
+import static app.config.Options.DumpReports;
+import static app.config.Options.DumpSprites;
+import static app.config.Options.DumpTables;
+import static app.config.Options.DumpTextures;
+import static app.config.Options.DumpWorld;
+import static app.config.Options.RecompressMaps;
 
 import java.awt.Desktop;
 import java.awt.Dimension;
@@ -1070,6 +1176,31 @@ public class StarRodClassic extends JFrame
 		}
 	}
 
+	private static void openUserGuide()
+	{
+		File workingDirectory = Environment.getWorkingDirectory().toPath().toAbsolutePath().normalize().toFile();
+		File file = new File(workingDirectory, "manual/README.html");
+
+		if (!file.exists())
+			file = new File(workingDirectory, "build/generated/manual/README.html");
+
+		if (!file.exists()) {
+			SwingUtils.getWarningDialog()
+				.setTitle("User Guide Not Found")
+				.setMessage("Could not find the local user guide.", file.getAbsolutePath())
+				.show();
+			return;
+		}
+
+		try {
+			Desktop.getDesktop().browse(file.toURI());
+		}
+		catch (IOException e) {
+			Logger.logWarning("Could not open user guide: " + file.getAbsolutePath());
+			Logger.printStackTrace(e);
+		}
+	}
+
 	private static void runCommandLine(String[] args)
 	{
 		for (int i = 0; i < args.length; i++) {
@@ -1335,7 +1466,7 @@ public class StarRodClassic extends JFrame
 			});
 
 			JButton audioBoothButton = new JButton("Audio Booth");
-			trySetIcon(audioBoothButton, "item/badge/AttackFXA");
+			trySetIcon(audioBoothButton, "item/key/boo_record");
 			SwingUtils.setFontSize(audioBoothButton, 12);
 			audioBoothButton.addActionListener((e) -> {
 				selected = GreetingChoice.AUDIO_BOOTH;
@@ -1350,6 +1481,11 @@ public class StarRodClassic extends JFrame
 				dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 			});
 
+			JButton userGuideButton = new JButton("User Manual");
+			trySetIcon(userGuideButton, "item/badge/refund");
+			SwingUtils.setFontSize(userGuideButton, 12);
+			userGuideButton.addActionListener(e -> openUserGuide());
+
 			setTitle(Environment.decorateTitle("Star Rod"));
 			setIconImage(Environment.getDefaultIconImage());
 
@@ -1362,12 +1498,13 @@ public class StarRodClassic extends JFrame
 			add(modManagerButton, fmtButton);
 			add(globalsEditorButton, fmtButton);
 			add(mapEditorButton, fmtButton);
-			add(stringEditorButton, fmtButton);
+			add(levelEditorButton, fmtButton);
 			add(spriteEditorButton, fmtButton);
 			add(imageEditorButton, fmtButton);
-			add(levelEditorButton, fmtButton);
+			add(stringEditorButton, fmtButton);
 			add(worldMapEditorButton, fmtButton);
 			add(audioBoothButton, fmtButton);
+			add(userGuideButton, fmtButton);
 			add(themesEditorButton, fmtButton);
 
 			pack();

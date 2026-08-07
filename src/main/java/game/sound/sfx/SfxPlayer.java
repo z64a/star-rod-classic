@@ -699,7 +699,7 @@ public class SfxPlayer implements AudioClient, PlaybackSession
 				case SET_RANDOM_VELOCITY:
 					randomVelocity = command.a;
 					break;
-				case SET_RANDOM_UNUSED:
+				case SET_RANDOM_PAN:
 					break;
 				case SET_PRESS_ENVELOPE:
 					customPressEnvelope = command.ref == null ? null : pressEnvelopes.get(command.ref);

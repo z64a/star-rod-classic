@@ -1,8 +1,6 @@
 # Star Rod Classic User Guide
 
-This guide covers Star Rod Classic 0.5.9.
-
-The manual is divided into three parts. The introduction explains Star Rod and the parts of Paper Mario it works with. The guides walk through particular tasks. The reference collects details you may need to look up while working.
+The manual is divided into four parts. The introduction explains Star Rod and the parts of Paper Mario it works with. The tutorials follow larger changes from beginning to end, while the guides cover particular tasks. The reference collects details you may need to look up while working.
 
 ## Introduction
 
@@ -13,8 +11,17 @@ The manual is divided into three parts. The introduction explains Star Rod and t
 - [5. Editors and Asset Pipelines](introduction/05-editors-and-asset-pipelines.md)
 - [6. The Modding Cycle](introduction/06-the-modding-cycle.md)
 
+## Tutorials
+
+- [Your First Change](tutorials/your-first-change.md)
+- [Scripting a Map](tutorials/scripting-a-map.md)
+- [Scripting a Battle](tutorials/scripting-a-battle.md)
+- [Adding a Boss](tutorials/adding-a-boss.md)
+- [Adding a Move](tutorials/adding-a-move.md)
+
 ## Guides
 
+- [How Hard Is It?](guides/how-hard-is-it.md)
 - [Creating a Mod](guides/creating-a-mod.md)
 - [Writing a Patch](guides/writing-a-patch.md)
 - [Event Script Overview](guides/event-script-overview.md)
@@ -26,20 +33,26 @@ The manual is divided into three parts. The introduction explains Star Rod and t
 - [Editing Items](guides/editing-items.md)
 - [Adding Sprites](guides/adding-sprites.md)
 - [Adding and Editing Maps](guides/adding-and-editing-maps.md)
+- [Adding a Sound Effect](guides/adding-a-sound-effect.md)
+- [Adding a New Instrument](guides/adding-a-new-instrument.md)
 
-## Reference
+## References
 
 - [Notation](reference/notation.md)
 - [Project Layout](reference/project-layout.md)
 - [Patch Files](reference/patch-files.md)
 - [Patch Expressions](reference/patch-expressions.md)
 - [Script Variables](reference/script-variables.md)
+- [Script Commands](reference/script-commands.md)
 - [Hint Files](reference/hint-files.md)
+- [MIPS](reference/mips.md)
 - [Assembly](reference/assembly.md)
+- [F3DEX2 Display Lists](reference/display-lists.md)
 - [Memory Map](reference/memory-map.md)
 - [String Markup](reference/string-markup.md)
 - [Globals](reference/globals.md)
 - [Image Assets and Scripts](reference/image-scripts.md)
+- [HUD Scripts](reference/hud-scripts.md)
 - [Item Data](reference/item-data.md)
 - [Sprite Palettes](reference/sprite-palettes.md)
 - [Map Render Modes](reference/map-render-modes.md)

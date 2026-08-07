@@ -9,14 +9,14 @@ Packaged releases include their own Java runtime. You do not need to install Jav
 1. Launch Star Rod and select your clean Paper Mario US v1.0 ROM when prompted.
 2. Choose or create a directory for the mod. This becomes `$mod` throughout the manual.
 3. Dump the ROM. Star Rod creates a dump directory beside the ROM and converts its assets into editable forms. The first dump takes several minutes.
-4. Use **Copy Assets to Mod** to populate the new project from the dump. Do this once when creating the project; afterward, the mod directory is your working copy.
+4. Use **Copy Assets to Mod** to populate the new project from the dump. Do this once when creating the project; afterward, use the original sources under the project's `src/` directories for reference and put your changes in the corresponding `patch/` directories.
 5. Make a small change and use **Compile Mod** to verify the setup. The compiled ROM is written under `$mod/out/`.
 
-The dump is a clean reference. Do not edit it in place. If you need to restore an original map, string, sprite, or other asset, copy it from the dump into the project again.
+Normal modding work should not require browsing or editing the dump after this initial copy. If an original project file is damaged or missing, the dump remains available as a clean source from which to restore it.
 
 ## Choose an Editor
 
-Much of Paper Mario's data is dumped as text. Syntax highlighting makes those files easier to read and helps catch simple mistakes. Notepad++ language files for scripts and strings are distributed with Star Rod. A [Star Rod extension for VS Code](https://marketplace.visualstudio.com/items?itemName=nanaian.vscode-star-rod) is also available.
+Much of Paper Mario's data is represented as text in the project. Syntax highlighting makes those files easier to read and helps catch simple mistakes. Notepad++ language files for scripts and strings are distributed with Star Rod. A [Star Rod extension for VS Code](https://marketplace.visualstudio.com/items?itemName=nanaian.vscode-star-rod) is also available.
 
 Sprites and textures can be edited in the image editor of your choice and converted through Star Rod. CI-4 sprite-sheet textures are limited to 16 colors per palette, while other assets may use CI-4, CI-8, intensity, intensity-alpha, or RGBA formats. [Aseprite](https://www.aseprite.org/) is a common choice for indexed pixel art and can also be imported directly by Sprite Editor.
 

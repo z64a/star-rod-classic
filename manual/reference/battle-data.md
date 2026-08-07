@@ -12,7 +12,7 @@ Battle-section and stage data occupy separate regions of memory. See the [Memory
 
 | Project source | Purpose |
 | --- | --- |
-| `$mod/battle/formation/src/` | Battle-section sources copied from the dump. |
+| `$mod/battle/formation/src/` | Battle-section sources. |
 | `$mod/battle/formation/patch/` | `.bpat` files which modify individual sections. |
 | `$mod/battle/formation/import/` | Reusable structures imported into a section. |
 | `$mod/battle/formation/import/enemy/` | Enemy definitions and their dependencies prepared for import. |
@@ -25,9 +25,9 @@ An overworld encounter uses the packed ID `AABBCCCC`:
 | --- | --- |
 | `AA` | Battle-section index. |
 | `BB` | Formation index in that section. |
-| `CCCC` | One-based stage-table index; zero selects the formation's default stage. |
+| `CCCC` | One-based stage table index; zero selects the formation's default stage. |
 
-For example, `12080005` selects section `12`, formation `08`, and stage-table entry `5`.
+For example, `12080005` selects section `12`, formation `08`, and stage table entry `5`.
 
 ## Actors and Parts
 

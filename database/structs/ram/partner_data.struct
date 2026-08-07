@@ -4,6 +4,7 @@ size: 8
 fields:
 {
 	  0 : enabled            : ubyte
-	  1 : level              : ubyte
+	  1 : level              : byte
+	  2 : unk_02             : short[3`]
 }
 

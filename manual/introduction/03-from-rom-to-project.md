@@ -29,11 +29,11 @@ Treat the dump as read-only. It can be recreated from the clean ROM, while chang
 
 ## 3.3. The Project
 
-A project contains the source files for one mod. When a project is created, **Copy Assets to Mod** supplies editable starting files from the dump and creates the directories expected by the build. From that point onward, the project is the home for handwritten patches, editor saves, configuration files, new assets, and other original work.
+A project contains the files for one mod. When a project is created, **Copy Assets to Mod** populates it with decoded sources and assets and creates the directories expected by the build. Overlay sources are placed under `src/`, while handwritten changes to their structures belong in the corresponding `patch/` directories. Editor saves, configuration files, new assets, and other original work remain elsewhere in the project.
 
-The manual uses `$mod` to mean the root of this project directory and `$dump` to mean the decoded original. The [Project Layout](../reference/project-layout.md) lists their exact contents. The distinction matters more than any particular path: `$dump` describes the clean game, while `$mod` describes what should be built.
+The manual uses `$mod` to mean the root of this project directory and `$dump` to mean the decoded original. The [Project Layout](../reference/project-layout.md) lists their exact contents. Normal modding work should stay under `$mod`; the dump remains part of the build environment and can be used to restore a damaged or missing original file.
 
-Some project sources are complete editable descriptions, while others contain only changes. Map Editor saves a map's geometry and its related marker data. A patch may alter only a few named structures within an otherwise original overlay, while a new image or message may have no original counterpart at all. The build understands these different forms and combines them in the appropriate order.
+Project files take several forms. Files under `src/` describe original data, while files under `patch/` contain changes to named structures. Map Editor saves a map's geometry and its related marker data separately. A new image or message may have no original counterpart at all. The build understands these different forms and combines them in the appropriate order.
 
 ## 3.4. Local Data, Globals, and Assets
 

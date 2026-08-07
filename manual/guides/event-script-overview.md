@@ -1,6 +1,6 @@
 # Event Script Overview
 
-Event scripts contain most of Paper Mario's high-level behavior. They are normally declared in a map, battle, move, item, or global patch, then compiled into the bytecode read by the `Evt` interpreter. Begin with a small script from the corresponding dumped source when possible. It will already use commands and API functions available in the correct context.
+Event scripts contain most of Paper Mario's high-level behavior. They are normally declared in a map, battle, move, item, or global patch, then compiled into the bytecode read by the `Evt` interpreter. Begin with a small script from the corresponding source under the project's `src/` directories when possible. It will already use commands and API functions available in the correct context.
 
 ## A Minimal Script
 
@@ -77,4 +77,4 @@ Each form creates another execution context initialized with a copy of the calle
 
 Calls may also block over several frames. Movement, dialogue, and other timed functions commonly keep the script at the same `Call` until the operation finishes. This is why a script can describe a long sequence without manually checking the frame count for every operation.
 
-For complete command and function signatures, consult the applicable `.lib` files under Star Rod's `database/` directory and working scripts from the dump. When the existing API is not enough, [Writing a Callable Function](writing-a-callable-function.md) explains how to expose new native code to a script.
+The [Script Commands](../reference/script-commands.md) reference lists every command understood by Classic. Functions invoked with `Call` are context-dependent; consult the applicable `.lib` files under Star Rod's `database/` directory and working scripts in the project's `src/` directories for their signatures. When the existing API is not enough, [Writing a Callable Function](writing-a-callable-function.md) explains how to expose new native code to a script.

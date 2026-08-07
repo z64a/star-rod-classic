@@ -8,7 +8,7 @@ When Star Rod recognizes a structure, it writes a readable representation to the
 
 These files describe what Star Rod found; they are not the game's original source code. Names may be derived from addresses or supplied by Star Rod. The index inventories the decoded layout and its gaps; it does not list every pointer to each structure. The accompanying binary data remains the authoritative copy of anything which was not decoded.
 
-Decoded sources are especially valuable as examples. If the original game already performs a similar task, its structures show which functions, flags, and relationships are actually used together.
+Decoded sources are especially valuable as examples. If the original game already performs a similar task, its structures show which functions, flags, and relationships are actually used together. Consult the sources under `$mod`, then place your changes in the corresponding `patch/` directory.
 
 ## 4.2. Patch Files
 

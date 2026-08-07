@@ -167,6 +167,8 @@ public class ProjectDatabase
 		if (hasProject)
 			loadAudioEnums();
 
+		addSoundAliases();
+
 		CType.loadTypes();
 
 		actorNameMap = readDecode(DATABASE_TYPES + "actors.txt");
@@ -260,6 +262,13 @@ public class ProjectDatabase
 		if (ambientSounds.isFile())
 			replaceEnum(AMBIENT_SOUND_NAMESPACE, "ambientSFX",
 				AudioCatalog.readAmbientNameTable(ambientSounds));
+	}
+
+	private static void addSoundAliases() throws IOException
+	{
+		ConstEnum soundEnum = constNameMap.get(SOUND_NAMESPACE);
+		if (soundEnum != null)
+			soundEnum.addAliases(new ConstEnum(SOUND_NAMESPACE, "soundID", new File(DATABASE_TYPES + "sound_aliases.txt")));
 	}
 
 	private static void replaceEnum(String namespace, String libName, Map<Integer, String> entries)
@@ -640,7 +649,14 @@ public class ProjectDatabase
 
 		private void addAlias(int id, String name)
 		{
-			encodeMap.put(name, String.format("%08X", id));
+			if (!encodeMap.containsKey(name))
+				encodeMap.put(name, String.format("%08X", id));
+		}
+
+		private void addAliases(ConstEnum aliases)
+		{
+			for (Entry<String, String> e : aliases.encodeMap.entrySet())
+				addAlias((int) Long.parseLong(e.getValue(), 16), e.getKey());
 		}
 
 		public String getNamespace()

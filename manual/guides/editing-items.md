@@ -23,12 +23,12 @@ Automatic graphics creates a world item-entity script and a menu HUD element fro
 
 ## Make It Usable in Battle
 
-A battle item needs an entry in `$mod/battle/item/Items.txt`. The entry associates the item ID with a battle-item source under `$mod/battle/item/patch/` or one of the dumped vanilla sources. That source must export `$Script_UseItem`.
+A battle item needs an entry in `$mod/battle/item/Items.txt`. The entry associates the item ID with a battle-item patch under `$mod/battle/item/patch/` or one of the original sources under `$mod/battle/item/src/`. That battle source must provide `$Script_UseItem` as a `Script_Use` structure.
 
-Copy the entry and `.bpat` source for a mechanically similar vanilla item, rename the source, and replace its effect logic. The item-table potency fields are available to conventional item code, but `Script_UseItem` decides how targeting, animation, damage, healing, status, and inventory consumption proceed.
+Choose the battle source used by a mechanically similar vanilla item, then create a `.bpat` with the same basename under `$mod/battle/item/patch/`. Copy the structures you need to change from the corresponding `.bscr` under `$mod/battle/item/src/`; do not rename or edit the original source. The item table potency fields are available to conventional item code, but `Script_UseItem` decides how targeting, animation, damage, healing, status, and inventory consumption proceed.
 
 ## Make It a Badge
 
-A badge item points to a move from Globals Editor's Moves tab. The move supplies its BP cost and battle-ability association. Adding the badge item alone does not create a new command or attack. Use an existing move when only the badge's presentation is new, or add the corresponding move and battle patches as well.
+A badge item points to a move from Globals Editor's Moves tab. The move supplies its BP cost and may also have an ability association for passive behavior. Adding the badge item alone does not create a new command or attack. Use an existing move when only the badge's presentation is new, or add the corresponding move and battle patches as well.
 
 See [Item Data](../reference/item-data.md) for field definitions, type flags, and ID behavior.

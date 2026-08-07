@@ -227,7 +227,7 @@ public final class SoundBankCatalog
 			xmr.requiresAttribute(elem, ATTR_BANK_INDEX);
 
 			String filename = xmr.getAttribute(elem, ATTR_BANK_NAME);
-			int bankGroup = SoundXml.readHex(xmr, elem, ATTR_BANK_GROUP, 1, 6);
+			int bankGroup = SoundXml.readHex(xmr, elem, ATTR_BANK_GROUP, 2, 6);
 			int bankIndex = SoundXml.readHex(xmr, elem, ATTR_BANK_INDEX, 0, 0xF);
 
 			BankInfo bank = getBank(filename);

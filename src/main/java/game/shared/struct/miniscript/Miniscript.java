@@ -67,6 +67,8 @@ public abstract class Miniscript extends BaseStruct
 			MiniCommand type = builder.build();
 			cmdDecodeMap.put(type.opcode, type);
 			cmdTypeMap.put(type.name, type);
+			for (String alias : builder.aliases)
+				cmdTypeMap.put(alias, type);
 		}
 
 		Arrays.sort(types, (a, b) -> b.name.length() - a.name.length());
@@ -280,6 +282,7 @@ public abstract class Miniscript extends BaseStruct
 		private final int opcode;
 		private int flags;
 		private MiniCommandArg[] args = new MiniCommandArg[0];
+		private String[] aliases = new String[0];
 		private Consumer<Object> scanCallback = null;
 
 		public CommandBuilder(int opcode, String name)
@@ -323,6 +326,12 @@ public abstract class Miniscript extends BaseStruct
 		public CommandBuilder setArgs(MiniCommandArg ... args)
 		{
 			this.args = args;
+			return this;
+		}
+
+		public CommandBuilder setAliases(String ... aliases)
+		{
+			this.aliases = aliases;
 			return this;
 		}
 

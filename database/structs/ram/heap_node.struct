@@ -3,10 +3,10 @@ type: ram
 size: 10
 fields:
 {
-	  0 : next               : ptr
-	  4 : length             : int
-	  8 : allocated          : short
-	  A : entryID            : short
-	  C : capacity           : int
+	  0 : next               : heap_node*
+	  4 : length             : uint
+	  8 : allocated          : ushort
+	  A : entryID            : ushort
+	  C : capacity           : uint
 }
 

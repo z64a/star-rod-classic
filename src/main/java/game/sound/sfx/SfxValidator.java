@@ -513,7 +513,12 @@ public final class SfxValidator
 			}
 
 			switch (command.op) {
-				case END, WAIT_FOR_END, END_LOOP, WAIT_FOR_RELEASE, STOP, RESTART:
+				case END:
+				case WAIT_FOR_END:
+				case END_LOOP:
+				case WAIT_FOR_RELEASE:
+				case STOP:
+				case RESTART:
 					break;
 				case NOP:
 					warn(context + " contains behaviorally inert Nop");
@@ -526,13 +531,16 @@ public final class SfxValidator
 					range(command.b, 0, 127, context + " velocity");
 					range(command.c, 0, 16575, context + " length");
 					break;
-				case SET_VOLUME, SET_REVERB, SET_ENVELOPE, FINE_TUNE, SET_CURRENT_VOLUME,
-						SET_RANDOM_PITCH, SET_RANDOM_VELOCITY, SET_ALTERNATIVE_VOLUME:
+				case SET_VOLUME:
+				case SET_REVERB:
+				case SET_ENVELOPE:
+				case FINE_TUNE:
+				case SET_CURRENT_VOLUME:
+				case SET_RANDOM_PITCH:
+				case SET_RANDOM_VELOCITY:
+				case SET_RANDOM_PAN:
+				case SET_ALTERNATIVE_VOLUME:
 					range(command.a, 0, 255, context + " value");
-					break;
-				case SET_RANDOM_UNUSED:
-					range(command.a, 0, 255, context + " value");
-					warn(context + " uses SetRandomUnused, which is behaviorally unused by the current engine");
 					break;
 				case SET_PAN:
 					range(command.a, 0, 255, context + " value");

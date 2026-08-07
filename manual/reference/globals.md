@@ -43,15 +43,20 @@ Comments begin with `%`. Keep all three header lines in a project override.
 | `$mod/globals/ModBytes.txt` | Additional saved bytes installed by Star Rod. |
 | `$mod/globals/ModFlags.txt` | Additional saved flags installed by Star Rod. |
 
-Each line begins with a hexadecimal index and may supply a default name, descriptive name, and comment:
+Each line begins with a hexadecimal index and a name. The original game-variable files may also retain a default name before the descriptive name:
 
 ```text
+% GameBytes.txt
 01C = Byte_DojoRank = DojoRank % current dojo promotion
-000 = ModByte_Example = ExampleCounter
-000 = ModFlag_Example = OpenedExampleChest
+
+% ModBytes.txt
+000 = MB_ExampleCounter
+
+% ModFlags.txt
+000 = MF_OpenedExampleChest
 ```
 
-Star Rod adds the leading `*` when the descriptive names are used as script variables. These examples become `*DojoRank`, `*ExampleCounter`, and `*OpenedExampleChest`.
+Star Rod adds the leading `*` when these names are used as script variables. These examples become `*DojoRank`, `*MB_ExampleCounter`, and `*MF_OpenedExampleChest`.
 
 Do not assign one name to two indices, and keep each index within the capacity listed in [Script Variables](script-variables.md).
 

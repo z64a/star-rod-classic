@@ -28,7 +28,7 @@ HUD-element sources use `.hs` under `$mod/image/hudscripts/`. Their load group d
 A static 32×32 element is:
 
 ```star-rod
-SetVisible
+EnableCI4
 SetTileSize ( .IconSize:32x32 )
 Loop
     SetIcon ( 60` ~ImageIcon:item/Mushroom )
@@ -44,7 +44,7 @@ The commands most often used by HUD elements are:
 | --- | --- |
 | `SetIcon ( duration image )` | Select an image for the given number of frames. |
 | `SetTileSize ( size )` | Select one of the standard icon dimensions. |
-| `SetVisible` / `SetHidden` | Change whether the element is drawn. |
+| `EnableCI4` / `DisableCI4` | Enable or disable CI4 image mode.
 | `SetScale ( scale )` | Change the drawing scale. |
 | `SetAlpha ( alpha )` | Change opacity. |
 | `SetTexelOffset ( x y )` | Offset the image within its tile. |
@@ -67,4 +67,4 @@ Star Rod rebuilds and relocates both script tables during compilation. New entri
 
 Item-entity scripts use the smaller command set `SetIcon`, `Loop`, `Restart`, `RandomRestart`, and `End`. `SetIcon` takes a duration followed by an image expression, just as it does in a HUD-element script.
 
-See [Working with Images](../guides/working-with-images.md) for the editor workflow.
+See the [HUD Scripts](hud-scripts.md) reference for the complete command set and [Working with Images](../guides/working-with-images.md) for the editor workflow.

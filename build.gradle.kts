@@ -30,6 +30,10 @@ java {
     }
 }
 
+val manualGenerator by sourceSets.creating {
+    java.srcDir("src/manual/java")
+}
+
 tasks.compileJava {
     options.release.set(targetJavaVersion)
     options.compilerArgs.add("-Xlint:deprecation")
@@ -94,12 +98,38 @@ dependencies {
     implementation(files("lib/org.eclipse.equinox.common-3.6.0.jar"))
 
     implementation("org.ahocorasick:ahocorasick:0.6.3")
+
+    add(manualGenerator.implementationConfigurationName, "org.commonmark:commonmark:0.29.0")
+    add(manualGenerator.implementationConfigurationName, "org.commonmark:commonmark-ext-gfm-tables:0.29.0")
+    add(manualGenerator.implementationConfigurationName, "org.commonmark:commonmark-ext-heading-anchor:0.29.0")
 }
 
 val licenseBuildDir = layout.buildDirectory.dir("reports/licenses/licenseReport")
+val manualBuildDir = layout.buildDirectory.dir("generated/manual")
 val releaseBuildDir = layout.buildDirectory.dir("release")
 val runtimeBuildDir = layout.buildDirectory.dir("runtime/$platformName")
 val javaCompiler = javaToolchains.compilerFor(java.toolchain)
+
+val renderManual by tasks.registering(JavaExec::class) {
+    dependsOn(manualGenerator.classesTaskName)
+
+    group = "documentation"
+    description = "Render the user guide as HTML"
+    classpath = manualGenerator.runtimeClasspath
+    mainClass.set("manual.ManualGenerator")
+    args(file("manual").absolutePath, manualBuildDir.get().asFile.absolutePath)
+
+    inputs.dir(file("manual"))
+    outputs.dir(manualBuildDir)
+
+    doFirst {
+        delete(manualBuildDir)
+    }
+}
+
+tasks.compileJava {
+    dependsOn(renderManual)
+}
 
 tasks.shadowJar {
     mergeServiceFiles()
@@ -149,7 +179,7 @@ val createRuntime by tasks.registering(Exec::class) {
 }
 
 tasks.register<Zip>("createReleaseZip") {
-    dependsOn(tasks.shadowJar, createRuntime, tasks.licenseReport)
+    dependsOn(tasks.shadowJar, createRuntime, tasks.licenseReport, renderManual)
 
     group = "release"
     description = "Create a release for $platformName"
@@ -163,6 +193,9 @@ tasks.register<Zip>("createReleaseZip") {
     }
     from(file("contributed")) {
         into("contributed")
+    }
+    from(manualBuildDir) {
+        into("manual")
     }
     from(licenseBuildDir) {
         into("database/licenses")

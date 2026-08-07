@@ -1,6 +1,8 @@
 # Assembly
 
-Star Rod assembles instructions for the NEC VR4300 CPU used by the Nintendo 64. Labels, pointers such as `$Script_Example`, script variables such as `*StoryProgress`, and function expressions such as `~Func:get_variable` may be used where the corresponding instruction accepts them.
+Star Rod assembles instructions for the NEC VR4300 CPU used by the Nintendo 64. The [MIPS](mips.md) reference lists the native registers and instructions. This page covers the supplementary syntax and pseudo-instructions provided by Star Rod.
+
+Labels, pointers such as `$Script_Example`, script variables such as `*StoryProgress`, and function expressions such as `~Func:get_variable` may be used where the corresponding instruction accepts them.
 
 ## Pseudo-Instructions
 

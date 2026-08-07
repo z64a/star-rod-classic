@@ -1,0 +1,9 @@
+% FieldStatus
+type: ram
+size: 4
+fields:
+{
+	  0 : status             : byte
+	  1 : pad_01             : ubyte
+	  2 : duration           : short
+}

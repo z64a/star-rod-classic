@@ -25,11 +25,11 @@ Use the **Friendly Name** for your own organization and the **Engine Name** for 
 
 ## Edit a Map
 
-For a vanilla map, `$mod/map/src/` contains the initial copied source. Open it through Level Editor or Map Editor and save the working version. Star Rod looks under `map/save/` first and falls back to `map/src/` when no saved copy exists.
+For a vanilla map, open its source under `$mod/map/src/` through Level Editor or Map Editor and save the working version. Star Rod looks under `map/save/` first and falls back to `map/src/` when no saved version exists.
 
 Map Editor's **Map** menu can build Geometry and Collision explicitly. **Automatically Build Map Assets** is enabled by default, so compilation also rebuilds missing or out-of-date shape and hit assets for maps found under `map/save/`.
 
-Script changes belong in the map's `.mpat` file under `$mod/map/patch/`. Reusable structures shared by several maps belong under `$mod/map/import/`. The copied `.mscr` and `.midx` files under `map/src/` describe the vanilla overlay; keep authored changes in the patch rather than editing generated or dumped binary data.
+Script changes belong in the map's `.mpat` file under `$mod/map/patch/`. Reusable structures shared by several maps belong under `$mod/map/import/`.
 
 See [Map Render Modes](../reference/map-render-modes.md) when choosing how a model is drawn, and [Patch Expressions](../reference/patch-expressions.md) for references to map markers, models, colliders, zones, entries, and paths.
 

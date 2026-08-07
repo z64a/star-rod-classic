@@ -630,7 +630,7 @@ public final class SfxBinary
 				case 0xF4:
 					return wire1(pc, Op.SET_RANDOM_VELOCITY);
 				case 0xF5:
-					return wire1(pc, Op.SET_RANDOM_UNUSED);
+					return wire1(pc, Op.SET_RANDOM_PAN);
 				case 0xF6:
 					checkRange(pc, 3, "SetPressEnvelope");
 					WireCommand envelope = new WireCommand(pc, 3, Op.SET_PRESS_ENVELOPE);
@@ -689,7 +689,7 @@ public final class SfxBinary
 				case SET_CURRENT_VOLUME:
 				case SET_RANDOM_PITCH:
 				case SET_RANDOM_VELOCITY:
-				case SET_RANDOM_UNUSED:
+				case SET_RANDOM_PAN:
 				case SET_ALTERNATIVE_VOLUME:
 					return new Command(wire.op, wire.a);
 				case PLAY:
@@ -1447,7 +1447,7 @@ public final class SfxBinary
 				case SET_RANDOM_VELOCITY:
 					writeByteCommand(out, 0xF4, command.a);
 					break;
-				case SET_RANDOM_UNUSED:
+				case SET_RANDOM_PAN:
 					writeByteCommand(out, 0xF5, command.a);
 					break;
 				case SET_PRESS_ENVELOPE:

@@ -71,8 +71,8 @@ public class HudElementScript extends Miniscript
 
 			new CommandBuilder(0x07, "SetSizesFixedScale",	new IconSizeArg(), new EnumArg("IconSize")),	// tile size, draw size
 
-			new CommandBuilder(0x08, "SetVisible"),
-			new CommandBuilder(0x09, "SetHidden"),
+			new CommandBuilder(0x08, "EnableCI4").setAliases("SetVisible"),
+			new CommandBuilder(0x09, "DisableCI4").setAliases("SetHidden"),
 
 			new CommandBuilder(0x0A, "AddTexelOffsetX",	new DecArg()),
 			new CommandBuilder(0x0B, "AddTexelOffsetY",	new DecArg()),
@@ -94,7 +94,7 @@ public class HudElementScript extends Miniscript
 
 			new CommandBuilder(0x13, "SetCustomSize",	new SizeXArg(), new SizeYArg()),
 			new CommandBuilder(0x14, "RandomRestart",	new DecArg(), new DecArg()), // random max, cutoff (< randmax)
-			new CommandBuilder(0x15, "op_15",			new HexArg()),
+			new CommandBuilder(0x15, "SetVariable",		new HexArg()),
 			// 16 is not used
 
 			new CommandBuilder(0x17, "RandomBranch",	VARARGS, new BranchListArg()),
