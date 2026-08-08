@@ -62,8 +62,8 @@ import static app.Directories.MOD_ALLY_SRC;
 import static app.Directories.MOD_ASSIST_SRC;
 import static app.Directories.MOD_AUDIO;
 import static app.Directories.MOD_BATTLE;
-import static app.Directories.MOD_ENUMS;
 import static app.Directories.MOD_EFFECT_SRC;
+import static app.Directories.MOD_ENUMS;
 import static app.Directories.MOD_FORMA;
 import static app.Directories.MOD_FORMA_ENEMY;
 import static app.Directories.MOD_FORMA_PATCH;
@@ -317,9 +317,6 @@ public class StarRodClassic extends JFrame
 							editorClosedSignal.await();
 							showMenu = themesEditor.exitToMainMenu;
 							break;
-
-						//	default:
-						//		throw new IllegalStateException("Tool does not exist for " + chosenTool);
 					}
 				}
 			}
@@ -338,7 +335,6 @@ public class StarRodClassic extends JFrame
 	private final Listener progressListener;
 	private final JPanel progressPanel;
 	private final JProgressBar progressBar;
-	//	private final JLabel taskLabel;
 	private final JLabel progressLabel;
 
 	private boolean exitToMainMenu = false;
@@ -635,13 +631,11 @@ public class StarRodClassic extends JFrame
 			cb.setContents(stringSelection, null);
 		});
 
-		//	taskLabel = new JLabel("Current Task");
 		progressLabel = new JLabel("The march of progress.");
 		progressBar = new JProgressBar();
 		progressBar.setIndeterminate(true);
 		progressPanel = new JPanel();
 		progressPanel.setLayout(new MigLayout("fillx"));
-		//	progressPanel.add(taskLabel,"w 25%");
 		progressPanel.add(progressLabel, "wrap");
 		progressPanel.add(progressBar, "grow, wrap 8");
 		progressPanel.setVisible(false);

@@ -1,0 +1,9 @@
+#new:Data $Test {
+##[IF:Mode:A]
+MODE_A
+##[ELSE]
+OTHER
+##[ELSEIF:Mode:B]
+MODE_B
+##[ENDIF]
+}

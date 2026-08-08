@@ -1,0 +1,7 @@
+#new:Data $Nested {
+Outer {
+Inner { Value }
+Tail
+}
+After
+}

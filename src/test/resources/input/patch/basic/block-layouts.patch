@@ -1,0 +1,5 @@
+#new:Data $Separate
+{
+Alpha Beta
+}
+@Script $Inline { Gamma Delta }

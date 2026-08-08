@@ -1,0 +1,12 @@
+#new:Data $Nested {
+##[IF:Outer:Yes]
+OUTER
+##[IF:Inner:Yes]
+INNER
+##[ENDIF]
+OUTER_TAIL
+##[ELSE]
+NOT_OUTER
+##[ENDIF]
+TAIL
+}

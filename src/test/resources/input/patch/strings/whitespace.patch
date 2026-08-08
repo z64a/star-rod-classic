@@ -1,0 +1,5 @@
+#new:String $Text {
+  Hello
+
+World  [End]
+}

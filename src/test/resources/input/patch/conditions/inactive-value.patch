@@ -1,0 +1,7 @@
+#new:Data $Test {
+##[IF:Enabled]
+##[VALUE:Missing]
+##[ELSE]
+KEPT
+##[ENDIF]
+}
