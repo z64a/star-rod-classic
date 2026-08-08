@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -611,16 +612,16 @@ public class Patcher implements IGlobalDatabase
 
 		// the in-game debug format/print buffer is 0x40 = 64 bytes
 		// leave 4 bytes for formatting, 1 for terminator char, and 1 extra for safety
-		if (name.length() > 58)
-			name.substring(0, 58);
+		byte[] nameBytes = name.getBytes(StandardCharsets.US_ASCII);
+		int nameLength = Math.min(nameBytes.length, 58);
 
 		// always have one extra byte for \0 and pad to 4 bytes
-		int len = (name.length() + 4) & -4;
+		int len = (nameLength + 4) & -4;
 		rp.writeShort(index);
 		rp.writeByte(4 + len);
 		rp.writeByte(unused ? 1 : 0);
-		rp.write(name.getBytes());
-		int padding = len - name.length();
+		rp.write(nameBytes, 0, nameLength);
+		int padding = len - nameLength;
 		if (padding > 0)
 			rp.write(new byte[padding]);
 	}

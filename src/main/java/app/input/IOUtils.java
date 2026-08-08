@@ -18,8 +18,11 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -426,6 +429,42 @@ public class IOUtils
 	{
 		return new PrintWriter(new BufferedWriter(new OutputStreamWriter(
 			new FileOutputStream(f), StandardCharsets.UTF_8)));
+	}
+
+	public static void atomicWriteLines(List<String> lines, File f) throws IOException
+	{
+		Path destination = f.toPath().toAbsolutePath().normalize();
+		Path parent = destination.getParent();
+		if (parent == null || !Files.isDirectory(parent))
+			throw new IOException("Output directory does not exist for " + f);
+
+		Path temp = Files.createTempFile(parent, "StarRod_", ".tmp");
+		try {
+			try (BufferedWriter writer = Files.newBufferedWriter(temp, StandardCharsets.UTF_8)) {
+				for (String line : lines) {
+					writer.write(line);
+					writer.newLine();
+				}
+			}
+
+			atomicMoveFile(temp.toFile(), destination.toFile());
+		}
+		finally {
+			Files.deleteIfExists(temp);
+		}
+	}
+
+	public static void atomicMoveFile(File source, File destination) throws IOException
+	{
+		Path sourcePath = source.toPath();
+		Path destinationPath = destination.toPath().toAbsolutePath().normalize();
+		try {
+			Files.move(sourcePath, destinationPath,
+				StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+		}
+		catch (AtomicMoveNotSupportedException e) {
+			Files.move(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+		}
 	}
 
 	public static void writeBufferToFile(ByteBuffer bb, File f) throws IOException

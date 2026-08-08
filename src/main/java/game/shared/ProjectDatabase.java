@@ -533,7 +533,7 @@ public class ProjectDatabase
 		int chance = DataUtils.parseIntString(fields[3]);
 
 		if (fields[1].contains("|")) {
-			String[] typeFields = fields[1].split("|");
+			String[] typeFields = fields[1].split("\\|");
 			if (typeFields.length != 2)
 				throw new InvalidInputException(DebuffType.getNamespace() + " type has invalid format: " + fields[1]);
 
@@ -549,7 +549,16 @@ public class ProjectDatabase
 		if (DebuffType.hasID(typeString))
 			type = DebuffType.getID(typeString);
 		else
-			type = DataUtils.parseIntString(fields[2]);
+			type = DataUtils.parseIntString(typeString);
+
+		if (msn < 0 || msn > 0xF)
+			throw new InvalidInputException(DebuffType.getNamespace() + " leading value is out of range (0-F): " + msn);
+		if ((type & ~0x0FFFF000) != 0)
+			throw new InvalidInputException(DebuffType.getNamespace() + " type uses bits outside 0FFFF000: " + typeString);
+		if (duration < 0 || duration > 0xF)
+			throw new InvalidInputException(DebuffType.getNamespace() + " duration is out of range (0-F): " + duration);
+		if (chance < 0 || chance > 0xFF)
+			throw new InvalidInputException(DebuffType.getNamespace() + " chance is out of range (0-255): " + chance);
 
 		return ((msn & 0xF) << 0x1C) | (type & 0x0FFFF000) | ((duration & 0xF) << 8) | (chance & 0xFF);
 	}

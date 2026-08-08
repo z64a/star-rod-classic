@@ -1001,11 +1001,10 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 
 		Palette pal = null;
 
-		File f = importFileChooser.getSelectedFile();
-		if (f != null && f.exists()) {
+		if (file != null && file.exists()) {
 			try {
 				try {
-					Tile newTile = Tile.load(f, importOptions.getFormat());
+					Tile newTile = Tile.load(file, importOptions.getFormat());
 					pal = newTile.palette;
 				}
 				catch (ImageFormatException e) {
@@ -1034,23 +1033,25 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 		if (image == null)
 			return;
 
-		Palette pal = null;
 		File file = null;
 
 		super.incrementDialogsOpen();
-		if (image != null && image.source != null)
-			importFileChooser.setDirectoryContaining(image.source.getParentFile());
-		if (importFileChooser.prompt() == ChooseDialogResult.APPROVE) {
-			ImportOptionsPanel importOptions = new ImportOptionsPanel();
-			int choice = getConfirmDialog("Import Options", importOptions).choose();
-			if (choice != JOptionPane.OK_OPTION)
-				return;
-
-			file = importFileChooser.getSelectedFile();
-			if (file != null && file.exists())
-				pal = getPaletteEDT(file);
+		try {
+			if (image.source != null)
+				importFileChooser.setDirectoryContaining(image.source.getParentFile());
+			if (importFileChooser.prompt() == ChooseDialogResult.APPROVE)
+				file = importFileChooser.getSelectedFile();
 		}
-		super.decrementDialogsOpen();
+		finally {
+			super.decrementDialogsOpen();
+		}
+
+		if (file == null || !file.exists())
+			return;
+
+		Palette pal = getPaletteEDT(file);
+		if (pal == null)
+			return;
 
 		EditorImage newImage = EditorImage.forcePalette(image, pal);
 		final String filename = file.getName();

@@ -1,6 +1,6 @@
 package util;
 
-import static util.Priority.MILESTONE;
+import static util.Priority.ERROR;
 import static util.Priority.STANDARD;
 
 import java.util.LinkedList;
@@ -9,7 +9,7 @@ import java.util.List;
 public abstract class Logger
 {
 	private static List<ListenerReference> listeners = new LinkedList<>();
-	private static Priority minListenerPriority = STANDARD;
+	private static Priority minListenerPriority = ERROR;
 
 	private static Listener progressListener;
 
@@ -63,9 +63,9 @@ public abstract class Logger
 
 	public static void removeListener(Listener listener)
 	{
-		listeners.remove(listener);
+		listeners.removeIf(ref -> ref.listener == listener);
 
-		minListenerPriority = MILESTONE;
+		minListenerPriority = ERROR;
 		for (ListenerReference r : listeners) {
 			if (minListenerPriority.greaterThan(r.priority))
 				minListenerPriority = r.priority;

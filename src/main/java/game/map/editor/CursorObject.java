@@ -10,7 +10,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -56,6 +55,7 @@ import renderer.shaders.scene.LineShader;
 import util.Logger;
 import util.MathUtil;
 import util.identity.IdentityHashSet;
+import util.xml.XmlWrapper;
 
 public class CursorObject extends EditorObject
 {
@@ -1205,8 +1205,7 @@ public class CursorObject extends EditorObject
 		ArrayList<GuideSprite> guides = new ArrayList<>(255);
 
 		try {
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder builder = factory.newDocumentBuilder();
+			DocumentBuilder builder = XmlWrapper.newSecureDocumentBuilder();
 			Document document = builder.parse(xmlFile);
 			document.getDocumentElement().normalize();
 

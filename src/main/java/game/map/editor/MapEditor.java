@@ -4,6 +4,7 @@ import static app.Directories.*;
 import static game.map.MapKey.*;
 import static game.map.editor.MapInput.*;
 import static org.lwjgl.opengl.GL11.*;
+import static renderer.GLUtils.NO_TEXTURE_ID;
 
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -3443,11 +3444,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 		}
 
 		if (needsBackgroundReload) {
-			glDeleteTextures(map.glBackgroundTexID);
-			if (map.bgImage != null)
-				map.glBackgroundTexID = TextureManager.bindBufferedImage(map.bgImage);
-			else
-				map.glBackgroundTexID = TextureManager.glMissingTextureID;
+			reloadBackgroundTexture();
 		}
 
 		if (dummyDraw)
@@ -3659,9 +3656,30 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 	{
 		if (reloadTextures)
 			TextureManager.clear();
-		glDeleteTextures(map.glBackgroundTexID);
+		deleteBackgroundTexture();
 		selectionManager = new SelectionManager(this);
 		gui.setSelectedTexture(null);
+	}
+
+	private void reloadBackgroundTexture()
+	{
+		int textureID = TextureManager.glMissingTextureID;
+		if (map.bgImage != null)
+			textureID = TextureManager.bindBufferedImage(map.bgImage);
+
+		if (textureID == NO_TEXTURE_ID)
+			return;
+
+		deleteBackgroundTexture();
+		map.glBackgroundTexID = textureID;
+		needsBackgroundReload = false;
+	}
+
+	private void deleteBackgroundTexture()
+	{
+		if (map.glBackgroundTexID != NO_TEXTURE_ID && map.glBackgroundTexID != TextureManager.glMissingTextureID)
+			glDeleteTextures(map.glBackgroundTexID);
+		map.glBackgroundTexID = NO_TEXTURE_ID;
 	}
 
 	/**

@@ -5,6 +5,7 @@ import static app.Directories.MOD_IMG_TEX;
 import static game.texture.TileFormat.CI_8;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_CLAMP_TO_BORDER;
+import static renderer.GLUtils.NO_TEXTURE_ID;
 
 import java.awt.Canvas;
 import java.awt.Container;
@@ -187,9 +188,9 @@ public class BattleEditor extends BaseEditor
 	private Map stageMap;
 	private boolean loadingStage = false;
 	private BufferedImage bgImage = null;
-	private int glBackgroundTexID = -1;
+	private int glBackgroundTexID = NO_TEXTURE_ID;
 
-	private int healthBarTexID = -1;
+	private int healthBarTexID = NO_TEXTURE_ID;
 
 	private Sprite playerSprite;
 	private PartnerActor currentPartner = PartnerActor.GOOMBARIO;
@@ -663,8 +664,10 @@ public class BattleEditor extends BaseEditor
 
 	public void setBackground(String bgName)
 	{
-		if (bgImage != null)
+		if (bgImage != null) {
 			glDeleteTextures(glBackgroundTexID);
+			glBackgroundTexID = NO_TEXTURE_ID;
+		}
 
 		if (bgName == null || bgName.isEmpty()) {
 			Logger.log("Cleared background.");

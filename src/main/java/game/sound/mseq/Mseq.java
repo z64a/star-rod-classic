@@ -89,6 +89,7 @@ public class Mseq implements XmlSerializable
 
 			try (XmlWriter xmw = new XmlWriter(DUMP_AUDIO_MSEQ.getFile(fileBaseName + ".xml"))) {
 				mseq.toXML(xmw);
+				xmw.save();
 			}
 		}
 	}
@@ -518,6 +519,38 @@ public class Mseq implements XmlSerializable
 				commands.add(makeCommand(xmr, elem));
 			}
 		}
+
+		validateLoopTiming(xmr);
+	}
+
+	private void validateLoopTiming(XmlReader xmr)
+	{
+		int[] loopStartPositions = { -1, -1 };
+
+		for (int i = 0; i < commands.size(); i++) {
+			MseqCommand command = commands.get(i);
+			if (command instanceof StartLoopCommand start) {
+				loopStartPositions[start.loopID] = i + 1;
+			}
+			else if (command instanceof EndLoopCommand end && end.count == 0) {
+				int startPos = loopStartPositions[end.loopID];
+				if (startPos < 0)
+					continue;
+
+				boolean advancesTime = false;
+				for (int j = startPos; j < i; j++) {
+					if (commands.get(j) instanceof DelayCommand) {
+						advancesTime = true;
+						break;
+					}
+				}
+
+				if (!advancesTime) {
+					xmr.complain(String.format(
+						"MSEQ loop %d ending at command %d repeats forever without a Delay", end.loopID, i));
+				}
+			}
+		}
 	}
 
 	@Override
@@ -546,7 +579,6 @@ public class Mseq implements XmlSerializable
 		xmw.closeTag(commandListTag);
 
 		xmw.closeTag(root);
-		xmw.save();
 	}
 
 	private static MseqCommand makeCommand(XmlReader xmr, Element elem)

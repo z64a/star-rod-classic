@@ -30,6 +30,7 @@ import util.Logger;
 public class MseqPlayer implements AudioClient, PlaybackSession
 {
 	private static final int NUM_VOICES = 16;
+	private static final int MAX_COMMANDS_PER_UPDATE = 65536;
 	public static final int SAMPLES_PER_TICK = 2 * AudioEngine.FRAME_SAMPLES;
 
 	public static enum PlayerState
@@ -395,7 +396,16 @@ public class MseqPlayer implements AudioClient, PlaybackSession
 			delayTime--;
 
 		// consume commands
+		int executed = 0;
 		while (delayTime == 0) {
+			if (++executed > MAX_COMMANDS_PER_UPDATE) {
+				Logger.logfError("MSEQ %s exceeded the per-update command limit", mseq.name);
+				stop();
+				curTime = mseq.duration;
+				curDuration = 0;
+				return;
+			}
+
 			if (mseq.commands.size() == curPos) {
 				state = PlayerState.DONE;
 				curTime = mseq.duration;
@@ -431,52 +441,33 @@ public class MseqPlayer implements AudioClient, PlaybackSession
 				}
 			}
 			else if (abs instanceof PlaySoundCommand cmd) {
-				logCommand("[%X] Play Sound %X @ %X (detune = %d)", cmd.track, cmd.pitch, cmd.volume,
-					((cmd.pitch & 0x7F) * 100) - tracks[cmd.track].instrument.keyBase);
-
-				int index = -1;
-
-				// find unassigned voice ref
-				for (int i = 0; i < voices.length; i++) {
-					if (voices[i] == null) {
-						index = i;
-						break;
-					}
+				MseqTrack track = tracks[cmd.track];
+				if (track.instrument == null) {
+					Logger.logfWarning("[%X] Play Sound: Instrument is null!", cmd.track);
 				}
+				else {
+					Instrument ins = track.instrument;
+					EnvelopePair envelope = track.envelope;
+					int detune = ((cmd.pitch & 0x7F) * 100) - ins.keyBase;
 
-				// try stealing the first voice -- an odd choice, but OK
-				if (index == -1) {
-					index = 0;
-					voices[0].kill();
-					voices[0] = null;
-				}
+					logCommand("[%X] Play Sound %X @ %X (detune = %d)", cmd.track, cmd.pitch, cmd.volume, detune);
 
-				if (index != -1) {
-					MseqTrack track = tracks[cmd.track];
+					int index = claimVoice();
+					MseqVoice voice = new MseqVoice(track, cmd.pitch);
+					voices[index] = voice;
+					engine.addVoice(voice);
 
-					if (track.instrument != null) {
-						Instrument ins = track.instrument;
-						EnvelopePair envelope = track.envelope;
+					voice.baseVolume = (cmd.volume & 0x7F) / Mseq.MAX_VOL_8;
+					voice.baseDetune = detune;
+					voice.setInstrument(ins);
+					voice.setEnvelope(envelope);
+					voice.setPan(track.pan);
+					voice.setReverb(track.reverb);
 
-						MseqVoice voice = new MseqVoice(track, cmd.pitch);
-						voices[index] = voice;
-						engine.addVoice(voice);
+					voice.updateVolume();
+					voice.updatePitch();
 
-						voice.baseVolume = (cmd.volume & 0x7F) / Mseq.MAX_VOL_8;
-						voice.baseDetune = ((cmd.pitch & 0x7F) * 100) - ins.keyBase;
-						voice.setInstrument(ins);
-						voice.setEnvelope(envelope);
-						voice.setPan(track.pan);
-						voice.setReverb(track.reverb);
-
-						voice.updateVolume();
-						voice.updatePitch();
-
-						voice.play();
-					}
-					else {
-						Logger.logfWarning("[%X] Play Sound: Instrument is null!", cmd.track);
-					}
+					voice.play();
 				}
 			}
 			else if (abs instanceof PlayDrumCommand cmd) {
@@ -493,8 +484,9 @@ public class MseqPlayer implements AudioClient, PlaybackSession
 					Instrument ins = track.instrument = res.instrument();
 					EnvelopePair envelope = track.envelope = res.envelope();
 
+					int index = claimVoice();
 					MseqVoice voice = new MseqVoice(track, cmd.drumID);
-					voices[Mseq.DRUM_TRACK] = voice;
+					voices[index] = voice;
 					engine.addVoice(voice);
 
 					voice.baseVolume = (drum.volume / Mseq.MAX_VOL_8) * (cmd.volume & 0x7F) / Mseq.MAX_VOL_8;
@@ -624,6 +616,19 @@ public class MseqPlayer implements AudioClient, PlaybackSession
 				}
 			}
 		}
+	}
+
+	private int claimVoice()
+	{
+		for (int i = 0; i < voices.length; i++) {
+			if (voices[i] == null)
+				return i;
+		}
+
+		// try stealing the first voice -- an odd choice, but OK
+		voices[0].kill();
+		voices[0] = null;
+		return 0;
 	}
 
 	private static void logCommand(String string, Object ... args)

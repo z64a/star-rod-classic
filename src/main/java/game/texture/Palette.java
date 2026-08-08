@@ -4,6 +4,7 @@ import static game.texture.TileFormat.TYPE_CI;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
+import static renderer.GLUtils.NO_TEXTURE_ID;
 
 import java.awt.Color;
 import java.awt.image.DataBuffer;
@@ -22,7 +23,7 @@ public class Palette
 
 	private boolean glBound = false;
 	//	private ByteBuffer glBuffer;
-	private int glTexID;
+	private int glTexID = NO_TEXTURE_ID;
 
 	public Palette(short[] pal)
 	{
@@ -298,5 +299,7 @@ public class Palette
 	{
 		if (glBound)
 			glDeleteTextures(glTexID);
+		glTexID = NO_TEXTURE_ID;
+		glBound = false;
 	}
 }

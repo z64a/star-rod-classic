@@ -205,10 +205,16 @@ public class Instrument implements XmlSerializable
 	public void load(File bankDir)
 	{
 		ReadWavData mainWav = readWav(new File(bankDir, mainFilename));
+		if (mainWav.samples.isEmpty())
+			throw new StarRodException("%s contains no audio samples", mainFilename);
+
 		ReadWavData loopWav = new ReadWavData(mainWav.sampleRate);
 
 		if (hasLoop) {
 			loopWav = readWav(new File(bankDir, loopFilename));
+			if (loopWav.samples.isEmpty())
+				throw new StarRodException("%s contains no audio samples", loopFilename);
+
 			loopStart = mainWav.samples.size();
 			loopEnd = mainWav.samples.size() + loopWav.samples.size();
 		}

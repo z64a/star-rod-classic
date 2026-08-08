@@ -1,6 +1,7 @@
 package game.map.editor.render;
 
 import static org.lwjgl.opengl.GL11.*;
+import static renderer.GLUtils.NO_TEXTURE_ID;
 
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -43,11 +44,11 @@ public abstract class TextureManager
 	public static BufferedImage background;
 	public static Image miniBackground;
 	public static Palette missingPalette;
-	public static int glBackground;
-	public static int glMissingTextureID;
-	public static int glNoBackgoundTexID;
-	public static int glMarkerTexID;
-	public static int glLightTexID;
+	public static int glBackground = NO_TEXTURE_ID;
+	public static int glMissingTextureID = NO_TEXTURE_ID;
+	public static int glNoBackgoundTexID = NO_TEXTURE_ID;
+	public static int glMarkerTexID = NO_TEXTURE_ID;
+	public static int glLightTexID = NO_TEXTURE_ID;
 
 	public static HashMap<String, Integer> textureCount;
 	public static int untexturedCount = 0;
@@ -209,11 +210,11 @@ public abstract class TextureManager
 	{
 		try {
 			BufferedImage bimg = ImageIO.read(f);
-			return (bimg == null) ? -1 : TextureManager.bindBufferedImage(bimg);
+			return (bimg == null) ? NO_TEXTURE_ID : TextureManager.bindBufferedImage(bimg);
 		}
 		catch (IOException e) {
 			Logger.logError(e.getMessage());
-			return -1;
+			return NO_TEXTURE_ID;
 		}
 	}
 

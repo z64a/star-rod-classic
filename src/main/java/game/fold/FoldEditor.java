@@ -2,6 +2,7 @@ package game.fold;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_CLAMP_TO_BORDER;
+import static renderer.GLUtils.NO_TEXTURE_ID;
 
 import java.awt.Canvas;
 import java.awt.event.ActionListener;
@@ -70,7 +71,7 @@ public class FoldEditor extends BaseEditor
 	private List<FoldAnim> foldAnims;
 
 	private BufferedImage bgImage = null;
-	private int glBackgroundTexID = -1;
+	private int glBackgroundTexID = NO_TEXTURE_ID;
 
 	private int currentAnimID = 6;
 

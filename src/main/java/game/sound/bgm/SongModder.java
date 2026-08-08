@@ -64,6 +64,7 @@ public abstract class SongModder
 
 			try (XmlWriter xmw = new XmlWriter(Directories.DUMP_AUDIO_BGM.getFile(fileBaseName + ".xml"))) {
 				song.toXML(xmw);
+				xmw.save();
 			}
 		}
 	}

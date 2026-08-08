@@ -4,6 +4,7 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL14.GL_DEPTH_COMPONENT32;
 import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.opengl.GL32.glFramebufferTexture;
+import static renderer.GLUtils.NO_TEXTURE_ID;
 
 import java.nio.ByteBuffer;
 
@@ -14,8 +15,8 @@ public final class FrameBuffer
 	private final int frameBuffer;
 	private final boolean hasDepth;
 
-	private int colorTexture;
-	private int depthTexture;
+	private int colorTexture = NO_TEXTURE_ID;
+	private int depthTexture = NO_TEXTURE_ID;
 
 	public int sizeX;
 	public int sizeY;
@@ -38,7 +39,7 @@ public final class FrameBuffer
 
 	public void bind(int sizeX, int sizeY)
 	{
-		glBindTexture(GL_TEXTURE_2D, 0); // make sure the texture isn't bound
+		glBindTexture(GL_TEXTURE_2D, NO_TEXTURE_ID); // make sure the texture isn't bound
 		RenderState.bindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
 
 		if (sizeX > this.sizeX || sizeY > this.sizeY) {
@@ -73,6 +74,8 @@ public final class FrameBuffer
 		glDeleteFramebuffers(frameBuffer);
 		glDeleteTextures(colorTexture);
 		glDeleteTextures(depthTexture);
+		colorTexture = NO_TEXTURE_ID;
+		depthTexture = NO_TEXTURE_ID;
 	}
 
 	public void unbind()

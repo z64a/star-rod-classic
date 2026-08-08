@@ -297,6 +297,7 @@ public final class SfxValidator
 			}
 
 			Set<String> spawnedNames = collectSpawnedNames(sound, context);
+			validateSpawnCycles(sound, context);
 
 			if (isDirectID(sound.id)) {
 				if (sound.routing != null)
@@ -343,6 +344,70 @@ public final class SfxValidator
 					error(context + " defines spawned effect " + spawned.name + " more than once");
 			}
 			return result;
+		}
+
+		private void validateSpawnCycles(Sound sound, String context)
+		{
+			Map<String, SpawnedEffect> effects = new HashMap<>();
+			for (SpawnedEffect spawned : sound.spawnedEffects) {
+				if (spawned != null && spawned.name != null)
+					effects.putIfAbsent(spawned.name, spawned);
+			}
+
+			Set<String> complete = new HashSet<>();
+			List<String> active = new ArrayList<>();
+			for (SpawnedEffect spawned : sound.spawnedEffects) {
+				if (spawned != null && spawned.name != null)
+					validateSpawnCycles(spawned.name, effects, complete, active, context);
+			}
+		}
+
+		private void validateSpawnCycles(String name, Map<String, SpawnedEffect> effects,
+			Set<String> complete, List<String> active, String context)
+		{
+			if (complete.contains(name))
+				return;
+
+			int cycleStart = active.indexOf(name);
+			if (cycleStart >= 0) {
+				StringBuilder cycle = new StringBuilder();
+				for (int i = cycleStart; i < active.size(); i++) {
+					if (cycle.length() > 0)
+						cycle.append(" -> ");
+					cycle.append(active.get(i));
+				}
+				cycle.append(" -> ").append(name);
+				error(context + " has recursive spawned-effect cycle: " + cycle);
+				return;
+			}
+
+			SpawnedEffect spawned = effects.get(name);
+			if (spawned == null)
+				return;
+
+			active.add(name);
+			for (String reference : collectSpawnReferences(spawned)) {
+				if (effects.containsKey(reference))
+					validateSpawnCycles(reference, effects, complete, active, context);
+			}
+			active.remove(active.size() - 1);
+			complete.add(name);
+		}
+
+		private List<String> collectSpawnReferences(SpawnedEffect spawned)
+		{
+			List<String> references = new ArrayList<>();
+			for (Track track : spawned.tracks) {
+				if (track == null || !(track.definition instanceof Sequence sequence))
+					continue;
+				for (Node node : sequence.nodes) {
+					if (node instanceof Command command && command.op == Op.SPAWN
+						&& command.ref != null && !references.contains(command.ref)) {
+						references.add(command.ref);
+					}
+				}
+			}
+			return references;
 		}
 
 		private void validateTrackSet(List<Track> tracks, Routing routing, String context, Set<String> spawnedNames)

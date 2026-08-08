@@ -4,6 +4,7 @@ import static app.Directories.DUMP_IMG_BG;
 import static game.string.StringConstants.StringEffect.*;
 import static game.texture.TileFormat.CI_8;
 import static org.lwjgl.opengl.GL11.*;
+import static renderer.GLUtils.NO_TEXTURE_ID;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -60,8 +61,8 @@ public class StringRenderer
 	public final TransformMatrix projMatrix;
 	public final TransformMatrix viewMatrix;
 
-	private int glBackgroundTexID;
-	private int glNoiseTexID;
+	private int glBackgroundTexID = NO_TEXTURE_ID;
+	private int glNoiseTexID = NO_TEXTURE_ID;
 
 	private Random rng;
 	private boolean useFiltering = true;
@@ -74,7 +75,7 @@ public class StringRenderer
 
 	private BufferedImage varImage = null;
 	private boolean varImageLoaded = false;
-	private int glVarTexID;
+	private int glVarTexID = NO_TEXTURE_ID;
 
 	public StringRenderer(StringEditor editor) throws IOException
 	{
@@ -97,10 +98,17 @@ public class StringRenderer
 		glDeleteTextures(glBackgroundTexID);
 		glDeleteTextures(glNoiseTexID);
 		glDeleteTextures(glVarTexID);
+		glBackgroundTexID = NO_TEXTURE_ID;
+		glNoiseTexID = NO_TEXTURE_ID;
+		glVarTexID = NO_TEXTURE_ID;
+		varImageLoaded = false;
 
-		if (glItemPreviews != null)
-			for (int i : glItemPreviews)
-				glDeleteTextures(i);
+		if (glItemPreviews != null) {
+			for (int i = 0; i < glItemPreviews.length; i++) {
+				glDeleteTextures(glItemPreviews[i]);
+				glItemPreviews[i] = NO_TEXTURE_ID;
+			}
+		}
 	}
 
 	private void loadTextures() throws IOException

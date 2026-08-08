@@ -2,6 +2,7 @@ package game.map;
 
 import static app.Directories.MOD_IMG_TEX;
 import static game.map.MapKey.*;
+import static renderer.GLUtils.NO_TEXTURE_ID;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -17,7 +18,6 @@ import java.util.Stack;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.w3c.dom.Element;
 
@@ -104,7 +104,7 @@ public class Map implements XmlSerializable
 	public transient File saveFile;
 	public transient boolean modified = false;
 	public transient BufferedImage bgImage = null;
-	public transient int glBackgroundTexID = -1;
+	public transient int glBackgroundTexID = NO_TEXTURE_ID;
 
 	@Override
 	public void fromXML(XmlReader xmr, Element mapElem)
@@ -807,9 +807,6 @@ public class Map implements XmlSerializable
 
 	private void saveMapAs(File file, String author, boolean overrideName) throws Exception
 	{
-		FileUtils.touch(file);
-		File tempFile = new File(file.getAbsolutePath() + ".temp");
-
 		if (modified)
 			this.author = author;
 
@@ -820,13 +817,11 @@ public class Map implements XmlSerializable
 
 		markerTree.recalculateIndicies();
 
-		try (XmlWriter xmw = new XmlWriter(tempFile)) {
+		try (XmlWriter xmw = new XmlWriter(file)) {
 			toXML(xmw);
 			xmw.save();
 		} // flushed on auto-close
 
-		FileUtils.copyFile(tempFile, file);
-		FileUtils.deleteQuietly(tempFile);
 		source = file;
 		saveFile = file;
 

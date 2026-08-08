@@ -1,6 +1,7 @@
 package game.sound;
 
 import static org.lwjgl.opengl.GL11.*;
+import static renderer.GLUtils.NO_TEXTURE_ID;
 
 import java.awt.Canvas;
 import java.awt.Dimension;
@@ -61,7 +62,7 @@ public class AudioEditor extends BaseEditor implements MouseManagerListener
 	private final BasicCamera cam;
 
 	private boolean glTexDirty = true;
-	private int glBackgroundTexID;
+	private int glBackgroundTexID = NO_TEXTURE_ID;
 
 	private boolean bDrawBackground = false;
 	private boolean bDrawGrid = true;

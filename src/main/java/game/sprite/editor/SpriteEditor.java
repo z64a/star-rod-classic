@@ -18,11 +18,14 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
@@ -58,6 +61,7 @@ import app.SwingUtils;
 import app.config.Config;
 import app.config.Options;
 import app.config.Options.Scope;
+import app.input.IOUtils;
 import game.map.editor.render.PresetColor;
 import game.map.editor.render.TextureManager;
 import game.map.editor.ui.dialogs.ChooseDialogResult;
@@ -926,69 +930,130 @@ public class SpriteEditor extends BaseEditor
 		boolean importPalette = (result & ImportOptionsDialog.PALETTE) != 0;
 		boolean importRaster = (result & ImportOptionsDialog.RASTER) != 0;
 
-		SpritePalette defaultPal = sprite.palettes.get(0);
-		if (importPalette) {
-			SpritePalette sp = new SpritePalette(rasters.get(0).img.palette);
+		SpritePalette importedPalette = null;
+		List<File> destinationFiles = new ArrayList<>();
+		List<File> stagedFiles = new ArrayList<>();
+		List<File> createdFiles = new ArrayList<>();
 
-			sp.name = FilenameUtils.getBaseName(rasters.get(0).filename);
-			sp.filename = importRaster
-				? sp.name + ".pal.png"
-				: FilenameUtils.getBaseName(rasters.get(0).filename) + ".png";
+		try {
+			Set<File> plannedFiles = new HashSet<>();
+			SpritePalette defaultPal;
 
-			if (new File(sprite.getDirectoryName() + sp.filename).exists()) {
-				Logger.logError("Refusing to overwrite existing file: " + sprite.getDirectoryName() + sp.filename);
-				return false;
+			if (importPalette) {
+				importedPalette = new SpritePalette(rasters.get(0).img.palette);
+				importedPalette.name = FilenameUtils.getBaseName(rasters.get(0).filename);
+				importedPalette.filename = importRaster
+					? importedPalette.name + ".pal.png"
+					: FilenameUtils.getBaseName(rasters.get(0).filename) + ".png";
+
+				File paletteFile = new File(sprite.getDirectoryName() + importedPalette.filename).getCanonicalFile();
+				if (paletteFile.exists()) {
+					Logger.logError("Refusing to overwrite existing file: " + paletteFile);
+					return false;
+				}
+				plannedFiles.add(paletteFile);
+				defaultPal = importedPalette;
+			}
+			else {
+				defaultPal = sprite.palettes.get(0);
 			}
 
+			if (importRaster) {
+				for (int i = 0; i < rasters.size(); i++) {
+					SpriteRaster sr = rasters.get(i);
+					if (sr.filename == null)
+						sr.filename = String.format("Raster_%02X.png", sprite.rasters.size() + i);
+
+					File destination;
+					if (sprite.isPlayerSprite())
+						destination = MOD_SPR_PLR_SHARED.getFile(sr.filename);
+					else
+						destination = new File(sprite.getDirectoryName() + sr.filename);
+					destination = destination.getCanonicalFile();
+
+					if (destination.exists() || !plannedFiles.add(destination)) {
+						Logger.logError("Refusing to overwrite existing file: " + destination);
+						return false;
+					}
+					destinationFiles.add(destination);
+
+					sr.defaultPal = defaultPal;
+					sr.img.palette = defaultPal.pal;
+					sr.loadEditorImages();
+				}
+
+				for (int i = 0; i < rasters.size(); i++) {
+					File destination = destinationFiles.get(i);
+					File parent = destination.getParentFile();
+					if (parent == null || !parent.isDirectory())
+						throw new IOException("Output directory does not exist for " + destination);
+
+					File temp = File.createTempFile("StarRod_", ".png", parent);
+					stagedFiles.add(temp);
+					rasters.get(i).img.savePNG(temp.getAbsolutePath());
+				}
+
+				for (int i = 0; i < destinationFiles.size(); i++) {
+					File destination = destinationFiles.get(i);
+					IOUtils.atomicMoveFile(stagedFiles.get(i), destination);
+					createdFiles.add(destination);
+				}
+			}
+
+			if (importedPalette != null) {
+				sprite.palettes.addElement(importedPalette);
+				importedPalette.modified = true;
+			}
+
+			if (importRaster) {
+				for (SpriteRaster sr : rasters) {
+					sprite.rasters.addElement(sr);
+					sr.imported = true;
+				}
+			}
+			sprite.recalculateIndices();
+		}
+		catch (Throwable t) {
+			for (SpriteRaster sr : rasters)
+				sprite.rasters.removeElement(sr);
+			if (importedPalette != null)
+				sprite.palettes.removeElement(importedPalette);
+			sprite.recalculateIndices();
+			deleteImportedFiles(createdFiles);
+
+			Logger.logError("Failed to import raster: " + f.getName());
+			super.showStackTrace(t);
+			return false;
+		}
+		finally {
+			deleteImportedFiles(stagedFiles);
+		}
+
+		if (importedPalette != null) {
 			invokeLater(() -> {
 				onPaletteListChange();
 			});
-			defaultPal = sp;
-			sprite.palettes.addElement(sp);
-			sp.modified = true;
 		}
-
 		if (importRaster) {
-			for (SpriteRaster sr : rasters) {
-				sr.defaultPal = defaultPal;
-				sprite.rasters.addElement(sr);
-				sr.imported = true;
-				sr.loadEditorImages();
-
-				sprite.recalculateIndices();
-
-				sr.img.palette = defaultPal.pal;
-				try {
-					if (sprite.isPlayerSprite()) {
-						sr.img.savePNG(MOD_SPR_PLR_SHARED + sr.filename);
-					}
-					else {
-						if (sr.filename == null)
-							sr.filename = String.format("Raster_%02X.png", sr.getIndex());
-
-						String trueFilename = sprite.getDirectoryName() + sr.filename;
-
-						if (new File(trueFilename).exists()) {
-							Logger.logError("Refusing to overwrite existing file: " + trueFilename);
-							return false;
-						}
-
-						sr.img.savePNG(trueFilename);
-					}
-				}
-				catch (Throwable t) {
-					Logger.logError("Failed to save imported raster: " + f.getName());
-					super.showStackTrace(t);
-					return false;
-				}
-			}
-
 			invokeLater(() -> {
 				onRasterListChange();
 			});
 		}
 
 		return true;
+	}
+
+	private static void deleteImportedFiles(List<File> files)
+	{
+		for (File file : files) {
+			try {
+				Files.deleteIfExists(file.toPath());
+			}
+			catch (IOException e) {
+				Logger.logError("Could not remove failed import file: " + file);
+				Logger.printStackTrace(e);
+			}
+		}
 	}
 
 	private SpriteRaster promptImportRaster()

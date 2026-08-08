@@ -8,6 +8,7 @@ import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
 import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL14.GL_MIRRORED_REPEAT;
 import static org.lwjgl.opengl.GL30.*;
+import static renderer.GLUtils.NO_TEXTURE_ID;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
@@ -42,7 +43,7 @@ public class Tile
 
 	private boolean glLoaded = false;
 	//	private ByteBuffer glBuffer;
-	private int glTexID;
+	private int glTexID = NO_TEXTURE_ID;
 
 	public Tile(TileFormat fmt, int h, int w)
 	{
@@ -568,6 +569,8 @@ public class Tile
 	{
 		if (glLoaded)
 			glDeleteTextures(glTexID);
+		glTexID = NO_TEXTURE_ID;
+		glLoaded = false;
 	}
 
 	public static Tile getSpritePaletteImage()

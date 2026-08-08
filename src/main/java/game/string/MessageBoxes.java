@@ -3,6 +3,7 @@ package game.string;
 import static app.Directories.*;
 import static game.texture.TileFormat.CI_4;
 import static org.lwjgl.opengl.GL11.*;
+import static renderer.GLUtils.NO_TEXTURE_ID;
 import static renderer.buffers.BufferedMesh.VBO_UV;
 
 import java.awt.Color;
@@ -280,7 +281,7 @@ public class MessageBoxes
 		private final TileFormat fmt;
 
 		private Tile tile;
-		private int glTexID;
+		private int glTexID = NO_TEXTURE_ID;
 
 		public void drawBasicQuad(float x, float y)
 		{
@@ -441,8 +442,10 @@ public class MessageBoxes
 		for (WindowPart g : WindowPart.values())
 			g.tile.glDelete();
 
-		for (Graphic l : Graphic.values())
+		for (Graphic l : Graphic.values()) {
 			glDeleteTextures(l.glTexID);
+			l.glTexID = NO_TEXTURE_ID;
+		}
 
 		borderMesh.glDelete();
 	}

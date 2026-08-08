@@ -306,6 +306,7 @@ public class Voice
 	private boolean canLoop()
 	{
 		return allowLooping && ins.hasLoop
+			&& ins.loopStart >= 0 && ins.loopEnd > ins.loopStart && ins.loopEnd <= ins.samples.size()
 			&& (ins.loopCount == Instrument.LOOP_FOREVER || loopIterations < ins.loopCount);
 	}
 }

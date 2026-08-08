@@ -1,12 +1,14 @@
 package renderer.shaders.postprocess;
 
+import static renderer.GLUtils.NO_TEXTURE_ID;
+
 import java.awt.image.BufferedImage;
 
 import game.map.editor.render.TextureManager;
 
 public class Warm2008Shader extends PostProcessShader
 {
-	private int lutTexID = 0;
+	private int lutTexID = NO_TEXTURE_ID;
 
 	public Warm2008Shader()
 	{

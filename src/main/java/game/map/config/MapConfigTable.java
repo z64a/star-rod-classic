@@ -5,7 +5,6 @@ import static game.map.config.MapConfigTable.Resource.ResourceType.*;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
@@ -424,7 +423,7 @@ public class MapConfigTable
 			xmw.closeTag(root);
 			xmw.save();
 		}
-		catch (FileNotFoundException e) {
+		catch (IOException e) {
 			// throw it back up to the main menu
 			throw new RuntimeException(e);
 		}

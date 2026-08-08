@@ -3,7 +3,6 @@ package game.world.partner;
 import static game.world.partner.PartnerKey.*;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,7 +74,7 @@ public class PartnerConfig
 	protected PartnerConfig()
 	{}
 
-	protected static void writeXML(List<PartnerConfig> partners, File xmlFile) throws FileNotFoundException
+	protected static void writeXML(List<PartnerConfig> partners, File xmlFile) throws IOException
 	{
 		try (XmlWriter xmw = new XmlWriter(xmlFile,
 			"You can't add new partners, but you can modify any of the existing ones.")) {

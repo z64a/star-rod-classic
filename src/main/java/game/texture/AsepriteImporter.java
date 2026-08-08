@@ -277,9 +277,10 @@ public class AsepriteImporter
 			bb.get(); // zero
 			int newChunks = bb.getInt();
 
-			assert (oldChunks == newChunks);
-
-			numChunks = (oldChunks == -1) ? newChunks : oldChunks;
+			if (oldChunks == 0xFFFF || newChunks != 0)
+				numChunks = newChunks;
+			else
+				numChunks = oldChunks;
 		}
 	}
 

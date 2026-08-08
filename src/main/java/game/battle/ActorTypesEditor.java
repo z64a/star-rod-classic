@@ -4,7 +4,6 @@ import static app.Directories.*;
 import static game.battle.ActorTypesEditor.ActorKey.*;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -481,7 +480,7 @@ public class ActorTypesEditor
 		return types;
 	}
 
-	private static void writeXML(List<ActorType> types, File xmlFile) throws FileNotFoundException
+	private static void writeXML(List<ActorType> types, File xmlFile) throws IOException
 	{
 		try (XmlWriter xmw = new XmlWriter(xmlFile,
 			"You can define up to 255 actor types (0-FE). Read the docs for more information.")) {

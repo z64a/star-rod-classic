@@ -680,7 +680,6 @@ public class Song implements XmlSerializable
 		xmw.closeTag(phraseListTag);
 
 		xmw.closeTag(root);
-		xmw.save();
 	}
 
 	public static class BGMPart implements Comparable<BGMPart>

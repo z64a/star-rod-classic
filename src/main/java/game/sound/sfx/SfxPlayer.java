@@ -35,6 +35,7 @@ import util.Logger;
 public class SfxPlayer implements AudioClient, PlaybackSession
 {
 	private static final int MAX_COMMANDS_PER_FRAME = 65536;
+	private static final int MAX_TRACK_PLAYERS = 1024;
 	private static final int MAX_TIMELINE_FRAMES = 10 * 60 * AudioEngine.OUTPUT_RATE / AudioEngine.FRAME_SAMPLES;
 	private static final int TRIGGER_NONE = 0;
 	private static final int TRIGGER_ALTERNATIVE_SOUND = 1;
@@ -93,6 +94,7 @@ public class SfxPlayer implements AudioClient, PlaybackSession
 	private int duration;
 	private int requestedTime;
 	private int initialTrigger;
+	private boolean trackLimitExceeded;
 
 	public SfxPlayer(AudioEngine engine, SoundBank bank)
 	{
@@ -205,7 +207,9 @@ public class SfxPlayer implements AudioClient, PlaybackSession
 		updateCounter = UPDATE_INTERVAL;
 		currentTime = 0;
 		requestedTime = -1;
-		startTracks(sound.tracks, true);
+		trackLimitExceeded = false;
+		if (!startTracks(sound.tracks, true))
+			return;
 		setTrigger(initialTrigger);
 	}
 
@@ -236,6 +240,7 @@ public class SfxPlayer implements AudioClient, PlaybackSession
 		paused = false;
 		currentTime = 0;
 		requestedTime = -1;
+		trackLimitExceeded = false;
 	}
 
 	@Override
@@ -363,13 +368,21 @@ public class SfxPlayer implements AudioClient, PlaybackSession
 		if (updatePlayers && !pendingSpawns.isEmpty()) {
 			List<SpawnedEffect> ready = new ArrayList<>(pendingSpawns);
 			pendingSpawns.clear();
-			for (SpawnedEffect spawned : ready)
-				startTracks(spawned.tracks, false);
+			for (SpawnedEffect spawned : ready) {
+				if (!startTracks(spawned.tracks, false))
+					return;
+			}
 		}
 
 		if (updatePlayers) {
 			for (SfxTrackPlayer player : trackPlayers)
 				player.update(fastForward);
+		}
+
+		if (trackLimitExceeded) {
+			Logger.logfError("SFX %s exceeded the active track limit", currentSound.name);
+			clearActivePlayback();
+			return;
 		}
 
 		Iterator<SfxTrackPlayer> iterator = trackPlayers.iterator();
@@ -397,13 +410,19 @@ public class SfxPlayer implements AudioClient, PlaybackSession
 			requestedTime = time;
 	}
 
-	private void startTracks(List<Track> tracks, boolean rootTrack)
+	private boolean startTracks(List<Track> tracks, boolean rootTrack)
 	{
 		for (Track track : tracks) {
 			if (track.definition instanceof Empty)
 				continue;
+			if (trackPlayers.size() >= MAX_TRACK_PLAYERS) {
+				Logger.logfError("SFX %s exceeded the active track limit", currentSound.name);
+				clearActivePlayback();
+				return false;
+			}
 			trackPlayers.add(new SfxTrackPlayer(track, rootTrack));
 		}
+		return true;
 	}
 
 	private final class SfxTrackPlayer
@@ -751,7 +770,10 @@ public class SfxPlayer implements AudioClient, PlaybackSession
 		{
 			for (SpawnedEffect spawned : currentSound.spawnedEffects) {
 				if (spawned.name.equals(name)) {
-					pendingSpawns.add(spawned);
+					if (trackPlayers.size() + pendingSpawns.size() >= MAX_TRACK_PLAYERS)
+						trackLimitExceeded = true;
+					else
+						pendingSpawns.add(spawned);
 					return;
 				}
 			}
