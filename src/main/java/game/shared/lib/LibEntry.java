@@ -20,7 +20,7 @@ import game.shared.struct.script.ScriptVariable;
 
 public class LibEntry
 {
-	private static final Pattern AddressFieldPattern = Pattern.compile("(80[0-9A-Fa-f]{6})(?:, *([0-9A-Fa-f]{1,8}))?");
+	private static final Pattern AddressFieldPattern = Pattern.compile("((?:80|[Ee]0)[0-9A-Fa-f]{6})(?:, *([0-9A-Fa-f]{1,8}))?");
 	private static final Matcher AddressFieldMatcher = AddressFieldPattern.matcher("");
 
 	private static final Pattern ValidScrTypePattern = Pattern.compile("\\$\\w+");

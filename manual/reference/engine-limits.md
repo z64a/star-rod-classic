@@ -29,6 +29,16 @@ This page collects important hard capacities and supported gameplay limits in th
 
 An API which accepts an `s32 npcID` does not enlarge the ID stored by an NPC. It allows the call to accept special negative IDs as well as ordinary list indices.
 
+## Visual Effects
+
+| Limit | Value | Reason |
+| --- | ---: | --- |
+| Loaded code per effect | 4 KiB | The engine maps one physical `0x1000`-byte page for each loaded effect. |
+| Simultaneously loaded effect types | 15 | The engine owns 15 effect-code pages and 15 shared-data records. |
+| Live effect instances | 96 | The engine's effect-instance pointer table has 96 entries. |
+
+The effect virtual addresses are spaced by `0x2000`, but that spacing does not provide 8 KiB of writable code. Star Rod rejects a rebuilt effect whose padded code blob is larger than `0x1000` bytes.
+
 ## Event Scripts and Messages
 
 | Limit | Value |

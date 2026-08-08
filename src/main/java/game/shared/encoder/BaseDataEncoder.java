@@ -1,7 +1,15 @@
 package game.shared.encoder;
 
 import static app.Directories.MOD_RESOURCE;
-import static game.shared.StructTypes.*;
+import static game.shared.StructTypes.AsciiT;
+import static game.shared.StructTypes.ConstDoubleT;
+import static game.shared.StructTypes.DataTableT;
+import static game.shared.StructTypes.DisplayListT;
+import static game.shared.StructTypes.FunctionT;
+import static game.shared.StructTypes.ScriptT;
+import static game.shared.StructTypes.SjisT;
+import static game.shared.StructTypes.StringT;
+import static game.shared.StructTypes.UnknownT;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
@@ -1625,6 +1633,9 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 		if (scopeName != null && !scopeName.isEmpty()) {
 			switch (scopeName.toLowerCase()) {
 				case "global":
+					break;
+				case "effect":
+					scope = LibScope.Effect;
 					break;
 				case "map":
 				case "world":

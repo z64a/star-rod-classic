@@ -135,6 +135,8 @@ Event scripts normally create effects with `PlayEffect`. Each effect type accept
 
 Effect code and graphics are loaded as needed and shared by instances of the same type. Instances are associated with the world or battle context in which they were created.
 
+The [Patching Visual Effects](../guides/patching-visual-effects.md) guide explains how Star Rod rebuilds these code and graphics blobs and why their `0xE...` and segment-09 addresses need special handling.
+
 ## 2.10. HUD Elements
 
 The engine uses **HUD elements** for reusable 2D image-based graphics in the status display, menus, battle interface, and elsewhere. Most are drawn in screen space, although the system can also place them within the world.

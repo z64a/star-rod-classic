@@ -18,6 +18,7 @@ For overlay data, `src` contains the original sources and `patch` contains handw
 | `map/save/` | Geometry and marker data saved by Map Editor; used in preference to the original map XML under `map/src/`. |
 | `map/patch/` | Hand-written patches applied to individual maps. |
 | `map/import/` | Reusable data imported by map patches. |
+| `effect/src/` and `effect/patch/` | Original visual-effect code and graphics sources, and `.epat` files which modify them. |
 | `battle/formation/src/` | Original battle-section sources. |
 | `battle/formation/patch/` | Battle section patches. |
 | `battle/formation/import/` | Reusable data imported into battle sections. |

@@ -47,6 +47,8 @@ public enum Options
 			"Partner overworld actions."),
 	DumpWorld			(true, Scope.Main, Type.Boolean, "DumpWorld", "True", "World Data",
 			"Scripts for entities and actions."),
+	DumpEffects		(true, Scope.Main, Type.Boolean, "DumpEffects", "True", "Visual Effects",
+			"Effect code and graphics."),
 	DumpTextures		(true, Scope.Main, Type.Boolean, "DumpTextures", "True", "Textures", ""),
 	DumpSprites			(true, Scope.Main, Type.Boolean, "DumpSprites", "True", "Sprites", ""),
 	DumpAudio			(true, Scope.Main, Type.Boolean, "DumpAudio", "True", "Audio Files", ""),

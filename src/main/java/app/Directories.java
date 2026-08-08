@@ -49,10 +49,10 @@ public enum Directories
 	DUMP_MAP_NPC 		(Root.DUMP, DUMP_MAP,		"/npc/"),
 	DUMP_MAP_THUMBNAIL	(Root.DUMP, DUMP_MAP,		"/thumbnail/"),
 
-	DUMP_EFFECT 		(Root.DUMP, 			"/effect/", true),
+	DUMP_EFFECT 		(Root.DUMP, 			"/effect/"),
 	DUMP_EFFECT_GFX		(Root.DUMP, DUMP_EFFECT,	"/grahics/", true),
-	DUMP_EFFECT_RAW		(Root.DUMP, DUMP_EFFECT,	"/raw/", true),
-	DUMP_EFFECT_SRC		(Root.DUMP, DUMP_EFFECT,	"/src/", true),
+	DUMP_EFFECT_RAW		(Root.DUMP, DUMP_EFFECT,	"/raw/"),
+	DUMP_EFFECT_SRC		(Root.DUMP, DUMP_EFFECT,	"/src/"),
 
 	DUMP_WORLD			(Root.DUMP,				"/world/"),
 
@@ -150,6 +150,11 @@ public enum Directories
 	MOD_MAP_CACHE		(Root.MOD, MOD_MAP, 		"/cache/", true),	// automatically generated files during patch process
 	MOD_MAP_TEMP		(Root.MOD, MOD_MAP, 		"/temp/", true),	// automatically generated files during patch process
 	MOD_MAP_THUMBNAIL	(Root.MOD, MOD_MAP,			"/thumbnail/"),
+
+	MOD_EFFECT			(Root.MOD,				"/effect/"),
+	MOD_EFFECT_SRC		(Root.MOD, MOD_EFFECT,			"/src/"),
+	MOD_EFFECT_PATCH	(Root.MOD, MOD_EFFECT,			"/patch/"),
+	MOD_EFFECT_TEMP		(Root.MOD, MOD_EFFECT,			"/temp/", true),
 
 	MOD_WORLD			(Root.MOD,				"/world/"),
 

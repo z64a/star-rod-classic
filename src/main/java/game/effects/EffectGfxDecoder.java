@@ -2,7 +2,10 @@ package game.effects;
 
 import static app.Directories.DUMP_EFFECT_RAW;
 import static app.Directories.DUMP_EFFECT_SRC;
-import static game.shared.StructTypes.*;
+import static game.shared.StructTypes.DisplayListT;
+import static game.shared.StructTypes.FloatTableT;
+import static game.shared.StructTypes.IntTableT;
+import static game.shared.StructTypes.ScriptT;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,7 +46,7 @@ public class EffectGfxDecoder extends BaseDataDecoder
 
 	public EffectGfxDecoder(ByteBuffer fileBuffer, DumpMetadata metadata, EffectTableEntry entry) throws IOException
 	{
-		super(LibScope.Common, DisplayListT, ProjectDatabase.rom.getLibrary(LibScope.Common));
+		super(LibScope.Effect, DisplayListT, ProjectDatabase.rom.getLibrary(LibScope.Effect));
 		try {
 			MIPS.setSegment(0);
 			useDumpMetadata(metadata);
@@ -78,8 +81,8 @@ public class EffectGfxDecoder extends BaseDataDecoder
 				super.decode(fileBuffer);
 
 				File rawFile = new File(DUMP_EFFECT_RAW + sourceName + "_Gfx.bin");
-				File scriptFile = new File(DUMP_EFFECT_SRC + sourceName + "_Gfx.wscr");
-				File indexFile = new File(DUMP_EFFECT_SRC + sourceName + "_Gfx.widx");
+				File scriptFile = new File(DUMP_EFFECT_SRC + sourceName + "_Gfx" + EffectEditor.SCRIPT_EXTENSION);
+				File indexFile = new File(DUMP_EFFECT_SRC + sourceName + "_Gfx" + EffectEditor.INDEX_EXTENSION);
 
 				printScriptFile(scriptFile, fileBuffer);
 				printIndexFile(indexFile);
@@ -89,19 +92,19 @@ public class EffectGfxDecoder extends BaseDataDecoder
 				List<EmbeddedImage> sortedImages = new ArrayList<>();
 				for(EmbeddedImage embed : embeddedImages)
 					sortedImages.add(embed);
-
+				
 				Collections.sort(sortedImages, (a, b) -> a.imgAddr - b.imgAddr);
-
+				
 				for(EmbeddedImage embed : sortedImages)
 				{
 					int imgOffset = 0;
 					if(embed.imgAddr >= 0x09000000)
 						imgOffset = startOffset + (embed.imgAddr - startAddress);
-
+				
 					int palOffset = 0;
 					if(embed.palAddr >= 0x09000000)
 						palOffset = startOffset + (embed.palAddr - startAddress);
-
+				
 					if(embed.tile.format.type == TileFormat.TYPE_CI)
 					{
 						System.out.printf("<Image offset=\"%X\" palette=\"%X\" flip=\"true\" fmt=\"%s\" w=\"%d\" h=\"%d\" name=\"effect/%s_%X_%X\"/>%n",
@@ -206,10 +209,10 @@ public class EffectGfxDecoder extends BaseDataDecoder
 					case G_BRANCH_Z:
 					buf.position(curPos);
 					curPos -= 8;
-
+					
 					int C = buf.getInt();
 					int D = buf.getInt();
-
+					
 					type.create(A, B, C, D);
 					break;
 					 */

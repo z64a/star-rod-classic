@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - Releases include a packaged runtime, users no longer need to install Java
+- Existing `PlayEffect` code and graphics can be rebuilt from `.epat` files
 - (Map Editor) Keyboard shortcuts can now be rebound
 - (Map Editor) Vertex paint controls now support hex colors and undo/redo
 

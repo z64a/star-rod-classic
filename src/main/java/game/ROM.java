@@ -36,14 +36,22 @@ public abstract class ROM
 		World		(StructTypes.mapTypes),
 		Battle		(StructTypes.battleTypes),
 		Pause		(StructTypes.sharedTypes),
-		MainMenu	(StructTypes.sharedTypes);
+		MainMenu	(StructTypes.sharedTypes),
+		Effect		(StructTypes.sharedTypes, false);
 		// @formatter:on
 
 		public final TypeMap typeMap;
+		public final boolean inheritsCommon;
 
 		private LibScope(TypeMap typeMap)
 		{
+			this(typeMap, true);
+		}
+
+		private LibScope(TypeMap typeMap, boolean inheritsCommon)
+		{
 			this.typeMap = typeMap;
+			this.inheritsCommon = inheritsCommon;
 		}
 	}
 
@@ -188,8 +196,10 @@ public abstract class ROM
 
 				case Common:
 					allRegions.add(r);
-					for (RamContent ram : ramMaps.values())
-						ram.regions.add(r);
+					for (LibScope scope : LibScope.values()) {
+						if (scope.inheritsCommon)
+							ramMaps.get(scope).regions.add(r);
+					}
 					break;
 
 				default:
@@ -221,8 +231,10 @@ public abstract class ROM
 		for (LibraryFile lib : libFiles) {
 			try {
 				if (lib.scope == LibScope.Common) {
-					for (RamContent ram : ramMaps.values())
-						ram.library.addEntries(lib, false);
+					for (LibScope scope : LibScope.values()) {
+						if (scope.inheritsCommon)
+							ramMaps.get(scope).library.addEntries(lib, false);
+					}
 				}
 			}
 			catch (InvalidInputException e) {

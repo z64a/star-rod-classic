@@ -33,6 +33,7 @@ The manual is divided into four parts. The introduction explains Star Rod and th
 - [Editing Items](guides/editing-items.md)
 - [Adding Sprites](guides/adding-sprites.md)
 - [Adding and Editing Maps](guides/adding-and-editing-maps.md)
+- [Patching Visual Effects](guides/patching-visual-effects.md)
 - [Adding a Sound Effect](guides/adding-a-sound-effect.md)
 - [Adding a New Instrument](guides/adding-a-new-instrument.md)
 

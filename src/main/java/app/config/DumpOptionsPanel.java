@@ -40,7 +40,6 @@ public class DumpOptionsPanel extends JPanel
 	public DumpOptionsPanel()
 	{
 		optEditors = new ArrayList<>();
-		setPreferredSize(new Dimension(380, 400));
 
 		JTabbedPane tabbedPane = new JTabbedPane();
 		SwingUtils.setFontSize(tabbedPane, 14);
@@ -56,6 +55,9 @@ public class DumpOptionsPanel extends JPanel
 
 		setLayout(new MigLayout("fill, ins 0"));
 		add(tabbedPane, "grow");
+
+		Dimension preferredSize = tabbedPane.getPreferredSize();
+		setPreferredSize(new Dimension(Math.max(380, preferredSize.width), preferredSize.height));
 	}
 
 	private void addTab(JTabbedPane tabbedPane, JPanel tab, String name)
@@ -80,6 +82,7 @@ public class DumpOptionsPanel extends JPanel
 		addCheckbox(tab, Options.DumpTables, "growx");
 		addCheckbox(tab, Options.DumpMaps, "growx");
 		addCheckbox(tab, Options.DumpWorld, "growx");
+		addCheckbox(tab, Options.DumpEffects, "growx");
 		addCheckbox(tab, Options.DumpBattles, "growx");
 		addCheckbox(tab, Options.DumpMoves, "growx");
 		addCheckbox(tab, Options.DumpPartners, "growx");

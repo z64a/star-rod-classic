@@ -13,6 +13,7 @@ import static app.Directories.DUMP_ALLY_SRC;
 import static app.Directories.DUMP_ASSIST_SRC;
 import static app.Directories.DUMP_AUDIO;
 import static app.Directories.DUMP_BATTLE;
+import static app.Directories.DUMP_EFFECT_SRC;
 import static app.Directories.DUMP_FORMA_ENEMY;
 import static app.Directories.DUMP_FORMA_SRC;
 import static app.Directories.DUMP_GLOBALS;
@@ -62,6 +63,7 @@ import static app.Directories.MOD_ASSIST_SRC;
 import static app.Directories.MOD_AUDIO;
 import static app.Directories.MOD_BATTLE;
 import static app.Directories.MOD_ENUMS;
+import static app.Directories.MOD_EFFECT_SRC;
 import static app.Directories.MOD_FORMA;
 import static app.Directories.MOD_FORMA_ENEMY;
 import static app.Directories.MOD_FORMA_PATCH;
@@ -97,6 +99,7 @@ import static app.Directories.MOD_TXTBOX_IMG;
 import static app.config.Options.CleanDump;
 import static app.config.Options.DumpAudio;
 import static app.config.Options.DumpBattles;
+import static app.config.Options.DumpEffects;
 import static app.config.Options.DumpLibrary;
 import static app.config.Options.DumpMaps;
 import static app.config.Options.DumpMessages;
@@ -860,6 +863,11 @@ public class StarRodClassic extends JFrame
 				EntityDecompiler.decompileAll();
 			}
 
+			if (fullDump || cfg.getBoolean(DumpEffects)) {
+				Logger.log("Dumping visual effects...", Priority.MILESTONE);
+				EffectEditor.dumpEffects(fileBuffer);
+			}
+
 			if (cfg.getBoolean(DumpReports)) {
 				PrintWriter pw = IOUtils.getBufferedPrintWriter(Directories.DUMP_REPORTS + "enemy_names.txt");
 				for (int i = 0; i < 0xD4; i++) {
@@ -911,7 +919,6 @@ public class StarRodClassic extends JFrame
 			if (fullDump || cfg.getBoolean(DumpLibrary)) {
 				Logger.log("Dumping libraries...", Priority.MILESTONE);
 				LibraryScriptDumper.dumpAll();
-				EffectEditor.dumpEffects(fileBuffer);
 			}
 
 			if (cfg.getBoolean(CleanDump)) {
@@ -969,6 +976,10 @@ public class StarRodClassic extends JFrame
 			FileUtils.cleanDirectory(MOD_MAP_SRC.toFile());
 			FileUtils.copyDirectory(DUMP_MAP_SRC.toFile(), MOD_MAP_SRC.toFile());
 			Directories.copyAllMissing(DUMP_MAP_THUMBNAIL, MOD_MAP_THUMBNAIL);
+
+			Logger.log("Copying effect data...", Priority.MILESTONE);
+			FileUtils.cleanDirectory(MOD_EFFECT_SRC.toFile());
+			FileUtils.copyDirectory(DUMP_EFFECT_SRC.toFile(), MOD_EFFECT_SRC.toFile());
 
 			Logger.log("Copying world data...", Priority.MILESTONE);
 			FileUtils.cleanDirectory(MOD_ASSIST_SRC.toFile());

@@ -1,6 +1,6 @@
 # Writing a Patch
 
-Patch files replace or add structures. Map overlay patches normally use `.mpat`; battle overlay patches use `.bpat`. Global patches live outside the overlays and use `.patch`. Structure bodies use the same syntax as files under `src/`, so a working vanilla structure is usually the best place to begin.
+Patch files replace or add structures. Map overlay patches normally use `.mpat`; battle overlay patches use `.bpat`; visual-effect patches use `.epat`. Global patches live outside the overlays and use `.patch`. Structure bodies use the same syntax as files under `src/`, so a working vanilla structure is usually the best place to begin.
 
 | Patch target | Extension | Project directory |
 | --- | --- | --- |
@@ -11,6 +11,7 @@ Patch files replace or add structures. Map overlay patches normally use `.mpat`;
 | Battle move | `.bpat` | `$mod/battle/move/patch/` |
 | Partner actor | `.bpat` | `$mod/battle/partner/patch/` |
 | Star Power | `.bpat` | `$mod/battle/starpower/patch/` |
+| Visual-effect code or graphics | `.epat` | `$mod/effect/patch/` |
 | Global data or code | `.patch` | `$mod/globals/patch/` |
 
 Reusable files loaded with `#import` belong under `$mod/map/import/` for map patches or `$mod/battle/formation/import/` for battle patches. Importable enemy definitions are conventionally kept in the latter directory's `enemy/` subdirectory.
@@ -119,3 +120,4 @@ Constants, enums, pointers, script variables, and expressions may be used in pla
 Inspect the corresponding sources under the project's `src/` directories before writing a new structure from scratch. Find a map, enemy, move, or item which already does something similar, copy the smallest relevant structure into the appropriate patch, and change it one piece at a time. Keeping the first build small makes missing imports and wrong overlay assumptions much easier to diagnose.
 
 See [Patch Files](../reference/patch-files.md), [Patch Expressions](../reference/patch-expressions.md), and [Script Variables](../reference/script-variables.md) for the exact syntax.
+Visual effects have additional address-space and size constraints described in [Patching Visual Effects](patching-visual-effects.md).

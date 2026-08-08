@@ -36,6 +36,7 @@ import app.input.InvalidInputException;
 import game.battle.ActorTypesEditor;
 import game.battle.AuxBattlePatcher;
 import game.battle.BattlePatcher;
+import game.effects.EffectPatcher;
 import game.globals.ItemModder;
 import game.globals.MoveModder;
 import game.map.Map;
@@ -187,6 +188,7 @@ public class Patcher implements IGlobalDatabase
 		spritePatcher = new SpritePatcher(this);
 		CompressedImagePatcher imgPatcher = new CompressedImagePatcher();
 		PartnerWorldPatcher partnerPatcher = new PartnerWorldPatcher(this);
+		EffectPatcher effectPatcher = new EffectPatcher(this);
 		Logger.log("Reading map config files...", Priority.MILESTONE);
 		MapConfigTable mapTable = mapPatcher.readConfigs();
 		recordTime("Map Configs Read");
@@ -327,6 +329,10 @@ public class Patcher implements IGlobalDatabase
 		partnerPatcher.patchData(this);
 		recordTime("World Data Built");
 
+		boolean patchedEffects = effectPatcher.buildData();
+		if (patchedEffects)
+			recordTime("Effect Data Built");
+
 		// preprocessing
 		battlePatcher.updateConfigs();
 		auxPatcher.generateConfigs();
@@ -411,6 +417,11 @@ public class Patcher implements IGlobalDatabase
 
 		Logger.log("Writing partner data...", Priority.MILESTONE);
 		partnerPatcher.writeData(this);
+
+		if (patchedEffects) {
+			effectPatcher.writeData();
+			recordTime("Effect Data Patched");
+		}
 
 		if (cfg.getBoolean(Options.BuildSpriteSheets)) {
 			Logger.log("Patching sprite sheets...", Priority.MILESTONE);
