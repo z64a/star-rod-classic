@@ -7,48 +7,19 @@ replay_pid*
 /.gradle/
 /bin/
 /build/
-/build-dev/
-/build-user/
-/target/
 
 # Local Star Rod data and runtime output
-/backups/
-/cfg/
-/database/include/
-/docs/
-/logs/
-/temp/
-/yay0/
-*.backup
-*.log
+/local/
 
-# Keep shared encoding, compiler, formatter, and cleanup settings.
+# Legacy Star Rod config location
+/cfg/
+
+# Eclipse: keep shared encoding, compiler, formatter, and cleanup settings
+/.settings/*
 !/.settings/org.eclipse.core.resources.prefs
 !/.settings/org.eclipse.jdt.core.prefs
 !/.settings/org.eclipse.jdt.ui.prefs
 
 # VS Code: keep the shared workspace settings only
-/.vscode/*
-!/.vscode/settings.json
-
-# Local source experiments
-/src/main/java/analysis/
-/src/main/java/compiler/
-
-# Locally generated Maven project
-pom.xml
-
-# Eclipse settings
-.settings/*
-!.settings/org.eclipse.core.resources.prefs
-!.settings/org.eclipse.jdt.core.prefs
-!.settings/org.eclipse.jdt.ui.prefs
-
-# Portable Eclipse encoding, compiler, formatter, and cleanup rules
-!/.settings/org.eclipse.core.resources.prefs
-!/.settings/org.eclipse.jdt.core.prefs
-!/.settings/org.eclipse.jdt.ui.prefs
-
-# Shared VS Code settings
 /.vscode/*
 !/.vscode/settings.json

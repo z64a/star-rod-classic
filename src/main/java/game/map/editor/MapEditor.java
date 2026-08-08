@@ -41,6 +41,7 @@ import app.AssetManager;
 import app.Directories;
 import app.Environment;
 import app.LoadingBar;
+import app.ProjectBackups;
 import app.StackTraceDialog;
 import app.StarRodClassic;
 import app.StarRodException;
@@ -540,7 +541,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 		MapKeyBindingsConfig.load(keyBindingsFile, keyConfig);
 		loadRecentMaps();
 
-		crashFile = new File(AssetManager.getMapBuildDir() + "/crash");
+		crashFile = new File(ProjectBackups.getMapDirectory(), "crash");
 
 		// ------------------------------------------------------------
 		// open files
@@ -829,6 +830,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 		if (crashFile == null)
 			return false;
 		try {
+			ProjectBackups.prepareMapDirectory();
 			map.saveBackupAs(crashFile, author);
 			return true;
 		}
@@ -840,9 +842,8 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 
 	private void saveBackup()
 	{
-		File mapDir = map.source.getParentFile();
-		File backupFile = new File(mapDir.getAbsoluteFile() + "/" + map.name + ".backup");
 		try {
+			File backupFile = new File(ProjectBackups.prepareMapDirectory(), map.name + ".backup");
 			map.saveBackupAs(backupFile, author);
 			DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 			Logger.log("Saved backup at " + dateFormatter.format(LocalDateTime.now()));
@@ -885,8 +886,10 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 	private Map checkForBackup(Map newMap)
 	{
 		try {
-			File mapDir = newMap.source.getParentFile();
-			File backupFile = new File(mapDir.getAbsoluteFile() + "/" + newMap.name + ".backup");
+			File backupFile = new File(ProjectBackups.getMapDirectory(), newMap.name + ".backup");
+			File legacyBackupFile = new File(newMap.source.getParentFile(), newMap.name + ".backup");
+			if (legacyBackupFile.exists() && (!backupFile.exists() || legacyBackupFile.lastModified() > backupFile.lastModified()))
+				backupFile = legacyBackupFile;
 
 			if (!backupFile.exists() || (backupFile.lastModified() <= newMap.source.lastModified()))
 				return newMap;

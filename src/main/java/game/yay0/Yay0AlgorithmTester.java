@@ -1,5 +1,9 @@
 package game.yay0;
 
+import static app.Directories.DUMP_YAY0_DECODED;
+import static app.Directories.DUMP_YAY0_ENCODED;
+import static app.Directories.DUMP_YAY0_REFERENCE;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -24,12 +28,16 @@ public class Yay0AlgorithmTester
 		Environment.exit();
 	}
 
-	private static final String ENCODED = "./yay0/encoded/";
-	private static final String DECODED = "./yay0/decoded/";
-	private static final String REFERENCE = "./yay0/reference/";
+	private final File encodedDir;
+	private final File decodedDir;
+	private final File referenceDir;
 
 	private Yay0AlgorithmTester() throws IOException
 	{
+		encodedDir = DUMP_YAY0_ENCODED.toFile();
+		decodedDir = DUMP_YAY0_DECODED.toFile();
+		referenceDir = DUMP_YAY0_REFERENCE.toFile();
+
 		//Logger.setVerbosity(Verbosity.DETAIL);
 
 		//	dump2();
@@ -42,20 +50,20 @@ public class Yay0AlgorithmTester
 		//verifyTest("01E9E692.bin");
 
 		/*
-		byte[] reference = FileUtils.readFileToByteArray(new File(REFERENCE + "01E9E692.bin"));
+		byte[] reference = FileUtils.readFileToByteArray(new File(referenceDir, "01E9E692.bin"));
 		byte[] decodedFromReference = Yay0Helper.decode(reference);
 
 		System.out.println("");
 
-		byte[] encoded = FileUtils.readFileToByteArray(new File(ENCODED + "01E9E692.bin"));
+		byte[] encoded = FileUtils.readFileToByteArray(new File(encodedDir, "01E9E692.bin"));
 		byte[] decodedFromEncoded = Yay0Helper.decode(encoded);
 		*/
 	}
 
 	private void compressFiles() throws IOException
 	{
-		FileUtils.deleteDirectory(new File(ENCODED));
-		File[] decompressedFiles = new File(DECODED).listFiles();
+		FileUtils.deleteDirectory(encodedDir);
+		File[] decompressedFiles = decodedDir.listFiles();
 
 		SimpleProgressBarDialog progressBar = new SimpleProgressBarDialog("Yay0 Compressor", "Compressing files...");
 		float count = 0.01f;
@@ -66,7 +74,7 @@ public class Yay0AlgorithmTester
 			System.out.println("Compressing " + f.getName());
 			byte[] source = FileUtils.readFileToByteArray(f);
 			byte[] encoded = Yay0Helper.encode(source);
-			FileUtils.writeByteArrayToFile(new File(ENCODED + f.getName()), encoded);
+			FileUtils.writeByteArrayToFile(new File(encodedDir, f.getName()), encoded);
 
 			progressBar.setProgress((int) (100 * (count / decompressedFiles.length)));
 			count++;
@@ -81,8 +89,8 @@ public class Yay0AlgorithmTester
 
 	private void compressFilesStreams() throws IOException
 	{
-		FileUtils.deleteDirectory(new File(ENCODED));
-		File[] decompressedFiles = new File(DECODED).listFiles();
+		FileUtils.deleteDirectory(encodedDir);
+		File[] decompressedFiles = decodedDir.listFiles();
 
 		SimpleProgressBarDialog progressBar = new SimpleProgressBarDialog("Yay0 Compressor", "Compressing files...");
 		float count = 0.01f;
@@ -90,7 +98,7 @@ public class Yay0AlgorithmTester
 		List<WorkBytes<String>> records = new ArrayList<>(decompressedFiles.length);
 		for (int i = 0; i < decompressedFiles.length; i++) {
 			File in = decompressedFiles[i];
-			File out = new File(ENCODED + in.getName());
+			File out = new File(encodedDir, in.getName());
 			records.add(new WorkBytes<>(in.getName(), in, out));
 		}
 
@@ -110,9 +118,9 @@ public class Yay0AlgorithmTester
 
 	private void compressTest(String name) throws IOException
 	{
-		byte[] source = FileUtils.readFileToByteArray(new File(DECODED + name));
+		byte[] source = FileUtils.readFileToByteArray(new File(decodedDir, name));
 		byte[] encoded = Yay0Helper.encode(source);
-		FileUtils.writeByteArrayToFile(new File(ENCODED + name), encoded);
+		FileUtils.writeByteArrayToFile(new File(encodedDir, name), encoded);
 	}
 
 	private void printBytes(byte[] buf, boolean newLines)
@@ -139,11 +147,11 @@ public class Yay0AlgorithmTester
 		String title = "Verify " + name + ": ";
 
 		Logger.log("From REFERENCE:", Priority.DETAIL);
-		byte[] reference = FileUtils.readFileToByteArray(new File(REFERENCE + name));
+		byte[] reference = FileUtils.readFileToByteArray(new File(referenceDir, name));
 		byte[] decodedFromReference = Yay0Helper.decode(reference);
 
 		Logger.log("From ENCODED:", Priority.DETAIL);
-		byte[] encoded = FileUtils.readFileToByteArray(new File(ENCODED + name));
+		byte[] encoded = FileUtils.readFileToByteArray(new File(encodedDir, name));
 		byte[] decodedFromEncoded = Yay0Helper.decode(encoded);
 
 		//printBytes(encoded, false);
@@ -170,9 +178,9 @@ public class Yay0AlgorithmTester
 
 	private void dump2() throws IOException
 	{
-		FileUtils.deleteDirectory(new File(ENCODED));
-		FileUtils.deleteDirectory(new File(DECODED));
-		FileUtils.deleteDirectory(new File(REFERENCE));
+		FileUtils.deleteDirectory(encodedDir);
+		FileUtils.deleteDirectory(decodedDir);
+		FileUtils.deleteDirectory(referenceDir);
 
 		RandomAccessFile raf = Environment.getBaseRomReader();
 
@@ -195,15 +203,15 @@ public class Yay0AlgorithmTester
 				raf.seek(offset);
 				raf.read(dumpedBytes);
 
-				File referenceFile = new File(REFERENCE + String.format("%08X.bin", offset));
+				File referenceFile = new File(referenceDir, String.format("%08X.bin", offset));
 				FileUtils.writeByteArrayToFile(referenceFile, dumpedBytes);
 
 				byte[] decodedBytes = Yay0Helper.decode(dumpedBytes);
-				File decodedFile = new File(DECODED + String.format("%08X.bin", offset));
+				File decodedFile = new File(decodedDir, String.format("%08X.bin", offset));
 				FileUtils.writeByteArrayToFile(decodedFile, decodedBytes);
 
 				byte[] encodedBytes = Yay0Helper.encode(decodedBytes);
-				File encodedFile = new File(ENCODED + String.format("%08X.bin", offset));
+				File encodedFile = new File(encodedDir, String.format("%08X.bin", offset));
 				FileUtils.writeByteArrayToFile(encodedFile, encodedBytes);
 			}
 		}
@@ -291,8 +299,8 @@ public class Yay0AlgorithmTester
 		int totalDiff = 0;
 		int totalReferenceSize = 0;
 
-		for (File f : new File(ENCODED).listFiles()) {
-			File ref = new File(REFERENCE + f.getName());
+		for (File f : encodedDir.listFiles()) {
+			File ref = new File(referenceDir, f.getName());
 			assert (ref.exists());
 
 			if (f.length() != ref.length()) {
@@ -327,9 +335,9 @@ public class Yay0AlgorithmTester
 		int errors = 0;
 		int total = 0;
 
-		for (File f : new File(ENCODED).listFiles()) {
+		for (File f : encodedDir.listFiles()) {
 			System.out.println(f.getName());
-			File ref = new File(REFERENCE + f.getName());
+			File ref = new File(referenceDir, f.getName());
 			assert (ref.exists());
 
 			byte[] encoded = FileUtils.readFileToByteArray(f);

@@ -20,7 +20,6 @@ plugins {
     id("java")
     id("com.gradleup.shadow") version "8.3.11"
     id("net.nemerosa.versioning") version "3.1.0"
-    id("com.cmgapps.licenses") version "4.8.0"
 }
 
 java {
@@ -96,9 +95,6 @@ dependencies {
     implementation("com.formdev:flatlaf-intellij-themes:3.4.1")
     implementation("com.formdev:flatlaf-extras:3.4.1")
 
-    implementation(files("lib/org.eclipse.cdt.core-5.11.0.jar"))
-    implementation(files("lib/org.eclipse.equinox.common-3.6.0.jar"))
-
     implementation("org.ahocorasick:ahocorasick:0.6.3")
 
     add(manualGenerator.implementationConfigurationName, "org.commonmark:commonmark:0.29.0")
@@ -110,7 +106,6 @@ tasks.test {
     useJUnitPlatform()
 }
 
-val licenseBuildDir = layout.buildDirectory.dir("reports/licenses/licenseReport")
 val manualBuildDir = layout.buildDirectory.dir("generated/manual")
 val releaseBuildDir = layout.buildDirectory.dir("release")
 val runtimeBuildDir = layout.buildDirectory.dir("runtime/$platformName")
@@ -143,6 +138,11 @@ tasks.shadowJar {
     exclude("META-INF/*.DSA")
     exclude("META-INF/*.RSA")
     exclude("META-INF/LICENSE")
+    exclude("META-INF/LICENSE.txt")
+    exclude("META-INF/NOTICE")
+    exclude("META-INF/NOTICE.txt")
+    exclude("LICENSE.txt")
+    exclude("NOTICE.txt")
     archiveFileName.set("StarRod.jar")
 
     manifest {
@@ -185,7 +185,7 @@ val createRuntime by tasks.registering(Exec::class) {
 }
 
 tasks.register<Zip>("createReleaseZip") {
-    dependsOn(tasks.shadowJar, createRuntime, tasks.licenseReport, renderManual)
+    dependsOn(tasks.shadowJar, createRuntime, renderManual)
 
     group = "release"
     description = "Create a release for $platformName"
@@ -203,8 +203,11 @@ tasks.register<Zip>("createReleaseZip") {
     from(manualBuildDir) {
         into("manual")
     }
-    from(licenseBuildDir) {
-        into("database/licenses")
+    from(file("LICENSE.txt")) {
+        into("license")
+    }
+    from(file("license")) {
+        into("license")
     }
     from(file("exec")) {
         include(if (isWindows) "StarRod.bat" else "StarRod")

@@ -25,9 +25,9 @@ public enum Directories
 	DATABASE_HINTS		(Root.NONE, DATABASE,		"/hints/"),
 	DATABASE_SYSTEM		(Root.NONE, DATABASE,		"/system/"),
 
-	BACKUPS				(Root.NONE,				"/backups/"),
-	TEMP				(Root.NONE,				"/temp/"),
-	LOGS				(Root.NONE, 			"/logs/"),
+	LOCAL				(Root.NONE,				"/local/"),
+	TEMP				(Root.NONE, LOCAL,			"/temp/"),
+	LOGS				(Root.NONE, LOCAL,			"/logs/"),
 
 	DEFAULTS			(Root.NONE, DATABASE,		"/defaults/"),
 	DEFAULTS_FORM		(Root.NONE, DEFAULTS,			"/formation/"),
@@ -135,10 +135,15 @@ public enum Directories
 
 	DUMP_LIB			(Root.DUMP,				"/lib/"),
 
+	DUMP_YAY0_REFERENCE	(Root.DUMP,				"/yay0/reference/", true),
 	DUMP_YAY0_DECODED	(Root.DUMP,				"/yay0/decoded/", true),
 	DUMP_YAY0_ENCODED	(Root.DUMP,				"/yay0/encoded/", true),
 
 	//=======================================================================================
+
+	MOD_BACKUPS			(Root.MOD,				"/backups/", true),
+	MOD_BACKUPS_PROJECT	(Root.MOD, MOD_BACKUPS,		"/project/", true),
+	MOD_BACKUPS_MAP		(Root.MOD, MOD_BACKUPS,		"/maps/", true),
 
 	MOD_MAP				(Root.MOD,				"/map/"),
 	MOD_MAP_IMPORT		(Root.MOD, MOD_MAP,			"/import/"),		// reusable patch data that can be imported into map patch files

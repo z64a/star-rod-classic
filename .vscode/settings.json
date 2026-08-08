@@ -20,5 +20,6 @@
     ],
     "java.codeGeneration.useBlocks": true,
     "java.format.enabled": true,
-    "java.saveActions.cleanup": true
+    "java.saveActions.cleanup": true,
+    "java.configuration.updateBuildConfiguration": "automatic"
 }

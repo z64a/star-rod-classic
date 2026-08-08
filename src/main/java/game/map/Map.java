@@ -786,8 +786,23 @@ public class Map implements XmlSerializable
 
 	public void saveBackupAs(File file, String author) throws Exception
 	{
-		this.editorData = null;
-		saveMapAs(file, author, false);
+		MapEditorMetadata oldEditorData = editorData;
+		File oldSource = source;
+		File oldSaveFile = saveFile;
+		String oldAuthor = this.author;
+		boolean oldModified = modified;
+
+		try {
+			editorData = null;
+			saveMapAs(file, author, false);
+		}
+		finally {
+			editorData = oldEditorData;
+			source = oldSource;
+			saveFile = oldSaveFile;
+			this.author = oldAuthor;
+			modified = oldModified;
+		}
 	}
 
 	private void saveMapAs(File file, String author, boolean overrideName) throws Exception

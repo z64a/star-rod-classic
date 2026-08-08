@@ -19,15 +19,17 @@ import javax.swing.SwingWorker;
 
 import org.apache.commons.io.FileUtils;
 
-import app.Directories;
 import app.Environment;
 import app.Project;
+import app.ProjectBackups;
 import app.config.Options;
 import util.LogFile;
 import util.Logger;
 
 public class BackupCreator extends JFrame
 {
+	private final File backupRoot;
+
 	public static void main(String[] args) throws IOException
 	{
 		Environment.initialize();
@@ -39,6 +41,8 @@ public class BackupCreator extends JFrame
 
 	public BackupCreator(Project mod) throws IOException
 	{
+		backupRoot = ProjectBackups.getRootDirectory().getCanonicalFile();
+
 		// frame setup
 		setTitle("Star Rod Backup Creator");
 		setIconImage(Environment.getDefaultIconImage());
@@ -69,7 +73,7 @@ public class BackupCreator extends JFrame
 		Date date = new Date();
 		String cleanModName = mod.config.getString(Options.ModVersionString).replaceAll("\\W", "");
 		String outName = "backup-" + cleanModName + "-" + formatter.format(date) + ".zip";
-		File outFile = new File(Directories.BACKUPS + outName);
+		File outFile = new File(ProjectBackups.prepareProjectDirectory(), outName);
 
 		if (!outFile.exists())
 			FileUtils.touch(outFile);
@@ -102,6 +106,9 @@ public class BackupCreator extends JFrame
 
 	private void zipFile(File fileToZip, String fileName, ZipOutputStream zipOut) throws IOException
 	{
+		if (fileToZip.getCanonicalFile().equals(backupRoot))
+			return;
+
 		if (fileToZip.isHidden())
 			return;
 

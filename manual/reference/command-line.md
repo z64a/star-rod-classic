@@ -7,7 +7,7 @@ StarRod.bat -Version   % Windows
 ./StarRod -Version    % Linux and macOS
 ```
 
-The active project and base ROM are read from `cfg/main.cfg` beside the executable. `ModPath` selects the project; relative paths beginning with `.` are resolved from the application directory. Build options come from that project's `mod.cfg`.
+The active project and base ROM are read from `local/main.cfg` beside the executable. If that file is missing, Star Rod imports the legacy `cfg/main.cfg` and saves it to the new location. `ModPath` selects the project; relative paths beginning with `.` are resolved from the application directory. Build options come from that project's `mod.cfg`.
 
 Tasks are processed from left to right and may be chained:
 
@@ -25,7 +25,7 @@ StarRod.bat -CompileTextures -CompileMaps -CompileMod
 | `-CompileMod` | Build the active project with its `mod.cfg` options. |
 | `-DumpMaps ROMfile` | Validate a big-endian Paper Mario ROM and dump its maps. |
 
-`-DumpMaps` takes its ROM from the command line. The other dump and build tasks use the ROM and project selected in `cfg/main.cfg`.
+`-DumpMaps` takes its ROM from the command line. The other dump and build tasks use the ROM and project selected in `local/main.cfg`.
 
 ## Map Tasks
 

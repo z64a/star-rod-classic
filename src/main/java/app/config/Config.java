@@ -35,16 +35,21 @@ public class Config
 
 	public void readConfig() throws IOException
 	{
-		List<String> lines = IOUtils.readFormattedTextFile(file, false);
+		readConfig(file);
+	}
+
+	public void readConfig(File source) throws IOException
+	{
+		List<String> lines = IOUtils.readFormattedTextFile(source, false);
 
 		for (String line : lines) {
 			if (!line.contains("="))
-				throw new InputFileException(file, "Missing assignment on line: %n%s", line);
+				throw new InputFileException(source, "Missing assignment on line: %n%s", line);
 
 			String[] tokens = line.split("\\s*=\\s*");
 
 			if (tokens.length > 2)
-				throw new InputFileException(file, "Multiple assignments on line: %n%s", line);
+				throw new InputFileException(source, "Multiple assignments on line: %n%s", line);
 
 			Options opt = Options.getOption(tokens[0]);
 			if (opt == null) {

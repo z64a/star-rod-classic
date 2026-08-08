@@ -10,7 +10,8 @@ import app.Environment;
  * domains the Option pertains to and the {@link Type} defines acceptable values for it to hold.
  * Type checking is enforced by getter/setter methods in the Config class.
  *
- * Options with Main or Dump scope belong to /cfg/main.cfg
+ * Options with Main scope belong to /local/main.cfg.
+ * Options with Dump scope belong to the dump's /dump.cfg.
  * Options with Editor or Patch scope belong to {mod.dir}/mod.cfg
  */
 public enum Options
