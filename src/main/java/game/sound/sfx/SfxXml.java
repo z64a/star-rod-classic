@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -764,7 +763,7 @@ public final class SfxXml
 			}
 
 			if (sound.source != null) {
-				String key = sound.source.toLowerCase(Locale.ROOT);
+				String key = sound.source.toLowerCase();
 				if (!sources.add(key))
 					throw modelError(source, "effect source path is reused: " + sound.source);
 			}
@@ -1073,10 +1072,10 @@ public final class SfxXml
 			validateRelativePath(relative, manifest, null, ATTR_SRC);
 			if (!relative.endsWith(".xml"))
 				throw modelError(manifest, "effect source must end with lowercase .xml: " + relative);
-			String key = relative.toLowerCase(Locale.ROOT);
+			String key = relative.toLowerCase();
 			String manifestRelative = assetRoot.relativize(manifest).toString().replace('\\', '/');
-			if (key.equals(manifestRelative.toLowerCase(Locale.ROOT))
-				|| key.equals(FN_SOUND_ENVELOPES.toLowerCase(Locale.ROOT)))
+			if (key.equals(manifestRelative.toLowerCase())
+				|| key.equals(FN_SOUND_ENVELOPES.toLowerCase()))
 				throw modelError(manifest, "effect source uses a reserved output path: " + relative);
 			if (!used.add(key))
 				throw modelError(manifest, "effect source path is reused: " + relative);

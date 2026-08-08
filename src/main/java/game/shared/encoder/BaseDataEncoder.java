@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -120,6 +121,7 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 
 	private final TypeMap typeMap;
 	private final Directories importDirectory;
+	private final HashSet<File> activeImports;
 
 	private LibScope defaultScope;
 
@@ -195,6 +197,7 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 
 		stringLiteralMap = new HashMap<>();
 		stringLiteralOriginMap = new HashMap<>();
+		activeImports = new HashSet<>();
 
 		importDirectory = null;
 	}
@@ -1497,7 +1500,16 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 		if (!importNamespace.isEmpty() && !importNamespace.matches("[\\w\\?]+"))
 			throw new InputFileException(unit.declaration, "Invalid namespace: %s (contains illegal character)", importNamespace);
 
-		File f = new File(importDirectory + "/" + filename);
+		File f;
+		try {
+			File importRoot = importDirectory.toFile().getCanonicalFile();
+			f = new File(importRoot, filename).getCanonicalFile();
+			if (!f.toPath().startsWith(importRoot.toPath()))
+				throw new InputFileException(unit.declaration, "Import resolves outside the import directory: %s", filename);
+		}
+		catch (IOException e) {
+			throw new InputFileException(unit.declaration, e);
+		}
 
 		if (!f.exists())
 			throw new InputFileException(unit.declaration, "Import file does not exist: %s", filename);
@@ -1524,6 +1536,9 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 			}
 		}
 
+		if (!activeImports.add(f))
+			throw new InputFileException(unit.declaration, "Import cycle detected: %s", filename);
+
 		String prevNamespace = currentNamespace;
 		try {
 			currentNamespace = combineImportNamespace(prevNamespace, importNamespace);
@@ -1532,7 +1547,10 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 		catch (IOException e) {
 			throw new InputFileException(f, e);
 		}
-		currentNamespace = prevNamespace;
+		finally {
+			currentNamespace = prevNamespace;
+			activeImports.remove(f);
+		}
 
 		unit.parsed = true;
 	}

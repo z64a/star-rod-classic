@@ -14,6 +14,9 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,6 +38,8 @@ import app.StarRodException;
 // unfortunate name, shared with org.apache.commons.io.IOUtils
 public class IOUtils
 {
+	private static final char UTF8ByteOrderMark = '\uFEFF';
+
 	public static Collection<File> getFilesWithExtension(Directories dir, String ext, boolean recursive) throws IOException
 	{
 		return getFilesWithExtension(dir.toFile(), new String[] { ext }, recursive);
@@ -228,15 +233,25 @@ public class IOUtils
 
 	public static ArrayList<Line> readPlainInputStream(AbstractSource source, InputStream is) throws IOException
 	{
-		try (BufferedReader in = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+		CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
+		decoder.onMalformedInput(CodingErrorAction.REPORT);
+		decoder.onUnmappableCharacter(CodingErrorAction.REPORT);
+
+		try (BufferedReader in = new BufferedReader(new InputStreamReader(is, decoder))) {
 			ArrayList<Line> lines = new ArrayList<>();
 
 			String line;
 			int lineNum = 1;
-			while ((line = in.readLine()) != null)
+			while ((line = in.readLine()) != null) {
+			if (lineNum == 1 && !line.isEmpty() && line.charAt(0) == UTF8ByteOrderMark)
+					line = line.substring(1);
 				lines.add(new Line(source, lineNum++, line));
+			}
 
 			return lines;
+		}
+		catch (CharacterCodingException e) {
+			throw new InputFileException(source, "Malformed UTF-8 input.");
 		}
 	}
 

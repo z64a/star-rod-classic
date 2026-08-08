@@ -44,7 +44,7 @@ public class StringEncoder
 	private static final String REGEX_1_INT = "-?(?:0x[0-9A-Fa-f]+|[0-9]+)";
 	private static final String REGEX_2_INT = REGEX_1_INT + "," + REGEX_1_INT;
 
-	private static final Pattern KVPattern = Pattern.compile("(?i)(\\w+)=([\\w,]+)");
+	private static final Pattern KVPattern = Pattern.compile("(?i)(\\w+)=([\\w,.+-]+)");
 	private static final Matcher KVMatcher = KVPattern.matcher("");
 
 	// temp buffer for encoding tags, prefer using helper methods to add to this

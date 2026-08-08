@@ -2,7 +2,6 @@ package game.sound.booth;
 
 import java.awt.Dimension;
 import java.io.File;
-import java.util.Locale;
 import java.util.function.Function;
 
 import javax.swing.DefaultListModel;
@@ -162,9 +161,9 @@ abstract class AudioBoothTab extends JPanel
 	private static <T> void updateListFilter(FilteredListModel<T> model, JTextField filterField,
 		JLabel countLabel, Function<T, String> filterText)
 	{
-		String filter = filterField.getText().toUpperCase(Locale.ROOT);
+		String filter = filterField.getText().toUpperCase();
 		model.setFilter((element) -> filterText.apply((T) element)
-			.toUpperCase(Locale.ROOT).contains(filter));
+			.toUpperCase().contains(filter));
 		setAssetCount(countLabel, model.getSize(), model.getSource().getSize());
 	}
 

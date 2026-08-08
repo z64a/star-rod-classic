@@ -8,7 +8,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 
@@ -560,7 +559,7 @@ public class AudioBooth
 			return;
 
 		File outputFile = chooser.getSelectedFile();
-		if (!outputFile.getName().toLowerCase(Locale.ROOT).endsWith(".wav"))
+		if (!outputFile.getName().toLowerCase().endsWith(".wav"))
 			outputFile = new File(outputFile.getParentFile(), outputFile.getName() + ".wav");
 		if (outputFile.isFile()) {
 			int choice = SwingUtils.getConfirmDialog()

@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -389,7 +388,7 @@ public final class AudioCatalog
 
 	private static String fileKey(String filename)
 	{
-		return FilenameUtils.getBaseName(filename).toUpperCase(Locale.ROOT);
+		return FilenameUtils.getBaseName(filename).toUpperCase();
 	}
 
 	public static boolean isVanillaUnusedSongID(int id)

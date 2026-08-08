@@ -8,7 +8,7 @@ replay_pid*
 /bin/
 /build/
 
-# Local Star Rod data and runtime output
+# Local Star Rod runtime output
 /local/
 
 # Legacy Star Rod config location
@@ -20,6 +20,6 @@ replay_pid*
 !/.settings/org.eclipse.jdt.core.prefs
 !/.settings/org.eclipse.jdt.ui.prefs
 
-# VS Code: keep the shared workspace settings only
+# VS Code: keep shared workspace settings
 /.vscode/*
 !/.vscode/settings.json

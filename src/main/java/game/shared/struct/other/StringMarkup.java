@@ -14,6 +14,8 @@ import util.Logger;
 
 public class StringMarkup extends BaseStruct
 {
+	private static final int MessageBufferSize = 1024;
+
 	public static final StringMarkup instance = new StringMarkup();
 
 	private StringMarkup()
@@ -23,19 +25,25 @@ public class StringMarkup extends BaseStruct
 	public void scan(BaseDataDecoder decoder, Pointer ptr, ByteBuffer fileBuffer)
 	{
 		int start = fileBuffer.position();
-		int i = 0;
-		do {
-			if (++i > 256) {
-				Logger.logWarning("String at %08X does not terminate after 256 characters!");
-				fileBuffer.position(fileBuffer.position() + 4);
-			}
+		int length = 0;
+		boolean terminated = false;
+		while (fileBuffer.hasRemaining()) {
+			byte b = fileBuffer.get();
+			length++;
+			if (length == MessageBufferSize + 1)
+				Logger.logWarning(String.format("String at %08X does not terminate after %d bytes!", ptr.address, MessageBufferSize));
 
-			if (!fileBuffer.hasRemaining()) {
-				Logger.logWarning("String at %08X does not terminate by end of file!");
-				return;
+			if (b == (byte) 0xFD) {
+				terminated = true;
+				break;
 			}
 		}
-		while ((fileBuffer.get() != (byte) 0xFD));
+
+		if (!terminated) {
+			Logger.logWarning(String.format("String at %08X does not terminate by end of file!", ptr.address));
+			return;
+		}
+
 		int end = fileBuffer.position();
 
 		fileBuffer.position(start);
