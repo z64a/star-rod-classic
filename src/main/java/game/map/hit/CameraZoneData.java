@@ -13,6 +13,7 @@ import java.util.List;
 import org.w3c.dom.Element;
 
 import common.Vector3f;
+
 import game.map.MapObject;
 import game.map.MutablePoint;
 import game.map.editor.MapEditor;

@@ -22,8 +22,6 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
-import app.Environment;
-import app.SwingUtils;
 import common.BaseEditor;
 import common.BaseEditorSettings;
 import common.BasicCamera;
@@ -31,6 +29,9 @@ import common.BasicCommandManager;
 import common.BasicEditorCommand;
 import common.MouseInput.MouseManagerListener;
 import common.MousePixelRead;
+
+import app.Environment;
+import app.SwingUtils;
 import game.map.editor.render.PresetColor;
 import game.map.editor.render.TextureManager;
 import game.map.editor.ui.SwatchPanel;
@@ -1174,7 +1175,7 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 			else
 				image.draw(mousePixelX, mousePixelY, pickedPixel);
 		}
-
+		
 		if(mouseManager.holdingRMB && mousePixelValid)
 			image.deselect(mousePixelX, mousePixelY);
 			*/

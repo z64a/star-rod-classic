@@ -256,25 +256,25 @@ public class EntityDecompiler
 	{
 		// dumps shadows
 		shadowMode = true;
-
+	
 		textureMap = new HashMap<>();
 		vertexMap = new HashMap<>();
-
+	
 		File rawFile  = new File(DUMP_ENTITY_RAW + "_" + EntitySet.COMMON + ".bin");
 		fileBuffer = IOUtils.getDirectBuffer(rawFile);
-
+	
 		List<ModelNode> nodes = new ArrayList<>();
 	//	nodes.add(new ModelNode(0, 0x8A48));
 		nodes.add(new ModelNode(0, 0x8A70));
-
+	
 		for(ModelNode node : nodes)
 			readDisplayNode(node);
-
+	
 	//	if(PRINT_DISPLAY_LISTS) {
 			for(ModelNode node : nodes)
 				printNodeInfo(node);
 	//	}
-
+	
 		EntityModel mdl = createModel(nodes);
 		mdl.writeToObj(new File(DUMP_ENTITY_SRC + "/shadow/circle.obj"));
 	}

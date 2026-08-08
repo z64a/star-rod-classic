@@ -17,6 +17,7 @@ import org.lwjgl.BufferUtils;
 
 import common.MouseInput;
 import common.Vector3f;
+
 import game.globals.ItemRecord;
 import game.globals.editor.GlobalsData;
 import game.globals.editor.GlobalsListModel;
@@ -27,8 +28,8 @@ import game.map.shape.TransformMatrix;
 import game.shared.ProjectDatabase;
 import game.sprite.Sprite;
 import game.sprite.SpriteLoader;
-import game.sprite.SpriteRaster;
 import game.sprite.SpriteLoader.SpriteSet;
+import game.sprite.SpriteRaster;
 import game.string.MessageBoxes;
 import game.string.StringConstants;
 import game.string.StringConstants.ControlCharacter;

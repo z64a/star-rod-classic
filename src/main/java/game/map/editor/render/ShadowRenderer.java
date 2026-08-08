@@ -12,9 +12,10 @@ import java.nio.ByteBuffer;
 
 import javax.imageio.ImageIO;
 
-import app.Directories;
 import common.BaseCamera;
 import common.Vector3f;
+
+import app.Directories;
 import game.map.shape.TransformMatrix;
 import renderer.buffers.BufferedMesh;
 import renderer.shaders.RenderState;

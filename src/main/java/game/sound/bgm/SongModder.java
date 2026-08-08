@@ -76,7 +76,8 @@ public abstract class SongModder
 		for (int index = 0; index < songElements.size(); index++) {
 			Element songElement = songElements.get(index);
 			int currentID = xmr.hasAttribute(songElement, ATTR_ID)
-				? SoundXml.readHex(xmr, songElement, ATTR_ID, 0, 0xFF) : index;
+				? SoundXml.readHex(xmr, songElement, ATTR_ID, 0, 0xFF)
+				: index;
 			if (currentID != songID)
 				continue;
 

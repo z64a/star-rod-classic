@@ -316,10 +316,10 @@ public class GeometryCompiler
 				raf.writeInt(RDP_PIPE_SYNC);
 				raf.writeInt(0);
 			}
-
+		
 			for(int i : batch.commandList)
 				raf.writeInt(i);
-
+		
 			writeTriangleList(batch.triangles);
 		}
 		*/

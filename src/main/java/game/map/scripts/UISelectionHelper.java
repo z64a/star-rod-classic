@@ -71,13 +71,13 @@ public abstract class UISelectionHelper
 	{
 		return getLastModel(true);
 	}
-
+	
 	public static Model getLastModel(boolean requireMesh)
 	{
 		MapObject mostRecent = getLastObject(MapObjectType.MODEL);
 		if(mostRecent == null)
 			return null;
-
+	
 		Model mdl = (Model)mostRecent;
 		if(requireMesh && !mdl.hasMesh())
 		{
@@ -85,21 +85,21 @@ public abstract class UISelectionHelper
 			Toolkit.getDefaultToolkit().beep();
 			return null;
 		}
-
+	
 		return mdl;
 	}
-
+	
 	public static Collider getLastCollider()
 	{
 		return getLastCollider(true);
 	}
-
+	
 	public static Collider getLastCollider(boolean requireMesh)
 	{
 		MapObject mostRecent = getLastObject(MapObjectType.COLLIDER);
 		if(mostRecent == null)
 			return null;
-
+	
 		Collider c = (Collider)mostRecent;
 		if(requireMesh && !c.hasMesh())
 		{
@@ -107,21 +107,21 @@ public abstract class UISelectionHelper
 			Toolkit.getDefaultToolkit().beep();
 			return null;
 		}
-
+	
 		return c;
 	}
-
+	
 	public static Zone getLastZone()
 	{
 		return getLastZone(true);
 	}
-
+	
 	public static Zone getLastZone(boolean requireMesh)
 	{
 		MapObject mostRecent = getLastObject(MapObjectType.COLLIDER);
 		if(mostRecent == null)
 			return null;
-
+	
 		Zone z = (Zone)mostRecent;
 		if(requireMesh && !z.hasMesh())
 		{
@@ -129,7 +129,7 @@ public abstract class UISelectionHelper
 			Toolkit.getDefaultToolkit().beep();
 			return null;
 		}
-
+	
 		return z;
 	}
 	*/

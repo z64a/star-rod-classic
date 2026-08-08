@@ -128,7 +128,7 @@ public class VolumeComponent extends BaseMarkerComponent
 	{
 		return true;
 	}
-
+	
 	@Override
 	public void addSelectablePoints(List<SelectablePoint> points)
 	{
@@ -137,7 +137,7 @@ public class VolumeComponent extends BaseMarkerComponent
 			points.add(maxPos);
 		}
 	}
-
+	
 	@Override
 	public void addToBackup(IdentityHashSet<PointBackup> backupList)
 	{
@@ -146,7 +146,7 @@ public class VolumeComponent extends BaseMarkerComponent
 			backupList.add(maxPos.point.getBackup());
 		}
 	}
-
+	
 	@Override
 	public void addPoints(IdentityHashSet<MutablePoint> positions)
 	{
@@ -155,7 +155,7 @@ public class VolumeComponent extends BaseMarkerComponent
 			positions.add(maxPos.point);
 		}
 	}
-
+	
 	@Override
 	public void startTransformation()
 	{
@@ -164,7 +164,7 @@ public class VolumeComponent extends BaseMarkerComponent
 			maxPos.point.startTransform();
 		}
 	}
-
+	
 	@Override
 	public void endTransformation()
 	{
@@ -173,34 +173,34 @@ public class VolumeComponent extends BaseMarkerComponent
 			maxPos.point.endTransform();
 		}
 	}
-
+	
 	@Override
 	public void render(RenderingOptions opts, MapEditViewport view, Renderer renderer)
 	{
 		super.render(opts, view, renderer);
-
+	
 		int R = (int) (float) radius.get();
 		int H = (int) (float) height.get();
-
+	
 		float r = 0.0f;
 		float g = 0.0f;
 		float b = 0.0f;
 		float a = 1.0f;
-
+	
 		if (parentMarker.selected)
 			r = 1.0f;
 		else
 			g = 1.0f;
 		RenderState.setLineWidth(2.0f);
-
+	
 		TransformMatrix mtx = TransformMatrix.identity();
 		MutablePoint pos = parentMarker.position;
-
+	
 		switch (parentMarker.type) {
 			case Sphere:
 				if (R < 0)
 					return;
-
+	
 				LineShader shader = ShaderManager.use(LineShader.class);
 				shader.useVertexColor.set(false);
 				shader.color.set(r, g, b, a);
@@ -208,28 +208,28 @@ public class VolumeComponent extends BaseMarkerComponent
 				mtx.translate(pos.getX(), pos.getY(), pos.getZ());
 				Renderer.instance().renderLineSphere36(mtx);
 				break;
-
+	
 			case Cylinder:
 				if (R < 0)
 					return;
-
+	
 				Renderer.instance().drawCircularVolume(
 					pos.getX(), pos.getY(), pos.getZ(), R, H,
 					r, g, b, a);
 				break;
-
+	
 			case Volume:
 				boolean editPointsMode = true;
-
+	
 				Renderer.instance().drawRectangularVolume(
 					minPos.point.getX(), minPos.point.getY(), minPos.point.getZ(),
 					maxPos.point.getX(), maxPos.point.getY(), maxPos.point.getZ(),
 					r, g, b, a);
-
+	
 				if (parentMarker.selected) {
 					RenderState.setColor(r, g, b, a);
 					RenderState.setPointSize(editPointsMode ? 12.0f : 8.0f);
-
+	
 					PointRenderQueue.addPoint().setPosition(minPos.point.getX(), minPos.point.getY(), minPos.point.getZ());
 					PointRenderQueue.addPoint().setPosition(maxPos.point.getX(), maxPos.point.getY(), maxPos.point.getZ());
 					PointRenderQueue.render(true);
@@ -237,7 +237,7 @@ public class VolumeComponent extends BaseMarkerComponent
 				break;
 			default:
 				break;
-
+	
 		}
 	}
 	*/

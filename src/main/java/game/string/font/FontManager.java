@@ -177,7 +177,7 @@ public class FontManager
 		int upper = CharSet.Normal.patch_ptrRasters >>> 16;
 		if((lower & 0x8000) != 0)
 			upper++;
-
+		
 		rp.seek("Custom Font", 0xB9E58);
 		rp.writeInt(0x3C060000 | upper);
 		rp.writeInt(0x24C60000 | lower);

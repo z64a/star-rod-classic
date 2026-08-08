@@ -631,19 +631,19 @@ public class DisplayList extends BaseStruct
 	private static void findLists(ByteBuffer fileBuffer)
 	{
 		fileBuffer.position(fileBuffer.capacity() - 4);
-
+	
 		int pos = fileBuffer.capacity() - 8;
 		int count = 0;
-
+	
 		ArrayList<Integer> starts = new ArrayList<>(2000);
 		ArrayList<Integer> ends = new ArrayList<>(2000);
 		boolean reading = false;
-
+	
 		while(pos > 0)
 		{
 			fileBuffer.position(pos);
 			long h = fileBuffer.getLong();
-
+	
 			if(!reading)
 			{
 				if(h == 0xDF00000000000000L)
@@ -661,42 +661,42 @@ public class DisplayList extends BaseStruct
 					ends.add(pos + 8);
 					//System.out.printf("%5d : %08X%n",  ++count, pos);
 				}
-
+	
 				boolean valid = true;
 				int opcode  = (int)(h >> 56) & 0xFF;
 				CommandType type = decodeMap.get(opcode);
-
+	
 				if(type == null)
 					valid = false;
-
+	
 				switch(opcode)
 				{
 				case 0x00:
 				case 0xFF:
 					valid = false;
 					break;
-
+	
 				case 0x05:
 					valid = ((h & 0xFFFFFFFFL) == 0);
 					break;
 				}
-
+	
 				if(!valid)
 				{
 					starts.add(pos + 8);
 					reading = false;
 				}
 			}
-
+	
 			pos -= 8;
 		}
-
+	
 		if(starts.size() != ends.size())
 			throw new IllegalStateException();
-
+	
 		Collections.reverse(starts);
 		Collections.reverse(ends);
-
+	
 		int i = 0;
 		for(Integer start : starts)
 		{

@@ -25,11 +25,11 @@ import app.StarRodClassic;
 import app.SwingUtils;
 import game.string.PMString;
 import game.string.editor.io.FileMetadata;
+import game.string.editor.io.FileMetadata.FileType;
 import game.string.editor.io.StringResource;
 import game.string.editor.io.StringResourceTree;
 import game.string.editor.io.StringTreeModel;
 import game.string.editor.io.StringTreeNode;
-import game.string.editor.io.FileMetadata.FileType;
 import net.miginfocom.swing.MigLayout;
 import util.Logger;
 

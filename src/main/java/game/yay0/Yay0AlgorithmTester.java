@@ -52,9 +52,9 @@ public class Yay0AlgorithmTester
 		/*
 		byte[] reference = FileUtils.readFileToByteArray(new File(referenceDir, "01E9E692.bin"));
 		byte[] decodedFromReference = Yay0Helper.decode(reference);
-
+		
 		System.out.println("");
-
+		
 		byte[] encoded = FileUtils.readFileToByteArray(new File(encodedDir, "01E9E692.bin"));
 		byte[] decodedFromEncoded = Yay0Helper.decode(encoded);
 		*/
@@ -225,7 +225,7 @@ public class Yay0AlgorithmTester
 	private void dumpFiles() throws IOException
 	{
 		RandomAccessFile raf = new RandomAccessFile(Database.PRISTINE_ROM, "r");
-
+	
 		raf.seek(0x1E40020);
 		for(int i = 0; i < 1033; i++) // 1033 = 0x409
 		{
@@ -234,34 +234,34 @@ public class Yay0AlgorithmTester
 			int offset = raf.readInt() + 0x1E40020;
 			int compressedLength = raf.readInt();
 			int decompressedLength = raf.readInt();
-
+	
 			raf.seek(offset);
 			if(raf.readInt() == 0x59617930) // "Yay0"
 			{
 				int yay0length = raf.readInt();
 				assert(yay0length == decompressedLength);
-
+	
 				byte[] dumpedBytes = new byte[compressedLength];
 				raf.seek(offset);
 				raf.read(dumpedBytes);
-
+	
 				File refCompressedFile = new File(REF_COMPRESSED + String.format("%08X.bin", offset));
 				FileUtils.writeByteArrayToFile(refCompressedFile, dumpedBytes);
-
+	
 				byte[] decodedBytes = Yay0BufferHelper.decode(dumpedBytes);
-
+	
 				File verDecompressedFile = new File(VER_DECOMPRESSED + String.format("%08X.bin", offset));
 				FileUtils.writeByteArrayToFile(verDecompressedFile, decodedBytes);
-
+	
 				byte[] encodedBytes = Yay0BufferHelper.encode(decodedBytes);
-
+	
 				File verCompressedFile = new File(VER_COMPRESSED + String.format("%08X.bin", offset));
 				FileUtils.writeByteArrayToFile(verCompressedFile, encodedBytes);
 			}
 		}
-
+	
 		// while !name.equals("end_data")
-
+	
 		raf.close();
 	}
 	 */
@@ -271,21 +271,21 @@ public class Yay0AlgorithmTester
 	{
 		int errors = 0;
 		int total = 0;
-
+	
 		for(File f : new File(VER_DECOMPRESSED).listFiles())
 		{
 			File ref = new File(REF_DECOMPRESSED + f.getName());
 			assert(ref.exists());
-
+	
 			if(!equals(f, ref))
 			{
 				System.out.println("PROBLEM: " + f.getName());
 				errors++;
 			}
-
+	
 			total++;
 		}
-
+	
 		System.out.println(total + " files decompressed with " + errors + " errors.");
 	}
 	 */

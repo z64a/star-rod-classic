@@ -8,9 +8,10 @@ import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
 
+import common.Vector3f;
+
 import app.AssetManager;
 import app.Directories;
-import common.Vector3f;
 import game.map.BoundingBox;
 import game.map.Map;
 import game.map.hit.Collider;

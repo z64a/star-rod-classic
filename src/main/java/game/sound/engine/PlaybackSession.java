@@ -3,8 +3,7 @@ package game.sound.engine;
 public interface PlaybackSession extends AutoCloseable
 {
 	public default void attach()
-	{
-	}
+	{}
 
 	public boolean isPlaying();
 

@@ -37,6 +37,14 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.w3c.dom.Element;
 
+import common.FrameLimiter;
+import common.GLEditor;
+import common.KeyboardInput;
+import common.MouseInput;
+import common.MouseInput.MouseManagerListener;
+import common.RawKeyboard;
+import common.Vector3f;
+
 import app.AssetManager;
 import app.Directories;
 import app.Environment;
@@ -51,13 +59,6 @@ import app.config.Options;
 import app.config.Options.Scope;
 import app.input.IOUtils;
 import app.input.InvalidInputException;
-import common.FrameLimiter;
-import common.GLEditor;
-import common.KeyboardInput;
-import common.RawKeyboard;
-import common.MouseInput;
-import common.MouseInput.MouseManagerListener;
-import common.Vector3f;
 import game.map.Axis;
 import game.map.BoundingBox;
 import game.map.Map;

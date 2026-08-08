@@ -35,8 +35,7 @@ import util.Logger;
 public class SfxPlayer implements AudioClient, PlaybackSession
 {
 	private static final int MAX_COMMANDS_PER_FRAME = 65536;
-	private static final int MAX_TIMELINE_FRAMES =
-		10 * 60 * AudioEngine.OUTPUT_RATE / AudioEngine.FRAME_SAMPLES;
+	private static final int MAX_TIMELINE_FRAMES = 10 * 60 * AudioEngine.OUTPUT_RATE / AudioEngine.FRAME_SAMPLES;
 	private static final int TRIGGER_NONE = 0;
 	private static final int TRIGGER_ALTERNATIVE_SOUND = 1;
 	private static final int TRIGGER_ALTERNATIVE_VOLUME = 2;
@@ -44,33 +43,33 @@ public class SfxPlayer implements AudioClient, PlaybackSession
 	private static final int UPDATE_INTERVAL = 434782;
 	private static final EnvelopePair SFX_ENVELOPE_FAST = new EnvelopePair(
 		new int[] {
-			60, 127,
-			45, 127,
-			43, 95,
-			29, 0,
-			EnvelopeProgram.CMD_END, 0
+				60, 127,
+				45, 127,
+				43, 95,
+				29, 0,
+				EnvelopeProgram.CMD_END, 0
 		},
 		new int[] {
-			39, 0,
-			EnvelopeProgram.CMD_END, 0
+				39, 0,
+				EnvelopeProgram.CMD_END, 0
 		}
 	);
 
 	private static final EnvelopePair SFX_ENVELOPE_SLOW = new EnvelopePair(
 		new int[] {
-			60, 127,
-			35, 127,
-			60, 63,
-			42, 31,
-			42, 15,
-			42, 7,
-			42, 3,
-			54, 0,
-			EnvelopeProgram.CMD_END, 0
+				60, 127,
+				35, 127,
+				60, 63,
+				42, 31,
+				42, 15,
+				42, 7,
+				42, 3,
+				54, 0,
+				EnvelopeProgram.CMD_END, 0
 		},
 		new int[] {
-			54, 0,
-			EnvelopeProgram.CMD_END, 0
+				54, 0,
+				EnvelopeProgram.CMD_END, 0
 		}
 	);
 

@@ -4,12 +4,10 @@ import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JSpinner.DefaultEditor;
-
-import app.SwingUtils;
-
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
+import app.SwingUtils;
 import game.texture.TileFormat;
 import net.miginfocom.swing.MigLayout;
 

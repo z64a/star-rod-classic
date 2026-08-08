@@ -243,7 +243,7 @@ public class IOUtils
 			String line;
 			int lineNum = 1;
 			while ((line = in.readLine()) != null) {
-			if (lineNum == 1 && !line.isEmpty() && line.charAt(0) == UTF8ByteOrderMark)
+				if (lineNum == 1 && !line.isEmpty() && line.charAt(0) == UTF8ByteOrderMark)
 					line = line.substring(1);
 				lines.add(new Line(source, lineNum++, line));
 			}

@@ -16,10 +16,11 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import app.AssetManager;
 import common.BaseCamera;
 import common.KeyboardInput;
 import common.Vector3f;
+
+import app.AssetManager;
 import game.map.Axis;
 import game.map.BoundingBox;
 import game.map.Map;
@@ -378,7 +379,7 @@ public class CursorObject extends EditorObject
 		double dot = nx*dir.x + nz*dir.z;
 		// okay way:
 		double dot = Vector3f.dot(dir, normalDir);
-
+		
 		pos.x += length * (dir.x - normalDir.x * dot);
 		pos.z += length * (dir.z - normalDir.z * dot);
 		 */

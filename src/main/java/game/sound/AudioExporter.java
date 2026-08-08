@@ -28,10 +28,8 @@ import game.sound.sfx.SfxPlayer;
 
 public class AudioExporter
 {
-	private static final int MAX_EXPORT_BLOCKS =
-		30 * 60 * AudioEngine.OUTPUT_RATE / AudioEngine.FRAME_SAMPLES;
-	private static final int MAX_TAIL_BLOCKS =
-		10 * AudioEngine.OUTPUT_RATE / AudioEngine.FRAME_SAMPLES;
+	private static final int MAX_EXPORT_BLOCKS = 30 * 60 * AudioEngine.OUTPUT_RATE / AudioEngine.FRAME_SAMPLES;
+	private static final int MAX_TAIL_BLOCKS = 10 * AudioEngine.OUTPUT_RATE / AudioEngine.FRAME_SAMPLES;
 
 	private final SoundBank bank;
 

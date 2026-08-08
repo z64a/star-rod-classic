@@ -62,6 +62,9 @@ import javax.swing.text.StyledDocument;
 import org.apache.commons.io.FilenameUtils;
 
 import com.alexandriasoftware.swing.JSplitButton;
+import common.BaseEditor;
+import common.BaseEditorSettings;
+import common.CameraInput;
 
 import app.Directories;
 import app.Environment;
@@ -71,9 +74,6 @@ import app.SwingUtils;
 import app.config.Config;
 import app.config.Options;
 import app.config.Options.Scope;
-import common.BaseEditor;
-import common.BaseEditorSettings;
-import common.CameraInput;
 import game.map.editor.ui.dialogs.ChooseDialogResult;
 import game.map.editor.ui.dialogs.OpenFileChooser;
 import game.shared.ProjectDatabase;

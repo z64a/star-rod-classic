@@ -410,7 +410,8 @@ final class BgmTab extends AudioBoothTab
 			XmlReader xmr = new XmlReader(file);
 			Element root = xmr.getRootElement();
 			String predefinedName = xmr.hasAttribute(root, SongKey.ATTR_CODE)
-				? xmr.getAttribute(root, SongKey.ATTR_NAME) : null;
+				? xmr.getAttribute(root, SongKey.ATTR_NAME)
+				: null;
 			int compositions = xmr.getTags(
 				xmr.getUniqueRequiredTag(root, SongKey.TAG_COMP_LIST),
 				SongKey.TAG_COMPOSITION).size();

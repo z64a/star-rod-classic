@@ -15,10 +15,11 @@ import javax.swing.JList;
 
 import org.w3c.dom.Element;
 
-import app.SwingUtils;
-import app.StarRodException;
 import common.BaseCamera;
 import common.Vector3f;
+
+import app.StarRodException;
+import app.SwingUtils;
 import game.map.Axis;
 import game.map.editor.MapEditor;
 import game.map.editor.UpdateProvider;

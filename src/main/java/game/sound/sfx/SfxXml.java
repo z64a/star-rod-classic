@@ -146,7 +146,8 @@ public final class SfxXml
 			if (unused && empty)
 				throw error(manifest, element, "empty sounds must not be marked unused");
 			String desc = reader.hasAttribute(element, ATTR_DESC)
-				? reader.getAttribute(element, ATTR_DESC) : "";
+				? reader.getAttribute(element, ATTR_DESC)
+				: "";
 			List<String> tags = readTags(reader, manifest, element);
 			names.setMetadata(id, unused, empty, desc, tags);
 		}
@@ -389,9 +390,11 @@ public final class SfxXml
 		checkAttributes(source, element, ATTR_SLOT, ATTR_PLAYER, ATTR_PRIORITY, ATTR_EMPTY);
 		int slot = readRangedInt(reader, source, element, ATTR_SLOT, 0, 7, false);
 		Integer player = reader.hasAttribute(element, ATTR_PLAYER)
-			? readRangedInt(reader, source, element, ATTR_PLAYER, 0, 7, false) : null;
+			? readRangedInt(reader, source, element, ATTR_PLAYER, 0, 7, false)
+			: null;
 		Integer priority = reader.hasAttribute(element, ATTR_PRIORITY)
-			? readRangedInt(reader, source, element, ATTR_PRIORITY, 0, 3, false) : null;
+			? readRangedInt(reader, source, element, ATTR_PRIORITY, 0, 3, false)
+			: null;
 
 		List<Element> children = childElements(source, element);
 		boolean empty = reader.hasAttribute(element, ATTR_EMPTY);
@@ -517,8 +520,7 @@ public final class SfxXml
 			case TAG_SET_INSTRUMENT:
 				checkAttributes(source, element, ATTR_WAV, ATTR_ENVELOPE);
 				requireNoChildren(source, element);
-				SoundBankCatalog.InstrumentAddress instrument =
-					readWavAddress(reader, source, element, catalog);
+				SoundBankCatalog.InstrumentAddress instrument = readWavAddress(reader, source, element, catalog);
 				return new Command(Op.SET_INSTRUMENT, instrument.bank, instrument.patch);
 			case TAG_SET_REVERB:
 				return new Command(Op.SET_REVERB,

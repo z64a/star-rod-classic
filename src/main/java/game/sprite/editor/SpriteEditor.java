@@ -48,6 +48,9 @@ import javax.swing.TransferHandler;
 
 import org.apache.commons.io.FilenameUtils;
 
+import common.BaseEditor;
+import common.BaseEditorSettings;
+
 import app.Environment;
 import app.IconResource;
 import app.StarRodException;
@@ -55,8 +58,6 @@ import app.SwingUtils;
 import app.config.Config;
 import app.config.Options;
 import app.config.Options.Scope;
-import common.BaseEditor;
-import common.BaseEditorSettings;
 import game.map.editor.render.PresetColor;
 import game.map.editor.render.TextureManager;
 import game.map.editor.ui.dialogs.ChooseDialogResult;
@@ -1104,12 +1105,12 @@ public class SpriteEditor extends BaseEditor
 				try {
 					int id = SpriteLoader.getMaximumID(spriteSet) + 1;
 					SpriteLoader.create(spriteSet, id);
-
+		
 					if(spriteSet == SpriteSet.Npc)
 						useNpcFiles(id);
 					else
 						usePlayerFiles(id);
-
+		
 				} catch (Throwable t) {
 					Logger.logError("Failed to create new sprite.");
 					incrementDialogsOpen();
@@ -1119,7 +1120,7 @@ public class SpriteEditor extends BaseEditor
 			});
 		});
 		menu.add(item);
-
+		
 		menu.addSeparator();
 		 */
 

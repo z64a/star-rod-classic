@@ -6,8 +6,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
-import game.map.editor.MapKeyConfig;
 import game.map.editor.MapInput;
+import game.map.editor.MapKeyConfig;
 import net.miginfocom.swing.MigLayout;
 
 public class MapInputListPanel extends JPanel

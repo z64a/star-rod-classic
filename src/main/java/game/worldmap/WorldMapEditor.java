@@ -24,9 +24,6 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.KeyStroke;
 
-import app.Directories;
-import app.Environment;
-import app.SwingUtils;
 import common.BaseEditor;
 import common.BaseEditorSettings;
 import common.BasicCamera;
@@ -34,6 +31,10 @@ import common.BasicCommandManager;
 import common.BasicEditorCommand;
 import common.MouseInput.MouseManagerListener;
 import common.MousePixelRead;
+
+import app.Directories;
+import app.Environment;
+import app.SwingUtils;
 import game.map.editor.render.PresetColor;
 import game.map.editor.render.TextureManager;
 import game.shared.ProjectDatabase;

@@ -102,15 +102,15 @@ public class ActorTypesEditor
 	{
 		Globals.initialize();
 		File xmlFile = new File(DUMP_BATTLE + FN_BATTLE_ACTORS);
-
+	
 		List<ActorType> types1 = readROM();
 		writeXML(types1, xmlFile);
 		List<ActorType> types2 = readXML(xmlFile);
-
+	
 		assert(types1.size() == types2.size());
 		for(int i = 0; i < types1.size(); i++)
 			assert(types1.get(i).equals(types2.get(i)));
-
+	
 		Globals.exit();
 	}
 	 */

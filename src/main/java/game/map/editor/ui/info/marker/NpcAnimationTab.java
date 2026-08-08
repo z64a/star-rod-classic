@@ -20,9 +20,9 @@ import game.map.marker.NpcComponent.SetMarkerSprite;
 import game.sprite.Sprite;
 import game.sprite.SpriteAnimation;
 import game.sprite.SpriteLoader;
-import game.sprite.SpritePalette;
 import game.sprite.SpriteLoader.SpriteMetadata;
 import game.sprite.SpriteLoader.SpriteSet;
+import game.sprite.SpritePalette;
 import game.sprite.editor.IndexableComboBoxRenderer;
 import net.miginfocom.swing.MigLayout;
 import util.ui.ListAdapterComboboxModel;
@@ -51,30 +51,30 @@ public class NpcAnimationTab extends JPanel
 		spriteSpinner.addChangeListener((e) -> {
 			if(ignoreChanges)
 				return;
-
+		
 			final int maxID = SpriteLoader.getMaximumID(SpriteSet.Npc);
 			if(spriteSpinner.getValue() > maxID)
 			{
 				spriteSpinner.setValue(maxID);
 				return;
 			}
-
+		
 			MapEditor.execute(new SetMarkerSprite(data, spriteSpinner.getValue()));
 		});
 		spriteSpinner.setToolTipText("Sprite ID");
-
+		
 		paletteSpinner = new HexSpinner(0, 0, 0);
 		paletteSpinner.addChangeListener((e) -> {
 			if(ignoreChanges)
 				return;
-
+		
 			if(data.previewSprite != null &&
 					(paletteSpinner.getValue() > data.previewSprite.lastValidPaletteID()))
 			{
 				paletteSpinner.setValue(data.previewSprite.lastValidPaletteID());
 				return;
 			}
-
+		
 			MapEditor.execute(new SetMarkerPalette(data, paletteSpinner.getValue()));
 		});
 		paletteSpinner.setToolTipText("Palette ID");

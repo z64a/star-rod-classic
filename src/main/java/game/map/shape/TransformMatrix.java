@@ -13,6 +13,7 @@ import org.lwjgl.BufferUtils;
 import org.w3c.dom.Element;
 
 import common.Vector3f;
+
 import game.map.Axis;
 import game.map.MutableAngle;
 import game.map.MutablePoint;

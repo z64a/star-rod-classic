@@ -371,10 +371,10 @@ public class MapIndex implements Externalizable
 		private int entryID;
 		private Vector3f pos;
 		private double angle;
-
+	
 		public IndexedMarker()
 		{}
-
+	
 		public IndexedMarker(Marker m)
 		{
 			this.name = m.name;
@@ -382,7 +382,7 @@ public class MapIndex implements Externalizable
 			pos = m.position.getVector();
 			angle = m.yaw.getAngle();
 		}
-
+	
 		@Override
 		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException
 		{
@@ -391,7 +391,7 @@ public class MapIndex implements Externalizable
 			angle = in.readDouble();
 			pos = new Vector3f(in.readFloat(), in.readFloat(), in.readFloat());
 		}
-
+	
 		@Override
 		public void writeExternal(ObjectOutput out) throws IOException
 		{
@@ -402,7 +402,7 @@ public class MapIndex implements Externalizable
 			out.writeFloat(pos.y);
 			out.writeFloat(pos.z);
 		}
-
+	
 		public String getName()
 		{
 			return name;

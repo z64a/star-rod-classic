@@ -18,9 +18,10 @@ import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.Timer;
 
+import common.FrameLimiter;
+
 import app.Environment;
 import app.input.IOUtils;
-import common.FrameLimiter;
 import game.sound.WaveformPanel;
 import game.sound.engine.AudioEngine;
 import game.sound.engine.Instrument;

@@ -70,14 +70,14 @@ public class StringMarkup extends BaseStruct
 		/*
 		ByteBuffer bb = StringEncoder.encodeLines(patch.lines);
 		List<String> charList = new ArrayList<>(bb.capacity());
-
+		
 		while(bb.hasRemaining())
 			charList.add(String.format("%02Xb", (int)bb.get()));
-
+		
 		if(charList.size() % 4 != 0)
 			for(int i = 0; i < 4 - (charList.size() % 4); i++)
 				charList.add("00b");
-
+		
 		String[] newTokens = new String[charList.size()];
 		charList.toArray(newTokens);
 		*/

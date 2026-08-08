@@ -32,12 +32,12 @@ import game.globals.editor.GlobalsData;
 import game.globals.editor.GlobalsRecord;
 import game.map.shading.SpriteShadingData;
 import game.map.shading.SpriteShadingEditor;
-import game.sound.AudioCatalog;
-import game.sound.sfx.SfxNames;
-import game.sound.sfx.SfxXml;
 import game.shared.ProjectDatabase.ConstEnum.EnumPair;
 import game.shared.lib.CType;
 import game.shared.struct.script.ScriptVariable;
+import game.sound.AudioCatalog;
+import game.sound.sfx.SfxNames;
+import game.sound.sfx.SfxXml;
 import game.string.StringConstKey;
 import game.string.StringEncoder;
 import game.texture.images.ImageDatabase;
@@ -971,35 +971,35 @@ public class ProjectDatabase
 	private static void readVariableDictionary(ScriptVariable type, DualHashMap<Integer, String> nameMap, File byteFile) throws IOException
 	{
 		nameMap.clear();
-
+	
 		if(!byteFile.exists())
 			return;
-
+	
 		List<String> lines = IOUtils.readFormattedTextFile(byteFile);
 		HashSet<Integer> indexSet = new HashSet<>();
-
+	
 		for(int i = 0; i < lines.size(); i++)
 		{
 			String line = lines.get(i);
-
+	
 			if(line.isEmpty() || !line.contains("="))
 				continue;
-
+	
 			String[] tokens = IOUtils.getKeyValuePair(byteFile, line, i);
 			String newName = SCRIPT_VAR_PREFIX + tokens[1];
 			int offset = Integer.parseInt(tokens[0], 16);
-
+	
 			int max = type.getMaxIndex();
 			if(offset < 0 || offset >= max)
 				throw new InputFileException(byteFile, i, "%s index is out of range (0 to %X): %n%s", type.getTypeName(), max, line);
-
+	
 			if(indexSet.contains(offset))
 				throw new InputFileException(byteFile, i, "Duplicate %s index: %n%s", type.getTypeName(), line);
 			indexSet.add(offset);
-
+	
 			if(nameMap.containsInverse(newName))
 				throw new InputFileException(byteFile, i, "Duplicate %s name: %n%s", type.getTypeName(), line);
-
+	
 			nameMap.add(offset, newName);
 		}
 	}
@@ -1011,82 +1011,82 @@ public class ProjectDatabase
 		List<String> lines = IOUtils.readTextFile(byteFile);
 		HashSet<Integer> indexSet = new HashSet<>();
 		nameMap.clear();
-
+	
 		for(int i = 0; i < lines.size(); i++)
 		{
 			String line = lines.get(i);
-
+	
 			if(line.isEmpty() || !line.contains("="))
 				continue;
-
+	
 			String[] tokens = IOUtils.getKeyValuePair(byteFile, line, i);
 			String newName = SCRIPT_VAR_PREFIX + tokens[1];
 			int offset = Integer.parseInt(tokens[0], 16);
-
+	
 			int max = ScriptVariable.GameByte.getMaxValue();
 			if(offset < 0 || offset >= max)
 				throw new InputFileException(byteFile, i, "Saved byte index is out of range (0 to %X): %s", max, line);
-
+	
 			if(indexSet.contains(offset))
 				throw new InputFileException(byteFile, i, "Duplicate saved byte index: ", line);
 			indexSet.add(offset);
-
+	
 			if(nameMap.containsInverse(newName))
 				throw new InputFileException(byteFile, i, "Duplicate saved byte name: " + line);
-
+	
 			nameMap.add(offset, newName);
 		}
 	}
-
+	
 	private static void readGameFlags(DualHashMap<Integer, String> nameMap, File flagFile) throws IOException
 	{
 		List<String> lines = IOUtils.readTextFile(flagFile);
 		HashSet<Integer> indexSet = new HashSet<>();
 		nameMap.clear();
-
+	
 		for(int i = 0; i < lines.size(); i++)
 		{
 			String line = lines.get(i);
-
+	
 			if(line.isEmpty() || !line.contains("="))
 				continue;
-
+	
 			String[] tokens = IOUtils.getKeyValuePair(flagFile, line, i);
 			String newName = SCRIPT_VAR_PREFIX + tokens[1];
 			int offset = Integer.parseInt(tokens[0], 16);
-
+	
 			int max = ScriptVariable.GameFlag.getMaxValue();
 			if(offset < 0 || offset >= max)
 				throw new InputFileException(flagFile, i, "Saved flag index is out of range (0 to %X): %s", max, line);
-
+	
 			if(indexSet.contains(offset))
 				throw new InputFileException(flagFile, i, "Duplicate saved flag index: ", line);
 			indexSet.add(offset);
-
+	
 			if(nameMap.containsInverse(newName))
 				throw new InputFileException(flagFile, i, "Saved flag may not share name with byte: " + line);
-
+	
 			if(nameMap.containsInverse(newName))
 				throw new InputFileException(flagFile, i, "Duplicate saved flag name: " + line);
-
+	
 			nameMap.add(offset, newName);
 		}
 	}
-
+	
 	private static void readModItems(File file) throws IOException
 	{
 		List<String> lines = IOUtils.readTextFile(file);
 		modItemMap.clear();
-
+	
 		for(int i = 0; i < lines.size(); i++)
 		{
 			String line = lines.get(i);
-
+	
 			if(line.isEmpty())
 				continue;
-
+	
 			String[] tokens = IOUtils.getKeyValuePair(file, line, i);
-
+	
 			int index = (int)Long.parseLong(tokens[0], 16);
 			modItemMap.put(tokens[1], String.format("%08X", index));
 		}

@@ -36,14 +36,14 @@ import javax.swing.SwingUtilities;
 import org.apache.commons.io.FilenameUtils;
 
 import com.alexandriasoftware.swing.JSplitButton;
+import common.BaseEditor;
+import common.BaseEditorSettings;
+import common.Vector3f;
 
 import app.Directories;
 import app.Environment;
 import app.StarRodException;
 import app.SwingUtils;
-import common.BaseEditor;
-import common.BaseEditorSettings;
-import common.Vector3f;
 import game.battle.ActorTypesEditor;
 import game.battle.ActorTypesEditor.ActorType;
 import game.battle.editor.BattleCamera.BasicTraceRay;
@@ -933,9 +933,9 @@ public class BattleEditor extends BaseEditor
 		if(shift) count++;
 		if(count > 1)
 			return false;
-
+	
 		// switch key --> java.awk.KeyEvent.*, e.g. KeyEvent.VK_DOWN
-
+	
 		return false;
 	}
 	 */
@@ -944,26 +944,26 @@ public class BattleEditor extends BaseEditor
 	private void addEditorMenu(JMenuBar menuBar)
 	{
 		JMenuItem item;
-
+	
 		JMenu menu = new JMenu(MENU_BAR_SPACING + "Editor" + MENU_BAR_SPACING);
 		menu.getPopupMenu().setLightWeightPopupEnabled(false);
 		menuBar.add(menu);
-
+	
 		item = new JMenuItem("View Shortcuts");
 		item.addActionListener((e)-> {
 			showControls();
 		});
 		menu.add(item);
 	}
-
+	
 	private void addOptionsMenu(JMenuBar menuBar, ActionListener openLogAction)
 	{
 		JMenuItem item;
-
+	
 		JMenu menu = new JMenu(MENU_BAR_SPACING + "Options" + MENU_BAR_SPACING);
 		menu.getPopupMenu().setLightWeightPopupEnabled(false);
 		menuBar.add(menu);
-
+	
 		item = new JMenuItem("Load Player Sprites");
 		item.addActionListener((e)-> {
 			invokeLater(() -> {
@@ -971,7 +971,7 @@ public class BattleEditor extends BaseEditor
 			});
 		});
 		menu.add(item);
-
+	
 		item = new JMenuItem("Load NPC Sprites");
 		item.addActionListener((e)-> {
 			invokeLater(() -> {
@@ -979,13 +979,13 @@ public class BattleEditor extends BaseEditor
 			});
 		});
 		menu.add(item);
-
+	
 		menu.addSeparator();
-
+	
 		item = new JMenuItem("Open Log");
 		item.addActionListener(openLogAction);
 		menu.add(item);
-
+	
 		if(!RunContext.mainConfig.getBoolean(Options.ExitToMenu)) {
 			item = new JMenuItem("Switch Tools");
 			item.addActionListener((e)-> {
@@ -995,7 +995,7 @@ public class BattleEditor extends BaseEditor
 			});
 			menu.add(item);
 		}
-
+	
 		item = new JMenuItem("Exit");
 		item.addActionListener((e)-> {
 			invokeLater(() -> {
@@ -1004,15 +1004,15 @@ public class BattleEditor extends BaseEditor
 		});
 		menu.add(item);
 	}
-
+	
 	private void addSpriteMenu(JMenuBar menuBar)
 	{
 		JMenuItem item;
-
+	
 		JMenu menu = new JMenu(MENU_BAR_SPACING + "Sprite" + MENU_BAR_SPACING);
 		menu.getPopupMenu().setLightWeightPopupEnabled(false);
 		menuBar.add(menu);
-
+	
 		item = new JMenuItem("Save Changes");
 		item.addActionListener((e)-> {
 			invokeLater(() -> {
@@ -1020,7 +1020,7 @@ public class BattleEditor extends BaseEditor
 			});
 		});
 		menu.add(item);
-
+	
 		item = new JMenuItem("Reload Current Sprite");
 		item.addActionListener((e)-> {
 			invokeLater(() -> {
@@ -1028,9 +1028,9 @@ public class BattleEditor extends BaseEditor
 			});
 		});
 		menu.add(item);
-
+	
 		menu.addSeparator();
-
+	
 		item = new JMenuItem("Convert to Keyframes");
 		item.addActionListener((e)-> {
 			invokeLater(() -> {
@@ -1042,7 +1042,7 @@ public class BattleEditor extends BaseEditor
 			});
 		});
 		menu.add(item);
-
+	
 		item = new JMenuItem("Convert to Commands");
 		item.addActionListener((e)-> {
 			invokeLater(() -> {
@@ -1055,52 +1055,52 @@ public class BattleEditor extends BaseEditor
 		});
 		menu.add(item);
 	}
-
+	
 	private void addRenderingMenu(JMenuBar menuBar)
 	{
 		JMenu menu = new JMenu(MENU_BAR_SPACING + "Rendering" + MENU_BAR_SPACING);
 		menu.getPopupMenu().setLightWeightPopupEnabled(false);
 		menuBar.add(menu);
-
+	
 		final JMenuItem itemBackground = new JCheckBoxMenuItem("Show Background");
 		itemBackground.setSelected(showBackground);
 		itemBackground.addActionListener((e)-> {
 			showBackground = itemBackground.isSelected();
 		});
 		menu.add(itemBackground);
-
+	
 		final JMenuItem itemFilter = new JCheckBoxMenuItem("Use Filtering");
 		itemFilter.setSelected(useFiltering);
 		itemFilter.addActionListener((e)-> {
 			useFiltering = itemFilter.isSelected();
 		});
 		menu.add(itemFilter);
-
+	
 		menu.addSeparator();
-
+	
 		final JMenuItem itemGuide = new JCheckBoxMenuItem("Show Scale Reference");
 		itemGuide.setSelected(showGuide);
 		itemGuide.addActionListener((e)-> {
 			showGuide = itemGuide.isSelected();
 		});
 		menu.add(itemGuide);
-
+	
 		final JMenuItem itemFlip = new JCheckBoxMenuItem("Flip Horizontally");
 		itemFlip.setSelected(flipHorizontal);
 		itemFlip.addActionListener((e)-> {
 			flipHorizontal = itemFlip.isSelected();
 		});
 		menu.add(itemFlip);
-
+	
 		menu.addSeparator();
-
+	
 		final JMenuItem itemHighlightComp = new JCheckBoxMenuItem("Highlight Selected Component");
 		itemHighlightComp.setSelected(true); //XXX -- really odd! this is called *before* instance variable initialization!
 		itemHighlightComp.addActionListener((e)-> {
 			highlightComponent = itemHighlightComp.isSelected();
 		});
 		menu.add(itemHighlightComp);
-
+	
 		final JMenuItem itemHighlightCmd = new JCheckBoxMenuItem("Highlight Current Command");
 		itemHighlightCmd.setSelected(true); //XXX -- really odd! this is called *before* instance variable initialization!
 		itemHighlightCmd.addActionListener((e)-> {
@@ -1108,12 +1108,12 @@ public class BattleEditor extends BaseEditor
 		});
 		menu.add(itemHighlightCmd);
 	}
-
+	
 	private JPanel getAnimationsTab()
 	{
 		JLabel defaultPaletteLabel = new JLabel("Palette");
 		SwingUtils.setFontSize(defaultPaletteLabel, 12);
-
+	
 		/*
 		paletteComboBox = new JComboBox<>();
 		SwingUtils.setFontSize(paletteComboBox, 14);
@@ -1123,12 +1123,12 @@ public class BattleEditor extends BaseEditor
 			if(cbOverridePalette.isSelected())
 				animOverridePalette = (SpritePalette)paletteComboBox.getSelectedItem();
 		});
-
+	
 		animationComboBox = new JComboBox<>();
 		SwingUtils.setFontSize(animationComboBox, 14);
 		animationComboBox.setMaximumRowCount(24);
 		animationComboBox.setRenderer(new IndexableComboBoxRenderer());
-
+	
 		compxSpinner = new JSpinner();
 		SwingUtils.setFontSize(compxSpinner, 12);
 		compxSpinner.setModel(new SpinnerNumberModel(0, -128, 128, 1));
@@ -1137,7 +1137,7 @@ public class BattleEditor extends BaseEditor
 			if(currentComp != null)
 				currentComp.posx = (int)compxSpinner.getValue();
 		});
-
+	
 		compySpinner = new JSpinner();
 		SwingUtils.setFontSize(compySpinner, 12);
 		compySpinner.setModel(new SpinnerNumberModel(0, -128, 128, 1));
@@ -1146,7 +1146,7 @@ public class BattleEditor extends BaseEditor
 			if(currentComp != null)
 				currentComp.posy = (int)compySpinner.getValue();
 		});
-
+	
 		compzSpinner = new JSpinner();
 		SwingUtils.setFontSize(compzSpinner, 12);
 		compzSpinner.setModel(new SpinnerNumberModel(0, -32, 32, 1));
@@ -1155,11 +1155,11 @@ public class BattleEditor extends BaseEditor
 			if(currentComp != null)
 				currentComp.posz = (int)compzSpinner.getValue();
 		});
-
+	
 		cbShowOnlySelectedComponent = new JCheckBox(" Draw current only");
 		cbShowOnlySelectedComponent.setSelected(false);
 		cbShowOnlySelectedComponent.setToolTipText("Only render the currently selected component in the preview window.");
-
+	
 		cbOverridePalette = new JCheckBox(" Override default pal");
 		cbOverridePalette.setSelected(false);
 		cbOverridePalette.addActionListener((e) -> {
@@ -1168,55 +1168,55 @@ public class BattleEditor extends BaseEditor
 			else
 				animOverridePalette = null;
 		});
-
+	
 		JButton editAnimationsButton = new JButton("Edit Animation List");
 		editAnimationsButton.addActionListener((e)-> {
 			if(sprite == null)
 				return;
 			showAnimationsEditorWindow();
 		});
-
+	
 		JButton addComponentButton = new JButton("Edit Components");
 		addComponentButton.addActionListener((e)-> {
 			if(sprite == null || currentAnim == null)
 				return;
 			showComponentsEditorWindow();
 		});
-
+	
 		JPanel relativePosPanel = new JPanel(new MigLayout("fill, ins 0, wrap"));
 		relativePosPanel.add(SwingUtils.getLabel("Relative Position:", SwingConstants.RIGHT, 12));
 		relativePosPanel.add(compxSpinner, "w 72!, sg spin, split 3, gaptop 4");
 		relativePosPanel.add(compySpinner, "w 72!, sg spin");
 		relativePosPanel.add(compzSpinner, "w 72!, sg spin");
-
+	
 		playbackStatusLabel = SwingUtils.getLabel("", SwingConstants.RIGHT, 12);
 		playbackFrameLabel = SwingUtils.getLabel("", SwingConstants.RIGHT, 12);
-
+	
 		JPanel playbackPanel = new JPanel(new MigLayout("fill, ins 0"));
 		playbackPanel.add(SwingUtils.getLabel("Playback Controls:", SwingConstants.RIGHT, 12));
 		playbackPanel.add(playbackStatusLabel, "growx");
 		playbackPanel.add(playbackFrameLabel, "growx, w 40::, wrap");
 		playbackPanel.add(getControlPanel(), "pushx, growx, span");
-
+	
 		commandListPanel = new JPanel(new MigLayout("ins 0, fill"));
 		commandEditPanel = new JPanel(new MigLayout("ins 0, fill"));
-
+	
 		componentPanel = new JPanel(new MigLayout("fill, ins 16", "[]32[grow]")); //XXX 35%
 		componentPanel.add(relativePosPanel, "grow");
 		componentPanel.add(playbackPanel, "grow, wrap");
 		componentPanel.add(commandListPanel, "gaptop 16, grow, pushy");
 		componentPanel.add(commandEditPanel, "gaptop 16, grow, push");
-
+	
 		componentTabPool = new ArrayList<>();
-
+	
 		componentTabs = new JTabbedPane();
 		componentTabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-
+	
 		componentTabs.addChangeListener((e) ->
 		{
 			if(ignoreComponentTabChanges)
 				return;
-
+	
 			final int id = componentTabs.getSelectedIndex();
 			if(id >= 0)
 			{
@@ -1225,7 +1225,7 @@ public class BattleEditor extends BaseEditor
 				});
 			}
 		});
-
+	
 		componentTabs.addMouseListener(new MouseAdapter()
 		{
 			@Override
@@ -1236,32 +1236,32 @@ public class BattleEditor extends BaseEditor
 					int tabIndex = componentTabs.indexAtLocation(evt.getX(), evt.getY());
 					if(tabIndex < 0)
 						return;
-
+	
 					incrementDialogsOpen();
 					String input = JOptionPane.showInputDialog(
 							componentTabs,
 							"Enter a new name", "Rename Component",
 							JOptionPane.PLAIN_MESSAGE);
 					decrementDialogsOpen();
-
+	
 					if(input == null)
 						return;
-
+	
 					String newName = input.trim();
-
+	
 					if(newName.isEmpty())
 						return;
-
+	
 					SpriteComponent comp = currentAnim.components.get(tabIndex);
 					comp.name = newName;
 					componentTabs.setTitleAt(tabIndex, String.format("%-8s", newName));
 				}
 			}
 		});
-
-
+	
+	
 		JPanel animationsTab = new JPanel(new MigLayout("fill, wrap, ins 16"));
-
+	
 		return animationsTab;
 	}
 	 */
@@ -1280,7 +1280,7 @@ public class BattleEditor extends BaseEditor
 		{
 			if(sprite == null || currentAnim == null)
 				return;
-
+		
 			int selected = (trace.pixelData.stencilValue - 1);
 			currentAnim.setComponentSelected(selected);
 			if(selected >= 0)

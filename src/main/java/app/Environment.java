@@ -30,8 +30,8 @@ import org.apache.commons.lang3.SystemUtils;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import app.Resource.ResourceType;
 import app.AppVersion.VersionLevel;
+import app.Resource.ResourceType;
 import app.config.Config;
 import app.config.Options;
 import app.config.Options.Scope;

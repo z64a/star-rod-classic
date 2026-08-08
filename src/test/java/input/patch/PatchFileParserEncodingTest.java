@@ -39,8 +39,8 @@ public class PatchFileParserEncodingTest
 	public void rejectsMalformedUtf8()
 	{
 		byte[] malformedPatch = {
-			'#', 'n', 'e', 'w', ':', 'D', 'a', 't', 'a', ' ', '$', 'B', 'a', 'd', ' ', '{', '\n',
-			(byte) 0xC3, 0x28, '\n', '}'
+				'#', 'n', 'e', 'w', ':', 'D', 'a', 't', 'a', ' ', '$', 'B', 'a', 'd', ' ', '{', '\n',
+				(byte) 0xC3, 0x28, '\n', '}'
 		};
 
 		assertThrows(InputFileException.class, () -> IOUtils.readPlainInputStream(

@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import common.Vector3f;
+
 import game.map.marker.Marker;
 import game.map.marker.Marker.MarkerType;
 import game.map.patching.MapDecoder;

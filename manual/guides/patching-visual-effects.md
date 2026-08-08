@@ -37,12 +37,14 @@ $mod/effect/patch/00 BigSteamPuff_Gfx.epat
 Do not edit the files under `effect/src/`. Copy the smallest structure you need into the patch, or patch a known offset within it. Effect patches use the normal overlay-patch syntax:
 
 ```star-rod
-@ $Function_Init {
+@ $Function_Main {
     [20]  NOP
 }
 ```
 
 The example only demonstrates the file and structure syntax; an instruction's meaning depends on the particular effect. Begin with the decoded function and make one verified change at a time.
+
+The effect-table entry point is named `$Function_Main`. Bundled hints for each supported ROM version name its known `EffectBlueprint` callbacks `$Function_Init`, `$Function_Update`, `$Function_RenderScene`, and `$Function_RenderUI`. Null callbacks are left unnamed.
 
 When the mod is compiled, Star Rod links code at the effect table's original `0xE...` virtual address and links graphics at `0x09000000`. It appends each changed binary to the ROM and rewrites the selected effect-table entry with the new ROM range. If two effects originally share graphics, patching one `_Gfx` basename gives that effect a changed copy and leaves the other table entries on the original data.
 

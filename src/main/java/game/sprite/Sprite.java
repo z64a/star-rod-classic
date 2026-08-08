@@ -17,10 +17,11 @@ import javax.swing.DefaultListModel;
 
 import org.w3c.dom.Element;
 
+import common.Vector3f;
+
 import app.AssetManager;
 import app.input.IOUtils;
 import app.input.InputFileException;
-import common.Vector3f;
 import game.map.BoundingBox;
 import game.map.shading.ShadingProfile;
 import game.sprite.SpriteLoader.SpriteSet;
@@ -1066,13 +1067,13 @@ public class Sprite implements XmlSerializable
 	public static void main(String[] args) throws IOException
 	{
 		RunContext.initialize();
-
+	
 		validateAll();
 	//	convertAll();
 	//	testBinary();
 	//	testXmlCommandLists();
 	//	testXml();
-
+	
 		RunContext.exit();
 	}
 	*/
@@ -1157,13 +1158,13 @@ public class Sprite implements XmlSerializable
 
 			/*
 			SpriteIO.writeBinaryNpc(spr, out);
-
+			
 			assert(raw.length() == out.length());
-
+			
 			ByteBuffer bb1 = IOUtils.getDirectBuffer(raw);
 			ByteBuffer bb2 = IOUtils.getDirectBuffer(out);
 			out.delete();
-
+			
 			assert(bb1.equals(bb2));
 			 */
 		}

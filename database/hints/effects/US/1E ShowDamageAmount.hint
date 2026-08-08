@@ -1,0 +1,11 @@
+add E003C23C Function
+name E003C23C Function_Init
+
+add E003C244 Function
+name E003C244 Function_Update
+
+add E003C474 Function
+name E003C474 Function_RenderScene
+
+add E003C47C Function
+name E003C47C Function_RenderUI

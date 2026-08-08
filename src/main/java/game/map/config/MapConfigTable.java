@@ -577,7 +577,7 @@ public class MapConfigTable
 			DefaultMutableTreeNode areaNode = (DefaultMutableTreeNode)root.getChildAt(i);
 			AreaConfig area = (AreaConfig)areaNode.getUserObject();
 			area.areaID = i;
-
+	
 			int mapID = 0;
 			for(int j = 0; j < areaNode.getChildCount(); j++)
 			{

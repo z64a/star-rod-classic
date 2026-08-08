@@ -17,11 +17,12 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 
+import common.BaseCamera;
+import common.Vector3f;
+
 import app.StarRodClassic;
 import app.StarRodException;
 import app.input.IOUtils;
-import common.BaseCamera;
-import common.Vector3f;
 import game.map.Axis;
 import game.map.BoundingBox;
 import game.map.editor.render.RenderMode;
@@ -262,7 +263,7 @@ public class EntityModel
 			double yawRad = Math.toRadians(yaw);
 			float sinYaw = (float)Math.sin(yawRad);
 			float cosYaw = (float)Math.cos(yawRad);
-
+		
 			return new Vector3f(
 					dx + cosYaw * fx + sinYaw * fz,
 					dy + fy,

@@ -1602,21 +1602,21 @@ public final class SfxBinary
 			if (compact) {
 				int packed = ((oneShot.volume & 0x7C) << 1) | oneShot.randomPitch / 8;
 				return new byte[] {
-					(byte) (oneShot.flags() | 2),
-					(byte) oneShot.bank,
-					(byte) oneShot.patch,
-					(byte) packed
+						(byte) (oneShot.flags() | 2),
+						(byte) oneShot.bank,
+						(byte) oneShot.patch,
+						(byte) packed
 				};
 			}
 			return new byte[] {
-				(byte) oneShot.flags(),
-				(byte) oneShot.bank,
-				(byte) oneShot.patch,
-				(byte) oneShot.volume,
-				(byte) oneShot.pan,
-				(byte) oneShot.reverb,
-				(byte) oneShot.pitch,
-				(byte) (oneShot.randomPitch / 8)
+					(byte) oneShot.flags(),
+					(byte) oneShot.bank,
+					(byte) oneShot.patch,
+					(byte) oneShot.volume,
+					(byte) oneShot.pan,
+					(byte) oneShot.reverb,
+					(byte) oneShot.pitch,
+					(byte) (oneShot.randomPitch / 8)
 			};
 		}
 

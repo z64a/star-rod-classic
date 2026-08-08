@@ -29,9 +29,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import common.FrameLimiter;
+
 import app.Environment;
 import app.SwingUtils;
-import common.FrameLimiter;
 import game.sound.AudioExporter;
 import game.sound.WaveformPanel;
 import game.sound.engine.AudioEngine;

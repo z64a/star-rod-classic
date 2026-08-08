@@ -1,0 +1,8 @@
+add E00A80FC Function
+name E00A80FC Function_Init
+
+add E00A8104 Function
+name E00A8104 Function_Update
+
+add E00A82D4 Function
+name E00A82D4 Function_RenderScene

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 import common.Vector3f;
+
 import game.map.Axis;
 import game.map.BoundingBox;
 import game.map.MutableAngle;

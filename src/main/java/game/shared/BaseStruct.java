@@ -71,12 +71,12 @@ public class BaseStruct implements IPrint, IScan, IParseField, IReplaceExpressio
 	/*
 	// maintain a set of instances for each struct class
 	private static HashMap<Class<? extends BaseStruct>, BaseStruct> instanceMap;
-
+	
 	protected static void init()
 	{
 		instanceMap = new HashMap<>();
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	public static <T extends BaseStruct> T get(Class<T> cls)
 	{
@@ -91,7 +91,7 @@ public class BaseStruct implements IPrint, IScan, IParseField, IReplaceExpressio
 				throw new StarRodException("Failed to create struct instance %s %n%s", cls.getSimpleName(), e.getMessage());
 			}
 		}
-
+	
 		return (T)struct;
 	}
 	*/

@@ -49,7 +49,7 @@ public class CType
 		getType("int*");
 		getType("double[3]**");
 		getType("byte*[4][3]*");
-
+		
 		for(Entry<String,Type> e : typePool.entrySet())
 		{
 			Type t = e.getValue();

@@ -154,6 +154,8 @@ import javax.swing.WindowConstants;
 
 import org.apache.commons.io.FileUtils;
 
+import common.BaseEditor;
+
 import app.AppVersion.VersionLevel;
 import app.config.BuildOptionsPanel;
 import app.config.Config;
@@ -164,7 +166,6 @@ import app.input.InvalidInputException;
 import app.update.BackupCreator;
 import app.update.MinorUpdator;
 import asm.AsmUtils;
-import common.BaseEditor;
 import game.ROM;
 import game.ROM.LibScope;
 import game.RomLoader;

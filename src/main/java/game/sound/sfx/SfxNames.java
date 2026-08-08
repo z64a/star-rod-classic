@@ -196,7 +196,8 @@ public final class SfxNames
 			if (unused && empty)
 				xmr.complain(String.format("Sound %04X cannot be both unused and empty", id));
 			String desc = xmr.hasAttribute(element, ATTR_DESC)
-				? xmr.getAttribute(element, ATTR_DESC) : "";
+				? xmr.getAttribute(element, ATTR_DESC)
+				: "";
 			List<String> idTags = List.of();
 			if (xmr.hasAttribute(element, ATTR_TAGS)) {
 				idTags = xmr.readStringList(element, ATTR_TAGS);

@@ -10,9 +10,10 @@ import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
 
 import common.KeyboardInputConfig;
+
 import game.map.editor.MapEditor;
-import game.map.editor.MapKeyConfig;
 import game.map.editor.MapInput;
+import game.map.editor.MapKeyConfig;
 
 /**
  * Swing presentation for Map Editor key inputs. Keyboard execution remains owned by KeyboardInput; accelerators here are display-only.

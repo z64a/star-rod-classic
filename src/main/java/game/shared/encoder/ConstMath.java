@@ -179,7 +179,7 @@ public abstract class ConstMath
 		/*
 		for(String s : tokens)
 			System.out.println("T: " + s);
-
+		
 		for(OffsetToken t : tokenList)
 			System.out.printf("%-10s %s%n", t.cat, t.value != 0 ? "" + t.value : 0);
 		*/

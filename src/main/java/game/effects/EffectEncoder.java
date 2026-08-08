@@ -91,17 +91,17 @@ public class EffectEncoder extends BaseDataEncoder
 				graphics ? "graphics" : "code", expectedAddress);
 	}
 
-	public int readInitAddress(String sourceName) throws IOException
+	public int readMainAddress(String sourceName) throws IOException
 	{
 		HashMap<String, Struct> structMap = new HashMap<>();
 		File indexFile = getOutputIndexFile(sourceName);
 		loadIndexFile(structMap, indexFile);
 
-		Struct init = structMap.get("$Function_Init");
-		if (init == null || !init.isTypeOf(StructTypes.FunctionT))
-			throw new InputFileException(indexFile, "Could not find $Function_Init in rebuilt effect code.");
+		Struct main = structMap.get("$Function_Main");
+		if (main == null || !main.isTypeOf(StructTypes.FunctionT))
+			throw new InputFileException(indexFile, "Could not find $Function_Main in rebuilt effect code.");
 
-		return init.originalAddress;
+		return main.originalAddress;
 	}
 
 	public static File getDumpRawFile(String sourceName)

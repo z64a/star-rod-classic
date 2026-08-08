@@ -23,7 +23,8 @@ public final class ManualGenerator
 	private static final Parser PARSER = Parser.builder().extensions(EXTENSIONS).build();
 	private static final HtmlRenderer RENDERER = HtmlRenderer.builder().extensions(EXTENSIONS).build();
 
-	private ManualGenerator() {}
+	private ManualGenerator()
+	{}
 
 	public static void main(String[] args) throws IOException
 	{

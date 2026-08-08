@@ -47,9 +47,9 @@ import game.shared.struct.function.JumpTable;
 import game.shared.struct.function.JumpTarget;
 import game.shared.struct.script.Script;
 import game.shared.struct.script.Script.ScriptLine;
+import game.shared.struct.script.ScriptVariable;
 import game.string.PMString;
 import game.string.StringDumper;
-import game.shared.struct.script.ScriptVariable;
 import game.texture.Tile;
 import game.texture.TileFormat;
 import patcher.Region;
@@ -93,10 +93,10 @@ public abstract class BaseDataDecoder
 		/*
 		ByteTableT.scanner = (decoder,ptr,fileBuf) -> {};
 		ByteTableT.printer = (decoder,ptr,fileBuf,pw) -> { decoder.printHex(ptr, fileBuf, pw, 8); };
-
+		
 		ShortTableT.scanner = (decoder,ptr,fileBuf) -> {};
 		ShortTableT.printer = (decoder,ptr,fileBuf,pw) -> { decoder.printHex(ptr, fileBuf, pw, 8); };
-
+		
 		IntTableT.scanner = (decoder,ptr,fileBuf) -> {};
 		IntTableT.printer =	(decoder,ptr,fileBuf,pw) -> { decoder.printHex(ptr, fileBuf, pw, 8); };
 		 */
@@ -815,40 +815,40 @@ public abstract class BaseDataDecoder
 				enqueueAsRoot(h.address, hintType, Origin.HINT);
 			}
 		}
-
+	
 		scanPointerQueue(fileBuffer);
 		TreeSet<String> usedNames = new TreeSet<String>();
-
+	
 		for(Pointer ptr : localPointerMap.values())
 		{
 			usedNames.add(ptr.getPointerName());
 		}
-
+	
 		for(Hint h : hintMap.values())
 		{
 			if(h.hasLength())
 			{
 				if(!finishedPointers.contains(h.address))
 					throw new InputFileException(hintFile, getSourceName() + " has unknown struct referenced by size hint: %08X", h.address);
-
+	
 				Pointer ptr = localPointerMap.get(h.address);
 				ptr.length = h.getLengthSuggestion();
 			}
-
+	
 			if(h.hasWordsPerRow())
 			{
 				if(!finishedPointers.contains(h.address))
 					throw new InputFileException(hintFile, getSourceName() + " has unknown struct referenced by newline hint: %08X", h.address);
-
+	
 				Pointer ptr = localPointerMap.get(h.address);
 				ptr.newlineHint = h.getWordsPerRowSuggestion();
 			}
-
+	
 			if(h.hasName())
 			{
 				if(!finishedPointers.contains(h.address))
 					throw new InputFileException(hintFile, getSourceName() + " has unknown struct referenced by name hint: %08X", h.address);
-
+	
 				Pointer ptr = localPointerMap.get(h.address);
 				String name = h.getNameSuggestion();
 				if(usedNames.contains(name))
@@ -864,6 +864,12 @@ public abstract class BaseDataDecoder
 
 	protected void printPreamble(PrintWriter pw)
 	{} // optional for subclasses
+
+	protected void printOriginAnnotation(PrintWriter pw, Pointer ptr)
+	{
+		if (ptr.origin != Origin.DECODED && ptr.origin != Origin.UNIDENTIFIED)
+			pw.println("% Origin: " + ptr.origin);
+	}
 
 	protected void printScriptFile(File f, ByteBuffer fileBuffer) throws IOException
 	{
@@ -890,8 +896,7 @@ public abstract class BaseDataDecoder
 					pw.print(ancestorPtr.getPointerName() + " ");
 				pw.println();
 			}
-			if (r.ptr.origin != Origin.DECODED && r.ptr.origin != Origin.UNIDENTIFIED)
-				pw.println("% Origin: " + r.ptr.origin);
+			printOriginAnnotation(pw, r.ptr);
 
 			if (annotateIndexInfo)
 				pw.printf("%% %08X --> %08X%n", toOffset(r.ptr.address), r.ptr.address);

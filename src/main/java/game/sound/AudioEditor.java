@@ -17,14 +17,15 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 
-import app.Directories;
-import app.Environment;
-import app.SwingUtils;
 import common.BaseEditor;
 import common.BaseEditorSettings;
 import common.BasicCamera;
 import common.MouseInput.MouseManagerListener;
 import common.MousePixelRead;
+
+import app.Directories;
+import app.Environment;
+import app.SwingUtils;
 import game.map.editor.render.PresetColor;
 import game.map.editor.render.TextureManager;
 import net.miginfocom.swing.MigLayout;

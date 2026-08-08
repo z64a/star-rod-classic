@@ -30,7 +30,7 @@ public class Struct
 		Replaced	// had an original size, overriden by patches
 	//	Deleted		// removed
 	}
-
+	
 	public Status status;
 	*/
 

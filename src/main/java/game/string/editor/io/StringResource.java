@@ -69,10 +69,10 @@ public class StringResource
 		{
 			if(!string.indexed)
 				continue;
-
+		
 			if(string.section > 0xFF || string.section < 0)
 				string.error = true;
-
+		
 			if(string.index > 0xFFFF)
 				string.error = true;
 		}

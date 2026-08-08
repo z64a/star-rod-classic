@@ -173,7 +173,7 @@ public class MapInfoPanel extends JPanel
 			@Override public void changedUpdate(DocumentEvent e)	{ updateName(); };
 			@Override public void insertUpdate(DocumentEvent e)		{ updateName(); };
 			@Override public void removeUpdate(DocumentEvent e)		{ updateName(); };
-
+		
 			private void updateName()
 			{
 				if(currentMap == null) return;
@@ -191,7 +191,7 @@ public class MapInfoPanel extends JPanel
 				editor.modified();
 			}
 		});
-
+		
 		bgField.addActionListener((e) -> {
 			if(currentMap == null) return;
 			currentMap.bgName = bgField.getText();

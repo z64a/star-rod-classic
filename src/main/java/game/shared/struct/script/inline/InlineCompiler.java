@@ -206,7 +206,7 @@ public class InlineCompiler
 			Set [n] *Var
 			...
 			Op	[m] [n]
-
+		
 		to the simplified form:
 			...
 			Op  [m] *Var
@@ -239,11 +239,11 @@ public class InlineCompiler
 			Op [n] X
 			...
 			Set	*Var [n]
-
+		
 		to the simplified form:
 			Op  *Var X
 			...
-
+		
 		this really only applies to the return value, as that is the only
 		script variable being set by a valid inline expression
 		 */

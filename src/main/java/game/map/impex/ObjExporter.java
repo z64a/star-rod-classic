@@ -6,8 +6,9 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 
-import app.input.IOUtils;
 import common.Vector3f;
+
+import app.input.IOUtils;
 import game.map.hit.Collider;
 import game.map.hit.Zone;
 import game.map.mesh.BasicMesh;

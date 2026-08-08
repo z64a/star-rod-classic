@@ -88,25 +88,25 @@ public class MapDumper
 		Logger.log("Reading map tables.", Priority.MILESTONE);
 		RandomAccessFile raf = new RandomAccessFile(romFile, "r");
 		MapConfigTable table = MapConfigTable.read(new ROM_JP(Directories.DATABASE.toFile()), raf);
-
+	
 		HashMap<String,String> entries = IOUtils.readKeyValueFile(
 				new File(Directories.DATABASE + "/" + Directories.FN_MAP_NICKNAMES));
-
+	
 		for(AreaConfig area : table.areas)
 		{
 			if(entries.containsKey(area.name))
 				area.nickname = entries.get(area.name);
-
+	
 			for(MapConfig map : area.maps)
 			{
 				if(entries.containsKey(map.name))
 					map.nickname = entries.get(map.name);
 			}
 		}
-
+	
 		Logger.log("Dumping map assets.", Priority.MILESTONE);
 		dumpAssets(raf, table);
-
+	
 		Logger.log("Dumping resources...", Priority.MILESTONE);
 		for(Resource res : table.allResources)
 		{
@@ -114,31 +114,31 @@ public class MapDumper
 			byte[] dumpedBytes = new byte[res.length];
 			raf.seek(res.offset);
 			raf.read(dumpedBytes);
-
+	
 			if(res.compressed)
 			{
 				File yay0 = new File(DUMP_MAP_JP_YAY0 + res.name);
 				FileUtils.writeByteArrayToFile(yay0, dumpedBytes);
-
+	
 				writeBytes = Yay0Helper.decode(dumpedBytes);
 			}
 			else
 				writeBytes = dumpedBytes;
-
+	
 			File out = new File(DUMP_MAP_JP_RAW + res.name);
 			FileUtils.writeByteArrayToFile(out, writeBytes);
 		}
-
+	
 		raf.close();
 		table.writeXML(new File(DUMP_MAP_JP + FN_MAP_TABLE));
-
+	
 		for(AreaConfig area : table.areas)
 		{
 			for(MapConfig cfg : area.maps)
 			{
 				Logger.log("Generating source files for map: " + cfg.name, Priority.MILESTONE);
 				cfg.hasData = false;
-
+	
 				Map map = generateMap(cfg);
 				try {
 					map.saveMapAs(DUMP_MAP_JP_SRC + map.name + ".xml", "");
@@ -146,14 +146,14 @@ public class MapDumper
 					StarRodDev.displayStackTrace(e);
 				}
 			}
-
+	
 			for(MapConfig cfg : area.stages)
 			{
 				Logger.log("Generating source files for stage: " + cfg.name, Priority.MILESTONE);
 				cfg.hasData = false;
-
+	
 				Map map = generateMap(cfg);
-
+	
 				MapObjectNode<Marker> rootNode = map.markerTree.getRoot();
 				for(int i = 0; i < BATTLE_ENEMY_POSITIONS.length; i++)
 				{
@@ -164,7 +164,7 @@ public class MapDumper
 					m.getNode().childIndex = rootNode.getChildCount();
 					rootNode.add(m.getNode());
 				}
-
+	
 				try {
 					map.saveMapAs(DUMP_MAP_JP_SRC + map.name + ".xml", "");
 				} catch (Exception e) {

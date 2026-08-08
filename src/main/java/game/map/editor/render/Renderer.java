@@ -12,6 +12,7 @@ import java.util.List;
 
 import common.BaseCamera;
 import common.Vector3f;
+
 import game.map.editor.MapEditor;
 import game.map.editor.MapEditor.IShutdownListener;
 import game.map.editor.PaintManager;

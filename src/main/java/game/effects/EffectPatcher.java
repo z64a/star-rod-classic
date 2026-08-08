@@ -49,7 +49,7 @@ public class EffectPatcher
 		public final List<File> patchFiles = new LinkedList<>();
 
 		public File binary;
-		public int initAddress;
+		public int mainAddress;
 
 		public PatchTarget(EffectAsset asset, boolean graphics)
 		{
@@ -103,11 +103,11 @@ public class EffectPatcher
 			target.binary = EffectEncoder.getOutputFile(target.sourceName);
 
 			if (!target.graphics) {
-				target.initAddress = encoder.readInitAddress(target.sourceName);
-				int initOffset = target.initAddress - target.asset.entry.codeDestAddr;
-				if (initOffset < 0 || initOffset >= target.binary.length())
+				target.mainAddress = encoder.readMainAddress(target.sourceName);
+				int mainOffset = target.mainAddress - target.asset.entry.codeDestAddr;
+				if (mainOffset < 0 || mainOffset >= target.binary.length())
 					throw new InputFileException(target.patchFiles.get(0),
-						"Rebuilt $Function_Init at %08X is outside the effect code blob.", target.initAddress);
+						"Rebuilt $Function_Main at %08X is outside the effect code blob.", target.mainAddress);
 			}
 		}
 
@@ -158,7 +158,7 @@ public class EffectPatcher
 			}
 			else {
 				rp.seek("Effect Code Table", tableEntry);
-				rp.writeInt(target.initAddress);
+				rp.writeInt(target.mainAddress);
 				rp.writeInt(start);
 				rp.writeInt(end);
 			}

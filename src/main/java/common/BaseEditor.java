@@ -36,6 +36,8 @@ import javax.swing.WindowConstants;
 
 import org.apache.commons.io.FileUtils;
 
+import common.MouseInput.MouseManagerListener;
+
 import app.Directories;
 import app.Environment;
 import app.LoadingBar;
@@ -48,7 +50,6 @@ import app.SwingUtils.OpenDialogCounter;
 import app.config.Config;
 import app.config.Options;
 import app.config.Options.Scope;
-import common.MouseInput.MouseManagerListener;
 import game.map.editor.CommandManager;
 import game.map.editor.Tickable;
 import game.map.editor.commands.AbstractCommand;

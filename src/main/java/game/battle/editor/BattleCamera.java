@@ -10,6 +10,7 @@ import org.lwjgl.BufferUtils;
 import common.BaseCamera;
 import common.MousePixelRead;
 import common.Vector3f;
+
 import renderer.GLUtils;
 import renderer.shaders.RenderState;
 
@@ -22,11 +23,11 @@ public class BattleCamera extends BaseCamera
 	/*
 	public final float defaultPosY;
 	public final float panSpeedScale;
-
+	
 	public final float defaultZoom;
 	public final float minZoom;
 	public final float maxZoom;
-
+	
 	private float zoom;
 	*/
 	private float maxW;
@@ -80,7 +81,7 @@ public class BattleCamera extends BaseCamera
 				zv -= zdv * zoom * 100;
 			}
 		}
-
+		
 		// zooming out
 		if(sdw < 0)
 		{
@@ -93,28 +94,28 @@ public class BattleCamera extends BaseCamera
 		/*
 		// panning
 		double panSpeed = 600.0 * panSpeedScale * zoom;
-
+		
 		int pv = 0;
 		int ph = 0;
 		if(Keyboard.isKeyDown(Keyboard.KEY_W)) pv -= 1;
 		if(Keyboard.isKeyDown(Keyboard.KEY_S)) pv += 1;
 		if(Keyboard.isKeyDown(Keyboard.KEY_A)) ph -= 1;
 		if(Keyboard.isKeyDown(Keyboard.KEY_D)) ph += 1;
-
+		
 		float dv = zv;
 		float dh = zh;
-
+		
 		double panMag = Math.sqrt(pv*pv + ph*ph);
 		if(!MathUtil.nearlyZero(panMag))
 		{
 			dv = zv + (float)(deltaTime * panSpeed * (pv / panMag));
 			dh = zh + (float)(deltaTime * panSpeed * (ph / panMag));
 		}
-
+		
 		targetPos.x += dh;
 		targetPos.y -= dv;
 		targetPos.z  = 400.0f * zoom;
-
+		
 		if(targetPos.x > maxW) targetPos.x = maxW;
 		if(targetPos.x < -maxW) targetPos.x = -maxW;
 		if(targetPos.y > maxH) targetPos.y = maxH;

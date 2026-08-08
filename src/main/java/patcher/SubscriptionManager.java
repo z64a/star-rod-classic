@@ -169,16 +169,16 @@ public abstract class SubscriptionManager
 		{
 			super("SetGlobalByte");
 		}
-
+	
 		@Override
 		protected void hook(RomPatcher rp) throws IOException
 		{
 			int offset = rp.nextAlignedOffset();
-
+	
 			rp.seek(name + "Hook", 0xDBC20); // 80145520
 			AsmUtils.assembleAndWrite(name + "Hook", rp, new String[]
 					{ String.format("J  %X", Patcher.toAddress(offset), "NOP")});
-
+	
 			List<String> lines = new LinkedList<>();
 			lines.add("PUSH   RA");
 			for(Subscription sub : subscribers)
@@ -190,28 +190,28 @@ public abstract class SubscriptionManager
 			lines.add("POP   RA");
 			lines.add("J     80145528");
 			lines.add("RESERVED");
-
+	
 			rp.seek(name + "Dispatch", offset);
 			AsmUtils.assembleAndWrite(true, name + "Dispatch", rp, lines);
 		}
 	}
-
+	
 	private static class SetGlobalFlag extends SubscriptionList
 	{
 		public SetGlobalFlag()
 		{
 			super("SetGlobalFlag");
 		}
-
+	
 		@Override
 		protected void hook(RomPatcher rp) throws IOException
 		{
 			int offset = rp.nextAlignedOffset();
-
+	
 			rp.seek(name + "Hook", 0xDBB50 ); // 80145450
 			AsmUtils.assembleAndWrite(name + "Hook", rp, new String[]
 					{ String.format("J  %X", Patcher.toAddress(offset), "NOP")});
-
+	
 			List<String> lines = new LinkedList<>();
 			lines.add("PUSH   RA");
 			for(Subscription sub : subscribers)
@@ -223,28 +223,28 @@ public abstract class SubscriptionManager
 			lines.add("POP   RA");
 			lines.add("J     80145458");
 			lines.add("RESERVED");
-
+	
 			rp.seek(name + "Dispatch", offset);
 			AsmUtils.assembleAndWrite(true, name + "Dispatch", rp, lines);
 		}
 	}
-
+	
 	private static class ClearGlobalFlag extends SubscriptionList
 	{
 		public ClearGlobalFlag()
 		{
 			super("ClearGlobalFlag");
 		}
-
+	
 		@Override
 		protected void hook(RomPatcher rp) throws IOException
 		{
 			int offset = rp.nextAlignedOffset();
-
+	
 			rp.seek(name + "Hook", 0xDBAE0 ); // 801453E0
 			AsmUtils.assembleAndWrite(name + "Hook", rp, new String[]
 					{ String.format("J  %X", Patcher.toAddress(offset), "NOP")});
-
+	
 			List<String> lines = new LinkedList<>();
 			lines.add("PUSH   RA");
 			for(Subscription sub : subscribers)
@@ -256,7 +256,7 @@ public abstract class SubscriptionManager
 			lines.add("POP   RA");
 			lines.add("J     801453E8");
 			lines.add("RESERVED");
-
+	
 			rp.seek(name + "Dispatch", offset);
 			AsmUtils.assembleAndWrite(true, name + "Dispatch", rp, lines);
 		}

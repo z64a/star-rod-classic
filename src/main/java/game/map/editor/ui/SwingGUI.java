@@ -49,13 +49,14 @@ import javax.swing.WindowConstants;
 
 import org.apache.commons.io.FilenameUtils;
 
+import common.EditorCanvas;
+import common.KeyBindingsPanel;
+
 import app.Environment;
 import app.StarRodFrame;
 import app.SwingUtils;
 import app.SwingUtils.OpenDialogCounter;
 import app.config.PreferencesPanel;
-import common.EditorCanvas;
-import common.KeyBindingsPanel;
 import game.globals.editor.DialogResult;
 import game.map.Map;
 import game.map.Map.SetBackground;
@@ -63,10 +64,10 @@ import game.map.Map.ToggleBackground;
 import game.map.Map.ToggleStage;
 import game.map.MapObject;
 import game.map.MapObject.MapObjectType;
-import game.map.editor.MapInput;
 import game.map.editor.MapEditor;
 import game.map.editor.MapEditor.EditorMode;
 import game.map.editor.MapEditor.IShutdownListener;
+import game.map.editor.MapInput;
 import game.map.editor.PaintManager;
 import game.map.editor.commands.AbstractCommand;
 import game.map.editor.commands.ChangeTextureArchive;
@@ -1292,29 +1293,29 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 			// following commands are forwarded directly to the editor
 			/*
 			case SAVE_MAP:
-
+			
 			case COMPILE_SHAPE:
 			case COMPILE_COLLISION:
-
+			
 			case SHOW_MODELS:
 			case SHOW_COLLIDERS:
 			case SHOW_ZONES:
 			case SHOW_MARKERS:
-
+			
 			case RESET_CAMERAS:
 			case RESET_LAYOUT:
-
+			
 			case SEPARATE_VERTS:
 			case FUSE_VERTS:
 			case JOIN_MODELS:
 			case SPLIT_MODEL:
-
+			
 			case CONVERT_COLLIDER_TO_ZONE:
 			case CONVERT_ZONE_TO_COLLIDER:
-
+			
 			case CREATE_COLLIDER_GROUP:
 			case CREATE_ZONE_GROUP:
-
+			
 			case DEBUG_RECOMPUTE_BOUNDING_BOXES:
 			 */
 			default:

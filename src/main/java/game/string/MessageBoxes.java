@@ -180,20 +180,20 @@ public class MessageBoxes
 			shader.renderQuad();
 
 			/*
-
+			
 			TriangleRenderQueue.addQuad(
 					TriangleRenderQueue.addVertex().setPosition(x1, y1, 0).setUV(0,0).getIndex(),
 					TriangleRenderQueue.addVertex().setPosition(x2, y1, 0).setUV(1,0).getIndex(),
 					TriangleRenderQueue.addVertex().setPosition(x2, y2, 0).setUV(1,1).getIndex(),
 					TriangleRenderQueue.addVertex().setPosition(x1, y2, 0).setUV(0,1).getIndex());
-
+			
 			/*
 			TriangleRenderQueue.addVertex().setPosition(x1, y2, 0).setUV(0.05f,0.05f).getIndex(),
 			TriangleRenderQueue.addVertex().setPosition(x2, y2, 0).setUV(0.95f,0.05f).getIndex(),
 			TriangleRenderQueue.addVertex().setPosition(x2, y1, 0).setUV(0.95f,0.95f).getIndex(),
 			TriangleRenderQueue.addVertex().setPosition(x1, y1, 0).setUV(0.05f,0.95f).getIndex());
 			/
-
+			
 			TriangleRenderQueue.render(true);
 			*/
 		}

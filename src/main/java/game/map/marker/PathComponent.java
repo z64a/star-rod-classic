@@ -12,6 +12,7 @@ import java.util.List;
 import org.w3c.dom.Element;
 
 import common.Vector3f;
+
 import game.map.MutablePoint;
 import game.map.MutablePoint.PointBackup;
 import game.map.editor.camera.MapEditViewport;

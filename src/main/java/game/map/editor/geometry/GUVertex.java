@@ -1,6 +1,7 @@
 package game.map.editor.geometry;
 
 import common.Vector3f;
+
 import game.map.mesh.Vertex;
 
 public class GUVertex

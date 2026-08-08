@@ -408,12 +408,12 @@ public class PatchFileParser
 			optName=.Constant
 			optName=##[SomeOpt]NotPartOfTheName
 		}
-
+	
 		conditional compiles:
 		##[IF:optName:Value]
 			...
 		##[ENDIF]
-
+	
 		##[IF:optName:value1]
 			...
 		##[ELSEIF:optName:value2]
@@ -421,7 +421,7 @@ public class PatchFileParser
 		##[ELSE]
 			...
 		##[ENDIF]
-
+	
 		replacement:
 		##[VALUE:optName]
 	 */

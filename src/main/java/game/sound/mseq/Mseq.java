@@ -378,8 +378,8 @@ public class Mseq implements XmlSerializable
 
 	public static enum TrackRampType
 	{
-		TUNE(0, "tune"),
-		VOLUME(1, "volume");
+		TUNE (0, "tune"),
+		VOLUME (1, "volume");
 
 		private final int binaryValue;
 		private final String name;

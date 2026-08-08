@@ -12,7 +12,8 @@ import org.apache.commons.io.FileUtils;
 
 public final class ProjectBackups
 {
-	private ProjectBackups() {}
+	private ProjectBackups()
+	{}
 
 	public static File getRootDirectory()
 	{

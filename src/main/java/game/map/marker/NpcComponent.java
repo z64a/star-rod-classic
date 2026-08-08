@@ -14,6 +14,7 @@ import org.w3c.dom.Element;
 
 import common.BaseCamera;
 import common.Vector3f;
+
 import game.map.Axis;
 import game.map.MutablePoint;
 import game.map.MutablePoint.PointBackup;

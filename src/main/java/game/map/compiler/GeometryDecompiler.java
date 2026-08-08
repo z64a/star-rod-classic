@@ -309,7 +309,7 @@ public class GeometryDecompiler
 
 		/*
 		int[][] propCheck = mdl.getProperties();
-
+		
 		assert(propCheck.length == properties.length);
 		for(int i = 0; i < properties.length; i++)
 		{
@@ -439,7 +439,7 @@ public class GeometryDecompiler
 	/*
 	private static PrintWriter pwDL = null;
 	private static PrintWriter pwPL = null;
-
+	
 	static
 	{
 		try {
@@ -449,41 +449,41 @@ public class GeometryDecompiler
 			e.printStackTrace();
 		}
 	}
-
+	
 	private void checkDisplayList(TexturedMesh mesh)
 	{
 		pwDL.println(map.name + ": display list for " + mesh.parentObject);
-
+	
 		ArrayList<Integer> cmdList = new ArrayList<Integer>();
 		int cmd;
 		do
 		{
 			int w1 = bb.getInt();
 			int w2 = bb.getInt();
-
+	
 			cmd = w1 >>> 24;
 		w1 = (w1 << 8) >>> 8;
 		pwDL.printf(" %02X %06X %08X\r\n", cmd, w1, w2);
-
+	
 		cmdList.add(cmd);
 		}
 		while(cmd != 0xDF);
-
+	
 		for(int i = 0; i < mesh.displayListModel.size(); i++)
 		{
 			DisplayCommand dcmd = mesh.displayListModel.get(i);
 			pwDL.println(dcmd);
 		}
-
+	
 		pwDL.flush();
-
+	
 		//for(int i = 0; i < mesh.displayList.size(); i++)
 		//{
 		//	DisplayCommand dcmd = mesh.displayList.get(i);
 		//	if(dcmd instanceof FlushPipeline)
 		//		assert(i == 0 || map.name.equals("mac_00"));
 		//}
-
+	
 		// mac_00
 		// E7 000000 00000000
 		// D9 FDFFFF 00000000
@@ -491,7 +491,7 @@ public class GeometryDecompiler
 		// 01 002004 802170F0
 		// E7 000000 00000000
 		// 01 020040 80217110
-
+	
 		//	SetGeometryMode cxx = (SetGeometryMode)mesh.displayListModel.get(1);
 		//	cxx = (SetGeometryMode)mesh.displayList.get(2);
 		//	assert(cxx.settingFlags);

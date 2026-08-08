@@ -1,0 +1,8 @@
+add E00A41A4 Function
+name E00A41A4 Function_Init
+
+add E00A41AC Function
+name E00A41AC Function_Update
+
+add E00A45DC Function
+name E00A45DC Function_RenderScene

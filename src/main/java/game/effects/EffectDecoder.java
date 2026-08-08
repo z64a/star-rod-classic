@@ -1,5 +1,6 @@
 package game.effects;
 
+import static app.Directories.DATABASE_HINTS;
 import static app.Directories.DUMP_EFFECT_RAW;
 import static app.Directories.DUMP_EFFECT_SRC;
 import static game.shared.StructTypes.FloatTableT;
@@ -9,6 +10,7 @@ import static game.shared.StructTypes.ScriptT;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 
 import asm.MIPS;
@@ -42,6 +44,19 @@ public class EffectDecoder extends BaseDataDecoder
 		return sourceName;
 	}
 
+	@Override
+	protected File getHintFile()
+	{
+		return new File(DATABASE_HINTS + "effects/" + ProjectDatabase.rom.version.name() + "/" + getSourceName() + ".hint");
+	}
+
+	@Override
+	protected void printOriginAnnotation(PrintWriter pw, Pointer ptr)
+	{
+		if (ptr.origin != Origin.HINT)
+			super.printOriginAnnotation(pw, ptr);
+	}
+
 	public EffectDecoder(ByteBuffer fileBuffer, DumpMetadata metadata, EffectTableEntry entry) throws IOException
 	{
 		super(LibScope.Effect, FunctionT, ProjectDatabase.rom.getLibrary(LibScope.Effect));
@@ -51,7 +66,7 @@ public class EffectDecoder extends BaseDataDecoder
 
 			useDumpMetadata(metadata);
 			findLocalPointers(fileBuffer);
-			enqueueAsRoot(entry.initAddr, FunctionT, Origin.DECODED, "Function_Init");
+			enqueueAsRoot(entry.initAddr, FunctionT, Origin.DECODED, "Function_Main");
 			super.decode(fileBuffer);
 
 			File rawFile = new File(DUMP_EFFECT_RAW + sourceName + ".bin");

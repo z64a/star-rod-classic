@@ -28,8 +28,9 @@ import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 
-import app.SwingUtils;
 import common.Vector3f;
+
+import app.SwingUtils;
 import game.map.editor.commands.AbstractCommand;
 import game.map.editor.render.RenderingOptions.SurfaceMode;
 import game.map.editor.render.TextureManager;

@@ -46,7 +46,7 @@ public class AnalyzeBK
 		System.out.println();
 		System.out.println("Sample Rates:");
 		Instrument.sampleRates.print();
-
+		
 		System.out.println();
 		System.out.println("Key Bases:");
 		Instrument.keyBases.print();

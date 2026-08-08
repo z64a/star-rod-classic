@@ -242,7 +242,8 @@ final class MseqTab extends AudioBoothTab
 			XmlReader xmr = new XmlReader(file);
 			Element root = xmr.getRootElement();
 			String predefinedName = xmr.hasAttribute(root, MseqKey.ATTR_CODE)
-				? xmr.getAttribute(root, MseqKey.ATTR_NAME) : null;
+				? xmr.getAttribute(root, MseqKey.ATTR_NAME)
+				: null;
 			boolean hasRamps = !xmr.getTags(
 				xmr.getUniqueRequiredTag(root, MseqKey.TAG_RAMP_LIST), MseqKey.TAG_RAMP).isEmpty();
 			return new MseqSummary(predefinedName, hasRamps);

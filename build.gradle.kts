@@ -1,3 +1,4 @@
+import com.diffplug.gradle.spotless.SpotlessExtension
 import org.gradle.api.tasks.bundling.Zip
 import java.util.Locale
 import java.util.Properties
@@ -18,6 +19,7 @@ repositories {
 
 plugins {
     id("java")
+    id("com.diffplug.spotless") version "8.8.0"
     id("com.gradleup.shadow") version "8.3.11"
     id("net.nemerosa.versioning") version "3.1.0"
 }
@@ -31,6 +33,23 @@ java {
 
 val manualGenerator by sourceSets.creating {
     java.srcDir("src/manual/java")
+}
+
+configure<SpotlessExtension> {
+    isEnforceCheck = false
+
+    java {
+        target("src/**/*.java")
+        importOrder("\\#", "java", "javax", "org", "com", "")
+        removeUnusedImports()
+        eclipse("4.38").configFile(".settings/org.eclipse.jdt.core.prefs")
+    }
+}
+
+tasks.register("formatJava") {
+    group = "formatting"
+    description = "Format and organize all Java sources under src using the project Eclipse settings"
+    dependsOn("spotlessJavaApply")
 }
 
 tasks.compileJava {
