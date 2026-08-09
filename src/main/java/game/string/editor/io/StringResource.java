@@ -126,6 +126,10 @@ public class StringResource
 		IOUtils.atomicWriteLines(linesOut, file);
 
 		lastModified = file.lastModified();
+	}
+
+	public void clearModified()
+	{
 		modified = false;
 		for (PMString msg : strings)
 			msg.modified = false;

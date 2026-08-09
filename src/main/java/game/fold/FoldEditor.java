@@ -353,9 +353,9 @@ public class FoldEditor extends BaseEditor
 	}
 
 	@Override
-	protected void saveChanges()
+	protected boolean saveChanges()
 	{
-
+		return true;
 	}
 
 	@Override

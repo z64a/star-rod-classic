@@ -357,11 +357,11 @@ public class Instrument implements XmlSerializable
 			boolean bigEndian = format.isBigEndian();
 
 			for (int i = 0; i < audioBytes.length; i += 2) {
-				int low = audioBytes[i] & 0xFF;
-				int high = audioBytes[i + 1] & 0xFF;
+				int a = audioBytes[i] & 0xFF;
+				int b = audioBytes[i + 1] & 0xFF;
 				short sample = bigEndian
-					? (short) ((high << 8) | low)
-					: (short) ((low) | (high << 8));
+					? (short) ((a << 8) | b)
+					: (short) ((b << 8) | a);
 				samples.add(sample);
 			}
 

@@ -49,14 +49,13 @@ import javax.swing.WindowConstants;
 
 import org.apache.commons.io.FilenameUtils;
 
-import common.EditorCanvas;
-import common.KeyBindingsPanel;
-
 import app.Environment;
 import app.StarRodFrame;
 import app.SwingUtils;
 import app.SwingUtils.OpenDialogCounter;
 import app.config.PreferencesPanel;
+import common.EditorCanvas;
+import common.KeyBindingsPanel;
 import game.globals.editor.DialogResult;
 import game.map.Map;
 import game.map.Map.SetBackground;
@@ -223,7 +222,8 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 			public void windowClosing(WindowEvent e)
 			{
 				openDialogCount.increment();
-				closeRequested = (!editor.map.modified || promptForSave()) && (!ProjectDatabase.SpriteShading.modified || promptSaveShading());
+				closeRequested = (!editor.map.modified || promptForSave())
+					&& (!ProjectDatabase.SpriteShading.modified || promptSaveShading());
 				if (!closeRequested)
 					openDialogCount.decrement();
 			}
@@ -442,16 +442,15 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 
 		switch (choice) {
 			case JOptionPane.YES_OPTION:
-				editor.action_SaveMap();
+				return editor.action_SaveMap();
 			case JOptionPane.NO_OPTION:
-				break;
+				return true;
 			case JOptionPane.CANCEL_OPTION:
 			case JOptionPane.CLOSED_OPTION:
-				closeRequested = false;
 				return false;
 		}
 
-		return true;
+		return false;
 	}
 
 	private boolean promptSaveShading()

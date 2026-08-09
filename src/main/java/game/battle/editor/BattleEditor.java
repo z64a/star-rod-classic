@@ -37,14 +37,14 @@ import javax.swing.SwingUtilities;
 import org.apache.commons.io.FilenameUtils;
 
 import com.alexandriasoftware.swing.JSplitButton;
-import common.BaseEditor;
-import common.BaseEditorSettings;
-import common.Vector3f;
 
 import app.Directories;
 import app.Environment;
 import app.StarRodException;
 import app.SwingUtils;
+import common.BaseEditor;
+import common.BaseEditorSettings;
+import common.Vector3f;
 import game.battle.ActorTypesEditor;
 import game.battle.ActorTypesEditor.ActorType;
 import game.battle.editor.BattleCamera.BasicTraceRay;
@@ -1270,9 +1270,10 @@ public class BattleEditor extends BaseEditor
 	 */
 
 	@Override
-	protected void saveChanges()
+	protected boolean saveChanges()
 	{
-
+		Logger.logError("Battle Editor does not support saving.");
+		return false;
 	}
 
 	@Override

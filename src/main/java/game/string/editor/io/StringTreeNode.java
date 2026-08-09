@@ -55,7 +55,7 @@ public class StringTreeNode extends DefaultMutableTreeNode implements Iterable<S
 		if (data.getType() == FileType.Resource) {
 			data.stringCount = data.getResource().strings.size();
 			data.error = false;
-			data.modified = false;
+			data.modified = data.getResource().modified;
 
 			for (PMString s : data.getResource().strings) {
 				if (s.hasError())

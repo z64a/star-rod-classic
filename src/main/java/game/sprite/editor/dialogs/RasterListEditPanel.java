@@ -5,12 +5,13 @@ import javax.swing.JButton;
 
 import game.sprite.Sprite;
 import game.sprite.SpriteRaster;
+import game.sprite.editor.SpriteEditor;
 
 public class RasterListEditPanel extends ListEditPanel<SpriteRaster>
 {
-	public RasterListEditPanel(Sprite sprite, DefaultListModel<SpriteRaster> listModel)
+	public RasterListEditPanel(Sprite sprite, DefaultListModel<SpriteRaster> listModel, SpriteEditor editor)
 	{
-		super(listModel);
+		super(listModel, editor::markCurrentSpriteModified);
 
 		JButton addButton = new JButton("Add New Raster");
 		addButton.addActionListener((e) -> {

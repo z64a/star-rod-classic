@@ -74,13 +74,13 @@ public class ResourcePanel extends JPanel
 
 		item = new JMenuItem("Save Changes");
 		item.addActionListener((evt) -> {
-			saveChangesTo(popupNode);
+			editor.saveChangesTo(popupNode);
 		});
 		allPopup.add(item);
 
 		item = new JMenuItem("Save Changes");
 		item.addActionListener((evt) -> {
-			saveChangesTo(popupNode);
+			editor.saveChangesTo(popupNode);
 		});
 		dirPopup.add(item);
 		item = new JMenuItem("Open Directory");
@@ -96,7 +96,7 @@ public class ResourcePanel extends JPanel
 
 		item = new JMenuItem("Save Changes");
 		item.addActionListener((evt) -> {
-			saveChangesTo(popupNode);
+			editor.saveChangesTo(popupNode);
 		});
 		resPopup.add(item);
 		item = new JMenuItem("Open Resource");
@@ -139,7 +139,7 @@ public class ResourcePanel extends JPanel
 		reloadButton.addActionListener((e) -> fullReload());
 
 		JButton saveAllButton = new JButton("Save All Changes");
-		reloadButton.addActionListener((e) -> saveAllChanges());
+		saveAllButton.addActionListener((e) -> editor.saveAllChanges());
 
 		setLayout(new MigLayout("fill, ins 0"));
 		JScrollPane scrollPane = new JScrollPane(resourceTree);
@@ -149,12 +149,12 @@ public class ResourcePanel extends JPanel
 		add(saveAllButton, "sg but, growx, h 32!");
 	}
 
-	public void saveAllChanges()
+	public void queueAllChanges()
 	{
-		saveChangesTo(resourceTreeModel.getRoot());
+		queueChangesTo(resourceTreeModel.getRoot());
 	}
 
-	public void saveChangesTo(StringTreeNode startNode)
+	public void queueChangesTo(StringTreeNode startNode)
 	{
 		Stack<StringTreeNode> nodes = new Stack<>();
 		nodes.push(startNode);
@@ -258,6 +258,11 @@ public class ResourcePanel extends JPanel
 		resourceTreeModel.getRoot().updateEditorInfo();
 		repaint();
 		listPanel.repaint();
+	}
+
+	public boolean hasModifiedResources()
+	{
+		return resourceTreeModel.getRoot().getUserObject().modified;
 	}
 
 	public static class ResourceTreeCellRenderer extends DefaultTreeCellRenderer implements TreeCellRenderer

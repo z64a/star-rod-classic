@@ -347,9 +347,10 @@ public class AudioEditor extends BaseEditor implements MouseManagerListener
 	}
 
 	@Override
-	protected void saveChanges()
+	protected boolean saveChanges()
 	{
 		//TODO
+		return true;
 	}
 
 	@Override

@@ -62,9 +62,6 @@ import javax.swing.text.StyledDocument;
 import org.apache.commons.io.FilenameUtils;
 
 import com.alexandriasoftware.swing.JSplitButton;
-import common.BaseEditor;
-import common.BaseEditorSettings;
-import common.CameraInput;
 
 import app.Directories;
 import app.Environment;
@@ -74,6 +71,9 @@ import app.SwingUtils;
 import app.config.Config;
 import app.config.Options;
 import app.config.Options.Scope;
+import common.BaseEditor;
+import common.BaseEditorSettings;
+import common.CameraInput;
 import game.map.editor.ui.dialogs.ChooseDialogResult;
 import game.map.editor.ui.dialogs.OpenFileChooser;
 import game.shared.ProjectDatabase;
@@ -91,6 +91,7 @@ import game.string.editor.StringTokenizer.Sequence;
 import game.string.editor.io.SourceWatcher;
 import game.string.editor.io.SourceWatcher.FileEvent;
 import game.string.editor.io.StringResource;
+import game.string.editor.io.StringTreeNode;
 import game.texture.ImageConverter;
 import game.texture.Tile;
 import game.texture.images.ImageScriptModder;
@@ -483,31 +484,72 @@ public class StringEditor extends BaseEditor
 		handleSaving();
 	}
 
-	private void handleSaving()
+	private boolean handleSaving()
 	{
-		if (pendingFileEvents.isEmpty() && !resourcesToSave.isEmpty()) {
-			saving = true;
-			ArrayList<StringResource> saved = new ArrayList<>();
+		if (!pendingFileEvents.isEmpty())
+			return false;
+		if (resourcesToSave.isEmpty())
+			return true;
 
-			for (StringResource res : resourcesToSave) {
-				try {
-					res.saveChanges();
-					saved.add(res);
-				}
-				catch (IOException e) {
-					Logger.printStackTrace(e);
-					Logger.logError(e.getMessage());
-				}
+		ArrayList<StringResource> saved = new ArrayList<>();
+		boolean allSaved = true;
+
+		for (StringResource res : resourcesToSave) {
+			try {
+				res.saveChanges();
+				saved.add(res);
 			}
-
-			if (saved.size() > 1)
-				Logger.logf("Saved %d resources.", saved.size());
-			else if (saved.size() == 1)
-				Logger.log("Saved resource: " + saved.get(0).file.getName());
-
-			resourcesToSave.clear();
-			resourcePanel.updateEditorInfo();
+			catch (IOException e) {
+				allSaved = false;
+				Logger.printStackTrace(e);
+				Logger.logError(e.getMessage());
+			}
 		}
+
+		if (allSaved) {
+			for (StringResource res : saved)
+				res.clearModified();
+		}
+
+		if (saved.size() > 1)
+			Logger.logf("Saved %d resources.", saved.size());
+		else if (saved.size() == 1)
+			Logger.log("Saved resource: " + saved.get(0).file.getName());
+
+		saving = !saved.isEmpty();
+		resourcesToSave.clear();
+		resourcePanel.updateEditorInfo();
+		modified = resourcePanel.hasModifiedResources();
+		return allSaved;
+	}
+
+	private void synchronizeWorkingString()
+	{
+		if (workingString != null && workingString.isModified())
+			workingString.setMarkup(getInputText());
+		resourcePanel.updateEditorInfo();
+	}
+
+	private boolean saveWorkingString()
+	{
+		synchronizeWorkingString();
+		if (workingString != null && workingString.isModified() && !resourcesToSave.contains(workingString.source))
+			resourcesToSave.add(workingString.source);
+		return handleSaving();
+	}
+
+	boolean saveAllChanges()
+	{
+		synchronizeWorkingString();
+		resourcePanel.queueAllChanges();
+		return handleSaving();
+	}
+
+	boolean saveChangesTo(StringTreeNode node)
+	{
+		synchronizeWorkingString();
+		resourcePanel.queueChangesTo(node);
+		return handleSaving();
 	}
 
 	private ImageIcon getButtonIcon(File imgFile, boolean useInterp) throws IOException
@@ -1336,10 +1378,7 @@ public class StringEditor extends BaseEditor
 		awtKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK);
 		item.setAccelerator(awtKeyStroke);
 		item.addActionListener((e) -> {
-			if (workingString != null && workingString.isModified()) {
-				workingString.setMarkup(getInputText());
-				resourcesToSave.add(workingString.source);
-			}
+			saveWorkingString();
 		});
 		menu.add(item);
 
@@ -1347,7 +1386,7 @@ public class StringEditor extends BaseEditor
 		awtKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK);
 		item.setAccelerator(awtKeyStroke);
 		item.addActionListener((e) -> {
-			resourcePanel.saveAllChanges();
+			saveAllChanges();
 		});
 		menu.add(item);
 
@@ -1443,10 +1482,9 @@ public class StringEditor extends BaseEditor
 	}
 
 	@Override
-	protected void saveChanges()
+	protected boolean saveChanges()
 	{
-		resourcePanel.saveAllChanges();
-		handleSaving();
+		return saveAllChanges();
 	}
 
 	@Override

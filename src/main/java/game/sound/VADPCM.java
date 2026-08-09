@@ -161,23 +161,12 @@ public class VADPCM
 		int pos = 0;
 
 		while (pos < numSamples) {
+			int frameStart = pos;
 			int remaining = Math.min(16, numSamples - pos);
 
 			// load frame samples into buffer; pad with zeros if necessary
 			if (numSamples - pos >= remaining) {
 				for (int i = 0; i < remaining; i++) {
-					// check loop start condition for each sample
-					if (loopStart > 0 && pos == loopStart) {
-						for (int j = 0; j < 16; j++) {
-							if (state[j] > Short.MAX_VALUE)
-								loopState[j] = Short.MAX_VALUE;
-							else if (state[j] < Short.MIN_VALUE)
-								loopState[j] = Short.MIN_VALUE;
-							else
-								loopState[j] = (short) state[j];
-						}
-					}
-
 					buffer[i] = samples.get(pos);
 					pos++;
 				}
@@ -186,6 +175,18 @@ public class VADPCM
 				}
 
 				encodeFrame(encoded, book, buffer, state, predCount);
+
+				// The decoder restarts an unaligned loop from the reconstructed frame containing its first sample.
+				if (loopStart > 0 && loopStart >= frameStart && loopStart < frameStart + 16) {
+					for (int i = 0; i < 16; i++) {
+						if (state[i] > Short.MAX_VALUE)
+							loopState[i] = Short.MAX_VALUE;
+						else if (state[i] < Short.MIN_VALUE)
+							loopState[i] = Short.MIN_VALUE;
+						else
+							loopState[i] = (short) state[i];
+					}
+				}
 			}
 			else {
 				Logger.logError("Missed a frame!");

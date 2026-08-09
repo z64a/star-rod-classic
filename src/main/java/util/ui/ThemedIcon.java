@@ -27,10 +27,22 @@ public abstract class ThemedIcon
 		}
 	}
 
-	public static final FlatSVGIcon REWIND_24 = getIcon("rewind_24");
+	public static final FlatSVGIcon NEXT_24 = getIcon("next_24");
+	public static final FlatSVGIcon PREV_24 = getIcon("prev_24");
 	public static final FlatSVGIcon STOP_24 = getIcon("stop_24");
 	public static final FlatSVGIcon PLAY_24 = getIcon("play_24");
 	public static final FlatSVGIcon PAUSE_24 = getIcon("pause_24");
+	public static final FlatSVGIcon REWIND_24 = getIcon("rewind_24");
+	public static final FlatSVGIcon FFWD_24 = getIcon("fast_forward_24");
+
+	public static final FlatSVGIcon NEXT_16 = NEXT_24.derive(16, 16);
+	public static final FlatSVGIcon PREV_16 = PREV_24.derive(16, 16);
+	public static final FlatSVGIcon STOP_16 = STOP_24.derive(16, 16);
+	public static final FlatSVGIcon PLAY_16 = PLAY_24.derive(16, 16);
+	public static final FlatSVGIcon PAUSE_16 = PAUSE_24.derive(16, 16);
+	public static final FlatSVGIcon REWIND_16 = REWIND_24.derive(16, 16);
+	public static final FlatSVGIcon FFWD_16 = FFWD_24.derive(16, 16);
+
 	public static final FlatSVGIcon VOLUME_UP_24 = getIcon("volume_up_24");
 	public static final FlatSVGIcon VOLUME_OFF_24 = getIcon("volume_off_24");
 

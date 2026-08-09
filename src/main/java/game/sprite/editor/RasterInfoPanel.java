@@ -75,6 +75,7 @@ public class RasterInfoPanel extends JPanel
 				sr.defaultPal = selectedPal;
 				sr.loadEditorImages();
 				image.repaint();
+				editor.markCurrentSpriteModified();
 			}
 		});
 
@@ -106,7 +107,10 @@ public class RasterInfoPanel extends JPanel
 				String name = nameField.getText().trim();
 				if (ignoreChanges || sr == null || name.isEmpty())
 					return;
-				sr.name = name;
+				if (!name.equals(sr.name)) {
+					sr.name = name;
+					editor.markCurrentSpriteModified();
+				}
 			}
 
 		});

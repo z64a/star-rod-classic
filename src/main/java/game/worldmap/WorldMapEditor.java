@@ -25,6 +25,9 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.KeyStroke;
 
+import app.Directories;
+import app.Environment;
+import app.SwingUtils;
 import common.BaseEditor;
 import common.BaseEditorSettings;
 import common.BasicCamera;
@@ -32,10 +35,6 @@ import common.BasicCommandManager;
 import common.BasicEditorCommand;
 import common.MouseInput.MouseManagerListener;
 import common.MousePixelRead;
-
-import app.Directories;
-import app.Environment;
-import app.SwingUtils;
 import game.map.editor.render.PresetColor;
 import game.map.editor.render.TextureManager;
 import game.shared.ProjectDatabase;
@@ -666,20 +665,23 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 	}
 
 	@Override
-	protected void saveChanges()
+	protected boolean saveChanges()
 	{
 		if (!loadedSuccessfully) {
 			Logger.logError("Cannot save the world map because it was not loaded successfully.");
-			return;
+			return false;
 		}
 
 		try {
 			WorldMapModder.saveLocations(locations);
+			modified = false;
 			Logger.log("Saved world map.");
+			return true;
 		}
 		catch (IOException e) {
 			Logger.logError("Failed to save world map.");
 			super.showStackTrace(e);
+			return false;
 		}
 	}
 

@@ -14,7 +14,7 @@ public class AnimationListEditPanel extends ListEditPanel<SpriteAnimation>
 
 	public AnimationListEditPanel(Sprite sprite, DefaultListModel<SpriteAnimation> listModel, SpriteEditor editor)
 	{
-		super(listModel);
+		super(listModel, editor::markCurrentSpriteModified);
 
 		this.editor = editor;
 

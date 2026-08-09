@@ -43,9 +43,9 @@ public class SpriteList extends JPanel
 
 			editor.invokeLater(() -> {
 				if (getSelected() == null)
-					editor.setSprite(-1, true);
+					editor.setSprite(-1, false);
 				else
-					editor.setSprite(getSelected().id, true);
+					editor.setSprite(getSelected().id, false);
 			});
 		});
 

@@ -22,6 +22,8 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
+import app.Environment;
+import app.SwingUtils;
 import common.BaseEditor;
 import common.BaseEditorSettings;
 import common.BasicCamera;
@@ -29,9 +31,6 @@ import common.BasicCommandManager;
 import common.BasicEditorCommand;
 import common.MouseInput.MouseManagerListener;
 import common.MousePixelRead;
-
-import app.Environment;
-import app.SwingUtils;
 import game.map.editor.render.PresetColor;
 import game.map.editor.render.TextureManager;
 import game.map.editor.ui.SwatchPanel;
@@ -796,17 +795,17 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 	}
 
 	@Override
-	protected void saveChanges()
+	protected boolean saveChanges()
 	{
-		exportImage();
+		return exportImage();
 	}
 
-	private void exportImage()
+	private boolean exportImage()
 	{
 		assert (SwingUtilities.isEventDispatchThread());
 
 		if (image == null)
-			return;
+			return true;
 
 		File file = null;
 
@@ -816,7 +815,7 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 			file = promptOverwrite(image.source);
 
 		if (file == null)
-			return;
+			return false;
 
 		Tile out = image.getTile();
 
@@ -826,9 +825,11 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 			modified = false;
 			imageLabel.setText((image.source != null) ? image.source.getName() : "New Image");
 			Logger.log("Exported " + file.getName());
+			return true;
 		}
 		catch (IOException e) {
 			super.showStackTrace(e);
+			return false;
 		}
 	}
 

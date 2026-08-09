@@ -36,8 +36,6 @@ import javax.swing.WindowConstants;
 
 import org.apache.commons.io.FileUtils;
 
-import common.MouseInput.MouseManagerListener;
-
 import app.Directories;
 import app.Environment;
 import app.LoadingBar;
@@ -50,6 +48,7 @@ import app.SwingUtils.OpenDialogCounter;
 import app.config.Config;
 import app.config.Options;
 import app.config.Options.Scope;
+import common.MouseInput.MouseManagerListener;
 import game.map.editor.CommandManager;
 import game.map.editor.Tickable;
 import game.map.editor.commands.AbstractCommand;
@@ -501,17 +500,15 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 
 		switch (choice) {
 			case JOptionPane.YES_OPTION:
-				saveChanges();
-				break;
+				return saveChanges();
 			case JOptionPane.NO_OPTION:
-				break;
+				return true;
 			case JOptionPane.CANCEL_OPTION:
 			case JOptionPane.CLOSED_OPTION:
-				closeRequested = false;
 				return false;
 		}
 
-		return true;
+		return false;
 	}
 
 	protected final DialogBuilder getMessageDialog(String title, Object message)
@@ -568,7 +565,7 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 	protected void glDraw()
 	{}
 
-	protected abstract void saveChanges();
+	protected abstract boolean saveChanges();
 
 	/**
 	 * Exposed for children

@@ -38,14 +38,6 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.w3c.dom.Element;
 
-import common.FrameLimiter;
-import common.GLEditor;
-import common.KeyboardInput;
-import common.MouseInput;
-import common.MouseInput.MouseManagerListener;
-import common.RawKeyboard;
-import common.Vector3f;
-
 import app.AssetManager;
 import app.Directories;
 import app.Environment;
@@ -60,6 +52,13 @@ import app.config.Options;
 import app.config.Options.Scope;
 import app.input.IOUtils;
 import app.input.InvalidInputException;
+import common.FrameLimiter;
+import common.GLEditor;
+import common.KeyboardInput;
+import common.MouseInput;
+import common.MouseInput.MouseManagerListener;
+import common.RawKeyboard;
+import common.Vector3f;
 import game.map.Axis;
 import game.map.BoundingBox;
 import game.map.Map;
@@ -3827,23 +3826,24 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 	/**
 	 * Saves the map quietly, will prompt for a filename if this is a newly created map.
 	 *
-	 * @throws IOException
+	 * @return whether the map was saved
 	 */
-	public void action_SaveMap()
+	public boolean action_SaveMap()
 	{
 		try {
 			map.saveMap(getAuthor(), new MapEditorMetadata(this));
 		}
 		catch (Exception e) {
 			displayStackTrace(e);
-			return;
+			return false;
 		}
 
 		map.modified = false;
 		lastBackupTime = time;
+		return true;
 	}
 
-	public void action_SaveMapAs(File f)
+	public boolean action_SaveMapAs(File f)
 	{
 		if (!f.exists()) {
 			// append extension if missing
@@ -3857,7 +3857,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 		}
 		catch (Exception e) {
 			displayStackTrace(e);
-			return;
+			return false;
 		}
 
 		map.modified = false;
@@ -3866,6 +3866,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 		updateWindowTitle();
 		updateRecentMaps();
 		gui.setRecentMaps(recentMaps);
+		return true;
 	}
 
 	public void action_OpenMap(File f)
