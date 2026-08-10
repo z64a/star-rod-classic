@@ -29,8 +29,6 @@ import javax.swing.SwingConstants;
 
 import org.apache.commons.io.FilenameUtils;
 
-import com.alexandriasoftware.swing.JSplitButton;
-
 import app.StarRodException;
 import app.SwingUtils;
 import app.input.IOUtils;
@@ -48,6 +46,7 @@ import util.Logger;
 import util.Pair;
 import util.ui.HexTextField;
 import util.ui.IntTextField;
+import util.ui.ThemedSplitButton;
 
 public class ImageAssetTab extends SingleListTab<ImageRecord>
 {
@@ -114,7 +113,7 @@ public class ImageAssetTab extends SingleListTab<ImageRecord>
 		});
 		SwingUtils.addBorderPadding(addButton);
 
-		JSplitButton actionsButton = new JSplitButton("Actions  ");
+		ThemedSplitButton actionsButton = new ThemedSplitButton("Actions  ");
 		JPopupMenu actionsPopup = new JPopupMenu();
 		actionsButton.setPopupMenu(actionsPopup);
 		actionsButton.setAlwaysPopup(true);

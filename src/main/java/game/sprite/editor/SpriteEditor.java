@@ -1597,6 +1597,7 @@ public class SpriteEditor extends BaseEditor
 		});
 
 		prevFrameButton = new JButton(ThemedIcon.PREV_24);
+		prevFrameButton.setDisabledIcon(ThemedIcon.getDisabledIcon(ThemedIcon.PREV_24));
 		prevFrameButton.setToolTipText("Step Back");
 		prevFrameButton.setMargin(buttonInsets);
 		prevFrameButton.addActionListener((e) -> {
@@ -1605,6 +1606,7 @@ public class SpriteEditor extends BaseEditor
 		prevFrameButton.setEnabled(false);
 
 		nextFrameButton = new JButton(ThemedIcon.NEXT_24);
+		nextFrameButton.setDisabledIcon(ThemedIcon.getDisabledIcon(ThemedIcon.NEXT_24));
 		nextFrameButton.setToolTipText("Step Forward");
 		nextFrameButton.setMargin(buttonInsets);
 		nextFrameButton.addActionListener((e) -> {
@@ -1615,6 +1617,7 @@ public class SpriteEditor extends BaseEditor
 		playButton = new JButton(ThemedIcon.PAUSE_24);
 
 		stopButton = new JButton(ThemedIcon.STOP_24);
+		stopButton.setDisabledIcon(ThemedIcon.getDisabledIcon(ThemedIcon.STOP_24));
 		stopButton.setToolTipText("Stop");
 		stopButton.setMargin(buttonInsets);
 		stopButton.addActionListener((e) -> {

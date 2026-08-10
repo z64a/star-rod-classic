@@ -180,8 +180,8 @@ public class EditPannerDialog extends JDialog
 		add(maxField, "w 24%, gapbottom 16");
 
 		add(new JPanel(), "split 3, growx, sg but");
-		add(cancelButton, "growx, sg but");
 		add(selectButton, "growx, sg but");
+		add(cancelButton, "growx, sg but");
 
 		pack();
 		setResizable(false);

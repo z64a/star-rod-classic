@@ -1,13 +1,9 @@
 package game.sound.booth;
 
-import static app.Directories.FN_AUDIO_AMBIENTS;
-import static app.Directories.FN_AUDIO_SONGS;
-import static app.Directories.MOD_AUDIO;
-import static app.Directories.MOD_AUDIO_MSEQ;
+import static app.Directories.*;
 
 import java.awt.Component;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -48,13 +44,13 @@ final class MseqTab extends AudioBoothTab
 	private Mseq selectedMseq;
 	private boolean suppressEvents;
 
-	MseqTab(AudioBooth booth, AudioEngine engine, SoundBank bank) throws IOException
+	MseqTab(AudioBooth booth, AudioEngine engine, SoundBank bank)
 	{
 		super(booth, "MSEQ", new MseqPlayer(engine, bank));
 		player = (MseqPlayer) getSession();
 
 		Map<String, String> names = loadNames();
-		Collection<File> files = IOUtils.getFilesWithExtension(MOD_AUDIO_MSEQ, "xml", false);
+		Collection<File> files = findAssets();
 		Map<File, MseqSummary> summaries = new HashMap<>();
 		for (File file : files)
 			summaries.put(file, readSummary(file));
@@ -233,6 +229,18 @@ final class MseqTab extends AudioBoothTab
 			Logger.logError("Could not read MSEQ names from " + catalog.getName());
 			Logger.printStackTrace(e);
 			return new HashMap<>();
+		}
+	}
+
+	private static Collection<File> findAssets()
+	{
+		try {
+			return IOUtils.getFilesWithExtension(MOD_AUDIO_MSEQ, "xml", false);
+		}
+		catch (Exception e) {
+			Logger.logError("Could not enumerate MSEQ assets for Audio Booth");
+			Logger.printStackTrace(e);
+			return List.of();
 		}
 	}
 

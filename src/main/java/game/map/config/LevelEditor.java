@@ -46,6 +46,7 @@ import app.Environment;
 import app.LoadingBar;
 import app.StarRodClassic;
 import app.SwingUtils;
+import app.ThemesEditor;
 import app.config.Options;
 import game.map.config.MapConfigTable.AreaConfig;
 import game.map.config.MapConfigTable.MapConfig;
@@ -220,6 +221,7 @@ public class LevelEditor
 		frame.setJMenuBar(menuBar);
 		addOptionsMenu(menuBar);
 		addDirectoriesMenu(menuBar);
+		ThemesEditor.addThemeMenuItem(menuBar, frame);
 	}
 
 	private void addOptionsMenu(JMenuBar menuBar)
@@ -429,7 +431,7 @@ public class LevelEditor
 
 	private static void createTab(JTabbedPane tabs, String text, Container contents)
 	{
-		JLabel tabLabel = new JLabel(text);
+		JLabel tabLabel = SwingUtils.getTabLabel(tabs, text, 12);
 		tabLabel.setHorizontalTextPosition(JLabel.TRAILING);
 		tabLabel.setIconTextGap(8);
 		tabLabel.setPreferredSize(new Dimension(65, 20));

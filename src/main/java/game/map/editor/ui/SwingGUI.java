@@ -53,6 +53,7 @@ import app.Environment;
 import app.StarRodFrame;
 import app.SwingUtils;
 import app.SwingUtils.OpenDialogCounter;
+import app.ThemesEditor;
 import app.config.PreferencesPanel;
 import common.EditorCanvas;
 import common.KeyBindingsPanel;
@@ -642,18 +643,20 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 
 		menu.addSeparator();
 
+		item = new JMenuItem("Preferences");
+		addButtonCommand(item, GuiCommand.SHOW_EDITOR_PREFERENCES);
+		menu.add(item);
+
 		item = new JMenuItem("Shortcuts");
 		addButtonCommand(item, GuiCommand.SHOW_SHORTCUTS);
 		menu.add(item);
 		item.setPreferredSize(menuItemDimension);
 
-		item = new JMenuItem("Preferences");
-		addButtonCommand(item, GuiCommand.SHOW_EDITOR_PREFERENCES);
-		menu.add(item);
-
 		item = new JMenuItem("Key Bindings");
 		addButtonCommand(item, GuiCommand.SHOW_KEY_BINDINGS);
 		menu.add(item);
+
+		ThemesEditor.addThemeMenuItem(menu, this);
 	}
 
 	private JMenu getTransformMenu()
@@ -924,7 +927,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 
 	private static void createTab(JTabbedPane tabs, String name, Container contents)
 	{
-		JLabel lbl = SwingUtils.getLabel(name, 12);
+		JLabel lbl = SwingUtils.getTabLabel(tabs, name, 12);
 		lbl.setPreferredSize(new Dimension(60, 20));
 		lbl.setHorizontalAlignment(SwingConstants.CENTER);
 
@@ -940,7 +943,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 
 		JScrollPane paintScrollPane = new JScrollPane(paintVertexTab);
 		paintScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		paintScrollPane.setBorder(null);
+		SwingUtils.setBorderless(paintScrollPane);
 
 		createTab(tabbedPane, "Objects", createTransformTab());
 		createTab(tabbedPane, "Texture", createTextureTab());
@@ -1003,13 +1006,13 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		bg.add(vertexRadioButton);
 		bg.add(pointRadioButton);
 
-		JPanel selectionTypePanel = new JPanel(new MigLayout("fill"));
+		JPanel selectModePanel = new JPanel(new MigLayout("fill, ins 0 4 0 4"));
 
-		selectionTypePanel.add(SwingUtils.getLabel("Selection mode:", 12), "growx, wrap, gapbottom 4");
-		selectionTypePanel.add(objectRadioButton, "sg selection_type, growx, split 4");
-		selectionTypePanel.add(triangleRadioButton, "sg selection_type, growx");
-		selectionTypePanel.add(vertexRadioButton, "sg selection_type, growx");
-		selectionTypePanel.add(pointRadioButton, "sg selection_type, growx, wrap");
+		selectModePanel.add(SwingUtils.getLabel("Selection Mode", 14), "growx, wrap, gapbottom 4");
+		selectModePanel.add(objectRadioButton, "sg selection_type, growx, split 4");
+		selectModePanel.add(triangleRadioButton, "sg selection_type, growx");
+		selectModePanel.add(vertexRadioButton, "sg selection_type, growx");
+		selectModePanel.add(pointRadioButton, "sg selection_type, growx, wrap");
 
 		// create dialogs
 		uvOptionsPanel = new UVOptionsPanel();
@@ -1019,14 +1022,11 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		objectPanel = new MapObjectPanel(this, editor, infoPanelContainer);
 
 		JPanel modifyTab = new JPanel();
-		modifyTab.setLayout(new MigLayout("fill, flowy, ins 4"));
-		modifyTab.add(selectionTypePanel, "grow");
-
-		//		modifyTab.add(objectPanel, "grow, pushy");
-		//		modifyTab.add(infoPanelContainer, "h 40%!, grow");
+		modifyTab.setLayout(new MigLayout("fill, flowy, ins 8 4 0 4"));
+		modifyTab.add(selectModePanel, "grow");
 
 		JScrollPane infoScrollPane = new JScrollPane(infoPanelContainer);
-		infoScrollPane.setBorder(null);
+		SwingUtils.setBorderless(infoScrollPane);
 		infoScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 		infoScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
@@ -1140,9 +1140,9 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		JPanel textureTab = new JPanel();
 		textureTab.setLayout(new MigLayout("fillx, insets 8 8 0 8"));
 
-		textureTab.add(SwingUtils.getLabel("Selected Texture:", 14), "span, wrap");
+		textureTab.add(SwingUtils.getLabel("Selected Texture", 14), "span, wrap");
 		textureTab.add(currentTexturePanel, "span, wrap");
-		textureTab.add(SwingUtils.getLabel("Available Textures:", 14), "span, wrap");
+		textureTab.add(SwingUtils.getLabel("Available Textures", 14), "span, wrap");
 		textureTab.add(textureScrollPane, "span, grow, wrap");
 
 		return textureTab;

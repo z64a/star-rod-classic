@@ -13,8 +13,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.JTextField;
 import javax.swing.ListCellRenderer;
 
-import com.alexandriasoftware.swing.JSplitButton;
-
 import app.SwingUtils;
 import game.globals.ItemRecord;
 import game.globals.MoveRecord;
@@ -33,6 +31,7 @@ import util.MathUtil;
 import util.ui.FlagEditorPanel;
 import util.ui.IntTextField;
 import util.ui.StringField;
+import util.ui.ThemedSplitButton;
 
 public class MoveTab extends SingleListTab<MoveRecord>
 {
@@ -224,7 +223,7 @@ public class MoveTab extends SingleListTab<MoveRecord>
 		});
 		SwingUtils.addBorderPadding(addButton);
 
-		JSplitButton actionsButton = new JSplitButton("Actions  ");
+		ThemedSplitButton actionsButton = new ThemedSplitButton("Actions  ");
 		JPopupMenu actionsPopup = new JPopupMenu();
 		actionsButton.setPopupMenu(actionsPopup);
 		actionsButton.setAlwaysPopup(true);

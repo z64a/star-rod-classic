@@ -95,13 +95,13 @@ public class ScriptManager implements IShutdownListener, UpdateListener
 
 	private static JComponent createTab(JTabbedPane tabs, String name, Container contents)
 	{
-		JLabel lbl = SwingUtils.getLabel(name, 12);
+		JLabel lbl = SwingUtils.getTabLabel(tabs, name, 12);
 		lbl.setPreferredSize(new Dimension(60, 20));
 		lbl.setHorizontalAlignment(SwingConstants.CENTER);
 
 		JScrollPane scrollPane = new JScrollPane(contents);
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		scrollPane.setBorder(null);
+		SwingUtils.setBorderless(scrollPane);
 		tabs.addTab(null, scrollPane);
 		tabs.setTabComponentAt(tabs.getTabCount() - 1, lbl);
 

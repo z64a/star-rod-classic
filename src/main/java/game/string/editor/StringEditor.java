@@ -61,8 +61,6 @@ import javax.swing.text.StyledDocument;
 
 import org.apache.commons.io.FilenameUtils;
 
-import com.alexandriasoftware.swing.JSplitButton;
-
 import app.Directories;
 import app.Environment;
 import app.StarRodClassic;
@@ -99,6 +97,7 @@ import net.miginfocom.swing.MigLayout;
 import renderer.shaders.RenderState;
 import util.Logger;
 import util.ui.ImagePanel;
+import util.ui.ThemedSplitButton;
 
 public class StringEditor extends BaseEditor
 {
@@ -657,19 +656,19 @@ public class StringEditor extends BaseEditor
 			showColorSelectionDialog();
 		});
 
-		JSplitButton stylesButton = new JSplitButton("Style");
+		ThemedSplitButton stylesButton = new ThemedSplitButton("Style");
 		stylesButton.setPopupMenu(getStylePopup());
 		stylesButton.setAlwaysPopup(true);
 
-		JSplitButton effectsButton = new JSplitButton("Effect");
+		ThemedSplitButton effectsButton = new ThemedSplitButton("Effect");
 		effectsButton.setPopupMenu(getEffectsPopup());
 		effectsButton.setAlwaysPopup(true);
 
-		JSplitButton functionsButton = new JSplitButton("Function");
+		ThemedSplitButton functionsButton = new ThemedSplitButton("Function");
 		functionsButton.setPopupMenu(getFunctionsPopup());
 		functionsButton.setAlwaysPopup(true);
 
-		JSplitButton presetsButton = new JSplitButton("Preset");
+		ThemedSplitButton presetsButton = new ThemedSplitButton("Preset");
 		presetsButton.setPopupMenu(getPresetPopup());
 		presetsButton.setAlwaysPopup(true);
 
@@ -1179,7 +1178,7 @@ public class StringEditor extends BaseEditor
 
 	private static void createTab(JTabbedPane tabs, String name, Container contents)
 	{
-		JLabel lbl = SwingUtils.getLabel(name, 12);
+		JLabel lbl = SwingUtils.getTabLabel(tabs, name, 12);
 		lbl.setPreferredSize(new Dimension(60, 20));
 		lbl.setHorizontalAlignment(SwingConstants.CENTER);
 

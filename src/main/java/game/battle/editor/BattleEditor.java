@@ -36,8 +36,6 @@ import javax.swing.SwingUtilities;
 
 import org.apache.commons.io.FilenameUtils;
 
-import com.alexandriasoftware.swing.JSplitButton;
-
 import app.Directories;
 import app.Environment;
 import app.StarRodException;
@@ -73,6 +71,7 @@ import renderer.shaders.scene.BasicTexturedShader;
 import util.Logger;
 import util.Priority;
 import util.ui.ListAdapterComboboxModel;
+import util.ui.ThemedSplitButton;
 
 public class BattleEditor extends BaseEditor
 {
@@ -844,21 +843,21 @@ public class BattleEditor extends BaseEditor
 		SwingUtils.setFontSize(actorsComboBox, 12);
 		SwingUtils.addBorderPadding(actorsComboBox);
 
-		JSplitButton stageButton = new JSplitButton("Edit   ");
+		ThemedSplitButton stageButton = new ThemedSplitButton("Edit   ");
 		JPopupMenu stageMenu = new JPopupMenu();
 		buildPopupStageMenu(stageMenu);
 		stageButton.setPopupMenu(stageMenu);
 		stageButton.setAlwaysPopup(true);
 		SwingUtils.addBorderPadding(stageButton);
 
-		JSplitButton formationButton = new JSplitButton("Edit   ");
+		ThemedSplitButton formationButton = new ThemedSplitButton("Edit   ");
 		JPopupMenu formationMenu = new JPopupMenu();
 		buildPopupStageMenu(formationMenu); //TODO
 		formationButton.setPopupMenu(formationMenu);
 		formationButton.setAlwaysPopup(true);
 		SwingUtils.addBorderPadding(formationButton);
 
-		JSplitButton actorButton = new JSplitButton("Edit   ");
+		ThemedSplitButton actorButton = new ThemedSplitButton("Edit   ");
 		JPopupMenu actorMenu = new JPopupMenu();
 		buildPopupStageMenu(actorMenu); //TODO
 		actorButton.setPopupMenu(actorMenu);
@@ -890,12 +889,13 @@ public class BattleEditor extends BaseEditor
 
 	private static void createTab(JTabbedPane tabs, EditorMode mode, Container contents)
 	{
-		JLabel lbl = SwingUtils.getLabel(mode.tabName, SwingConstants.CENTER, 12);
+		JLabel lbl = SwingUtils.getTabLabel(tabs, mode.tabName, 12);
+		lbl.setHorizontalAlignment(SwingConstants.CENTER);
 		lbl.setPreferredSize(new Dimension(90, 20));
 
 		JScrollPane scrollPane = new JScrollPane(contents);
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		scrollPane.setBorder(null);
+		SwingUtils.setBorderless(scrollPane);
 		tabs.addTab(null, scrollPane);
 		tabs.setTabComponentAt(tabs.getTabCount() - 1, lbl);
 	}

@@ -166,7 +166,7 @@ public class NpcAnimationTab extends JPanel
 
 		animsScrollPane = new JScrollPane(animsPanel);
 		animsScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-		animsScrollPane.setBorder(null);
+		SwingUtils.setBorderless(animsScrollPane);
 
 		add(animsScrollPane, "growx");
 		add(new JLabel(), "pushy");

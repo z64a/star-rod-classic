@@ -62,9 +62,8 @@ public class DumpOptionsPanel extends JPanel
 
 	private void addTab(JTabbedPane tabbedPane, JPanel tab, String name)
 	{
-		JLabel tabLabel = new JLabel(name);
+		JLabel tabLabel = SwingUtils.getTabLabel(tabbedPane, name, 12);
 		tabLabel.setPreferredSize(new Dimension(60, 18));
-		SwingUtils.setFontSize(tabLabel, 12);
 
 		int index = tabbedPane.getTabCount();
 		tabbedPane.addTab(null, tab);

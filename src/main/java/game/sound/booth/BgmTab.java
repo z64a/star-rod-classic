@@ -1,12 +1,9 @@
 package game.sound.booth;
 
-import static app.Directories.FN_AUDIO_SONGS;
-import static app.Directories.MOD_AUDIO;
-import static app.Directories.MOD_AUDIO_BGM;
+import static app.Directories.*;
 
 import java.awt.Component;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -74,13 +71,13 @@ final class BgmTab extends AudioBoothTab
 	private boolean updatingControls;
 	private boolean suppressEvents;
 
-	BgmTab(AudioBooth booth, AudioEngine engine, SoundBank bank) throws IOException
+	BgmTab(AudioBooth booth, AudioEngine engine, SoundBank bank)
 	{
 		super(booth, "BGM", new BgmPlayer(engine, bank));
 		player = (BgmPlayer) getSession();
 
 		Map<String, String> names = loadNames();
-		Collection<File> files = IOUtils.getFilesWithExtension(MOD_AUDIO_BGM, "xml", false);
+		Collection<File> files = findAssets();
 		Map<File, BgmSummary> summaries = new HashMap<>();
 		for (File file : files)
 			summaries.put(file, readSummary(file));
@@ -380,15 +377,33 @@ final class BgmTab extends AudioBoothTab
 
 	private static Song loadBgm(File file) throws Exception
 	{
-		SoundBankCatalog catalog = SoundBankCatalog.loadMod();
-		String bgmFilename = FilenameUtils.getBaseName(file.getName()) + ".bgm";
-		SoundBankCatalog songCatalog = catalog.withSongBanks(
-			MOD_AUDIO.getFile(FN_AUDIO_SONGS), bgmFilename);
 		Song song = new Song();
-		song.setSoundBankCatalog(songCatalog);
+		try {
+			SoundBankCatalog catalog = SoundBankCatalog.loadMod();
+			String bgmFilename = FilenameUtils.getBaseName(file.getName()) + ".bgm";
+			SoundBankCatalog songCatalog = catalog.withSongBanks(
+				MOD_AUDIO.getFile(FN_AUDIO_SONGS), bgmFilename);
+			song.setSoundBankCatalog(songCatalog);
+		}
+		catch (Exception e) {
+			Logger.logfWarning("Could not load the sound banks for BGM asset %s; unresolved instruments will be muted: %s",
+				file.getName(), e.getMessage());
+		}
 		XmlReader xmr = new XmlReader(file);
 		song.fromXML(xmr, xmr.getRootElement());
 		return song;
+	}
+
+	private static Collection<File> findAssets()
+	{
+		try {
+			return IOUtils.getFilesWithExtension(MOD_AUDIO_BGM, "xml", false);
+		}
+		catch (Exception e) {
+			Logger.logError("Could not enumerate BGM assets for Audio Booth");
+			Logger.printStackTrace(e);
+			return List.of();
+		}
 	}
 
 	private static Map<String, String> loadNames()

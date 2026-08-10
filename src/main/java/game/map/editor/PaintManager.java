@@ -12,7 +12,6 @@ import java.awt.event.MouseEvent;
 import java.util.Deque;
 import java.util.LinkedList;
 
-import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -26,7 +25,6 @@ import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.Border;
-import javax.swing.border.EtchedBorder;
 
 import common.Vector3f;
 
@@ -491,7 +489,7 @@ public class PaintManager
 			SwingUtils.addBorderPadding(pickerButton);
 			gui.addButtonCommand(pickerButton, GuiCommand.SHOW_CHOOSE_COLOR_DIALOG);
 
-			Border border = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
+			Border border = SwingUtils.createThemedLineBorder();
 
 			JPanel rgbaPanel = new JPanel(new MigLayout("fill, wrap, hidemode 3, ins 16 16 16 16"));
 			rgbaPanel.setBorder(border);

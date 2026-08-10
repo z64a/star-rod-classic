@@ -1,5 +1,6 @@
 package game.map.editor.ui;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -28,8 +29,6 @@ public class MapObjectTreeCellRenderer extends JPanel implements TreeCellRendere
 	private transient Icon closedIcon;
 	private transient Icon leafIcon;
 	private transient Icon openIcon;
-
-	private boolean hasInit;
 
 	//XXX BUG: have to explicitly set a size or children with long names will be truncated by parent
 	// being renamed. comment out getPreferredSize and use the red border visualization below to see.
@@ -61,14 +60,18 @@ public class MapObjectTreeCellRenderer extends JPanel implements TreeCellRendere
 	public void updateUI()
 	{
 		super.updateUI();
+		updateIcons();
+	}
 
-		if (!hasInit || (leafIcon instanceof UIResource)) {
+	private void updateIcons()
+	{
+		if (leafIcon == null || leafIcon instanceof UIResource) {
 			leafIcon = CircleIcon.instance();
 		}
-		if (!hasInit || (closedIcon instanceof UIResource)) {
+		if (closedIcon == null || closedIcon instanceof UIResource) {
 			closedIcon = UIManager.getIcon("Tree.closedIcon");
 		}
-		if (!hasInit || (openIcon instanceof UIManager)) {
+		if (openIcon == null || openIcon instanceof UIResource) {
 			openIcon = UIManager.getIcon("Tree.openIcon");
 		}
 	}
@@ -77,6 +80,7 @@ public class MapObjectTreeCellRenderer extends JPanel implements TreeCellRendere
 	public Component getTreeCellRendererComponent(JTree tree, Object obj,
 		boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus)
 	{
+		updateIcons();
 		DefaultMutableTreeNode node = (DefaultMutableTreeNode) obj;
 
 		if (node.getUserObject() instanceof MapObject mobj) {
@@ -91,7 +95,8 @@ public class MapObjectTreeCellRenderer extends JPanel implements TreeCellRendere
 				nameLabel.setFont(getFont().deriveFont(Font.PLAIN));
 
 			nameLabel.setText(mobj.toString());
-			nameLabel.setForeground(null);
+			Color foreground = UIManager.getColor(selected ? "Tree.selectionForeground" : "Tree.foreground");
+			nameLabel.setForeground((foreground == null) ? tree.getForeground() : foreground);
 		}
 		else {
 			iconLabel.setIcon(Environment.ICON_ERROR);

@@ -29,10 +29,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import common.FrameLimiter;
-
 import app.Environment;
 import app.SwingUtils;
+import app.ThemesEditor;
+import common.FrameLimiter;
 import game.sound.AudioExporter;
 import game.sound.WaveformPanel;
 import game.sound.engine.AudioEngine;
@@ -124,7 +124,9 @@ public class AudioBooth
 		masterVolumeSlider.addChangeListener((e) -> updateMasterVolume());
 		updateMasterVolume();
 
-		statusLabel = new JLabel("Select an audio asset.");
+		statusLabel = new JLabel(initialBank.getLoadFailureCount() == 0
+			? "Select an audio asset."
+			: String.format("%d assets failed to load.", initialBank.getLoadFailureCount()));
 		statusLabel.setVerticalAlignment(SwingConstants.CENTER);
 		timeLabel = new JLabel(formatTime(0) + " / " + formatTime(0));
 
@@ -191,6 +193,7 @@ public class AudioBooth
 		selectedMenu.add(reloadItem);
 		selectedMenu.add(exportItem);
 		menuBar.add(selectedMenu);
+		ThemesEditor.addThemeMenuItem(menuBar, frame);
 		frame.setJMenuBar(menuBar);
 
 		assetTabs = new JTabbedPane();
@@ -236,13 +239,13 @@ public class AudioBooth
 
 	private static SoundBank createSoundBank() throws IOException
 	{
-		SoundBank soundBank = new SoundBank();
+		SoundBank soundBank = new SoundBank(true);
 		// required for radio songs, just keep this always loaded
 		soundBank.installAuxBank("SPC3", 2);
 		return soundBank;
 	}
 
-	private List<AudioBoothTab> createTabs(SoundBank soundBank) throws IOException
+	private List<AudioBoothTab> createTabs(SoundBank soundBank)
 	{
 		List<AudioBoothTab> tabs = new ArrayList<>();
 		tabs.add(new SamplesTab(this, engine, soundBank));
@@ -261,7 +264,7 @@ public class AudioBooth
 
 	private void addAssetTab(AudioBoothTab tab)
 	{
-		JLabel label = SwingUtils.getLabel(tab.getTitle(), 12);
+		JLabel label = SwingUtils.getTabLabel(assetTabs, tab.getTitle(), 12);
 		label.setHorizontalAlignment(SwingConstants.CENTER);
 		label.setPreferredSize(new Dimension(60, 20));
 

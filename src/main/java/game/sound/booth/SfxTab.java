@@ -7,15 +7,19 @@ import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.ListCellRenderer;
 import javax.swing.UIManager;
 
+import app.SwingUtils;
 import game.sound.AudioExporter;
 import game.sound.SoundBankCatalog;
 import game.sound.engine.AudioEngine;
@@ -51,7 +55,7 @@ final class SfxTab extends AudioBoothTab
 		player = (SfxPlayer) getSession();
 
 		DefaultListModel<Sound> model = new DefaultListModel<>();
-		Map<Sound, String> sampleNames = new HashMap<>();
+		Map<Sound, List<String>> sampleNames = new HashMap<>();
 		File manifest = MOD_AUDIO.getFile(SfxXml.FN_SOUND_EFFECTS);
 
 		if (manifest.isFile()) {
@@ -73,30 +77,7 @@ final class SfxTab extends AudioBoothTab
 
 		soundList = new JList<>(model);
 		configureList(soundList);
-		soundList.setCellRenderer(new DefaultListCellRenderer() {
-			@Override
-			public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-				boolean isSelected, boolean cellHasFocus)
-			{
-				Component component = super.getListCellRendererComponent(
-					list, value, index, isSelected, cellHasFocus);
-				if (value instanceof Sound sound) {
-					String samples = sampleNames.get(sound);
-					String suffix = "";
-					if (sound.isEmpty())
-						suffix = "  (empty)";
-					else {
-						if (sound.unused)
-							suffix = "  (unused)";
-						if (samples != null && !samples.isEmpty())
-							suffix += "  (" + samples + ")";
-					}
-					setText(String.format("%04X  %s%s%s",
-						sound.id, sound.name, suffix, triggerIndicator(sound)));
-				}
-				return component;
-			}
-		});
+		soundList.setCellRenderer(new SoundCellRenderer(sampleNames));
 		soundList.addListSelectionListener((e) -> {
 			if (suppressEvents || e.getValueIsAdjusting())
 				return;
@@ -106,7 +87,7 @@ final class SfxTab extends AudioBoothTab
 		JPanel listPanel = createListPanel(soundList, model, manifest,
 			(sound) -> String.format("%04X %s %s %s %s %s", sound.id, sound.name,
 				sound.unused ? "unused" : "", sound.desc,
-				String.join(" ", sound.tags), sampleNames.get(sound)));
+				String.join(" ", sound.tags), String.join(" ", sampleNames.get(sound))));
 
 		alternativeSoundBox = new JCheckBox("Alternative Sound");
 		alternativeSoundBox.addActionListener((e) -> updatePreview());
@@ -121,6 +102,62 @@ final class SfxTab extends AudioBoothTab
 		add(listPanel, "grow, push, wrap");
 		add(alternativePanel, "growx");
 		updateAlternativeControls();
+	}
+
+	private static class SoundCellRenderer extends JPanel implements ListCellRenderer<Sound>
+	{
+		private static final int MAX_SAMPLE_NAMES = 3;
+
+		private final Map<Sound, List<String>> sampleNames;
+		private final DefaultListCellRenderer defaultRenderer = new DefaultListCellRenderer();
+		private final JLabel nameLabel = new JLabel();
+		private final JLabel samplesLabel = new JLabel();
+
+		private SoundCellRenderer(Map<Sound, List<String>> sampleNames)
+		{
+			this.sampleNames = sampleNames;
+			setLayout(new MigLayout("ins 0, fillx", "[grow,fill][]", "[]"));
+			add(nameLabel, "growx, pushx");
+			add(samplesLabel, "gapleft 12, alignx right");
+			setOpaque(true);
+		}
+
+		@Override
+		public Component getListCellRendererComponent(JList<? extends Sound> list, Sound sound, int index,
+			boolean isSelected, boolean cellHasFocus)
+		{
+			JLabel defaults = (JLabel) defaultRenderer.getListCellRendererComponent(list, sound, index, isSelected, cellHasFocus);
+			setBackground(defaults.getBackground());
+			setBorder(defaults.getBorder());
+			setComponentOrientation(defaults.getComponentOrientation());
+			nameLabel.setFont(defaults.getFont());
+			samplesLabel.setFont(defaults.getFont());
+
+			String suffix = "";
+			if (sound.isEmpty())
+				suffix = "  (empty)";
+			else if (sound.unused)
+				suffix = "  (unused)";
+			nameLabel.setText(String.format("%04X  %s%s%s", sound.id, sound.name, suffix, triggerIndicator(sound)));
+
+			List<String> names = sampleNames.get(sound);
+			String displayedNames = formatSampleNames(names);
+			samplesLabel.setText(displayedNames.isEmpty() ? "" : "(" + displayedNames + ")");
+			setToolTipText(names != null && names.size() > MAX_SAMPLE_NAMES ? String.join(", ", names) : null);
+
+			setForeground(!isSelected && sound.isEmpty() ? SwingUtils.getBlueTextColor() : defaults.getForeground());
+			nameLabel.setForeground(getForeground());
+			samplesLabel.setForeground(getForeground());
+			return this;
+		}
+
+		private static String formatSampleNames(List<String> names)
+		{
+			if (names == null || names.isEmpty())
+				return "";
+			String displayed = String.join(", ", names.subList(0, Math.min(MAX_SAMPLE_NAMES, names.size())));
+			return names.size() > MAX_SAMPLE_NAMES ? displayed + ", ..." : displayed;
+		}
 	}
 
 	private void selectSound(Sound sound)
@@ -263,13 +300,13 @@ final class SfxTab extends AudioBoothTab
 		}
 	}
 
-	private static String getSampleNames(Sound sound, SoundBankCatalog catalog)
+	private static List<String> getSampleNames(Sound sound, SoundBankCatalog catalog)
 	{
 		LinkedHashSet<String> samples = new LinkedHashSet<>();
 		collectSampleNames(samples, sound.tracks, catalog);
 		for (SfxArchive.SpawnedEffect effect : sound.spawnedEffects)
 			collectSampleNames(samples, effect.tracks, catalog);
-		return String.join(", ", samples);
+		return List.copyOf(samples);
 	}
 
 	private static void collectSampleNames(Collection<String> samples, Collection<Track> tracks, SoundBankCatalog catalog)

@@ -1,5 +1,6 @@
 package util.ui;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -25,6 +26,18 @@ public abstract class ThemedIcon
 			Logger.logError(e.getMessage());
 			return null;
 		}
+	}
+
+	public static FlatSVGIcon getDisabledIcon(FlatSVGIcon icon)
+	{
+		FlatSVGIcon disabledIcon = new FlatSVGIcon(icon);
+		disabledIcon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> {
+			Color disabledColor = UIManager.getColor("Label.disabledForeground");
+			if (disabledColor == null)
+				disabledColor = UIManager.getColor("Button.disabledText");
+			return (disabledColor == null) ? color : disabledColor;
+		}));
+		return disabledIcon;
 	}
 
 	public static final FlatSVGIcon NEXT_24 = getIcon("next_24");

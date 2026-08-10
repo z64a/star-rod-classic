@@ -45,6 +45,7 @@ import app.StarRodFrame;
 import app.SwingUtils;
 import app.SwingUtils.DialogBuilder;
 import app.SwingUtils.OpenDialogCounter;
+import app.ThemesEditor;
 import app.config.Config;
 import app.config.Options;
 import app.config.Options.Scope;
@@ -343,6 +344,7 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 		}
 
 		createGui(toolPanel, glCanvas, menuBar, infoLabel, openLogAction);
+		ThemesEditor.addThemeMenuItem(menuBar, frame);
 
 		JPanel contentPanel = new JPanel(new MigLayout("fill, insets 0"));
 		contentPanel.add(toolPanel, "grow");

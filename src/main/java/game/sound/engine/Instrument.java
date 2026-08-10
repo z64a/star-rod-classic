@@ -35,6 +35,8 @@ import util.xml.XmlWrapper.XmlWriter;
 public class Instrument implements XmlSerializable
 {
 	private static final String EXT_WAV = ".wav";
+	private static final int FALLBACK_SAMPLE_RATE = 16000;
+	private static final int FALLBACK_SAMPLE_COUNT = 512;
 
 	public static final int LOOP_FOREVER = -1;
 
@@ -61,6 +63,8 @@ public class Instrument implements XmlSerializable
 	public ArrayList<Short> samples;
 
 	public boolean hasLoop;
+	public boolean usingFallbackSample;
+	public transient String loadFailure;
 
 	public Envelope envelope;
 
@@ -70,6 +74,9 @@ public class Instrument implements XmlSerializable
 
 	// during build
 	private transient EncodeData buildData;
+
+	private Instrument()
+	{}
 
 	public Instrument(ByteBuffer bb, int start, String name)
 	{
@@ -116,6 +123,33 @@ public class Instrument implements XmlSerializable
 	public Instrument(XmlReader xmr, Element insElem)
 	{
 		fromXML(xmr, insElem);
+	}
+
+	public static Instrument createFallbackInstrument()
+	{
+		Instrument instrument = new Instrument();
+		instrument.name = "Default";
+		instrument.mainFilename = "Default" + EXT_WAV;
+		instrument.useFallbackSample(null);
+		return instrument;
+	}
+
+	public void useFallbackSample(Exception loadFailure)
+	{
+		usingFallbackSample = true;
+		this.loadFailure = loadFailure == null ? null : loadFailure.getMessage();
+		hasLoop = false;
+		loopFilename = null;
+		loopStart = 0;
+		loopEnd = 0;
+		loopCount = 0;
+		keyBase = 4800;
+		sampleRate = FALLBACK_SAMPLE_RATE;
+
+		// Keep an invalid sample playable without introducing a replacement sound.
+		samples = new ArrayList<>(FALLBACK_SAMPLE_COUNT);
+		for (int i = 0; i < FALLBACK_SAMPLE_COUNT; i++)
+			samples.add((short) 0);
 	}
 
 	@Override

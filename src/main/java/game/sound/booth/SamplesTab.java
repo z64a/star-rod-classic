@@ -64,8 +64,11 @@ final class SamplesTab extends AudioBoothTab
 			{
 				Component component = super.getListCellRendererComponent(
 					list, value, index, isSelected, cellHasFocus);
-				if (value instanceof Bank bankEntry)
+				if (value instanceof Bank bankEntry) {
 					setText(String.format("%s  (%d samples)", bankEntry.name, bankEntry.instruments.size()));
+					if (!isSelected && bankEntry.instruments.stream().anyMatch((instrument) -> instrument.usingFallbackSample))
+						setForeground(SwingUtils.getRedTextColor());
+				}
 				return component;
 			}
 		});
@@ -81,10 +84,15 @@ final class SamplesTab extends AudioBoothTab
 				Component component = super.getListCellRendererComponent(
 					list, value, index, isSelected, cellHasFocus);
 				if (value instanceof Instrument instrument) {
-					setText(String.format("%02X  %s%s", index, instrument.name,
-						instrument.hasLoop ? "  (loop)" : ""));
-					setToolTipText(String.format("Sample rate: %d Hz; key base: %.2f; envelope: %s (%d variants)",
-						instrument.sampleRate, instrument.keyBase / 100.0, instrument.envelope.name, instrument.envelope.count()));
+					setText(String.format("%02X  %s%s%s", index, instrument.name,
+						instrument.hasLoop ? "  (loop)" : "", instrument.usingFallbackSample ? "  (muted)" : ""));
+					String toolTip = String.format("Sample rate: %d Hz; key base: %.2f; envelope: %s (%d variants)",
+						instrument.sampleRate, instrument.keyBase / 100.0, instrument.envelope.name, instrument.envelope.count());
+					if (instrument.loadFailure != null)
+						toolTip += "; load failure: " + instrument.loadFailure;
+					setToolTipText(toolTip);
+					if (!isSelected && instrument.usingFallbackSample)
+						setForeground(SwingUtils.getRedTextColor());
 				}
 				return component;
 			}

@@ -37,7 +37,7 @@ public class FileChangesDialogPanel extends JDialog
 		JTextArea text = new JTextArea(6, 32);
 		text.setText(sb.toString());
 		text.setEditable(false);
-		text.setBorder(null);
+		SwingUtils.setBorderless(text);
 
 		JScrollPane scroll = new JScrollPane(text);
 		add(scroll, "gaptop 12");

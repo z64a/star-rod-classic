@@ -98,7 +98,7 @@ public class MainOptionsPanel extends JPanel
 		JScrollPane fileScrollPane = new JScrollPane(getFilesPanel());
 		fileScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
 		fileScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		fileScrollPane.setBorder(null);
+		SwingUtils.setBorderless(fileScrollPane);
 
 		overrideShapeText = new StringField((s) -> {
 			if (ignoreChanges || scripts == null)

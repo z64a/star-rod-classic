@@ -31,6 +31,7 @@ import app.Environment;
 import app.LoadingBar;
 import app.StarRodException;
 import app.SwingUtils;
+import app.ThemesEditor;
 import app.config.Options;
 import app.input.IOUtils;
 import game.globals.editor.GlobalsData.GlobalsCategory;
@@ -242,6 +243,7 @@ public class GlobalsEditor
 		frame.setJMenuBar(menuBar);
 
 		addActionsMenu(menuBar);
+		ThemesEditor.addThemeMenuItem(menuBar, frame);
 	}
 
 	private void addActionsMenu(JMenuBar menuBar)
@@ -305,7 +307,7 @@ public class GlobalsEditor
 	{
 		tabList.add(tab);
 
-		tab.tabLabel = new JLabel(tab.getTabName());
+		tab.tabLabel = SwingUtils.getTabLabel(tabbedPane, tab.getTabName(), 12);
 		tab.tabLabel.setHorizontalTextPosition(JLabel.TRAILING);
 		tab.tabLabel.setIcon(getIcon(tab.getIconPath()));
 		tab.tabLabel.setIconTextGap(8);
