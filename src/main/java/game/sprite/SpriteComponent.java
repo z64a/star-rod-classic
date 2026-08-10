@@ -328,6 +328,15 @@ public class SpriteComponent implements XmlSerializable, Indexable<SpriteCompone
 		boolean enableStencilBuffer, boolean enableSelectedHighlight,
 		boolean useSelectShading, boolean drawBounds, boolean useFiltering)
 	{
+		render(spriteShading, paletteOverride, enableStencilBuffer, enableSelectedHighlight, useSelectShading, drawBounds, useFiltering,
+			1.0f, 1.0f, 1.0f, 1.0f);
+	}
+
+	public void render(ShadingProfile spriteShading, SpritePalette paletteOverride,
+		boolean enableStencilBuffer, boolean enableSelectedHighlight,
+		boolean useSelectShading, boolean drawBounds, boolean useFiltering,
+		float colorR, float colorG, float colorB, float colorA)
+	{
 		if (sr == null || sr.deleted || hidden)
 			return;
 
@@ -390,6 +399,7 @@ public class SpriteComponent implements XmlSerializable, Indexable<SpriteCompone
 		renderPalette.pal.glBind(shader.palette);
 
 		shader.useFiltering.set(useFiltering);
+		shader.color.set(colorR, colorG, colorB, colorA);
 		shader.selectShading.set(useSelectShading);
 		shader.selected.set(enableSelectedHighlight && selected);
 		shader.highlighted.set(highlighted);

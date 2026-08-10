@@ -554,6 +554,12 @@ public class Sprite implements XmlSerializable
 	// render based on IDs -- these are used by the map editor
 	public void render(ShadingProfile spriteShading, int animationID, int paletteOverride, boolean useSelectShading, boolean useFiltering)
 	{
+		render(spriteShading, animationID, paletteOverride, useSelectShading, useFiltering, 1.0f, 1.0f, 1.0f, 1.0f);
+	}
+
+	public void render(ShadingProfile spriteShading, int animationID, int paletteOverride, boolean useSelectShading, boolean useFiltering,
+		float colorR, float colorG, float colorB, float colorA)
+	{
 		if (animationID >= animations.size())
 			throw new IllegalArgumentException(String.format(
 				"Animation ID is out of range: %X of %X", animationID, animations.size()));
@@ -562,12 +568,20 @@ public class Sprite implements XmlSerializable
 			throw new IllegalArgumentException(String.format(
 				"Palette ID is out of range: %X of %X", paletteOverride, palettes.size()));
 
-		render(spriteShading, animations.get(animationID), palettes.get(paletteOverride), true, useFiltering, useSelectShading);
+		render(spriteShading, animations.get(animationID), palettes.get(paletteOverride), true, useFiltering, useSelectShading,
+			colorR, colorG, colorB, colorA);
 	}
 
 	// render based on reference
 	public void render(ShadingProfile spriteShading, SpriteAnimation anim, SpritePalette paletteOverride,
 		boolean enableSelectedHighlight, boolean useSelectShading, boolean useFiltering)
+	{
+		render(spriteShading, anim, paletteOverride, enableSelectedHighlight, useSelectShading, useFiltering, 1.0f, 1.0f, 1.0f, 1.0f);
+	}
+
+	public void render(ShadingProfile spriteShading, SpriteAnimation anim, SpritePalette paletteOverride,
+		boolean enableSelectedHighlight, boolean useSelectShading, boolean useFiltering,
+		float colorR, float colorG, float colorB, float colorA)
 	{
 		if (!animations.contains(anim))
 			throw new IllegalArgumentException(anim + " does not belong to " + toString());
@@ -576,7 +590,8 @@ public class Sprite implements XmlSerializable
 
 		for (int i = 0; i < anim.components.size(); i++) {
 			SpriteComponent comp = anim.components.get(i);
-			comp.render(spriteShading, paletteOverride, enableStencilBuffer, enableSelectedHighlight, useSelectShading, false, useFiltering);
+			comp.render(spriteShading, paletteOverride, enableStencilBuffer, enableSelectedHighlight, useSelectShading, false, useFiltering,
+				colorR, colorG, colorB, colorA);
 			comp.addCorners(aabb);
 		}
 	}

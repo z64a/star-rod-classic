@@ -15,6 +15,7 @@ uniform sampler2D u_image;
 uniform sampler1D u_palette;
 
 uniform bool u_useFiltering;
+uniform vec4 u_color = vec4(1.0f);
 
 uniform bool u_useShading = false;
 uniform vec2 u_shadingOffset = vec2(0, 0);
@@ -114,6 +115,8 @@ void main()
 		if(o_color.a > 0.0)
 			o_color.a += 0.4;
 	}
+
+	o_color *= u_color;
 
 	// 'alpha test' required for stencil buffer read to work correctly
 	if(o_color.a == 0.0f)

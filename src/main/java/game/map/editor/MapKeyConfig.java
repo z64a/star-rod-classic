@@ -22,11 +22,12 @@ public final class MapKeyConfig extends KeyboardInputConfig
 		addDefault(MapInput.PASTE_OBJECTS, KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK);
 		addDefault(MapInput.OPEN_TRANSFORM_DIALOG, KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK);
 
-		addDefault(MapInput.TOGGLE_TWO_SIDED, KeyEvent.VK_L);
+		addDefault(MapInput.TOGGLE_TWO_SIDED, KeyEvent.VK_O);
 		addDefault(MapInput.TOGGLE_UV_EDIT, KeyEvent.VK_U);
 
 		addDefault(MapInput.PLAY_IN_EDITOR_TOGGLE, KeyEvent.VK_P);
 		addDefault(MapInput.PLAY_IN_EDITOR_JUMP, KeyEvent.VK_J);
+		addDefault(MapInput.PLAY_IN_EDITOR_SPIN, KeyEvent.VK_L);
 		addDefault(MapInput.PLAY_IN_EDITOR_HOVER, KeyEvent.VK_K);
 
 		addDefault(MapInput.MOVE_FORWARD, KeyEvent.VK_W);

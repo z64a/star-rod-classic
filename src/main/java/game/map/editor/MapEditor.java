@@ -2472,6 +2472,10 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 				cursor3D.endInputJump();
 				break;
 
+			case PLAY_IN_EDITOR_SPIN:
+				cursor3D.endInputSpin();
+				break;
+
 			default:
 				// nothing
 				break;
@@ -2638,6 +2642,11 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 			case PLAY_IN_EDITOR_JUMP:
 				if (isPlayInEditorMode)
 					cursor3D.startInputJump();
+				break;
+
+			case PLAY_IN_EDITOR_SPIN:
+				if (isPlayInEditorMode)
+					cursor3D.startInputSpin();
 				break;
 
 			case PIE_IGNORE_HIDDEN_COL:
@@ -3021,7 +3030,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 		cursor3D.tickSimulation(keyboard, collisionMap, map, perspectiveView, deltaTime, (perspectiveView == activeView), allowInput,
 			false);
 
-		Vector3f start = cursor3D.getPosition();
+		Vector3f start = cursor3D.getSimulationPosition();
 		PickRay traceBelowCursor = new PickRay(Channel.COLLISION, new Vector3f(start.x, start.y + 10, start.z), PickRay.DOWN,
 			perspectiveView);
 

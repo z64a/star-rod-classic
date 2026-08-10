@@ -22,6 +22,7 @@ public enum MapInput implements KeyInput
 
 	PLAY_IN_EDITOR_TOGGLE,
 	PLAY_IN_EDITOR_JUMP,
+	PLAY_IN_EDITOR_SPIN,
 	PLAY_IN_EDITOR_HOVER,
 	PIE_IGNORE_HIDDEN_COL,
 	PIE_IGNORE_HIDDEN_ZONE,
@@ -130,6 +131,8 @@ public enum MapInput implements KeyInput
 				return "Start / Stop Play in Editor";
 			case PLAY_IN_EDITOR_JUMP:
 				return "Play in Editor Jump";
+			case PLAY_IN_EDITOR_SPIN:
+				return "Play in Editor Spin";
 			case PLAY_IN_EDITOR_HOVER:
 				return "Play in Editor Hover";
 			case SELECT_VERTICIES:
@@ -195,6 +198,7 @@ public enum MapInput implements KeyInput
 
 			case PLAY_IN_EDITOR_TOGGLE:
 			case PLAY_IN_EDITOR_JUMP:
+			case PLAY_IN_EDITOR_SPIN:
 			case PLAY_IN_EDITOR_HOVER:
 				return "Play in Editor";
 
