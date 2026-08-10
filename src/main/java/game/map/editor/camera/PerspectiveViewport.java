@@ -249,6 +249,8 @@ public class PerspectiveViewport extends MapEditViewport
 
 		if (opts.selectionMode == SelectionManager.SelectionMode.VERTEX)
 			renderer.drawVertices(editor.selectionManager.getVertices(), false);
+		else if (opts.selectionMode == SelectionManager.SelectionMode.TRIANGLE)
+			renderer.drawTriangleCentroids(opts, shapeMap, hitMap);
 
 		if (opts.selectionMode == SelectionManager.SelectionMode.POINT) {
 			List<MapObject> selectedObjects = MapEditor.instance().selectionManager.getSelectedObjects();

@@ -26,6 +26,7 @@ public abstract class BaseShader
 	protected static final String FS_LINE = "frag_line.glsl";
 	protected static final String FS_POINT = "frag_point.glsl";
 	protected static final String FS_POINT_WS = "frag_point_ws.glsl";
+	protected static final String FS_CENTROID = "frag_triangle_centroid.glsl";
 
 	protected static final String FS_BASIC_SOLID = "frag_basic_solid.glsl";
 	protected static final String FS_BASIC_TEXTURED = "frag_basic_textured.glsl";

@@ -275,9 +275,6 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 	public Vector3f dragBoxEndPoint;
 	public boolean draggingBox;
 
-	public boolean selectionPainting;
-	public float selectionPaintRadius;
-
 	public boolean snapTranslation;
 	public boolean snapRotation;
 	public boolean snapScale;
@@ -1080,9 +1077,6 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 		dragBoxStartPoint = null;
 		dragBoxEndPoint = null;
 		draggingBox = false;
-
-		selectionPainting = false;
-		selectionPaintRadius = 16.0f;
 
 		selectionManager = new SelectionManager(this);
 		commandManager = new CommandManager(32);
@@ -2045,10 +2039,6 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 
 		switch (editorMode) {
 			case Modify:
-				// TODO
-				// if(selectionPainting)
-				// ...
-				// else
 				startTranslateScale(selectionManager.currentSelection, clickHitLMB);
 				break;
 			case EditUVs:
@@ -2244,11 +2234,16 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 	{
 		clickRayMMB = currentRay;
 		clickHitMMB = selectionManager.pickWorld(getGeometryMap(), currentRay, activeView, true);
+		placeCursor(clickHitMMB);
+	}
 
-		if (!clickHitMMB.missed()) {
-			cursor3D.setPosition(clickHitMMB.point);
-			requestPlayInEditorCameraCut();
-		}
+	private void placeCursor(PickHit hit)
+	{
+		if (hit.missed())
+			return;
+
+		cursor3D.setPosition(hit.point);
+		requestPlayInEditorCameraCut();
 	}
 
 	@Override
@@ -2471,10 +2466,6 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 				canDoNudgeTranslation = true;
 				break;
 
-			case SELECTION_PAINTING:
-				selectionPainting = false;
-				break;
-
 			case PLAY_IN_EDITOR_JUMP:
 				cursor3D.endInputJump();
 				break;
@@ -2553,10 +2544,6 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 
 			case ROUND_VERTICIES:
 				roundVertices();
-				break;
-
-			case SELECTION_PAINTING:
-				selectionPainting = true;
 				break;
 
 			case NUDGE_UP:
@@ -2655,6 +2642,10 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 			case PLAY_IN_EDITOR_SPIN:
 				if (isPlayInEditorMode)
 					cursor3D.startInputSpin();
+				break;
+
+			case PLACE_CURSOR_AT_MOUSE:
+				placeCursor(selectionManager.pickWorld(getGeometryMap(), currentRay, activeView, true));
 				break;
 
 			case PIE_IGNORE_HIDDEN_COL:

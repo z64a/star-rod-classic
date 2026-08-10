@@ -134,6 +134,8 @@ public class OrthographicViewport extends MapEditViewport
 
 		if (opts.selectionMode == SelectionManager.SelectionMode.VERTEX)
 			renderer.drawVertices(editor.selectionManager.getVertices(), true);
+		else if (opts.selectionMode == SelectionManager.SelectionMode.TRIANGLE)
+			renderer.drawTriangleCentroids(opts, shapeMap, hitMap);
 
 		RenderState.enableDepthTest(false);
 		if (opts.selectionMode == SelectionManager.SelectionMode.POINT) {
