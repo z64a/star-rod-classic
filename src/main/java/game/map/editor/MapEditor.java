@@ -1384,14 +1384,14 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 				break;
 		}
 
+		if (isPlayInEditorMode)
+			updatePlayInEditorSimulation(deltaTime);
+
 		perspectiveView.camera.tick(deltaTime);
 		activeView.camera.handleMovementInput(mouse, keyboard, (float) deltaTime);
 
 		if (doStepProfiling)
 			profiler.record("input");
-
-		if (isPlayInEditorMode)
-			updatePlayInEditorSimulation(deltaTime);
 
 		cursor3D.updateShadow(getCollisionMap(), map, deltaTime);
 
@@ -1864,8 +1864,13 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 			if (mouse.isHoldingMMB()) {
 				clickHitMMB = selectionManager.pickWorld(getGeometryMap(), currentRay, activeView, true);
 
-				if (!clickHitMMB.missed())
-					cursor3D.updateDrag(clickHitMMB.point);
+				if (!clickHitMMB.missed()) {
+					if (isPlayInEditorMode)
+						cursor3D.setPosition(clickHitMMB.point);
+					else
+						cursor3D.updateDrag(clickHitMMB.point);
+					requestPlayInEditorCameraCut();
+				}
 			}
 		}
 	}
@@ -2240,8 +2245,10 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 		clickRayMMB = currentRay;
 		clickHitMMB = selectionManager.pickWorld(getGeometryMap(), currentRay, activeView, true);
 
-		if (!clickHitMMB.missed())
+		if (!clickHitMMB.missed()) {
 			cursor3D.setPosition(clickHitMMB.point);
+			requestPlayInEditorCameraCut();
+		}
 	}
 
 	@Override
@@ -2626,6 +2633,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 
 				if (!isPlayInEditorMode) {
 					cursor3D.startPreviewMode();
+					zoneCam.startPreview(cursor3D.getSimulationPosition());
 					isPlayInEditorMode = true;
 				}
 				else {
@@ -3024,28 +3032,47 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 	public void updatePlayInEditorSimulation(double deltaTime)
 	{
 		Map collisionMap = getCollisionMap();
+		List<Zone> cameraCandidates = new ArrayList<>();
+		for (Zone zone : collisionMap.zoneTree)
+			cameraCandidates.add(zone);
 
 		// update 'player'
 		boolean allowInput = (changeMapState != ChangeMapState.EXITING) && (changeMapState != ChangeMapState.ENTERING);
+		if (!zoneCam.controller.isInitialized())
+			updatePlayInEditorCamera(cameraCandidates, 0.0);
+		zoneCam.prepareSimulation();
 		cursor3D.tickSimulation(keyboard, collisionMap, map, perspectiveView, deltaTime, (perspectiveView == activeView), allowInput,
-			false);
+			false, (stepTime) -> updatePlayInEditorCamera(cameraCandidates, stepTime));
 
 		Vector3f start = cursor3D.getSimulationPosition();
 		PickRay traceBelowCursor = new PickRay(Channel.COLLISION, new Vector3f(start.x, start.y + 10, start.z), PickRay.DOWN,
 			perspectiveView);
 
-		// update camera
-		List<Zone> candidates = new ArrayList<>();
-		for (Zone z : collisionMap.zoneTree) {
-			if (z.hasCameraData.get())
-				candidates.add(z);
-		}
-		PickHit zoneHit = Map.pickObjectFromSet(traceBelowCursor, candidates, pieIgnoreHiddenZones);
-		if (zoneHit.dist < Float.MAX_VALUE)
-			zoneCam.controlData = ((Zone) zoneHit.obj).camData;
-
 		// update exit trigger + map transition state
 		updateMapTransition(traceBelowCursor);
+	}
+
+	private void updatePlayInEditorCamera(List<Zone> cameraCandidates, double deltaTime)
+	{
+		Vector3f playerPosition = cursor3D.getSimulationPosition();
+		PickRay cameraTrace = new PickRay(Channel.COLLISION, new Vector3f(playerPosition.x, playerPosition.y + 10.0f, playerPosition.z), PickRay.DOWN,
+			perspectiveView);
+		PickHit zoneHit = Map.pickObjectFromSet(cameraTrace, cameraCandidates, pieIgnoreHiddenZones);
+
+		CameraZoneData cameraData = null;
+		if (zoneHit.dist < Float.MAX_VALUE) {
+			Zone zone = (Zone) zoneHit.obj;
+			if (zone.hasCameraData.get())
+				cameraData = zone.camData;
+		}
+
+		zoneCam.updateSimulation(cameraData, playerPosition, cursor3D.allowVerticalCameraMovement(), cursor3D.getCameraYInterpRate(), deltaTime);
+	}
+
+	private void requestPlayInEditorCameraCut()
+	{
+		if (isPlayInEditorMode)
+			zoneCam.requestCameraCut(cursor3D.getSimulationPosition());
 	}
 
 	private void updateMapTransition(PickRay traceBelowCursor)
@@ -3142,6 +3169,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 				// eat a frame to ensure the viewport is rendered with complete fade before opening map
 				action_OpenMap(destMap);
 				cursor3D.startPreviewMode();
+				zoneCam.startPreview(cursor3D.getSimulationPosition());
 				isPlayInEditorMode = true;
 
 				CommandBatch syncHidden = new CommandBatch("Set Visibility");
@@ -3175,6 +3203,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 					cursor3D.setPosition(new Vector3f(0.0f, 0.0f, 0.0f));
 					cursor3D.setMoveHeading(0.0f, 0.0f);
 				}
+				zoneCam.requestCameraCut(cursor3D.getSimulationPosition());
 				changeMapState = ChangeMapState.ENTERING;
 				mapChangeTimer = 0.0f;
 				// tryMapExit(traceBelowCursor); // prevents triggering the loading zone until you leave it

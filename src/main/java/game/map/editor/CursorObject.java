@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.DoubleConsumer;
 
 import javax.xml.parsers.DocumentBuilder;
 
@@ -122,7 +123,7 @@ public class CursorObject extends EditorObject
 	private float scriptedMoveSpeed = 0;
 	private boolean scriptedMovement = false;
 
-	private float lastValidCamHeight = 0.0f;
+	private boolean lastFloorSloped = false;
 
 	private enum PlayerState
 	{
@@ -302,7 +303,7 @@ public class CursorObject extends EditorObject
 		playerTime = 0.0;
 		fallTime = 0.0f;
 		lastGroundPos.set(previewPos);
-		lastValidCamHeight = previewPos.y;
+		lastFloorSloped = false;
 		previousPlayerPos.set(previewPos);
 		renderPlayerPos.set(previewPos);
 		setGravityParams(FALL);
@@ -646,7 +647,37 @@ public class CursorObject extends EditorObject
 
 	public boolean allowVerticalCameraMovement()
 	{
-		return (preview && ((!jumping && !falling) || hovering || previewPos.y < lastValidCamHeight));
+		return preview && ((!jumping && !falling) || hovering);
+	}
+
+	public float getCameraYInterpRate()
+	{
+		if (hovering)
+			return 7.2f;
+
+		if (lastFloorSloped) {
+			switch (actionState) {
+				case Jump:
+				case Falling:
+					return 32.0f;
+				default:
+					return 3.0f;
+			}
+		}
+
+		switch (actionState) {
+			case Walk:
+			case Run:
+			case Jump:
+				return 7.2f;
+			default:
+				return 24.0f;
+		}
+	}
+
+	public float getSimulationInterpolation()
+	{
+		return (float) (playerTime / PLAYER_TICK_RATE);
 	}
 
 	public void setMoveHeading(float moveSpeed, float moveYaw)
@@ -1060,6 +1091,7 @@ public class CursorObject extends EditorObject
 		}
 
 		previewPos.y = floor.hit.point.y;
+		updateFloorSlope(floor);
 		physPlayerLand();
 	}
 
@@ -1098,6 +1130,7 @@ public class CursorObject extends EditorObject
 			GroundHit floor = checkForGround(candidates, cameraYaw);
 			if (floor != null && floor.distance <= Math.abs(gravityIntegrator[0])) {
 				previewPos.y = floor.hit.point.y;
+				updateFloorSlope(floor);
 				if (stepUpReturnState == PlayerState.Spin)
 					transitionToLocomotion();
 				else
@@ -1183,7 +1216,7 @@ public class CursorObject extends EditorObject
 		if (floorDelta < STEP_UP_HEIGHT) {
 			previewPos.y = floor.hit.point.y;
 			lastGroundPos.set(previewPos);
-			lastValidCamHeight = previewPos.y;
+			updateFloorSlope(floor);
 		}
 		else {
 			transitionTo(PlayerState.StepUp);
@@ -1217,8 +1250,14 @@ public class CursorObject extends EditorObject
 			MathUtil.lerp(alpha, previousPlayerPos.z, previewPos.z));
 	}
 
+	private void updateFloorSlope(GroundHit floor)
+	{
+		Vector3f normal = floor.hit.norm;
+		lastFloorSloped = normal != null && (Math.abs(normal.x) > 0.001f || Math.abs(normal.z) > 0.001f);
+	}
+
 	public void tickSimulation(KeyboardInput keyboard, Map collisionMap, Map entityMap, MapEditViewport viewport, double deltaTime, boolean hasFocus,
-		boolean checkInput, boolean showDebugTraces)
+		boolean checkInput, boolean showDebugTraces, DoubleConsumer simulationStep)
 	{
 		hovering = false;
 
@@ -1267,10 +1306,10 @@ public class CursorObject extends EditorObject
 			falling = true;
 			fallTime = 0.0f;
 			hovering = true;
-			lastValidCamHeight = previewPos.y;
 			playerTime = 0.0;
 			previousPlayerPos.set(previewPos);
 			renderPlayerPos.set(previewPos);
+			simulationStep.accept(deltaTime);
 			return;
 		}
 
@@ -1279,6 +1318,7 @@ public class CursorObject extends EditorObject
 			previousPlayerPos.set(previewPos);
 			tickPlayer(candidates, viewport.camera.getYaw());
 			playerTime -= PLAYER_TICK_RATE;
+			simulationStep.accept(PLAYER_TICK_RATE);
 		}
 		updateRenderPlayerPosition();
 
