@@ -26,9 +26,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 
-import common.Vector3f;
-
 import app.SwingUtils;
+import common.Vector3f;
 import game.map.editor.commands.AbstractCommand;
 import game.map.editor.render.RenderingOptions.SurfaceMode;
 import game.map.editor.render.TextureManager;
@@ -68,7 +67,7 @@ public class PaintManager
 
 	public static void update(MapEditor editor, double deltaTime)
 	{
-		if (editor.rawKeyboard.isAltDown()) {
+		if (editor.keyboard.isDown(MapInput.PAINT_RAINBOW)) {
 			int[] out_hsl = new int[3];
 			out_hsl[0] = (int) (hmax * (editor.getFrame() % 60) / 60.0);
 			out_hsl[1] = smax;

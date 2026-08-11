@@ -41,6 +41,7 @@ public enum MapInput implements KeyInput
 	SELECT_TRIANGLES,
 	SELECT_VERTICIES,
 	SELECT_POINTS,
+	PAINT_RAINBOW,
 
 	OPEN_MODEL_TAB,
 	OPEN_COLLIDER_TAB,
@@ -139,6 +140,8 @@ public enum MapInput implements KeyInput
 				return "Place 3D Cursor at Mouse";
 			case SELECT_VERTICIES:
 				return "Select Vertices";
+			case PAINT_RAINBOW:
+				return "Rainbow Painting";
 			case OPEN_MODEL_TAB:
 				return "Open Models Tab";
 			case OPEN_COLLIDER_TAB:
@@ -280,6 +283,9 @@ public enum MapInput implements KeyInput
 			case TOGGLE_EDGES:
 			case USE_GEOMETRY_FLAGS:
 				return "Visibility";
+
+			case PAINT_RAINBOW:
+				return "Vertex Painting";
 
 			default:
 				return "Other";

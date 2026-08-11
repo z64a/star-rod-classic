@@ -100,6 +100,8 @@ public final class MapKeyConfig extends KeyboardInputConfig
 		addDefault(MapInput.TOGGLE_EDGES, KeyEvent.VK_E);
 		addDefault(MapInput.USE_GEOMETRY_FLAGS, KeyEvent.VK_M);
 
+		addDefault(MapInput.PAINT_RAINBOW, KeyEvent.VK_ALT);
+
 		makeGlobal(MapInput.UNDO);
 		makeGlobal(MapInput.REDO);
 		finishDefaults();

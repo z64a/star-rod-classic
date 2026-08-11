@@ -6,6 +6,7 @@ import static game.map.editor.MapInput.*;
 import static org.lwjgl.opengl.GL11.*;
 import static renderer.GLUtils.NO_TEXTURE_ID;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.KeyboardFocusManager;
@@ -31,6 +32,7 @@ import javax.imageio.ImageIO;
 import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -1300,7 +1302,10 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 
 		if (editorMode == EditorMode.VertexPaint) {
 			PaintManager.update(this, deltaTime);
-			paintPickHit = selectionManager.pickWorld(map, currentRay, activeView, true);
+			if (gui.isFocused())
+				paintPickHit = selectionManager.pickWorld(map, currentRay, activeView, true);
+			else
+				paintPickHit = null;
 		}
 
 		if (editorMode == EditorMode.EditUVs && !selectionManager.uvSelection.transforming())
@@ -3519,7 +3524,12 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 			RenderState.setModelMatrix(null);
 
 			RenderState.setLineWidth(2.0f);
-			RenderState.setColor(0.9f, 0.9f, 0.9f, 1.0f);
+			Color background = UIManager.getColor("Panel.background");
+			if (background == null)
+				RenderState.setColor(0.9f, 0.9f, 0.9f, 1.0f);
+			else
+				RenderState.setColor(background.getRed() / 255.0f, background.getGreen() / 255.0f, background.getBlue() / 255.0f,
+					background.getAlpha() / 255.0f);
 
 			if (enableXDivider) {
 				LineRenderQueue.addLine(
