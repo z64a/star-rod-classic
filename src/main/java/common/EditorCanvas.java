@@ -30,6 +30,7 @@ public class EditorCanvas extends AWTGLCanvas
 	private final GLEditor editor;
 	private double framebufferScaleX = Double.NaN;
 	private double framebufferScaleY = Double.NaN;
+	private boolean renderStateInitialized;
 
 	public EditorCanvas(GLEditor editor)
 	{
@@ -51,7 +52,32 @@ public class EditorCanvas extends AWTGLCanvas
 
 		updateFramebufferScale();
 		RenderState.init();
+		renderStateInitialized = true;
 		editor.glInit();
+	}
+
+	@Override
+	public void disposeCanvas()
+	{
+		try {
+			disposeRenderState();
+		}
+		finally {
+			super.disposeCanvas();
+		}
+	}
+
+	void disposeRenderState()
+	{
+		if (!renderStateInitialized)
+			return;
+
+		try {
+			runInContext(RenderState::shutdown);
+		}
+		finally {
+			renderStateInitialized = false;
+		}
 	}
 
 	@Override

@@ -24,6 +24,17 @@ public abstract class ShaderManager
 		instanceMap = new HashMap<>();
 	}
 
+	protected static void shutdown()
+	{
+		if (instanceMap == null)
+			return;
+
+		for (BaseShader shader : instanceMap.values())
+			shader.delete();
+		instanceMap.clear();
+		instanceMap = null;
+	}
+
 	@SuppressWarnings("unchecked")
 	public static <T extends BaseShader> T get(Class<T> cls)
 	{
@@ -57,26 +68,37 @@ public abstract class ShaderManager
 		//		System.out.printf("%4d %s (%s)%n", elem.getLineNumber(), elem.getClassName(), elem.getMethodName());
 
 		int vertShader = createShader(vert, GL_VERTEX_SHADER);
-		int fragShader = createShader(frag, GL_FRAGMENT_SHADER);
-		int programID = glCreateProgram();
+		int fragShader = 0;
+		int programID = 0;
+		boolean linked = false;
 
-		glAttachShader(programID, vertShader);
-		glAttachShader(programID, fragShader);
+		try {
+			fragShader = createShader(frag, GL_FRAGMENT_SHADER);
+			programID = glCreateProgram();
 
-		glLinkProgram(programID);
+			glAttachShader(programID, vertShader);
+			glAttachShader(programID, fragShader);
+			glLinkProgram(programID);
 
-		if (glGetProgrami(programID, GL_LINK_STATUS) == GL_FALSE) {
-			glDeleteProgram(programID);
-			throw new StarRodException("Failed to link shader: %n%s", getInfoLogMessage(programID));
+			if (glGetProgrami(programID, GL_LINK_STATUS) == GL_FALSE)
+				throw new StarRodException("Failed to link shader: %n%s", getProgramInfoLogMessage(programID));
+
+			linked = true;
+			return programID;
 		}
+		finally {
+			if (programID != 0) {
+				glDetachShader(programID, vertShader);
+				if (fragShader != 0)
+					glDetachShader(programID, fragShader);
+				if (!linked)
+					glDeleteProgram(programID);
+			}
 
-		glDetachShader(programID, vertShader);
-		glDetachShader(programID, fragShader);
-
-		glDeleteShader(fragShader);
-		glDeleteShader(vertShader);
-
-		return programID;
+			if (fragShader != 0)
+				glDeleteShader(fragShader);
+			glDeleteShader(vertShader);
+		}
 	}
 
 	private static int createShader(String resourceName, int type)
@@ -125,7 +147,7 @@ public abstract class ShaderManager
 				}
 			}
 
-			String k = getInfoLogMessage(shaderID);
+			String k = getShaderInfoLogMessage(shaderID);
 			glDeleteShader(shaderID);
 			throw new StarRodException("Failed to compile %s %s %n%s", typename, resourceName, k);
 		}
@@ -133,9 +155,15 @@ public abstract class ShaderManager
 		return shaderID;
 	}
 
-	private static String getInfoLogMessage(int shaderID)
+	private static String getShaderInfoLogMessage(int shaderID)
 	{
 		int messageLength = glGetShaderi(shaderID, GL_INFO_LOG_LENGTH);
 		return glGetShaderInfoLog(shaderID, messageLength);
+	}
+
+	private static String getProgramInfoLogMessage(int programID)
+	{
+		int messageLength = glGetProgrami(programID, GL_INFO_LOG_LENGTH);
+		return glGetProgramInfoLog(programID, messageLength);
 	}
 }

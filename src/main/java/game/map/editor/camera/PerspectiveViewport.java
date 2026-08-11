@@ -148,17 +148,15 @@ public class PerspectiveViewport extends MapEditViewport
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// render final viewport
-		PostProcessFX.NONE.apply(0, sceneBuffer, null, prevBuffer, opts.time);
-
-		RenderState.bindFramebuffer(GL_READ_FRAMEBUFFER, sceneBuffer.getFrameBuffer());
-		RenderState.bindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-		glBlitFramebuffer(minX, minY, minX + sizeX, minY + sizeY,
-			RenderState.toFramebufferX(minX), RenderState.toFramebufferY(minY),
-			RenderState.toFramebufferX(minX + sizeX), RenderState.toFramebufferY(minY + sizeY),
-			GL_DEPTH_BUFFER_BIT,
-			GL_NEAREST);
-
-		RenderState.bindFramebuffer(GL_FRAMEBUFFER, 0);
+		RenderState.enableDepthTest(false);
+		RenderState.setDepthWrite(false);
+		try {
+			PostProcessFX.NONE.apply(0, sceneBuffer, null, prevBuffer, opts.time);
+		}
+		finally {
+			RenderState.setDepthWrite(true);
+			RenderState.enableDepthTest(true);
+		}
 
 		if (doPerspProfiling)
 			profiler.print();

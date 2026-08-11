@@ -134,15 +134,20 @@ public abstract class ModelRenderer
 		RenderState.setLineWidth(1.0f);
 		RenderState.setPolygonMode(PolygonMode.LINE);
 		glEnable(GL_POLYGON_OFFSET_LINE);
-		shader.drawMode.set(opts.edgeHighlights ? MODE_FILL_OUTLINE_HIGHLIGHT : MODE_FILL_OUTLINE);
+		try {
+			shader.drawMode.set(opts.edgeHighlights ? MODE_FILL_OUTLINE_HIGHLIGHT : MODE_FILL_OUTLINE);
 
-		for (DisplayCommand cmd : mesh.displayListModel) {
-			if (cmd instanceof TriangleBatch batch) {
-				glDrawArrays(GL_TRIANGLES, batch.bufferStartPos, 3 * batch.triangles.size());
+			for (DisplayCommand cmd : mesh.displayListModel) {
+				if (cmd instanceof TriangleBatch batch) {
+					glDrawArrays(GL_TRIANGLES, batch.bufferStartPos, 3 * batch.triangles.size());
+				}
+				else if (opts.useGeometryFlags) {
+					cmd.doGL();
+				}
 			}
-			else if (opts.useGeometryFlags) {
-				cmd.doGL();
-			}
+		}
+		finally {
+			glDisable(GL_POLYGON_OFFSET_LINE);
 		}
 	}
 

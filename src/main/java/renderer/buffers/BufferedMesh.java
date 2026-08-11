@@ -271,7 +271,8 @@ public class BufferedMesh
 		if (auxVBO != null)
 			glDeleteBuffers(auxVBO.id);
 
-		glDeleteVertexArrays(vao);
+		if (vao >= 0)
+			glDeleteVertexArrays(vao);
 		RenderState.setVAO(0);
 		vao = -1;
 	}

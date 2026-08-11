@@ -117,7 +117,6 @@ public class FoldEditor extends BaseEditor
 	@Override
 	public void glInit()
 	{
-		RenderState.init();
 		TextureManager.bindEditorTextures();
 		loadTextures();
 		ShadowRenderer.init();

@@ -294,6 +294,7 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 		if (config != null)
 			config.saveConfigFile();
 
+		glCanvas.disposeRenderState();
 		frame.setVisible(false);
 		frame.dispose();
 	}

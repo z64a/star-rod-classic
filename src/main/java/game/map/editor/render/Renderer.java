@@ -93,7 +93,6 @@ public class Renderer implements IShutdownListener
 		glEnable(GL_SCISSOR_TEST);
 		glEnable(GL_DEPTH_CLAMP);
 
-		RenderState.init();
 		ShadowRenderer.init();
 		DeferredLineRenderer.init();
 		TextRenderer.init();

@@ -1,5 +1,6 @@
 package renderer.shaders;
 
+import static org.lwjgl.opengl.GL20.glDeleteProgram;
 import static org.lwjgl.opengl.GL30.glBindBufferBase;
 import static org.lwjgl.opengl.GL31.*;
 import static renderer.buffers.BufferedMesh.*;
@@ -96,6 +97,12 @@ public abstract class BaseShader
 	public final void initializeCache()
 	{
 		resetCache();
+	}
+
+	final void delete()
+	{
+		mesh.glDelete();
+		glDeleteProgram(program);
 	}
 
 	public final void resetCache()

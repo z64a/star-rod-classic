@@ -3,8 +3,7 @@ package game.map.editor;
 import common.KeyInput;
 
 /**
- * Logical inputs understood by the Map Editor. Physical keyboard bindings,
- * input state, persistence, and Swing presentation are owned by other classes.
+ * Actions available for Map Editor key bindings.
  */
 public enum MapInput implements KeyInput
 {

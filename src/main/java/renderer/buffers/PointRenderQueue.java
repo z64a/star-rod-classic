@@ -72,8 +72,11 @@ public abstract class PointRenderQueue
 			reset();
 	}
 
-	public void delete()
+	public static void delete()
 	{
-		points.delete();
+		if (points != null) {
+			points.delete();
+			points = null;
+		}
 	}
 }

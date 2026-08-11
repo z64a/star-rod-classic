@@ -141,9 +141,11 @@ public class TexturedMesh extends AbstractMesh implements XmlSerializable
 		for (TriangleBatch batch : getBatches()) {
 			batch.bufferStartPos = -1;
 			for (Triangle t : batch.triangles) {
-				int triStart = addTexturedTriangle(t, selectionEnabled &&
-					(opts.selectionMode == SelectionMode.TRIANGLE && t.selected) ||
-					(opts.selectionMode == SelectionMode.OBJECT && parentObject.selected));
+				boolean triSelected = opts.selectionMode == SelectionMode.TRIANGLE && t.selected;
+				boolean objSelected = opts.selectionMode == SelectionMode.OBJECT && parentObject.selected;
+				boolean selected = selectionEnabled && (triSelected || objSelected);
+
+				int triStart = addTexturedTriangle(t, selected);
 				if (batch.bufferStartPos < 0)
 					batch.bufferStartPos = triStart;
 			}
