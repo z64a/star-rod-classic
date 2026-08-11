@@ -37,6 +37,56 @@ An optional namespace qualifies every imported name:
 
 The imported structures have names such as `$FileNamespace:PointerName`. Nested imports produce nested names such as `$Outer:Inner:OriginalName`.
 
+An import may pass named options to the imported file. Add a body containing one `Name=Value` assignment per line:
+
+```star-rod
+#import Configurable.mpat Shared {
+	Mode=Hard
+	IncludeExtraData=true
+	TableVal=20
+}
+```
+
+Option names and comparisons are case-insensitive. Each value must be a single token. A constant may be supplied as a value and is resolved before it is passed to the imported file.
+
+The imported file may use the following preprocessor directives:
+
+| Directive | Description |
+| --- | --- |
+| `##[IF:Name]` | Include the following branch when the option is defined. |
+| `##[IF:Name:Value]` | Include the following branch when the option has the specified value. |
+| `##[IFNOT:Name]` | Include the following branch when the option is not defined. |
+| `##[IFNOT:Name:Value]` | Include the following branch when the option does not have the specified value. An undefined option also satisfies this condition. |
+| `##[ELSEIF:Name]` | Begin another branch selected when the option is defined and no earlier branch matched. |
+| `##[ELSEIF:Name:Value]` | Begin another branch selected when the option has the specified value and no earlier branch matched. |
+| `##[ELSEIFNOT:Name]` | Begin another branch selected when the option is not defined and no earlier branch matched. |
+| `##[ELSEIFNOT:Name:Value]` | Begin another branch selected when the option does not have the specified value and no earlier branch matched. |
+| `##[ELSE]` | Begin the fallback branch. |
+| `##[ENDIF]` | End the conditional. |
+| `##[VALUE:Name]` | Replace the directive with the option value. |
+
+Conditionals may be nested. Every `IF` or `IFNOT` must have a matching `ENDIF`, and `ELSEIF`, `ELSEIFNOT`, and `ELSE` apply to the nearest open conditional. `VALUE` may appear within a declaration or body line; using an undefined value in an active branch is an error.
+
+For example, `Configurable.mpat` could select a structure and substitute a value passed by the importing patch:
+
+```star-rod
+##[IF:Mode:Hard]
+#new:Data $ModeData {
+	2
+}
+##[ELSE]
+#new:Data $ModeData {
+	1
+}
+##[ENDIF]
+
+#new:Data $Table {
+	##[VALUE:TableVal]
+}
+```
+
+Options are scoped to a single import. A nested import receives its own option body; values can be forwarded explicitly with `##[VALUE:Name]`.
+
 ### `#define .Name Value`
 
 Creates a constant for the current patch. Global constants must be defined in a global patch or enum file.

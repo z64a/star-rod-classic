@@ -224,13 +224,20 @@ public class TexturePanner
 		params.init[AUX_V] = args[12];
 	}
 
-	// load from XML tag
-	public static void load(DefaultListModel<TexturePanner> texPanUnits, XmlReader xmr, Element pannerElem)
+	// read panner ID from XML tag
+	public static int readID(XmlReader xmr, Element pannerElem)
 	{
 		xmr.requiresAttribute(pannerElem, ATTR_PAN_ID);
 		int pannerID = xmr.readHex(pannerElem, ATTR_PAN_ID);
 		if (pannerID > 15 || pannerID < 0)
 			xmr.complain("Invalid panner ID: " + pannerID);
+		return pannerID;
+	}
+
+	// load from XML tag
+	public static void load(DefaultListModel<TexturePanner> texPanUnits, XmlReader xmr, Element pannerElem)
+	{
+		int pannerID = readID(xmr, pannerElem);
 
 		TexturePanner panner = texPanUnits.get(pannerID);
 		if (xmr.hasAttribute(pannerElem, ATTR_GENERATE))

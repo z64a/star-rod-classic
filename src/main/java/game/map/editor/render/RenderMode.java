@@ -28,7 +28,7 @@ public enum RenderMode
 	SURF_XLU_AA_ZB_L3		( 0x22, 6000000, "Surface_XLU_Layer3"),
 	SURF_XLU_ZB				( 0x13, 8000000, "Surface_XLU_No_AA"),
 	SURF_XLU_AA				( 0x14,       0, "Surface_XLU_No_ZB"),
-	//	SURF_XLU_ZB_Z_UPD 		( 0x15, 8000000, "Surf_XLU_ZB + Z_UPD"),	// unused and non-standard -- don't allow this one
+	SURF_XLU_ZB_Z_UPD 		( 0x15, 8000000, "Surf_XLU_ZB + Z_UPD"),	// used by runtime scripts; not currently exposed
 	ALPHA_TEST_AA_ZB_2SIDE	( 0x0D, 1000000, "AlphaTest"),
 	ALPHA_TEST_AA_ZB_1SIDE	( 0x0F, 1000000, "AlphaTest_OneSided"),
 	ALPHA_TEST_AA			( 0x10,       0, "AlphaTest_No_ZB"),
@@ -83,11 +83,15 @@ public enum RenderMode
 	{
 		switch (id) {
 			case 0x11:
-			case 0x16:
-			case 0x22:
-			case 0x1A:
+			case 0x13:
 			case 0x14:
+			case 0x16:
+			case 0x1A:
+			case 0x1C:
+			case 0x22:
 			case 0x26:
+			case 0x2E:
+			case 0x2F:
 				return true;
 
 			default:

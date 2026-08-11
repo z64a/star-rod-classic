@@ -618,7 +618,7 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 		Logger.log("Reading patch file: " + IOUtils.getRelativePath(Environment.project.getDirectory(), f));
 
 		List<Line> lines = IOUtils.readPlainInputFile(f);
-		readPatchSource(lines, new CaseInsensitiveMap<>());
+		readPatchSource(lines, rules);
 	}
 
 	private final void readPatchSource(List<Line> lines, CaseInsensitiveMap<String> rules) throws IOException

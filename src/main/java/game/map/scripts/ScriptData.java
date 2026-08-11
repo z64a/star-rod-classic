@@ -25,6 +25,7 @@ import game.map.tree.CategoryTreeModel;
 import game.map.tree.CategoryTreeModel.CategoryTreeNode;
 import game.shared.ProjectDatabase;
 import util.IterableListModel;
+import util.Logger;
 import util.xml.XmlWrapper.XmlReader;
 import util.xml.XmlWrapper.XmlSerializable;
 import util.xml.XmlWrapper.XmlTag;
@@ -204,8 +205,21 @@ public class ScriptData extends UpdateProvider implements XmlSerializable
 	{
 		Element pannersElem = xmr.getUniqueTag(scriptElem, TAG_PANNER_LIST);
 		if (pannersElem != null) {
-			for (Element pannerElem : xmr.getTags(pannersElem, TAG_PANNER))
+			// Some older dumps appended a second set of default panners.
+			boolean[] loadedPanners = new boolean[16];
+			boolean foundDuplicate = false;
+			for (Element pannerElem : xmr.getTags(pannersElem, TAG_PANNER)) {
+				int pannerID = TexturePanner.readID(xmr, pannerElem);
+				if (loadedPanners[pannerID]) {
+					foundDuplicate = true;
+					continue;
+				}
+
 				TexturePanner.load(texPanners, xmr, pannerElem);
+				loadedPanners[pannerID] = true;
+			}
+			if (foundDuplicate)
+				Logger.logWarning("Ignored duplicate texture panner definitions.");
 		}
 
 		Element optionsElem = xmr.getUniqueTag(scriptElem, TAG_OPTIONS);

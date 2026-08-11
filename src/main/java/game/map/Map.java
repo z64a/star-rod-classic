@@ -49,7 +49,6 @@ import game.map.scripts.ScriptData;
 import game.map.shape.LightSet;
 import game.map.shape.LightSet.LightSetDigest;
 import game.map.shape.Model;
-import game.map.shape.TexturePanner;
 import game.map.shape.UV;
 import game.map.tree.ColliderTreeModel;
 import game.map.tree.MapObjectNode;
@@ -303,9 +302,6 @@ public class Map implements XmlSerializable
 		modelTree.getRoot().getUserObject().lights.set(lightSets.get(0));
 
 		scripts = new ScriptData();
-
-		for (int i = 0; i < 16; i++)
-			scripts.texPanners.addElement(new TexturePanner(i));
 	}
 
 	public void add(MapObject obj)
