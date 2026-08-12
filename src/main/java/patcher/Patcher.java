@@ -34,6 +34,7 @@ import app.config.Options;
 import app.config.WatchListEntry;
 import app.input.IOUtils;
 import app.input.InvalidInputException;
+import game.ROM.LibScope;
 import game.battle.ActorTypesEditor;
 import game.battle.AuxBattlePatcher;
 import game.battle.BattlePatcher;
@@ -94,6 +95,7 @@ public class Patcher implements IGlobalDatabase
 	private boolean addingUserGlobals = false;
 
 	private SpritePatcher spritePatcher;
+	private BuildSymbolMap buildSymbolMap;
 
 	public Patcher() throws IOException
 	{
@@ -105,6 +107,7 @@ public class Patcher implements IGlobalDatabase
 	private void patchROM() throws IOException
 	{
 		timerLookup = new LinkedHashMap<>();
+		buildSymbolMap = new BuildSymbolMap();
 		long startTime = System.nanoTime();
 		Logger.log(new java.util.Date().toString(), Priority.IMPORTANT);
 		Logger.log("Preparing patching process.", Priority.MILESTONE);
@@ -238,6 +241,7 @@ public class Patcher implements IGlobalDatabase
 		gpm.readInternalPatch("ExtendedGlobals.patch",
 			cfg.getBoolean(Options.EnableDebugCode) && cfg.getBoolean(Options.EnableVarLogging) ? "LogVars" : "");
 		gpm.readInternalPatch("ExtendedScripts.patch");
+		gpm.readInternalPatch("CrashScreen.patch");
 		gpm.readInternalPatch("ExtraMoves.patch");
 		gpm.readInternalPatch("MoreStringVars.patch");
 
@@ -350,6 +354,8 @@ public class Patcher implements IGlobalDatabase
 
 		// add things to load during boot
 		gpm.addNewStructs();
+		if (cfg.getBoolean(Options.EnableCrashSymbols))
+			buildSymbolMap.writeEmbeddedFunctionTable(rp, getGlobalPointerAddress("$CrashSymbolTableInfo"));
 
 		SubscriptionManager.writeHooks(rp);
 		FunctionPatcher.showVersionInfo(rp, rp.nextAlignedOffset());
@@ -455,6 +461,7 @@ public class Patcher implements IGlobalDatabase
 		printTimes();
 
 		rp.writeFile();
+		buildSymbolMap.write();
 
 		cfg.setString(Options.CompileVersion, Environment.getVersionString()); // another successful compile. great job!
 		cfg.setBoolean(Options.ClearMapCache, false);
@@ -633,6 +640,12 @@ public class Patcher implements IGlobalDatabase
 			throw new IllegalStateException("Cannot add compiled global pointers!");
 
 		globalPointerMap.put(global.toString(), addr);
+	}
+
+	@Override
+	public void addBuildSymbol(int address, int size, String name, String type, LibScope scope, String source, boolean overlay)
+	{
+		buildSymbolMap.add(address, size, name, type, scope, source, overlay);
 	}
 
 	@Override

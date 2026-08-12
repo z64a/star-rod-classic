@@ -1,6 +1,7 @@
 package patcher;
 
 import app.input.InvalidInputException;
+import game.ROM.LibScope;
 import game.map.MapIndex;
 
 // maybe just get rid of this interface and let classes BaseDataEncoder take Patcher as argument
@@ -37,4 +38,7 @@ public interface IGlobalDatabase
 	public int getPlayerAnimID(String spriteName, String animName, String palName);
 
 	public RomPatcher getRomPatcher(); //TODO awkward
+
+	default void addBuildSymbol(int address, int size, String name, String type, LibScope scope, String source, boolean overlay)
+	{}
 }

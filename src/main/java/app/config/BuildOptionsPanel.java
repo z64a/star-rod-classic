@@ -171,6 +171,7 @@ public class BuildOptionsPanel extends JPanel
 		JPanel tab = new JPanel(new MigLayout("fillx, " + TAB_INSETS, "[]16[]"));
 
 		addCheckbox(tab, Options.EnableDebugCode, "growx, span, wrap, gapbottom 4");
+		addCheckbox(tab, Options.EnableCrashSymbols, "growx, span, wrap, gapbottom 4");
 		addCheckbox(tab, Options.EnableVarLogging, "growx, span, wrap, gapbottom 4");
 
 		addCheckbox(tab, Options.QuickLaunch, "growx, wrap, gapbottom 8");

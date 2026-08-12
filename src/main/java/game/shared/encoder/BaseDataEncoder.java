@@ -300,6 +300,27 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 			determineLocalPlacement();
 		else
 			determineGlobalPlacement();
+
+		collectBuildSymbols();
+	}
+
+	private void collectBuildSymbols()
+	{
+		String defaultSource = primarySource == null ? "-" : primarySource.getName();
+		for (Struct struct : declaredStructs.values()) {
+			if (struct.deleted || (!struct.isTypeOf(FunctionT) && !struct.isTypeOf(ScriptT)))
+				continue;
+
+			boolean moved = struct.isDumped() && struct.finalAddress != struct.originalAddress;
+			if (struct.gens != Struct.StructGenus.New && struct.gens != Struct.StructGenus.Hook && !moved)
+				continue;
+
+			String source = defaultSource;
+			if (!struct.patchList.isEmpty() && struct.patchList.get(0).sourceLine != null)
+				source = struct.patchList.get(0).sourceLine.source.getName();
+			String type = struct.isTypeOf(FunctionT) ? "Function" : "Script";
+			globalsDatabase.addBuildSymbol(struct.finalAddress, struct.finalSize, struct.name, type, struct.scope, source, overlayMode);
+		}
 	}
 
 	protected final void buildOverlay(File outFile, File outIndexFile) throws IOException
