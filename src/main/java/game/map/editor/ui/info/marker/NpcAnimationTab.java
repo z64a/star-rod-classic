@@ -2,20 +2,19 @@ package game.map.editor.ui.info.marker;
 
 import java.util.Collection;
 
-import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JScrollPane;
 
 import app.StarRodException;
 import app.SwingUtils;
 import game.map.editor.MapEditor;
 import game.map.marker.NpcComponent;
 import game.map.marker.NpcComponent.SetAnimation;
+import game.map.marker.NpcComponent.SetAnimationOverride;
+import game.map.marker.NpcComponent.SetDefaultAnimation;
 import game.map.marker.NpcComponent.SetMarkerPalette;
-import game.map.marker.NpcComponent.SetMarkerPreviewAnimation;
 import game.map.marker.NpcComponent.SetMarkerSprite;
 import game.sprite.Sprite;
 import game.sprite.SpriteAnimation;
@@ -29,56 +28,33 @@ import util.ui.ListAdapterComboboxModel;
 
 public class NpcAnimationTab extends JPanel
 {
+	private static final String[] ANIMATION_NAMES = {
+			"Idle", "Walk", "Run", "Chase",
+			"Alert", "Unused", "Death", "Hit",
+			"08", "09", "0A", "0B",
+			"0C", "0D", "0E", "0F"
+	};
+
 	private final MarkerInfoPanel parent;
 
-	private RangeCheckComboBox<SpriteMetadata> spriteComboBox;
-	private RangeCheckComboBox<SpritePalette> paletteBox;
+	private final RangeCheckComboBox<SpriteMetadata> spriteComboBox;
+	private final RangeCheckComboBox<SpritePalette> paletteBox;
+	private final RangeCheckComboBox<SpriteAnimation> defaultAnimationBox;
 
-	private JPanel palettePanel;
-	private JScrollPane animsScrollPane;
+	private final JPanel spriteDetailsPanel;
+	private final JPanel animationsPanel;
+	private final JCheckBox hideAiAnimationsCheckbox;
 
-	private RangeCheckComboBox<?>[] animComboBox = new RangeCheckComboBox[16];
-	private JRadioButton[] animRadioButton = new JRadioButton[16];
+	private final RangeCheckComboBox<SpriteAnimation>[] animationComboBoxes;
+	private final JCheckBox[] animationOverrideCheckboxes;
+	private final JPanel[] animationRows;
 
+	@SuppressWarnings("unchecked")
 	public NpcAnimationTab(MarkerInfoPanel parent)
 	{
 		this.parent = parent;
 
-		SpriteLoader.initialize(); // make sure the sprite files are ready
-
-		/*
-		spriteSpinner = new HexSpinner(1, SpriteLoader.getMaximumID(SpriteSet.Npc), 1);
-		spriteSpinner.addChangeListener((e) -> {
-			if(ignoreChanges)
-				return;
-		
-			final int maxID = SpriteLoader.getMaximumID(SpriteSet.Npc);
-			if(spriteSpinner.getValue() > maxID)
-			{
-				spriteSpinner.setValue(maxID);
-				return;
-			}
-		
-			MapEditor.execute(new SetMarkerSprite(data, spriteSpinner.getValue()));
-		});
-		spriteSpinner.setToolTipText("Sprite ID");
-		
-		paletteSpinner = new HexSpinner(0, 0, 0);
-		paletteSpinner.addChangeListener((e) -> {
-			if(ignoreChanges)
-				return;
-		
-			if(data.previewSprite != null &&
-					(paletteSpinner.getValue() > data.previewSprite.lastValidPaletteID()))
-			{
-				paletteSpinner.setValue(data.previewSprite.lastValidPaletteID());
-				return;
-			}
-		
-			MapEditor.execute(new SetMarkerPalette(data, paletteSpinner.getValue()));
-		});
-		paletteSpinner.setToolTipText("Palette ID");
-		*/
+		SpriteLoader.initialize();
 
 		spriteComboBox = new RangeCheckComboBox<>();
 		spriteComboBox.setRenderer(new IndexableComboBoxRenderer());
@@ -88,125 +64,126 @@ public class NpcAnimationTab extends JPanel
 		if (spriteNames.isEmpty())
 			throw new StarRodException("No valid NPC sprites could be found!");
 
-		for (SpriteMetadata sp : spriteNames)
-			spriteComboBox.addItem(sp);
+		for (SpriteMetadata sprite : spriteNames)
+			spriteComboBox.addItem(sprite);
 
 		spriteComboBox.addActionListener((e) -> {
-			if (parent.ignoreEvents())
+			if (parent.ignoreEvents() || parent.getData() == null)
 				return;
-			SpriteMetadata spr = (SpriteMetadata) spriteComboBox.getSelectedItem();
-			MapEditor.execute(new SetMarkerSprite(parent.getData(), spr.id));
+			SpriteMetadata sprite = (SpriteMetadata) spriteComboBox.getSelectedItem();
+			if (sprite != null)
+				MapEditor.execute(new SetMarkerSprite(parent.getData(), sprite.id));
 		});
 
 		paletteBox = new RangeCheckComboBox<>();
 		paletteBox.setRenderer(new IndexableComboBoxRenderer());
-
 		paletteBox.addActionListener((e) -> {
-			if (parent.ignoreEvents())
+			if (parent.ignoreEvents() || parent.getData() == null)
 				return;
 			MapEditor.execute(new SetMarkerPalette(parent.getData(), paletteBox.getSelectedIndex()));
 		});
 
-		String[] animNames = {
-				"Idle", "Walk", "Run", "Chase",
-				"04", "05", "Death", "Hit",
-				"08", "09", "0A", "0B",
-				"0C", "0D", "0E", "0F"
-		};
+		defaultAnimationBox = new RangeCheckComboBox<>();
+		defaultAnimationBox.setRenderer(new IndexableComboBoxRenderer());
+		defaultAnimationBox.addActionListener((e) -> {
+			if (parent.ignoreEvents() || parent.getData() == null || defaultAnimationBox.getSelectedIndex() < 0)
+				return;
+			MapEditor.execute(new SetDefaultAnimation(parent.getData(), defaultAnimationBox.getSelectedIndex()));
+		});
 
-		animComboBox = new RangeCheckComboBox[16];
-		animRadioButton = new JRadioButton[16];
+		animationComboBoxes = new RangeCheckComboBox[16];
+		animationOverrideCheckboxes = new JCheckBox[16];
+		animationRows = new JPanel[16];
 
-		ButtonGroup bg = new ButtonGroup();
-
+		animationsPanel = new JPanel(new MigLayout("fillx, ins 0, hidemode 3"));
 		for (int i = 0; i < 16; i++) {
 			final int index = i;
-			animComboBox[i] = new RangeCheckComboBox<>();
-			animComboBox[i].setRenderer(new IndexableComboBoxRenderer());
-			animComboBox[i].addActionListener((e) -> {
-				if (parent.ignoreEvents())
+			animationComboBoxes[i] = new RangeCheckComboBox<>();
+			animationComboBoxes[i].setRenderer(new IndexableComboBoxRenderer());
+			animationComboBoxes[i].addActionListener((e) -> {
+				if (parent.ignoreEvents() || parent.getData() == null || animationComboBoxes[index].getSelectedIndex() < 0)
 					return;
-				MapEditor.execute(new SetAnimation(parent.getData(), index, animComboBox[index].getSelectedIndex()));
+				MapEditor.execute(new SetAnimation(parent.getData(), index, animationComboBoxes[index].getSelectedIndex()));
 			});
-			animRadioButton[i] = new JRadioButton();
-			bg.add(animRadioButton[i]);
-			animRadioButton[i].setSelected(i == 0);
-			animRadioButton[i].addActionListener((e) -> {
-				if (parent.ignoreEvents())
+
+			animationOverrideCheckboxes[i] = new JCheckBox();
+			animationOverrideCheckboxes[i].setToolTipText("Override the default animation for " + ANIMATION_NAMES[i]);
+			animationOverrideCheckboxes[i].addActionListener((e) -> {
+				if (parent.ignoreEvents() || parent.getData() == null)
 					return;
-				MapEditor.execute(new SetMarkerPreviewAnimation(parent.getData(), index));
+				MapEditor.execute(new SetAnimationOverride(parent.getData(), index, animationOverrideCheckboxes[index].isSelected()));
 			});
+
+			animationRows[i] = new JPanel(new MigLayout("fillx, ins 0"));
+			animationRows[i].add(animationOverrideCheckboxes[i], "w 8%!");
+			animationRows[i].add(new JLabel(ANIMATION_NAMES[i]), "w 18%!");
+			animationRows[i].add(animationComboBoxes[i], "growx, pushx");
+			animationsPanel.add(animationRows[i], "growx, wrap");
 		}
 
-		// use this so things line up with
+		hideAiAnimationsCheckbox = new JCheckBox(" Hide AI-specific animations (08-0F)", true);
+		hideAiAnimationsCheckbox.addActionListener((e) -> updateAnimationVisibility());
+
 		JPanel spritePanel = new JPanel(new MigLayout("fillx, ins 0"));
+		spritePanel.add(new JLabel("Sprite"), "w 28%!");
+		spritePanel.add(spriteComboBox, "growx, pushx");
 
-		spritePanel.add(new JLabel("Sprite"), "w 15%, split 2"); // gaptop 16,
-		spritePanel.add(spriteComboBox, "growx, wrap");
+		spriteDetailsPanel = new JPanel(new MigLayout("fillx, ins 0"));
+		spriteDetailsPanel.add(new JLabel("Palette"), "w 28%!");
+		spriteDetailsPanel.add(paletteBox, "growx, pushx, wrap");
+		spriteDetailsPanel.add(new JLabel("Default Anim"), "w 28%!");
+		spriteDetailsPanel.add(defaultAnimationBox, "growx, pushx");
 
-		palettePanel = new JPanel(new MigLayout("fillx, ins 0"));
+		setLayout(new MigLayout("fillx, ins n 16 n 16, wrap"));
+		add(spritePanel, "growx");
+		add(spriteDetailsPanel, "growx");
+		add(hideAiAnimationsCheckbox, "gaptop 8");
+		add(animationsPanel, "growx");
 
-		palettePanel.add(new JLabel("Palette"), "w 15%, split 2");
-		palettePanel.add(paletteBox, "growx");
-
-		setLayout(new MigLayout("ins n 16 n 16, wrap, fill"));
-		add(spritePanel, "growx, wrap");
-		add(palettePanel, "growx, wrap");
-		add(new JLabel(), "h 8!, wrap");
-
-		//	animationsPanel.add(SwingUtils.getLabel("Animations", 14), "wrap, gapbottom 8");
-
-		JPanel animsPanel = new JPanel(new MigLayout("fillx, ins 0 0 0 5%"));
-
-		for (int i = 0; i < 16; i++) {
-			animsPanel.add(animRadioButton[i], "span, split 3, w 8%");
-			animsPanel.add(new JLabel(animNames[i]), "w 16%");
-			animsPanel.add(animComboBox[i], "pushx, growx, wrap");
-		}
-
-		animsScrollPane = new JScrollPane(animsPanel);
-		animsScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-		SwingUtils.setBorderless(animsScrollPane);
-
-		add(animsScrollPane, "growx");
-		add(new JLabel(), "pushy");
+		updateAnimationVisibility();
 	}
 
-	public void onSetData()
-	{
-		// reload anim names here?
-	}
-
-	@SuppressWarnings("unchecked")
 	public void updateFields()
 	{
 		NpcComponent npc = parent.getData().npcComponent;
 
-		Sprite previewSprite = npc.previewSprite;
 		spriteComboBox.setSelectedIndex(npc.getSpriteID() - 1);
-
-		System.out.println(previewSprite);
-
+		Sprite previewSprite = npc.previewSprite;
 		if (previewSprite == null) {
-			palettePanel.setVisible(false);
-			animsScrollPane.setVisible(false);
+			spriteDetailsPanel.setVisible(false);
+			hideAiAnimationsCheckbox.setVisible(false);
+			animationsPanel.setVisible(false);
 			return;
 		}
-		else {
-			palettePanel.setVisible(true);
-			animsScrollPane.setVisible(true);
-		}
+
+		spriteDetailsPanel.setVisible(true);
+		hideAiAnimationsCheckbox.setVisible(true);
+		animationsPanel.setVisible(true);
 
 		paletteBox.setModel(new ListAdapterComboboxModel<>(previewSprite.palettes));
 		paletteBox.setSelectedIndex(npc.getPaletteID());
 
-		// reload combobox models when sprite changes
+		defaultAnimationBox.setModel(new ListAdapterComboboxModel<>(previewSprite.animations));
+		defaultAnimationBox.setSelectedIndex(npc.getDefaultAnimation());
+
 		for (int i = 0; i < 16; i++) {
-			((JComboBox<SpriteAnimation>) animComboBox[i]).setModel(new ListAdapterComboboxModel<>(previewSprite.animations));
-			animComboBox[i].setSelectedIndex(npc.getAnimation(i));
+			animationComboBoxes[i].setModel(new ListAdapterComboboxModel<>(previewSprite.animations));
+			boolean overridden = npc.isAnimationOverridden(i);
+			animationOverrideCheckboxes[i].setSelected(overridden);
+			animationComboBoxes[i].setSelectedIndex(npc.getAnimation(i));
+			animationComboBoxes[i].setEnabled(overridden);
 		}
 
-		animRadioButton[npc.previewAnimIndex].setSelected(true);
+		updateAnimationVisibility();
+	}
+
+	private void updateAnimationVisibility()
+	{
+		boolean hideAiAnimations = hideAiAnimationsCheckbox.isSelected();
+		for (int i = 8; i < animationRows.length; i++)
+			animationRows[i].setVisible(!hideAiAnimations);
+		animationsPanel.revalidate();
+		animationsPanel.repaint();
 	}
 
 	private static class RangeCheckComboBox<T> extends JComboBox<T>

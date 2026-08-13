@@ -19,7 +19,7 @@ public class EditorCanvas extends AWTGLCanvas
 	{
 		GLData data = new GLData();
 		data.samples = 4;
-		data.swapInterval = 0;
+		data.swapInterval = 1;
 		data.majorVersion = 3;
 		data.minorVersion = 3;
 		data.profile = GLData.Profile.CORE;
@@ -36,6 +36,7 @@ public class EditorCanvas extends AWTGLCanvas
 	{
 		super(getConfiguration());
 		this.editor = editor;
+		setIgnoreRepaint(true);
 	}
 
 	@Override
@@ -86,7 +87,6 @@ public class EditorCanvas extends AWTGLCanvas
 		updateFramebufferScale();
 		editor.glDraw();
 		swapBuffers();
-		repaint();
 	}
 
 	private void updateFramebufferScale()

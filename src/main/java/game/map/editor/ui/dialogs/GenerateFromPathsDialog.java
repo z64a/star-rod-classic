@@ -47,6 +47,7 @@ public class GenerateFromPathsDialog extends JDialog
 	private final SliderSpinner segmentsSlider;
 	private final JCheckBox cbOverrideRadius;
 	private final JCheckBox cbTwistPerUnitLength;
+	private final JCheckBox cbRollWithSpline;
 
 	public GenerateFromPathsDialog(JFrame parent, PreviewGeneratorFromPaths preview,
 		BiConsumer<DialogResult, TriangleBatch> onCloseCallback)
@@ -64,6 +65,7 @@ public class GenerateFromPathsDialog extends JDialog
 			}
 
 			preview.paths = paths;
+			updateControlState();
 			updatePreview();
 		});
 
@@ -106,6 +108,10 @@ public class GenerateFromPathsDialog extends JDialog
 
 		cbTwistPerUnitLength = new JCheckBox(" Use twist per length (200 units)");
 		cbTwistPerUnitLength.addActionListener((e) -> updatePreview());
+
+		cbRollWithSpline = new JCheckBox(" Roll with spline");
+		cbRollWithSpline.addActionListener((e) -> updatePreview());
+		cbRollWithSpline.setEnabled(false);
 
 		cbOverrideRadius.setSelected(true);
 		radiusSlider.setEnabled(false);
@@ -152,6 +158,7 @@ public class GenerateFromPathsDialog extends JDialog
 		add(twistSlider, "span, growx");
 		add(cbOverrideRadius, "span, growx");
 		add(cbTwistPerUnitLength, "span, growx");
+		add(cbRollWithSpline, "span, growx");
 
 		add(new JLabel(), "gaptop 16, growx, sg but, split 3");
 		add(selectButton, "gaptop 16, growx, sg but");
@@ -175,13 +182,24 @@ public class GenerateFromPathsDialog extends JDialog
 
 	public String getTypeName()
 	{
+		if (preview.paths.size() == 1)
+			return "Ribbon";
+
 		return (segmentsSlider.getValue() > 2) ? "Pipe" : "Ribbon";
 	}
 
 	public TriangleBatch generateTriangles()
 	{
-		if (preview.paths.size() < 2)
+		if (preview.paths.isEmpty())
 			return null;
+
+		if (preview.paths.size() == 1) {
+			IterableListModel<PathPoint> path = preview.paths.get(0).pathComponent.path.points;
+			return FromPathsGenerator.generate(path,
+				cbTwistPerUnitLength.isSelected(), cbRollWithSpline.isSelected(),
+				radiusSlider.getValue(), taperSlider.getValue(),
+				angleSlider.getValue(), twistSlider.getValue());
+		}
 
 		// get last two selected paths
 		IterableListModel<PathPoint> pathA = preview.paths.get(preview.paths.size() - 2).pathComponent.path.points;
@@ -192,6 +210,18 @@ public class GenerateFromPathsDialog extends JDialog
 			radiusSlider.getValue(), taperSlider.getValue(),
 			angleSlider.getValue(), twistSlider.getValue(),
 			segmentsSlider.getValue());
+	}
+
+	private void updateControlState()
+	{
+		boolean singlePath = preview.paths.size() == 1;
+		segmentsSlider.setEnabled(!singlePath);
+		cbOverrideRadius.setEnabled(!singlePath);
+		cbRollWithSpline.setEnabled(singlePath);
+
+		boolean useRadius = singlePath || !cbOverrideRadius.isSelected();
+		radiusSlider.setEnabled(useRadius);
+		taperSlider.setEnabled(useRadius);
 	}
 
 	private static final class SliderSpinner extends JComponent

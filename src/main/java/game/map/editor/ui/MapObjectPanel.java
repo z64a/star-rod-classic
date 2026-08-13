@@ -154,7 +154,7 @@ public class MapObjectPanel extends JTabbedPane implements TreeSelectionListener
 		createMenu.add(generateFromItem);
 
 		JMenuItem generateFromPaths = new JMenuItem("From Paths");
-		generateFromPaths.setToolTipText("Generate a ribbon with center and edge paths.");
+		generateFromPaths.setToolTipText("Generate a ribbon from one path, or a ribbon or pipe from center and edge paths.");
 		gui.addButtonCommand(generateFromPaths, GuiCommand.SHOW_EXTRUDE_RIBBON_MODEL_DIALOG);
 		createMenu.add(generateFromPaths);
 

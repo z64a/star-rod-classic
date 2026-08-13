@@ -57,7 +57,7 @@ import util.xml.XmlWrapper.XmlWriter;
 
 public class Marker extends MapObject implements Tickable, Externalizable, XmlSerializable
 {
-	private static final int latestVersion = 4;
+	private static final int latestVersion = 6;
 	private int instanceVersion = latestVersion;
 
 	public static boolean movePointsWithObject = false;
@@ -249,7 +249,7 @@ public class Marker extends MapObject implements Tickable, Externalizable, XmlSe
 		bombPosComponent.fromBinary(in);
 
 		npcComponent = new NpcComponent(this);
-		npcComponent.fromBinary(in);
+		npcComponent.fromBinary(in, instanceVersion);
 
 		gridComponent = new GridComponent(this);
 		gridComponent.fromBinary(in);

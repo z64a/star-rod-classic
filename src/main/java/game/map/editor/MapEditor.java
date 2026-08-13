@@ -4352,6 +4352,9 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 		Vector3f pos = cursor3D.getPosition();
 
 		Marker m = new Marker(name, type, pos.x, pos.y, pos.z, 0);
+		if (type == MarkerType.NPC)
+			m.npcComponent.generate.set(true);
+
 		m.getNode().parentNode = parent;
 		m.getNode().childIndex = parent.getChildCount();
 		createObject(m);

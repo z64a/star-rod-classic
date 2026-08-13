@@ -282,17 +282,19 @@ public class OrthographicCamera extends MapEditCamera
 	@Override
 	public void drawBackground()
 	{
+		if (!editor.gridEnabled && !editor.showAxes)
+			return;
+
+		RenderState.setDepthWrite(false);
+
 		if (editor.gridEnabled)
 			drawGrid();
 
 		if (editor.showAxes)
 			drawAxes();
 
-		if (editor.gridEnabled || editor.showAxes) {
-			RenderState.setDepthWrite(false);
-			LineRenderQueue.render(true);
-			RenderState.setDepthWrite(true);
-		}
+		LineRenderQueue.render(true);
+		RenderState.setDepthWrite(true);
 	}
 
 	/**
@@ -407,6 +409,9 @@ public class OrthographicCamera extends MapEditCamera
 					break;
 			}
 		}
+
+		// render grid before changing line width for coordinate boundaries
+		LineRenderQueue.render(true);
 
 		RenderState.setLineWidth(2.0f);
 		RenderState.setColor(0.35f, 0.35f, 0.35f, 1.0f);

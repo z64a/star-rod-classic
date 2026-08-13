@@ -70,6 +70,9 @@ public class Pointer
 	public EntityType assignedToType = null;
 	public Marker assignedToMarker = null;
 
+	// for data structures that describe a marker, such as NPC data and settings
+	public Marker associatedMarker = null;
+
 	/*
 	private ArrayList<Property> properties = new ArrayList<>();
 	

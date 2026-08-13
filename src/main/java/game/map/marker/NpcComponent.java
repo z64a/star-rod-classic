@@ -49,9 +49,22 @@ import util.xml.XmlWrapper.XmlWriter;
 
 public class NpcComponent extends BaseMarkerComponent
 {
+	private final Consumer<Object> notifyGeneral = (o) -> {
+		parentMarker.updateListeners(MarkerInfoPanel.tag_NPCData);
+	};
+
 	private final Consumer<Object> notifyMovement = (o) -> {
 		parentMarker.updateListeners(MarkerInfoPanel.tag_NPCMovementTab);
 	};
+
+	public static final int CALLBACK_INIT = 0x01;
+	public static final int CALLBACK_INTERACT = 0x02;
+	public static final int CALLBACK_IDLE = 0x04;
+	public static final int CALLBACK_AI = 0x08;
+	public static final int CALLBACK_HIT = 0x10;
+	public static final int CALLBACK_DEFEAT = 0x20;
+	public static final int CALLBACK_AUX = 0x40;
+	public static final int CALLBACK_MASK = 0x7F;
 
 	public static enum MoveType
 	{
@@ -69,9 +82,37 @@ public class NpcComponent extends BaseMarkerComponent
 	private int spriteID;
 	private int paletteID;
 
+	// Entries without an override bit use defaultAnimation.
 	private int[] animations = new int[Npc.ANIM_TABLE_SIZE];
-	public transient int previewAnimIndex;
+	private int defaultAnimation;
+	private int animationOverrideFlags;
 	public transient Sprite previewSprite = null;
+
+	// script generation
+
+	public EditableField<Boolean> generate = EditableFieldFactory.create(false)
+		.setCallback(notifyGeneral).setName(new StandardBoolName("Generate NPC Data")).build();
+
+	public EditableField<Integer> enemyFlags = EditableFieldFactory.create(0)
+		.setCallback(notifyGeneral).setName("Set Enemy Flags").build();
+
+	public EditableField<String> tattleMessage = EditableFieldFactory.create("")
+		.setCallback(notifyGeneral).setName("Set Tattle Message").build();
+
+	public EditableField<Integer> height = EditableFieldFactory.create(0)
+		.setCallback(notifyGeneral).setName("Set NPC Height").build();
+
+	public EditableField<Integer> radius = EditableFieldFactory.create(0)
+		.setCallback(notifyGeneral).setName("Set NPC Radius").build();
+
+	public EditableField<Integer> level = EditableFieldFactory.create(0)
+		.setCallback(notifyGeneral).setName("Set NPC Level").build();
+
+	public EditableField<Integer> actionFlags = EditableFieldFactory.create(0)
+		.setCallback(notifyGeneral).setName("Set Enemy Action Flags").build();
+
+	public EditableField<Integer> callbackFlags = EditableFieldFactory.create(0)
+		.setCallback(notifyGeneral).setName("Set Generated Callbacks").build();
 
 	// movement
 
@@ -149,11 +190,21 @@ public class NpcComponent extends BaseMarkerComponent
 	{
 		NpcComponent copy = new NpcComponent(copyParent);
 
+		copy.generate.set(generate.get());
+		copy.enemyFlags.set(enemyFlags.get());
+		copy.tattleMessage.set(tattleMessage.get());
+		copy.height.set(height.get());
+		copy.radius.set(radius.get());
+		copy.level.set(level.get());
+		copy.actionFlags.set(actionFlags.get());
+		copy.callbackFlags.set(callbackFlags.get());
+
 		copy.loadTerritoryData(moveType.get(), getTerritoryData());
 
 		copy.setSpriteID(spriteID);
 		copy.setPaletteID(paletteID);
-		copy.setPreviewAnimIndex(previewAnimIndex);
+		copy.defaultAnimation = defaultAnimation;
+		copy.animationOverrideFlags = animationOverrideFlags;
 
 		for (int i = 0; i < animations.length; i++)
 			copy.animations[i] = animations[i];
@@ -164,6 +215,17 @@ public class NpcComponent extends BaseMarkerComponent
 	@Override
 	public void toXML(XmlWriter xmw)
 	{
+		XmlTag npcTag = xmw.createTag(TAG_NPC, true);
+		xmw.addBoolean(npcTag, ATTR_NPC_GENERATE, generate.get());
+		xmw.addHex(npcTag, ATTR_NPC_FLAGS, enemyFlags.get());
+		xmw.addAttribute(npcTag, ATTR_NPC_TATTLE, tattleMessage.get());
+		xmw.addInt(npcTag, ATTR_NPC_HEIGHT, height.get());
+		xmw.addInt(npcTag, ATTR_NPC_RADIUS, radius.get());
+		xmw.addInt(npcTag, ATTR_NPC_LEVEL, level.get());
+		xmw.addHex(npcTag, ATTR_NPC_ACTION_FLAGS, actionFlags.get());
+		xmw.addHex(npcTag, ATTR_NPC_CALLBACKS, callbackFlags.get());
+		xmw.printTag(npcTag);
+
 		XmlTag movementTag = xmw.createTag(TAG_MOVEMENT, true);
 		xmw.addEnum(movementTag, ATTR_MOVEMENT_TYPE, moveType.get());
 		int[] data = getTerritoryData();
@@ -173,6 +235,8 @@ public class NpcComponent extends BaseMarkerComponent
 		XmlTag spriteTag = xmw.createTag(TAG_SPRITE, true);
 		xmw.addHex(spriteTag, ATTR_SPRITE, getSpriteID());
 		xmw.addHex(spriteTag, ATTR_PALETTE, paletteID);
+		xmw.addHex(spriteTag, ATTR_DEFAULT_ANIMATION, defaultAnimation);
+		xmw.addHex(spriteTag, ATTR_ANIMATION_OVERRIDES, animationOverrideFlags);
 		xmw.addHexArray(spriteTag, ATTR_ANIMATIONS, animations);
 		xmw.printTag(spriteTag);
 	}
@@ -180,6 +244,26 @@ public class NpcComponent extends BaseMarkerComponent
 	@Override
 	public void fromXML(XmlReader xmr, Element markerElem)
 	{
+		Element npcElem = xmr.getUniqueTag(markerElem, TAG_NPC);
+		if (npcElem != null) {
+			if (xmr.hasAttribute(npcElem, ATTR_NPC_GENERATE))
+				generate.set(xmr.readBoolean(npcElem, ATTR_NPC_GENERATE));
+			if (xmr.hasAttribute(npcElem, ATTR_NPC_FLAGS))
+				enemyFlags.set(xmr.readHex(npcElem, ATTR_NPC_FLAGS));
+			if (xmr.hasAttribute(npcElem, ATTR_NPC_TATTLE))
+				tattleMessage.set(xmr.getAttribute(npcElem, ATTR_NPC_TATTLE));
+			if (xmr.hasAttribute(npcElem, ATTR_NPC_HEIGHT))
+				height.set(xmr.readInt(npcElem, ATTR_NPC_HEIGHT));
+			if (xmr.hasAttribute(npcElem, ATTR_NPC_RADIUS))
+				radius.set(xmr.readInt(npcElem, ATTR_NPC_RADIUS));
+			if (xmr.hasAttribute(npcElem, ATTR_NPC_LEVEL))
+				level.set(xmr.readInt(npcElem, ATTR_NPC_LEVEL));
+			if (xmr.hasAttribute(npcElem, ATTR_NPC_ACTION_FLAGS))
+				actionFlags.set(xmr.readHex(npcElem, ATTR_NPC_ACTION_FLAGS));
+			if (xmr.hasAttribute(npcElem, ATTR_NPC_CALLBACKS))
+				callbackFlags.set(xmr.readHex(npcElem, ATTR_NPC_CALLBACKS));
+		}
+
 		Element movementElem = xmr.getUniqueRequiredTag(markerElem, TAG_MOVEMENT);
 
 		xmr.requiresAttribute(movementElem, ATTR_MOVEMENT_TYPE);
@@ -193,6 +277,15 @@ public class NpcComponent extends BaseMarkerComponent
 			setSpriteID(xmr.readHex(spriteElement, ATTR_SPRITE));
 			setPaletteID(xmr.readHex(spriteElement, ATTR_PALETTE));
 			animations = xmr.readHexArray(spriteElement, ATTR_ANIMATIONS, Npc.ANIM_TABLE_SIZE);
+			if (xmr.hasAttribute(spriteElement, ATTR_DEFAULT_ANIMATION))
+				defaultAnimation = xmr.readHex(spriteElement, ATTR_DEFAULT_ANIMATION);
+			else
+				defaultAnimation = animations[0];
+
+			if (xmr.hasAttribute(spriteElement, ATTR_ANIMATION_OVERRIDES))
+				animationOverrideFlags = xmr.readHex(spriteElement, ATTR_ANIMATION_OVERRIDES) & 0xFFFF;
+			else
+				inferAnimationOverrides();
 		}
 	}
 
@@ -225,10 +318,31 @@ public class NpcComponent extends BaseMarkerComponent
 		out.writeInt(paletteID);
 		for (int i = 0; i < 16; i++)
 			out.writeInt(animations[i]);
+		out.writeInt(defaultAnimation);
+		out.writeInt(animationOverrideFlags);
+
+		out.writeBoolean(generate.get());
+		out.writeInt(enemyFlags.get());
+		out.writeUTF(tattleMessage.get() == null ? "" : tattleMessage.get());
+		out.writeInt(height.get());
+		out.writeInt(radius.get());
+		out.writeInt(level.get());
+		out.writeInt(actionFlags.get());
+		out.writeInt(callbackFlags.get());
 	}
 
 	@Override
 	public void fromBinary(ObjectInput in) throws IOException, ClassNotFoundException
+	{
+		fromBinary(in, true, true);
+	}
+
+	public void fromBinary(ObjectInput in, int instanceVersion) throws IOException, ClassNotFoundException
+	{
+		fromBinary(in, instanceVersion >= 5, instanceVersion >= 6);
+	}
+
+	private void fromBinary(ObjectInput in, boolean hasGenerationData, boolean hasAnimationOverrides) throws IOException, ClassNotFoundException
 	{
 		moveType.set((MoveType) in.readObject());
 		flying.set(in.readBoolean());
@@ -262,6 +376,36 @@ public class NpcComponent extends BaseMarkerComponent
 
 		for (int i = 0; i < 16; i++)
 			animations[i] = in.readInt();
+
+		if (hasAnimationOverrides) {
+			defaultAnimation = in.readInt();
+			animationOverrideFlags = in.readInt() & 0xFFFF;
+		}
+		else {
+			defaultAnimation = animations[0];
+			inferAnimationOverrides();
+		}
+
+		if (hasGenerationData) {
+			generate.set(in.readBoolean());
+			enemyFlags.set(in.readInt());
+			tattleMessage.set(in.readUTF());
+			height.set(in.readInt());
+			radius.set(in.readInt());
+			level.set(in.readInt());
+			actionFlags.set(in.readInt());
+			callbackFlags.set(in.readInt());
+		}
+	}
+
+	public boolean hasCallback(int callback)
+	{
+		return (callbackFlags.get() & callback) != 0;
+	}
+
+	public boolean needsInitScript()
+	{
+		return callbackFlags.get() != 0;
 	}
 
 	public int[] getTerritoryData()
@@ -440,7 +584,6 @@ public class NpcComponent extends BaseMarkerComponent
 
 		if (getSpriteID() > 0)
 			needsReloading = true;
-		previewAnimIndex = 0;
 	}
 
 	@Override
@@ -449,8 +592,8 @@ public class NpcComponent extends BaseMarkerComponent
 		if (previewSprite != null) {
 			spriteTime += deltaTime;
 			if (spriteTime >= SPRITE_TICK_RATE) {
-				int animID = animations[previewAnimIndex];
-				if (animID < previewSprite.animations.size())
+				int animID = defaultAnimation;
+				if (animID >= 0 && animID < previewSprite.animations.size())
 					previewSprite.updateAnimation(animID);
 				spriteTime -= SPRITE_TICK_RATE;
 			}
@@ -650,7 +793,7 @@ public class NpcComponent extends BaseMarkerComponent
 		mtx.translate(x, y, z);
 		RenderState.setModelMatrix(mtx);
 
-		int animID = Math.min(animations[previewAnimIndex], previewSprite.animations.size() - 1);
+		int animID = Math.min(defaultAnimation, previewSprite.animations.size() - 1);
 		int palID = Math.min(paletteID, previewSprite.palettes.size() - 1);
 		if (animID >= 0 && palID >= 0) // watch out for sprites with no animations
 			previewSprite.render(opts.spriteShading, animID, palID, opts.useFiltering, selected);
@@ -727,7 +870,7 @@ public class NpcComponent extends BaseMarkerComponent
 
 	public int getAnimation(int index)
 	{
-		return animations[index];
+		return isAnimationOverridden(index) ? animations[index] : defaultAnimation;
 	}
 
 	public void setAnimation(int index, int animation)
@@ -736,15 +879,45 @@ public class NpcComponent extends BaseMarkerComponent
 		parentMarker.updateListeners(MarkerInfoPanel.tag_NPCAnimTab);
 	}
 
-	public int getPreviewAnimIndex()
+	public int getDefaultAnimation()
 	{
-		return previewAnimIndex;
+		return defaultAnimation;
 	}
 
-	public void setPreviewAnimIndex(int value)
+	public void setDefaultAnimation(int value)
 	{
-		previewAnimIndex = value;
+		defaultAnimation = value;
+		if (previewSprite != null && value >= 0 && value < previewSprite.animations.size())
+			previewSprite.resetAnimation(value);
 		parentMarker.updateListeners(MarkerInfoPanel.tag_NPCAnimTab);
+	}
+
+	public int getDefaultAnimationID()
+	{
+		return ((getSpriteID() & 0xFF) << 16) | ((getPaletteID() & 0xFF) << 8) | (defaultAnimation & 0xFF);
+	}
+
+	public boolean isAnimationOverridden(int index)
+	{
+		return (animationOverrideFlags & (1 << index)) != 0;
+	}
+
+	public void setAnimationOverride(int index, boolean override)
+	{
+		if (override)
+			animationOverrideFlags |= (1 << index);
+		else
+			animationOverrideFlags &= ~(1 << index);
+		parentMarker.updateListeners(MarkerInfoPanel.tag_NPCAnimTab);
+	}
+
+	public void inferAnimationOverrides()
+	{
+		animationOverrideFlags = 0;
+		for (int i = 0; i < animations.length; i++) {
+			if (animations[i] != defaultAnimation)
+				animationOverrideFlags |= (1 << i);
+		}
 	}
 
 	public int getPaletteID()
@@ -891,17 +1064,17 @@ public class NpcComponent extends BaseMarkerComponent
 		}
 	}
 
-	public static final class SetMarkerPreviewAnimation extends AbstractCommand
+	public static final class SetDefaultAnimation extends AbstractCommand
 	{
 		private final NpcComponent comp;
 		private final int oldValue;
 		private final int newValue;
 
-		public SetMarkerPreviewAnimation(Marker m, int value)
+		public SetDefaultAnimation(Marker m, int value)
 		{
-			super("Set Animation");
+			super("Set Default Animation");
 			this.comp = m.npcComponent;
-			oldValue = comp.previewAnimIndex;
+			oldValue = comp.defaultAnimation;
 			newValue = value;
 		}
 
@@ -915,24 +1088,56 @@ public class NpcComponent extends BaseMarkerComponent
 		public void exec()
 		{
 			super.exec();
-			comp.setPreviewAnimIndex(newValue);
-			if (comp.previewSprite != null) {
-				int animID = comp.animations[comp.previewAnimIndex];
-				if (animID < comp.previewSprite.animations.size())
-					comp.previewSprite.resetAnimation(animID);
-			}
+			comp.setDefaultAnimation(newValue);
 		}
 
 		@Override
 		public void undo()
 		{
 			super.undo();
-			comp.setPreviewAnimIndex(oldValue);
-			if (comp.previewSprite != null) {
-				int animID = comp.animations[comp.previewAnimIndex];
-				if (animID < comp.previewSprite.animations.size())
-					comp.previewSprite.resetAnimation(animID);
-			}
+			comp.setDefaultAnimation(oldValue);
+		}
+	}
+
+	public static final class SetAnimationOverride extends AbstractCommand
+	{
+		private final NpcComponent comp;
+		private final int index;
+		private final boolean oldValue;
+		private final boolean newValue;
+		private final int oldAnimation;
+
+		public SetAnimationOverride(Marker m, int index, boolean value)
+		{
+			super(value ? "Enable Animation Override" : "Disable Animation Override");
+			this.comp = m.npcComponent;
+			this.index = index;
+			oldValue = comp.isAnimationOverridden(index);
+			newValue = value;
+			oldAnimation = comp.animations[index];
+		}
+
+		@Override
+		public boolean shouldExec()
+		{
+			return oldValue != newValue;
+		}
+
+		@Override
+		public void exec()
+		{
+			super.exec();
+			if (newValue && !oldValue)
+				comp.animations[index] = comp.defaultAnimation;
+			comp.setAnimationOverride(index, newValue);
+		}
+
+		@Override
+		public void undo()
+		{
+			super.undo();
+			comp.animations[index] = oldAnimation;
+			comp.setAnimationOverride(index, oldValue);
 		}
 	}
 

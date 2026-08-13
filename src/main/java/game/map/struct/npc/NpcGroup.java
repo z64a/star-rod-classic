@@ -11,6 +11,7 @@ import app.config.Options;
 import app.input.Line;
 import game.map.marker.Marker;
 import game.map.marker.Marker.MarkerType;
+import game.map.marker.NpcComponent;
 import game.map.marker.NpcComponent.MoveType;
 import game.map.patching.MapDecoder;
 import game.shared.BaseStruct;
@@ -50,7 +51,7 @@ public class NpcGroup extends BaseStruct
 			float x = fileBuffer.getFloat(); // X
 			float y = fileBuffer.getFloat(); // Y
 			float z = fileBuffer.getFloat(); // Z
-			fileBuffer.getInt(); // flags
+			int flags = fileBuffer.getInt();
 			int initScript = fileBuffer.getInt();
 			Pointer initPtr = decoder.tryEnqueueAsChild(npc, initScript, ScriptT);
 			if (initPtr != null)
@@ -65,6 +66,11 @@ public class NpcGroup extends BaseStruct
 
 			String tempName = String.format("NPC_%08X", npcAddress);
 			Marker npcMarker = new Marker(tempName, MarkerType.NPC, x, y, z, angle);
+			npcMarker.npcComponent.generate.set(true);
+			npcMarker.npcComponent.enemyFlags.set(flags);
+			if (initScript != 0)
+				npcMarker.npcComponent.callbackFlags.set(NpcComponent.CALLBACK_INIT);
+			npc.associatedMarker = npcMarker;
 			if (mapDecoder != null)
 				mapDecoder.addMarker(npcMarker);
 
@@ -143,6 +149,8 @@ public class NpcGroup extends BaseStruct
 
 			for (int j = 1; j < 16; j++)
 				npcMarker.npcComponent.setAnimation(j, fileBuffer.getInt() & 0xFF);
+			npcMarker.npcComponent.setDefaultAnimation(anim0 & 0xFF);
+			npcMarker.npcComponent.inferAnimationOverrides();
 
 			int w2 = fileBuffer.getInt();
 			int w3 = fileBuffer.getInt(); // omo_09 $NpcGroup_802493BC [0] has this == 1
@@ -151,7 +159,12 @@ public class NpcGroup extends BaseStruct
 			assert (w3 == 0 || w3 == 1) : String.format("%X NPC_%08X", w3, npcAddress);
 
 			decoder.tryEnqueueAsChild(npc, fileBuffer.getInt(), ExtraAnimationListT);
-			fileBuffer.getInt(); // tattle string ID
+			int tattleMessage = fileBuffer.getInt();
+			if (tattleMessage != 0) {
+				int group = (tattleMessage >>> 16) & 0xFFFF;
+				int index = tattleMessage & 0xFFFF;
+				npcMarker.npcComponent.tattleMessage.set(String.format("%02X-%03X", group, index));
+			}
 		}
 	}
 

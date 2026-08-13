@@ -45,6 +45,7 @@ public class MarkerInfoPanel extends MapInfoPanel<Marker>
 	private GridSubpanel gridSubpanel;
 	private PathSubpanel pathSubpanel;
 	private EntitySubpanel entitySubpanel;
+	private NpcSubpanel scriptsTab;
 	private BombPosSubpanel bombPosSubpanel;
 	//private VolumeSubpanel volumeSubpanel;
 
@@ -57,6 +58,7 @@ public class MarkerInfoPanel extends MapInfoPanel<Marker>
 	// update tags (not used much)
 
 	public static final String tag_GeneralTab = "GeneralTab";
+	public static final String tag_NPCData = "NPCData";
 	public static final String tag_NPCAnimTab = "NPCAnimTab";
 	public static final String tag_NPCMovementTab = "NPCMovementTab";
 	public static final String tag_EntityTab = "EntityTab";
@@ -67,6 +69,7 @@ public class MarkerInfoPanel extends MapInfoPanel<Marker>
 	{
 		super(true);
 
+		scriptsTab = new NpcSubpanel(this);
 		territoryTab = new TerritoryTab(this);
 		npcAnimationsTab = new NpcAnimationTab(this);
 
@@ -160,7 +163,6 @@ public class MarkerInfoPanel extends MapInfoPanel<Marker>
 			return;
 
 		entitySubpanel.onSetData();
-		npcAnimationsTab.onSetData();
 	}
 
 	@Override
@@ -202,6 +204,7 @@ public class MarkerInfoPanel extends MapInfoPanel<Marker>
 					gridSubpanel.updateFields();
 					break;
 				case NPC:
+					scriptsTab.updateFields();
 					territoryTab.updateDynamicFields(true);
 					territoryTab.updateFields();
 					npcAnimationsTab.updateFields();
@@ -220,13 +223,14 @@ public class MarkerInfoPanel extends MapInfoPanel<Marker>
 
 			subpanelContainer.repaint();
 
-			// npc movement tab visibility
+			// NPC tab visibility
 			MarkerType type = getData().getType();
 
 			if (type == MarkerType.NPC) {
 				if (!npcTabsAvailable) {
 					tabs.addTab("Territory", territoryTab);
 					tabs.addTab("Animations", npcAnimationsTab);
+					tabs.addTab("Scripts", scriptsTab);
 					npcTabsAvailable = true;
 				}
 			}
@@ -234,6 +238,7 @@ public class MarkerInfoPanel extends MapInfoPanel<Marker>
 				if (npcTabsAvailable) {
 					tabs.remove(territoryTab);
 					tabs.remove(npcAnimationsTab);
+					tabs.remove(scriptsTab);
 					npcTabsAvailable = false;
 				}
 			}

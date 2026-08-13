@@ -38,6 +38,7 @@ import game.shared.struct.script.ScriptVariable;
 import game.sound.AudioCatalog;
 import game.sound.sfx.SfxNames;
 import game.sound.sfx.SfxXml;
+import game.string.MessageDatabase;
 import game.string.StringConstKey;
 import game.string.StringEncoder;
 import game.texture.images.ImageDatabase;
@@ -61,6 +62,7 @@ public class ProjectDatabase
 
 	public static ImageDatabase images;
 	public static GlobalsData globalsData;
+	public static MessageDatabase messages;
 
 	public static DualHashMap<Integer, String> EffectType;
 
@@ -233,6 +235,10 @@ public class ProjectDatabase
 
 	public static void loadGlobals(boolean fromProject)
 	{
+		messages = new MessageDatabase();
+		if (fromProject)
+			messages.load();
+
 		globalsData = new GlobalsData();
 		globalsData.loadDataStrict(fromProject);
 

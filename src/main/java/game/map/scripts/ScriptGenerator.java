@@ -91,9 +91,13 @@ public class ScriptGenerator
 		this.map = map;
 		this.index = new MapIndex(map);
 
+		List<Marker> npcList = new ArrayList<>();
 		List<Marker> entityList = new ArrayList<>();
 		List<String> entityNames = new ArrayList<>();
 		for (Marker m : map.markerTree) {
+			if (m.getType() == MarkerType.NPC && m.npcComponent.generate.get())
+				npcList.add(m);
+
 			if (m.getType() == MarkerType.Entity) {
 				String entityName = m.getName();
 				if (entityNames.contains(entityName))
@@ -110,7 +114,7 @@ public class ScriptGenerator
 		List<String> lines = new LinkedList<>();
 
 		addInitScript(lines);
-		// NPCs
+		addNPCs(npcList, lines);
 		addEntities(entityList, lines);
 		addCameraTargets(lines);
 		addMusic(lines);
@@ -679,6 +683,17 @@ public class ScriptGenerator
 			lines.add("}");
 			lines.add("");
 		}
+	}
+
+	private void addNPCs(List<Marker> npcList, List<String> lines) throws InvalidInputException
+	{
+		NpcGenerator generator = new NpcGenerator(this, npcList);
+		if (generator.getLines().isEmpty())
+			return;
+
+		mainHooks.add("Call  MakeNpcs  ( .False " + NpcGenerator.GROUP_LIST_NAME + " )");
+		lines.addAll(generator.getLines());
+		callbackLines.addAll(generator.getCallbacks());
 	}
 
 	private void addCameraTargets(List<String> camLines) throws InvalidInputException
