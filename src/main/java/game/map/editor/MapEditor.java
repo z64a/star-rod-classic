@@ -1037,13 +1037,13 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 		uvViews = new MapEditViewport[2];
 		uvViews[0] = perspectiveView;
 		uvViews[1] = uvEditView;
+		activeView = perspectiveView;
 
 		if (changeMapState == ChangeMapState.NONE) {
 			mainViewMode = ViewMode.FOUR;
 			setViewMode(mainViewMode);
 			resizeViews();
 
-			activeView = perspectiveView;
 			objectGrid = new Grid(false, 4);
 			uvGrid = new UVGrid(8);
 			grid = objectGrid;
@@ -3051,7 +3051,14 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 	private void updatePlayInEditorCamera(List<Zone> cameraCandidates, double deltaTime)
 	{
 		Vector3f playerPosition = cursor3D.getSimulationPosition();
-		PickRay cameraTrace = new PickRay(Channel.COLLISION, new Vector3f(playerPosition.x, playerPosition.y + 10.0f, playerPosition.z), PickRay.DOWN,
+		Vector3f samplePosition = playerPosition;
+		if (changeMapState == ChangeMapState.ENTERING) {
+			MapObject obj = map.find(MapObjectType.MARKER, destMarkerName);
+			if (obj != null)
+				samplePosition = ((Marker) obj).position.getVector();
+		}
+
+		PickRay cameraTrace = new PickRay(Channel.COLLISION, new Vector3f(samplePosition.x, samplePosition.y + 10.0f, samplePosition.z), PickRay.DOWN,
 			perspectiveView);
 		PickHit zoneHit = Map.pickObjectFromSet(cameraTrace, cameraCandidates, pieIgnoreHiddenZones);
 
