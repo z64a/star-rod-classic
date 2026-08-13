@@ -4184,6 +4184,18 @@ $strQuickLoad
 		ADDIU	T0, T0, 8
 		ADDIU	T1, T1, 1
 	ENDLOOP
+	% If the party had no active partner, take out the newly enabled selection.
+	LABU		V0, 8010F2A2 % gPlayerData.curPartner
+	BNE			V0, R0, .Draw
+	NOP
+	LIO			T0, $PartnerData
+	LBU			A0, .PartnerMenuPos (T0)
+	DADDU		T1, T0, A0
+	LBU			V0, 0 (T1)
+	BEQ			V0, R0, .Draw
+	ADDIU		A0, A0, 1 % menu rows 0-10 map to partner IDs 1-11
+	JAL			800EB168 % switch_to_partner
+	NOP
 	B			.Draw
 	NOP
 	.NoSelection

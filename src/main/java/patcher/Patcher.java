@@ -270,6 +270,9 @@ public class Patcher implements IGlobalDatabase
 
 		recordTime("Item/Move Data Patched");
 
+		if (cfg.getBoolean(Options.EnableFPSCounter))
+			gpm.readInternalPatch("FPSCounter.patch");
+
 		if (cfg.getBoolean(Options.EnableDebugCode)) {
 			CaseInsensitiveMap<String> debugRules = writeDebugSettings(cfg, rp);
 			gpm.readInternalPatch("DebugInfo.patch", debugRules);

@@ -98,6 +98,9 @@ public enum Options
 	EnableDebugCode		(true, Scope.Patch, Type.Boolean, "EnableDebugCode", "False", "Enable Debug Information",
 			"Print live debug information and enable the cheat menu."),
 
+	EnableFPSCounter	(true, Scope.Patch, Type.Boolean, "EnableFPSCounter", "False", "Show FPS Counter",
+			"Display CPU and GPU frame timing with implied FPS."),
+
 	EnableCrashSymbols	(true, Scope.Patch, Type.Boolean, "EnableCrashSymbols", "False", "Embed Crash Function Names",
 			"Embed always-resident function names for crash-screen stack traces (about 73 KiB of RAM)."),
 

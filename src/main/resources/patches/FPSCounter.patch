@@ -1,0 +1,470 @@
+% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+% PERFORMANCE COUNTER
+% Measures the complete CPU game frame and total RSP/RDP execution time for
+% the background and main graphics tasks. Values use 16-frame moving averages.
+% Each FPS value is the implied rate of its associated measurement.
+%{
+
+#reserve 140 $FPSCounterData
+
+#define .FrameStart			0
+#define .CPUTime			4
+#define .CPUSum				8
+#define .CPUIndex			C
+#define .CPUCount			10
+#define .CPUActive			14
+#define .GPUTaskStart		18
+#define .GPUFrameTime		1C
+#define .GPUTime			20
+#define .GPUSum				24
+#define .GPUIndex			28
+#define .GPUCount			2C
+#define .GPUState			30
+#define .GPUArm				34
+#define .GPUAvailable		38
+#define .Initialized		3C
+#define .CPUSamples			40
+#define .GPUSamples			80
+#define .StringBuffer		C0
+#define .PrintfBuffer		100
+
+#define .PosY				4`
+#define .CpuLabelX			12`
+#define .CpuTimeX			.CpuLabelX[30`]
+#define .CpuFPSX			.CpuLabelX[76`]
+#define .GpuLabelX			180`
+#define .GpuTimeX			.GpuLabelX[30`]
+#define .GpuFPSX			.GpuLabelX[76`]
+
+#new:ASCII $FPSCounterLabelCPU
+{
+"CPU:"
+}
+
+#new:ASCII $FPSCounterLabelGPU
+{
+"GPU:"
+}
+
+#new:ASCII $FPSCounterFmtTime
+{
+"%d.%01d ms"
+}
+
+#new:ASCII $FPSCounterFmtFPS
+{
+"(%d fps)"
+}
+
+#new:ASCII $FPSCounterUnavailableTime
+{
+"--.- ms"
+}
+
+#new:ASCII $FPSCounterUnavailableFPS
+{
+"(--- fps)"
+}
+
+% Start the CPU game-frame timer and arm the next pair of graphics tasks.
+@Hook 1B40 % 80026740
+{
+	MFC0		V0, Count
+	LIO			AT, $FPSCounterData
+	SW			V0, .FrameStart (AT)
+	ADDIU		V1, R0, 1
+	SW			V1, .CPUActive (AT)
+	SW			V1, .GPUArm (AT)
+	ADDIU		SP, SP, -20
+	J			80026748
+	SW			RA, 18 (SP)
+}
+
+% Finish CPU timing at the end of the retrace callback, after update,
+% display-list construction, and graphics task submission have completed.
+@Hook 1550 % 80026150
+{
+	JAL			$FPSCounterCPUCompleted
+	NOP
+	LW			RA, 18 (SP)
+	J			80026158
+	LW			S1, 14 (SP)
+}
+
+% Draw after the rest of the front UI has been submitted.
+@Hook 20C4 % 80026CC4
+{
+	PUSH		RA
+	JAL			$FPSCounterPrint
+	NOP
+	POP			RA
+	LW			V0, 0 (S1)
+	J			80026CCC
+	ANDI		V0, V0, 20
+}
+
+% Start timing immediately before NuSystem starts each graphics task.
+@Hook 3A1C8 % 8005EDC8
+{
+	LW			A0, 10 (SP)
+	PUSH		RA
+	JAL			$FPSCounterGPUTaskStarted
+	NOP
+	POP			RA
+	LW			A0, 10 (SP)
+	JAL			80065C1C % osSpTaskStartGo
+	ADDIU		A0, A0, 10
+	J			8005EDD4
+	NOP
+}
+
+% NuSystem reaches this point only after both RSP and RDP completion.
+@Hook 3A218 % 8005EE18
+{
+	LW			A0, 10 (SP)
+	PUSH		RA
+	JAL			$FPSCounterGPUTaskCompleted
+	NOP
+	POP			RA
+	LW			A1, 10 (SP)
+	J			8005EE20
+	LW			A0, 50 (A1)
+}
+
+#new:Function $FPSCounterCPUCompleted
+{
+	LIO			AT, $FPSCounterData
+	LW			V0, .CPUActive (AT)
+	BEQ			V0, R0, .Done
+	NOP
+	SW			R0, .CPUActive (AT)
+	MFC0		V0, Count
+	LW			V1, .FrameStart (AT)
+	SUBU		A0, V0, V1
+	ADDIU		A1, AT, .CPUSamples
+	ADDIU		A2, AT, .CPUSum
+	ADDIU		A3, AT, .CPUIndex
+	ADDIU		T0, AT, .CPUCount
+	J			$FPSCounterRecordSample
+	ADDIU		T1, AT, .CPUTime
+	.Done
+	JR			RA
+	NOP
+}
+
+#new:Function $FPSCounterGPUTaskStarted
+{
+	LIO			AT, $FPSCounterData
+	LW			V0, .GPUState (AT)
+	BNE			V0, R0, .StoreStart
+	NOP
+	LW			V0, .GPUArm (AT)
+	BEQ			V0, R0, .Done
+	NOP
+	SW			R0, .GPUArm (AT)
+	ADDIU		V0, R0, 1
+	SW			V0, .GPUState (AT)
+	SW			R0, .GPUFrameTime (AT)
+	% Reset the RDP counters used to detect unsupported HLE timing.
+	LIO			V0, A410000C
+	LI			V1, 3C0
+	SW			V1, 0 (V0)
+	.StoreStart
+	MFC0		V0, Count
+	SW			V0, .GPUTaskStart (AT)
+	.Done
+	JR			RA
+	NOP
+}
+
+#new:Function $FPSCounterGPUTaskCompleted
+{
+	LIO			AT, $FPSCounterData
+	LW			V0, .GPUState (AT)
+	BEQ			V0, R0, .Done
+	NOP
+	MFC0		V0, Count
+	LW			V1, .GPUTaskStart (AT)
+	SUBU		V0, V0, V1
+	LW			V1, .GPUFrameTime (AT)
+	ADDU		V1, V1, V0
+	SW			V1, .GPUFrameTime (AT)
+
+	% The swap-buffer task is the final graphics task for this rendered frame.
+	LW			T0, 8 (A0)
+	ANDI		T0, T0, 1
+	BEQ			T0, R0, .Done
+	NOP
+	SW			R0, .GPUState (AT)
+
+	% HLE plugins commonly complete immediately and leave all RDP busy counters
+	% at zero. Do not present their callback latency as real GPU execution time.
+	LIO			T0, A4100014
+	LW			T1, 0 (T0)
+	LW			T2, 4 (T0)
+	LW			T3, 8 (T0)
+	OR			T1, T1, T2
+	OR			T1, T1, T3
+	BEQ			T1, R0, .Unavailable
+	NOP
+	ADDIU		V0, R0, 1
+	SW			V0, .GPUAvailable (AT)
+	COPY		A0, V1
+	ADDIU		A1, AT, .GPUSamples
+	ADDIU		A2, AT, .GPUSum
+	ADDIU		A3, AT, .GPUIndex
+	ADDIU		T0, AT, .GPUCount
+	J			$FPSCounterRecordSample
+	ADDIU		T1, AT, .GPUTime
+	.Unavailable
+	SW			R0, .GPUAvailable (AT)
+	SW			R0, .GPUTime (AT)
+	.Done
+	JR			RA
+	NOP
+}
+
+% Adds A0 to a moving average containing at most 16 samples.
+% A1 = sample array, A2 = sum, A3 = index, T0 = count, T1 = average
+#new:Function $FPSCounterRecordSample
+{
+	LW			V0, 0 (A2)
+	LW			T2, 0 (A3)
+	SLL			T3, T2, 2
+	ADDU		T3, A1, T3
+	LW			T4, 0 (T3)
+	SUBU		V0, V0, T4
+	ADDU		V0, V0, A0
+	SW			A0, 0 (T3)
+	SW			V0, 0 (A2)
+	ADDIU		T2, T2, 1
+	ANDI		T2, T2, F
+	SW			T2, 0 (A3)
+	LW			T2, 0 (T0)
+	SLTIU		T3, T2, 16`
+	BEQ			T3, R0, .HaveCount
+	NOP
+	ADDIU		T2, T2, 1
+	SW			T2, 0 (T0)
+	.HaveCount
+	DIVU		V0, T2
+	MFLO		V0
+	JR			RA
+	SW			V0, 0 (T1)
+}
+
+#new:Function $FPSCounterPrint
+{
+	PUSH		RA, S0, S1, S2
+	LIO			S0, $FPSCounterData
+	% Initialize the message print buffer for hardware.
+	LBU			V0, .Initialized (S0)
+	BNE			V0, R0, .InitDone
+	NOP
+	SAW			R0, 802DACA0
+	ADDIU		V0, R0, 1
+	SB			V0, .Initialized (S0)
+	.InitDone
+	LW			S1, .CPUTime (S0)
+	BEQ			S1, R0, .Done
+	NOP
+	LW			S2, .GPUTime (S0)
+
+	% Fixed CPU fields, aligned from the left.
+	LIO			A0, $FPSCounterLabelCPU
+	ADDIU		A1, R0, .CpuLabelX
+	ADDIU		A2, R0, .PosY
+	COPY		A3, R0
+	JAL			$FPSCounterDrawString
+	COPY		T0, R0
+	COPY		A0, S1
+	ADDIU		A1, R0, .CpuTimeX
+	ADDIU		A2, R0, .CpuFPSX
+	JAL			$FPSCounterDrawMetric
+	COPY		A3, R0
+
+	% Omit the entire GPU group when hardware timing is unavailable.
+	LW			V0, .GPUAvailable (S0)
+	BEQ			V0, R0, .Done
+	NOP
+	BEQ			S2, R0, .Done
+	NOP
+
+	% Fixed GPU fields.
+	LIO			A0, $FPSCounterLabelGPU
+	ADDIU		A1, R0, .GpuLabelX
+	ADDIU		A2, R0, .PosY
+	COPY		A3, R0
+	JAL			$FPSCounterDrawString
+	COPY		T0, R0
+	COPY		A0, S2
+	ADDIU		A1, R0, .GpuTimeX
+	ADDIU		A2, R0, .GpuFPSX
+	JAL			$FPSCounterDrawMetric
+	COPY		A3, R0
+	B			.Done
+	NOP
+
+	% Retained in case unavailable GPU fields are shown again.
+	.GPUUnavailable
+	LIO			A0, $FPSCounterUnavailableTime
+	ADDIU		A1, R0, .GpuTimeX
+	ADDIU		A2, R0, .PosY
+	COPY		A3, R0
+	JAL			$FPSCounterDrawString
+	COPY		T0, R0
+	LIO			A0, $FPSCounterUnavailableFPS
+	ADDIU		A1, R0, .GpuFPSX
+	ADDIU		A2, R0, .PosY
+	COPY		A3, R0
+	JAL			$FPSCounterDrawString
+	COPY		T0, R0
+	.Done
+	JPOP		RA, S0, S1, S2
+}
+
+% Draws fixed time and implied-FPS fields for one measurement.
+% A0 = Count ticks
+% A1 = time X
+% A2 = FPS X
+% A3 = nonzero to right-align fields
+#new:Function $FPSCounterDrawMetric
+{
+	PUSH		RA, S0, S1, S2, S3, S4, S5, S6
+	LIO			S0, $FPSCounterData
+	COPY		S1, A0
+	COPY		S2, A1
+	COPY		S3, A2
+	COPY		S4, A3
+
+	% Convert Count ticks to tenths of a millisecond.
+	SLL			T0, S1, 1
+	ADDIU		T0, T0, 4687`
+	LI			T1, 9375`
+	DIVU		T0, T1
+	MFLO		S5
+
+	% Select this measurement's 30 FPS budget color.
+	COPY		S6, R0
+	SLTIU		T0, S5, 251`
+	BNE			T0, R0, .MetricColorDone
+	NOP
+	ADDIU		S6, R0, 5
+	SLTIU		T0, S5, 301`
+	BNE			T0, R0, .MetricColorDone
+	NOP
+	ADDIU		S6, R0, 6
+	SLTIU		T0, S5, 334`
+	BNE			T0, R0, .MetricColorDone
+	NOP
+	ADDIU		S6, R0, 7
+	.MetricColorDone
+
+	% Draw the fixed millisecond field.
+	ADDIU		T0, R0, 10`
+	DIVU		S5, T0
+	MFLO		A2
+	MFHI		A3
+	LIO			A1, $FPSCounterFmtTime
+	JAL			800654F0 % sprintf
+	ADDIU		A0, S0, .PrintfBuffer
+	ADDIU		A0, S0, .PrintfBuffer
+	COPY		A1, S2
+	ADDIU		A2, R0, .PosY
+	COPY		A3, S6
+	JAL			$FPSCounterDrawString
+	COPY		T0, S4
+
+	% Calculate implied FPS and cap it at 999.
+	LI			T0, 46875000`
+	SRL			T1, S1, 1
+	ADDU		T0, T0, T1
+	DIVU		T0, S1
+	MFLO		S5
+	SLTIU		T0, S5, 1000`
+	BNE			T0, R0, .HaveFPS
+	NOP
+	LI			S5, 999`
+	.HaveFPS
+	COPY		A2, S5
+	LIO			A1, $FPSCounterFmtFPS
+	JAL			800654F0 % sprintf
+	ADDIU		A0, S0, .PrintfBuffer
+	ADDIU		A0, S0, .PrintfBuffer
+	COPY		A1, S3
+	ADDIU		A2, R0, .PosY
+	COPY		A3, S6
+	JAL			$FPSCounterDrawString
+	COPY		T0, S4
+	JPOP		RA, S0, S1, S2, S3, S4, S5, S6
+}
+
+% A0 = null-terminated ASCII input
+% A1 = PM string output
+#new:Function $FPSCounterASCIItoPM
+{
+	ADDIU		V1, R0, 20
+	.ReadChar
+	LB			V0, 0 (A0)
+	BEQ			V0, R0, .Done
+	ADDIU		A0, A0, 1
+	BEQL		V0, V1, .PutChar
+	ADDIU		V0, R0, F7
+	SUB			V0, V0, V1
+	BLTZ		V0, .Done
+	NOP
+	.PutChar
+	SB			V0, 0 (A1)
+	B			.ReadChar
+	ADDIU		A1, A1, 1
+	.Done
+	ADDIU		V0, V0, FD
+	JR			RA
+	SB			V0, 0 (A1)
+}
+
+% Draws an ASCII string. Set T0 nonzero to align its right edge at A1.
+% A0 = null-terminated ASCII string
+% A1 = pos X
+% A2 = pos Y
+% A3 = palette
+#new:Function $FPSCounterDrawString
+{
+	PUSH		RA, S0, S1, S2, S3, S4
+	LIO			S0, $FPSCounterData
+	COPY		S1, A1
+	COPY		S2, A2
+	COPY		S3, A3
+	COPY		S4, T0
+	ADDIU		A2, S0, .StringBuffer
+	% Clear the converted message buffer.
+	ADDIU		V0, A2, 40
+	.ClearBuffer
+	ADDIU		V0, V0, -4
+	BNE			V0, A2, .ClearBuffer
+	SW			R0, 0 (V0)
+	LIO			V0, FF0D0C0C
+	SW			V0, 0 (A2)
+	JAL			$FPSCounterASCIItoPM
+	ADDIU		A1, A2, 4
+
+	% Measure right-aligned strings so their right edge remains fixed.
+	ADDIU		A0, S0, .StringBuffer
+	BEQ			S4, R0, .Draw
+	COPY		A1, S1
+	JAL			80126474 % get_msg_width
+	COPY		A1, R0
+	SUBU		A1, S1, V0
+	.Draw
+	ADDIU		A0, S0, .StringBuffer
+	COPY		A2, S2
+	ADDIU		SP, SP, -10
+	SW			S3, 10 (SP) % palette
+	SW			R0, 14 (SP) % style
+	JAL			801264EC % draw_msg
+	ADDIU		A3, R0, FF
+	ADDIU		SP, SP, 10
+	JPOP		RA, S0, S1, S2, S3, S4
+}
+
+%}
