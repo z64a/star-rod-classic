@@ -37,4 +37,4 @@ public interface Node
 	/** Accept the visitor. **/
 	public Object jjtAccept(InlineParserVisitor visitor, Object data);
 }
-/* JavaCC - OriginalChecksum=1844fb0221e2f2ff73b0230daaa1c4f2 (do not edit this line) */
+/* JavaCC - OriginalChecksum=2f285c1d909337519709cd92a3a177eb (do not edit this line) */

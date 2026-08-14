@@ -27,4 +27,4 @@ public interface InlineParserTreeConstants
 			"Float",
 	};
 }
-/* JavaCC - OriginalChecksum=d902d0a230f5f01b67327bedeeb9c209 (do not edit this line) */
+/* JavaCC - OriginalChecksum=33001c1b16391a4fe48005dda871721f (do not edit this line) */

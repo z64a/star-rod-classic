@@ -70,6 +70,12 @@ public class WorldLibDecoder extends BaseWorldDecoder
 
 					case data:
 						break;
+
+					case lbl:
+						break;
+
+					case sig:
+						break;
 				}
 			}
 		}

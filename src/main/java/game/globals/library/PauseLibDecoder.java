@@ -95,6 +95,12 @@ public class PauseLibDecoder extends BaseDataDecoder
 
 					case data:
 						break;
+
+					case lbl:
+						break;
+
+					case sig:
+						break;
 				}
 			}
 		}

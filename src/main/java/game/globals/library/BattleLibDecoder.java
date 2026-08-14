@@ -66,6 +66,12 @@ public class BattleLibDecoder extends BaseBattleDecoder
 
 					case data:
 						break;
+
+					case lbl:
+						break;
+
+					case sig:
+						break;
 				}
 			}
 		}

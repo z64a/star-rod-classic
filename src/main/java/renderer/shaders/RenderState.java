@@ -218,9 +218,24 @@ public abstract class RenderState
 		rec.glColor.a = a;
 	}
 
-	public static final Color4f getColor()
+	public static final float getColorR()
 	{
-		return rec.glColor; //TODO encapsulation violated
+		return rec.glColor.r;
+	}
+
+	public static final float getColorG()
+	{
+		return rec.glColor.g;
+	}
+
+	public static final float getColorB()
+	{
+		return rec.glColor.b;
+	}
+
+	public static final float getColorA()
+	{
+		return rec.glColor.a;
 	}
 
 	// --------------------------------------------------------------------------

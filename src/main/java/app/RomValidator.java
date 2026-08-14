@@ -62,123 +62,122 @@ public class RomValidator
 		pleaseWait.setResizable(false);
 		pleaseWait.setVisible(false);
 
-		RandomAccessFile raf = new RandomAccessFile(f, "r");
-
-		raf.seek(0x10);
-		int crc1 = raf.readInt();
-		int crc2 = raf.readInt();
-
-		if (crc1 != CRC1_Z64) {
-			boolean v64 = (crc1 == CRC1_V64 && crc2 == CRC2_V64);
-			boolean n64 = (crc1 == CRC1_N64 && crc2 == CRC2_N64);
-			boolean x64 = (crc1 == CRC1_X64 && crc2 == CRC2_X64);
-
-			if (v64 || n64 || x64) {
-				// just need to byteswap
-				SwingUtils.getWarningDialog()
-					.setTitle("ROM Validation Warning")
-					.setMessage("Selected ROM has incorrect byte order.", "A corrected copy will be made.")
-					.show();
-
-				pleaseWait.setVisible(true);
-
-				String path = f.getAbsolutePath();
-				path = FilenameUtils.removeExtension(path);
-				/*
-				String extension = path.substring(path.lastIndexOf("."));
-				path = path.substring(0, path.lastIndexOf("."));
-				
-				if(extension.equals("n64"))
-					swapped = new File(path + ".z64");
-				else
-					swapped = new File(path + "_swapped" + extension);
-				*/
-
-				File swapped = new File(path + "_fixed.z64");
-
-				if (v64)
-					wordswap(f, swapped);
-				else if (n64)
-					byteswap(f, swapped);
-				else if (x64)
-					fullswap(f, swapped);
-
-				f = swapped;
-
-				raf.close();
-				raf = new RandomAccessFile(f, "r");
+		try {
+			int crc1;
+			int crc2;
+			try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
 				raf.seek(0x10);
 				crc1 = raf.readInt();
 				crc2 = raf.readInt();
 			}
+
+			if (crc1 != CRC1_Z64) {
+				boolean v64 = (crc1 == CRC1_V64 && crc2 == CRC2_V64);
+				boolean n64 = (crc1 == CRC1_N64 && crc2 == CRC2_N64);
+				boolean x64 = (crc1 == CRC1_X64 && crc2 == CRC2_X64);
+
+				if (v64 || n64 || x64) {
+					// just need to byteswap
+					SwingUtils.getWarningDialog()
+						.setTitle("ROM Validation Warning")
+						.setMessage("Selected ROM has incorrect byte order.", "A corrected copy will be made.")
+						.show();
+
+					pleaseWait.setVisible(true);
+
+					String path = f.getAbsolutePath();
+					path = FilenameUtils.removeExtension(path);
+					/*
+					String extension = path.substring(path.lastIndexOf("."));
+					path = path.substring(0, path.lastIndexOf("."));
+
+					if(extension.equals("n64"))
+						swapped = new File(path + ".z64");
+					else
+						swapped = new File(path + "_swapped" + extension);
+					*/
+
+					File swapped = new File(path + "_fixed.z64");
+
+					if (v64)
+						wordswap(f, swapped);
+					else if (n64)
+						byteswap(f, swapped);
+					else if (x64)
+						fullswap(f, swapped);
+
+					f = swapped;
+
+					try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
+						raf.seek(0x10);
+						crc1 = raf.readInt();
+						crc2 = raf.readInt();
+					}
+				}
+				else {
+					SwingUtils.getErrorDialog()
+						.setTitle("ROM Validation Failure")
+						.setMessage("Incorrect ROM or version, CRC does not match.")
+						.show();
+					return null;
+				}
+			}
+
+			pleaseWait.setVisible(true);
+
+			if (crc1 == CRC1_Z64 && crc2 == CRC2_Z64) {
+				// now compute the checksum
+				try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
+					if (!verifyCRCs(raf)) {
+						SwingUtils.getErrorDialog()
+							.setTitle("ROM Validation Failure")
+							.setMessage("ROM data does not match CRC values!")
+							.show();
+						return null;
+					}
+				}
+			}
 			else {
-				pleaseWait.setVisible(false);
 				SwingUtils.getErrorDialog()
 					.setTitle("ROM Validation Failure")
 					.setMessage("Incorrect ROM or version, CRC does not match.")
 					.show();
-				raf.close();
 				return null;
 			}
-		}
 
-		pleaseWait.setVisible(true);
+			try {
+				byte[] fileBytes = FileUtils.readFileToByteArray(f);
+				MessageDigest digest = MessageDigest.getInstance("MD5");
 
-		if (crc1 == CRC1_Z64 && crc2 == CRC2_Z64) {
-			// now compute the checksum
-			if (!verifyCRCs(raf)) {
-				pleaseWait.setVisible(false);
-				SwingUtils.getErrorDialog()
-					.setTitle("ROM Validation Failure")
-					.setMessage("ROM data does not match CRC values!")
+				digest.update(fileBytes);
+				byte[] hashedBytes = digest.digest();
+
+				StringBuilder sb = new StringBuilder(2 * hashedBytes.length);
+				for (byte b : hashedBytes)
+					sb.append(String.format("%02X", b));
+
+				String fileMD5 = sb.toString();
+				if (!fileMD5.equals(MD5)) {
+					SwingUtils.getErrorDialog()
+						.setTitle("ROM Validation Failure")
+						.setMessage("MD5 hash does not match!")
+						.show();
+					return null;
+				}
+			}
+			catch (NoSuchAlgorithmException e) {
+				SwingUtils.getWarningDialog()
+					.setTitle("ROM Validation Warning")
+					.setMessage("Missing MD5 hash algorithm, could not complete validation!")
 					.show();
-				return null;
 			}
+
+			return f;
 		}
-		else {
+		finally {
 			pleaseWait.setVisible(false);
-			SwingUtils.getErrorDialog()
-				.setTitle("ROM Validation Failure")
-				.setMessage("Incorrect ROM or version, CRC does not match.")
-				.show();
-			raf.close();
-			return null;
+			pleaseWait.dispose();
 		}
-
-		raf.close();
-
-		try {
-			byte[] fileBytes = FileUtils.readFileToByteArray(f);
-			MessageDigest digest = MessageDigest.getInstance("MD5");
-
-			digest.update(fileBytes);
-			byte[] hashedBytes = digest.digest();
-
-			StringBuilder sb = new StringBuilder(2 * hashedBytes.length);
-			for (byte b : hashedBytes)
-				sb.append(String.format("%02X", b));
-
-			String fileMD5 = sb.toString();
-			if (!fileMD5.equals(MD5)) {
-				pleaseWait.setVisible(false);
-				SwingUtils.getErrorDialog()
-					.setTitle("ROM Validation Failure")
-					.setMessage("MD5 hash does not match!")
-					.show();
-				return null;
-			}
-		}
-		catch (NoSuchAlgorithmException e) {
-			SwingUtils.getWarningDialog()
-				.setTitle("ROM Validation Warning")
-				.setMessage("Missing MD5 hash algorithm, could not complete validation!")
-				.show();
-		}
-
-		pleaseWait.setVisible(false);
-		pleaseWait.dispose();
-
-		return f;
 	}
 
 	// v64 -> z64

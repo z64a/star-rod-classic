@@ -1,6 +1,5 @@
 package renderer.buffers;
 
-import game.map.editor.render.Color4f;
 import game.map.editor.render.PresetColor;
 import renderer.shaders.RenderState;
 
@@ -18,11 +17,10 @@ public final class BufferVertex
 	{
 		this.index = index;
 
-		Color4f color = RenderState.getColor();
-		r = color.r;
-		g = color.g;
-		b = color.b;
-		a = color.a;
+		r = RenderState.getColorR();
+		g = RenderState.getColorG();
+		b = RenderState.getColorB();
+		a = RenderState.getColorA();
 	}
 
 	public int getIndex()

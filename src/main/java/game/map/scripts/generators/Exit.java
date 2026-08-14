@@ -201,6 +201,12 @@ public final class Exit extends Generator
 				gotoMap = script.get(9);
 				doorSound.set(ProjectDatabase.DoorSoundsType.getName(script.get(2).args[1]));
 				break;
+
+			case VerticalPipe:
+				throw new IllegalArgumentException("Cannot parse a vertical pipe exit from this script format.");
+
+			case HorizontalPipe:
+				throw new IllegalArgumentException("Cannot parse a horizontal pipe exit from this script format.");
 		}
 
 		ptrDestMapName = gotoMap.args[1];

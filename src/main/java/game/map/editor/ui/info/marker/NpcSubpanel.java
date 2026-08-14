@@ -1,12 +1,6 @@
 package game.map.editor.ui.info.marker;
 
-import static game.map.marker.NpcComponent.CALLBACK_AI;
-import static game.map.marker.NpcComponent.CALLBACK_AUX;
-import static game.map.marker.NpcComponent.CALLBACK_DEFEAT;
-import static game.map.marker.NpcComponent.CALLBACK_HIT;
-import static game.map.marker.NpcComponent.CALLBACK_IDLE;
-import static game.map.marker.NpcComponent.CALLBACK_INIT;
-import static game.map.marker.NpcComponent.CALLBACK_INTERACT;
+import static game.map.marker.NpcComponent.*;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -14,7 +8,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 
 import app.SwingUtils;
 import game.globals.editor.ListSelectorDialog;
@@ -33,47 +26,47 @@ import util.ui.StringField;
 public class NpcSubpanel extends JPanel
 {
 	private static final Flag[] ENEMY_FLAGS = new Flag[] {
-		new Flag(0x00000001, "Passive", "Collision does not trigger a battle."),
-		new Flag(0x00000002, "Unused"),
-		new Flag(0x00000004, "Do not kill", "Keep the NPC after it is defeated in battle."),
-		new Flag(0x00000008, "Enable hit script"),
-		new Flag(0x00000010, "Fled"),
-		new Flag(0x00000020, "Disable AI", "Disable movement AI and collision."),
-		new Flag(0x00000040, "Projectile"),
-		new Flag(0x00000080, "Do not update shadow Y"),
-		new Flag(0x00000100, "Ignore world collision"),
-		new Flag(0x00000200, "Ignore player collision"),
-		new Flag(0x00000400, "Ignore entity collision"),
-		new Flag(0x00000800, "Flying"),
-		new Flag(0x00001000, "Gravity"),
-		new Flag(0x00002000, "No shadow raycast"),
-		new Flag(0x00004000, "Has no sprite"),
-		new Flag(0x00008000, "Use inspect icon"),
-		new Flag(0x00010000, "Raycast to interact"),
-		new Flag(0x00020000, "Use player sprite"),
-		new Flag(0x00040000, "No delay after flee"),
-		new Flag(0x00080000, "Do not suspend scripts"),
-		new Flag(0x00100000, "Skip battle"),
-		new Flag(0x00200000, "Active while offscreen"),
-		new Flag(0x00400000, "Do not auto-face player"),
-		new Flag(0x00800000, "No drops"),
-		new Flag(0x01000000, "Ignore touch"),
-		new Flag(0x02000000, "Ignore jump"),
-		new Flag(0x04000000, "Ignore hammer"),
-		new Flag(0x08000000, "Cannot interact"),
-		new Flag(0x10000000, "Ignore partner"),
-		new Flag(0x20000000, "Ignore spin"),
-		new Flag(0x40000000, "Begin chasing"),
-		new Flag(0x80000000, "Suspended"),
+			new Flag(0x00000001, "Passive", "Collision does not trigger a battle."),
+			new Flag(0x00000002, "Unused"),
+			new Flag(0x00000004, "Do not kill", "Keep the NPC after it is defeated in battle."),
+			new Flag(0x00000008, "Enable hit script"),
+			new Flag(0x00000010, "Fled"),
+			new Flag(0x00000020, "Disable AI", "Disable movement AI and collision."),
+			new Flag(0x00000040, "Projectile"),
+			new Flag(0x00000080, "Do not update shadow Y"),
+			new Flag(0x00000100, "Ignore world collision"),
+			new Flag(0x00000200, "Ignore player collision"),
+			new Flag(0x00000400, "Ignore entity collision"),
+			new Flag(0x00000800, "Flying"),
+			new Flag(0x00001000, "Gravity"),
+			new Flag(0x00002000, "No shadow raycast"),
+			new Flag(0x00004000, "Has no sprite"),
+			new Flag(0x00008000, "Use inspect icon"),
+			new Flag(0x00010000, "Raycast to interact"),
+			new Flag(0x00020000, "Use player sprite"),
+			new Flag(0x00040000, "No delay after flee"),
+			new Flag(0x00080000, "Do not suspend scripts"),
+			new Flag(0x00100000, "Skip battle"),
+			new Flag(0x00200000, "Active while offscreen"),
+			new Flag(0x00400000, "Do not auto-face player"),
+			new Flag(0x00800000, "No drops"),
+			new Flag(0x01000000, "Ignore touch"),
+			new Flag(0x02000000, "Ignore jump"),
+			new Flag(0x04000000, "Ignore hammer"),
+			new Flag(0x08000000, "Cannot interact"),
+			new Flag(0x10000000, "Ignore partner"),
+			new Flag(0x20000000, "Ignore spin"),
+			new Flag(0x40000000, "Begin chasing"),
+			new Flag(0x80000000, "Suspended"),
 	};
 
 	private static final Flag[] ACTION_FLAGS = new Flag[] {
-		new Flag(0x01, "Jump when player seen"),
-		new Flag(0x02, "No first strike"),
-		new Flag(0x04, "Chase requires path"),
-		new Flag(0x08, "No spin reaction"),
-		new Flag(0x10, "Look around while idle"),
-		new Flag(0x20, "Mute while offscreen"),
+			new Flag(0x01, "Jump when player seen"),
+			new Flag(0x02, "No first strike"),
+			new Flag(0x04, "Chase requires path"),
+			new Flag(0x08, "No spin reaction"),
+			new Flag(0x10, "Look around while idle"),
+			new Flag(0x20, "Mute while offscreen"),
 	};
 
 	private final MarkerInfoPanel parent;

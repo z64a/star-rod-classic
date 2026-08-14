@@ -98,7 +98,7 @@ public class MapObjectNode<T extends MapObject>
 
 	/**
 	 * It is assumed that any node which allows children is a group and
-	 * any node that does not is an object! (See: MoveNodes)
+	 * any node that does not is an object!
 	 */
 	@Override
 	public boolean getAllowsChildren()
