@@ -1104,9 +1104,6 @@ public class PseudoInstruction
 				for (int j = 0; j < replacements.length; j++) {
 					// reorder last branch instruction: move into PI asm
 					if (pi.useDelaySlot && j == replacements.length - 1) {
-						//XXX correct?
-						//	String branch = instructionList.get(i + 1);
-						//	newinstructions.add(branch);
 						newinstructions.add(instructionList.get(i + 1));
 						i += 2;
 					}
