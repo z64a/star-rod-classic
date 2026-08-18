@@ -182,8 +182,8 @@ public enum Options
 
 	ModVersionString	(true, Scope.Patch, Type.String, "ModVersionString", "Paper Mario Mod"),
 
-	CompressModPackage	(true, Scope.Patch, Type.Boolean, "CompressModPackage", "True", "Compress Mod Package",
-			"Use Yay0 to compress the final diff file for your mod. May take several additional minutes."),
+	CompressModPackage	(true, Scope.Patch, Type.Boolean, "CompressModPackage", "True", "Compress Legacy MOD Package",
+			"Use Yay0 to compress the legacy .mod diff file. May take several additional minutes."),
 
 	DebugInlineScripts	(false, Scope.Patch, Type.Boolean, "DebugInlineScripts", "False"),
 

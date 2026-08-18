@@ -22,6 +22,6 @@ Sprites and textures can be edited in the image editor of your choice and conver
 
 ## Build and Distribute
 
-Use **Compile Mod** whenever you need a test ROM. When the mod is ready to share, use **Package Mod** to create a distributable patch which users can apply to their own clean Paper Mario US v1.0 ROM. Do not distribute the patched ROM itself.
+Use **Compile Mod** whenever you need a test ROM. When the mod is ready to share, use **Package Mod** to create a distributable patch which users can apply to their own clean Paper Mario US v1.0 ROM. BPS is the default and widely supported format; the legacy Star Rod `.mod` format remains available from the package format chooser. Do not distribute the patched ROM itself.
 
 See [Project Layout](../reference/project-layout.md) before deciding where to put new source files. The [Command Line reference](../reference/command-line.md) covers automated builds.

@@ -1,116 +1,7 @@
 package app;
 
-import static app.Directories.DATABASE;
-import static app.Directories.DATABASE_TYPES;
-import static app.Directories.DEFAULTS;
-import static app.Directories.DEFAULTS_ALLY;
-import static app.Directories.DEFAULTS_FORM;
-import static app.Directories.DEFAULTS_ITEM;
-import static app.Directories.DEFAULTS_MAP;
-import static app.Directories.DEFAULTS_MOVE;
-import static app.Directories.DEFAULTS_STARS;
-import static app.Directories.DUMP_ALLY_SRC;
-import static app.Directories.DUMP_ASSIST_SRC;
-import static app.Directories.DUMP_AUDIO;
-import static app.Directories.DUMP_BATTLE;
-import static app.Directories.DUMP_EFFECT_SRC;
-import static app.Directories.DUMP_FORMA_ENEMY;
-import static app.Directories.DUMP_FORMA_SRC;
-import static app.Directories.DUMP_GLOBALS;
-import static app.Directories.DUMP_HUD_SCRIPTS;
-import static app.Directories.DUMP_IMG;
-import static app.Directories.DUMP_IMG_ASSETS;
-import static app.Directories.DUMP_IMG_BG;
-import static app.Directories.DUMP_IMG_COMP;
-import static app.Directories.DUMP_IMG_TEX;
-import static app.Directories.DUMP_ITEM;
-import static app.Directories.DUMP_ITEM_SCRIPTS;
-import static app.Directories.DUMP_ITEM_SRC;
-import static app.Directories.DUMP_MAP;
-import static app.Directories.DUMP_MAP_SRC;
-import static app.Directories.DUMP_MAP_THUMBNAIL;
-import static app.Directories.DUMP_MINIGAME_SRC;
-import static app.Directories.DUMP_MOVE;
-import static app.Directories.DUMP_MOVE_SRC;
-import static app.Directories.DUMP_REPORTS;
-import static app.Directories.DUMP_REQUESTS;
-import static app.Directories.DUMP_SPRITE;
-import static app.Directories.DUMP_SPR_NPC_SRC;
-import static app.Directories.DUMP_SPR_PLR_SRC;
-import static app.Directories.DUMP_STARS_SRC;
-import static app.Directories.DUMP_STRINGS_FONT;
-import static app.Directories.DUMP_STRINGS_SRC;
-import static app.Directories.DUMP_TXTBOX_IMG;
-import static app.Directories.FN_BATTLE_ACTORS;
-import static app.Directories.FN_BATTLE_ITEMS;
-import static app.Directories.FN_BATTLE_MOVES;
-import static app.Directories.FN_BATTLE_SECTIONS;
-import static app.Directories.FN_GAME_BYTES;
-import static app.Directories.FN_GAME_FLAGS;
-import static app.Directories.FN_HUD_SCRIPTS;
-import static app.Directories.FN_IMAGE_ASSETS;
-import static app.Directories.FN_ITEM_SCRIPTS;
-import static app.Directories.FN_MAP_TABLE;
-import static app.Directories.FN_MOD_BYTES;
-import static app.Directories.FN_MOD_FLAGS;
-import static app.Directories.FN_SPRITE_SHADING;
-import static app.Directories.FN_SPRITE_TABLE;
-import static app.Directories.FN_STRING_CONSTANTS;
-import static app.Directories.LOGS;
-import static app.Directories.MOD_ALLY_PATCH;
-import static app.Directories.MOD_ALLY_SRC;
-import static app.Directories.MOD_ASSIST_SRC;
-import static app.Directories.MOD_AUDIO;
-import static app.Directories.MOD_BATTLE;
-import static app.Directories.MOD_EFFECT_SRC;
-import static app.Directories.MOD_ENUMS;
-import static app.Directories.MOD_FORMA;
-import static app.Directories.MOD_FORMA_ENEMY;
-import static app.Directories.MOD_FORMA_PATCH;
-import static app.Directories.MOD_FORMA_SRC;
-import static app.Directories.MOD_GLOBALS;
-import static app.Directories.MOD_HUD_SCRIPTS;
-import static app.Directories.MOD_IMG;
-import static app.Directories.MOD_IMG_ASSETS;
-import static app.Directories.MOD_IMG_BG;
-import static app.Directories.MOD_IMG_COMP;
-import static app.Directories.MOD_IMG_TEX;
-import static app.Directories.MOD_ITEM;
-import static app.Directories.MOD_ITEM_PATCH;
-import static app.Directories.MOD_ITEM_SCRIPTS;
-import static app.Directories.MOD_ITEM_SRC;
-import static app.Directories.MOD_MAP;
-import static app.Directories.MOD_MAP_PATCH;
-import static app.Directories.MOD_MAP_SRC;
-import static app.Directories.MOD_MAP_THUMBNAIL;
-import static app.Directories.MOD_MINIGAME_SRC;
-import static app.Directories.MOD_MOVE;
-import static app.Directories.MOD_MOVE_PATCH;
-import static app.Directories.MOD_MOVE_SRC;
-import static app.Directories.MOD_SPRITE;
-import static app.Directories.MOD_SPR_NPC_SRC;
-import static app.Directories.MOD_SPR_PLR_SRC;
-import static app.Directories.MOD_STARS_PATCH;
-import static app.Directories.MOD_STARS_SRC;
-import static app.Directories.MOD_STRINGS;
-import static app.Directories.MOD_STRINGS_FONT;
-import static app.Directories.MOD_STRINGS_SRC;
-import static app.Directories.MOD_TXTBOX_IMG;
-import static app.config.Options.CleanDump;
-import static app.config.Options.DumpAudio;
-import static app.config.Options.DumpBattles;
-import static app.config.Options.DumpEffects;
-import static app.config.Options.DumpLibrary;
-import static app.config.Options.DumpMaps;
-import static app.config.Options.DumpMessages;
-import static app.config.Options.DumpMoves;
-import static app.config.Options.DumpPartners;
-import static app.config.Options.DumpReports;
-import static app.config.Options.DumpSprites;
-import static app.config.Options.DumpTables;
-import static app.config.Options.DumpTextures;
-import static app.config.Options.DumpWorld;
-import static app.config.Options.RecompressMaps;
+import static app.Directories.*;
+import static app.config.Options.*;
 
 import java.awt.Desktop;
 import java.awt.Dimension;
@@ -154,8 +45,6 @@ import javax.swing.WindowConstants;
 
 import org.apache.commons.io.FileUtils;
 
-import common.BaseEditor;
-
 import app.AppVersion.VersionLevel;
 import app.config.BuildOptionsPanel;
 import app.config.Config;
@@ -166,6 +55,7 @@ import app.input.InvalidInputException;
 import app.update.BackupCreator;
 import app.update.MinorUpdator;
 import asm.AsmUtils;
+import common.BaseEditor;
 import game.ROM;
 import game.ROM.LibScope;
 import game.RomLoader;
@@ -573,8 +463,36 @@ public class StarRodClassic extends JFrame
 
 		packageModButton = new JButton("Package Mod");
 		packageModButton.addActionListener(e -> {
+			String bpsOption = "BPS";
+			String modOption = "MOD";
+			String cancelOption = "Cancel";
+			int choice = SwingUtils.getOptionDialog()
+				.setTitle("Package Mod")
+				.setMessage(
+					"Select patch format:",
+					"BPS - Widely supported (recommended).",
+					"MOD - Legacy Star Rod.",
+					"")
+				.setMessageType(JOptionPane.QUESTION_MESSAGE)
+				.setOptions(bpsOption, modOption, cancelOption)
+				.setDefault(bpsOption)
+				.setParent(this)
+				.choose();
+
+			Patcher.ModPackageFormat format;
+			switch (choice) {
+				case 0:
+					format = Patcher.ModPackageFormat.BPS;
+					break;
+				case 1:
+					format = Patcher.ModPackageFormat.MOD;
+					break;
+				default:
+					return;
+			}
+
 			new TaskWorker(() -> {
-				packageMod();
+				packageMod(format);
 			});
 		});
 		buttons.add(packageModButton);
@@ -1080,7 +998,7 @@ public class StarRodClassic extends JFrame
 		return true;
 	}
 
-	private boolean packageMod()
+	private boolean packageMod(Patcher.ModPackageFormat format)
 	{
 		try {
 			Environment.project.config.readConfig(); // refresh
@@ -1094,7 +1012,7 @@ public class StarRodClassic extends JFrame
 				return false;
 			}
 
-			Patcher.packageMod(patchedRom);
+			Patcher.packageMod(patchedRom, format);
 
 			if (!Environment.isCommandLine()) {
 				SwingUtilities.invokeLater(() -> {

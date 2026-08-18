@@ -97,6 +97,12 @@ public class Patcher implements IGlobalDatabase
 	private SpritePatcher spritePatcher;
 	private BuildSymbolMap buildSymbolMap;
 
+	public enum ModPackageFormat
+	{
+		BPS,
+		MOD
+	}
+
 	public Patcher() throws IOException
 	{
 		ProjectDatabase.loadModGlobals();
@@ -784,9 +790,11 @@ public class Patcher implements IGlobalDatabase
 
 	public static void packageMod(File rom) throws IOException
 	{
-		LinkedList<Integer> diffStarts = new LinkedList<>();
-		LinkedList<Integer> diffLengths = new LinkedList<>();
+		packageMod(rom, ModPackageFormat.BPS);
+	}
 
+	public static void packageMod(File rom, ModPackageFormat format) throws IOException
+	{
 		Config cfg = Environment.project.config;
 
 		String modName = cfg.getString(Options.ModVersionString);
@@ -796,18 +804,38 @@ public class Patcher implements IGlobalDatabase
 		byte[] base = Environment.getBaseRomBytes();
 		byte[] patched = FileUtils.readFileToByteArray(rom);
 
-		/*
-		Delta delta = new Delta();
-		byte[] diff = delta.compute(base, patched);
-		File outXDelta = new File(MOD_OUT + modName + ".xdelta");
-		FileUtils.writeByteArrayToFile(outXDelta, diff);
-		Logger.log("Wrote XDELTA file to " + outXDelta, Priority.IMPORTANT);
-		 */
+		Logger.log("Starting mod packaging: " + new java.util.Date().toString(), Priority.IMPORTANT);
+
+		switch (format) {
+			case BPS:
+				packageBPS(base, patched, modName);
+				break;
+			case MOD:
+				packageStarRodMod(base, patched, modName, cfg);
+				break;
+			default:
+				throw new IllegalStateException("Unknown mod package format: " + format);
+		}
+
+		Logger.log("Mod package complete. " + new java.util.Date().toString(), Priority.IMPORTANT);
+	}
+
+	private static void packageBPS(byte[] base, byte[] patched, String modName) throws IOException
+	{
+		Logger.log("Creating BPS patch...", Priority.MILESTONE);
+		byte[] patch = BPSPatch.create(base, patched);
+		File outBPS = new File(MOD_OUT + modName + ".bps");
+		FileUtils.writeByteArrayToFile(outBPS, patch);
+		Logger.log("Wrote BPS file to " + outBPS, Priority.IMPORTANT);
+	}
+
+	private static void packageStarRodMod(byte[] base, byte[] patched, String modName, Config cfg) throws IOException
+	{
+		LinkedList<Integer> diffStarts = new LinkedList<>();
+		LinkedList<Integer> diffLengths = new LinkedList<>();
 
 		if (patched.length < base.length)
 			throw new RuntimeException("Patched ROM should not be smaller than base ROM!");
-
-		Logger.log("Starting mod packaging: " + new java.util.Date().toString(), Priority.IMPORTANT);
 
 		boolean mismatching = false;
 		int mismatchStart = -1;
@@ -882,7 +910,6 @@ public class Patcher implements IGlobalDatabase
 		File outMod = new File(MOD_OUT + modName + ".mod");
 		FileUtils.writeByteArrayToFile(outMod, diffBytes);
 		Logger.log("Wrote MOD file to " + outMod, Priority.IMPORTANT);
-		Logger.log("Mod package complete. " + new java.util.Date().toString(), Priority.IMPORTANT);
 	}
 
 	/*
