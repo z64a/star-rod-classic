@@ -52,8 +52,6 @@ import app.config.DumpOptionsPanel;
 import app.config.Options;
 import app.input.IOUtils;
 import app.input.InvalidInputException;
-import app.update.BackupCreator;
-import app.update.MinorUpdator;
 import asm.AsmUtils;
 import common.BaseEditor;
 import game.ROM;
@@ -77,8 +75,6 @@ import game.map.compiler.CollisionCompiler;
 import game.map.compiler.GeometryCompiler;
 import game.map.config.LevelEditor;
 import game.map.editor.MapEditor;
-import game.map.editor.ui.dialogs.ChooseDialogResult;
-import game.map.editor.ui.dialogs.DirChooser;
 import game.map.patching.MapDumper;
 import game.map.scripts.ScriptGenerator;
 import game.map.shading.SpriteShadingEditor;
@@ -1506,93 +1502,7 @@ public class StarRodClassic extends JFrame
 			if (MapIndex.getFile().exists())
 				FileUtils.forceDelete(MapIndex.getFile());
 
-			update(modVersion, modConfig, (f) -> {
-				new MinorUpdator(f);
-			});
+			Logger.logf("Opening project from %s. Its build version will be updated after the next successful compile.", modVersion);
 		}
-	}
-
-	private static void update(AppVersion modVersion, Config modConfig, UpdateFunction updateFunc) throws IOException, InterruptedException
-	{
-		int choice = SwingUtils.getConfirmDialog()
-			.setTitle("Out of Date Mod")
-			.setMessage("Detected mod version " + modVersion + ".",
-				"Migrate mod to " + Environment.getVersion() + "?")
-			.setOptionsType(JOptionPane.YES_NO_OPTION)
-			.setMessageType(JOptionPane.WARNING_MESSAGE)
-			.choose();
-
-		if (choice != JOptionPane.OK_OPTION)
-			Environment.exit();
-
-		choice = SwingUtils.getConfirmDialog()
-			.setTitle("Make Backup")
-			.setMessage("Create a backup of your mod directory?")
-			.setOptionsType(JOptionPane.YES_NO_OPTION)
-			.setMessageType(JOptionPane.WARNING_MESSAGE)
-			.choose();
-
-		if (choice == JOptionPane.OK_OPTION) {
-			try {
-				new BackupCreator(Environment.project);
-			}
-			catch (IOException e) {
-				SwingUtils.getErrorDialog()
-					.setTitle("Backup Failed")
-					.setMessage("Failed to create backup!", e.getMessage())
-					.show();
-
-				Logger.printStackTrace(e);
-				Environment.exit();
-			}
-
-			SwingUtils.getMessageDialog()
-				.setTitle("Backup Successful")
-				.setMessage("Backup complete.")
-				.setMessageType(JOptionPane.INFORMATION_MESSAGE)
-				.show();
-		}
-
-		SwingUtils.getMessageDialog()
-			.setTitle("Find Old Database")
-			.setMessage("Select the old Star Rod database folder.")
-			.setMessageType(JOptionPane.INFORMATION_MESSAGE)
-			.show();
-
-		DirChooser dbChooser = new DirChooser(Environment.getWorkingDirectory(), "Select Old Database Directory");
-		if (dbChooser.prompt() == ChooseDialogResult.APPROVE) {
-			File dbChoice = dbChooser.getSelectedFile();
-			if (dbChoice == null) {
-				SwingUtils.getErrorDialog()
-					.setTitle("Update Failed")
-					.setMessage("Can't update without reading the old database.")
-					.show();
-
-				Environment.exit();
-			}
-
-			updateFunc.update(dbChoice);
-			modConfig.setString(Options.CompileVersion, Environment.getVersionString());
-			modConfig.saveConfigFile();
-
-			SwingUtils.getMessageDialog()
-				.setTitle("Update Complete")
-				.setMessage("Automatic update done.", "Don't forget to copy assets to your mod.")
-				.setMessageType(JOptionPane.INFORMATION_MESSAGE)
-				.show();
-		}
-		else {
-			SwingUtils.getErrorDialog()
-				.setTitle("Update Failed")
-				.setMessage("Can't update without reading the old database.")
-				.show();
-
-			Environment.exit();
-		}
-	}
-
-	private static abstract interface UpdateFunction
-	{
-		public void update(File dbFile) throws IOException, InterruptedException;
 	}
 }

@@ -33,7 +33,6 @@ import game.globals.editor.GlobalsRecord;
 import game.map.shading.SpriteShadingData;
 import game.map.shading.SpriteShadingEditor;
 import game.shared.ProjectDatabase.ConstEnum.EnumPair;
-import game.shared.lib.CType;
 import game.shared.struct.script.ScriptVariable;
 import game.sound.AudioCatalog;
 import game.sound.sfx.SfxNames;
@@ -170,8 +169,6 @@ public class ProjectDatabase
 			loadAudioEnums();
 
 		addSoundAliases();
-
-		CType.loadTypes();
 
 		actorNameMap = readDecode(DATABASE_TYPES + "actors.txt");
 		miscConstantsMap = readEncode(DATABASE_TYPES + "misc.txt");

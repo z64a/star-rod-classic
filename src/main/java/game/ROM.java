@@ -214,7 +214,11 @@ public abstract class ROM
 		List<LibraryFile> libFiles = new ArrayList<>();
 		try {
 			int added = 0;
-			for (File f : IOUtils.getFilesWithExtension(databaseDir, "lib", true)) {
+			File libDirectory = new File(databaseDir, "lib");
+			if (!libDirectory.exists())
+				libDirectory = databaseDir; // compatibility with pre-0.6 databases
+
+			for (File f : IOUtils.getFilesWithExtension(libDirectory, "lib", true)) {
 				LibraryFile lib = new LibraryFile(version, f);
 				if (lib.version == version) {
 					libFiles.add(lib);

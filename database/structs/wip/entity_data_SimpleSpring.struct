@@ -1,8 +1,0 @@
-% entity_data_SimpleSpring
-type: ram
-size: 4
-fields:
-{
-	  0 : launchVelocity     : int
-}
-

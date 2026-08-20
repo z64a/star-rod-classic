@@ -1,9 +1,0 @@
-% msg_font_data
-type: ram
-size: 18
-fields:
-{
-	  0 : charInfo           : msg_charset*[3`]
-	  C : field_0xc          : pointer[3`]
-}
-

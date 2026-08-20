@@ -33,7 +33,6 @@ import game.shared.ProjectDatabase;
 import game.shared.ProjectDatabase.ConstEnum;
 import game.shared.SyntaxConstants;
 import game.shared.decoder.Pointer.Origin;
-import game.shared.lib.CType.Primitive;
 import game.shared.lib.LibEntry;
 import game.shared.lib.LibEntry.EntryType;
 import game.shared.lib.LibEntry.LibParam;
@@ -1282,15 +1281,12 @@ public abstract class BaseDataDecoder
 				printEnum(pw, type.constType, value);
 				break;
 
-			case MemoryStruct:
-				if (type.ctype == Primitive.Bool.type)
-					printBoolean(pw, value);
-				else
-					printScriptWord(pw, value);
+			case Boolean:
+				printBoolean(pw, value);
 				break;
 
+			case Value:
 			case Unknown:
-			case MissingMemoryStruct:
 			case MissingStaticStruct:
 				printScriptWord(pw, value);
 				break;

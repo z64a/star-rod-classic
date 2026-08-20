@@ -867,15 +867,13 @@ public class Patcher implements IGlobalDatabase
 			}
 		}
 
-		if (patched.length > base.length) {
-			if (mismatching) {
-				diffStarts.add(mismatchStart);
-				diffLengths.add(patched.length - mismatchStart);
-			}
-			else {
-				diffStarts.add(base.length);
-				diffLengths.add(patched.length - base.length);
-			}
+		if (mismatching) {
+			diffStarts.add(mismatchStart);
+			diffLengths.add(patched.length - mismatchStart);
+		}
+		else if (patched.length > base.length) {
+			diffStarts.add(base.length);
+			diffLengths.add(patched.length - base.length);
 		}
 
 		Logger.log("Found " + diffStarts.size() + " different byte sequences.", Priority.MILESTONE);

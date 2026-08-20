@@ -1,0 +1,54 @@
+% functions available to code loaded in the effect address space
+% ordinary engine calls are routed through the E020 shim table
+
+{version=1.0}
+{scope=effect}
+
+asm : E0200000, 325AD0 : effect_rand_int : int result : int max
+asm : E0200044, 325B14 : effect_simple_rand : int result : int max, int index
+asm : E02000AC, 325B7C : func_E02000AC : void : int x, int y
+
+asm : E0200410, 325EE0 : guRotateF : void : Matrix4f* mtx, float angle, float x, float y, float z
+asm : E0200420, 325EF0 : guTranslateF : void : Matrix4f* mtx, float x, float y, float z
+asm : E0200430, 325F00 : guTranslate : void : Matrix4s* mtx, float x, float y, float z
+asm : E0200440, 325F10 : guScaleF : void : Matrix4f* mtx, float x, float y, float z
+asm : E0200450, 325F20 : guMtxCatF : void : Matrix4f* mtxA, Matrix4f* mtxB, Matrix4f* dest
+asm : E0200460, 325F30 : guMtxF2L : void : Matrix4f* src, Matrix4s* dest
+asm : E0200470, 325F40 : guMtxL2F : void : Matrix4f* dest, Matrix4s* src
+asm : E0200480, 325F50 : queue_render_task : RenderTask* task : RenderTask* task
+asm : E0200490, 325F60 : create_effect_instance : EffectInstance* effect : EffectBlueprint* bp
+asm : E02004A0, 325F70 : remove_effect : void : EffectInstance* effect
+asm : E02004B0, 325F80 : general_heap_malloc : ptr data : int size
+asm : E02004C0, 325F90 : mem_clear : void : ptr data, int numBytes
+
+% E02004D0 is the null entry in the shim table.
+
+asm : E02004E0, 325FB0 : rand_int : int result : int max
+asm : E02004F0, 325FC0 : clamp_angle : F0 float angle : F12 float angle
+asm : E0200500, 325FD0 : sin_deg : F0 float result : F12 float angle
+asm : E0200510, 325FE0 : cos_deg : F0 float result : F12 float angle
+asm : E0200520, 325FF0 : atan2 : F0 float angle : F12 float startX, F14 float startZ, A2 float endX, A3 float endZ
+asm : E0200530, 326000 : npc_raycast_down_sides : bool hit : int ignoreFlags, float* x, float* y, float* z, float* length
+asm : E0200540, 326010 : load_effect : void : int effectID
+asm : E0200550, 326020 : sqrtf : F0 float result : F12 float value
+asm : E0200560, 326030 : mdl_draw_hidden_panel_surface : void : Gfx** displayListPos, int modelID
+asm : E0200570, 326040 : is_point_visible : bool visible : float x, float y, float z, int margin, float* screenX, float* screenY
+asm : E0200580, 326050 : guPerspectiveF : void : Matrix4f* mtx, short* perspNorm, float fovy, float aspect, float near, float far, float scale
+asm : E0200590, 326060 : guMtxIdentF : void : Matrix4f* mtx
+asm : E02005A0, 326070 : transform_point : void : Matrix4f* mtx, float inX, float inY, float inZ, float inS, float* outX, float* outY, float* outZ, float* outW
+asm : E02005B0, 326080 : guLookAtHiliteF : void : varargs
+asm : E02005C0, 326090 : set_screen_overlay_params_back : void : int type, float amount
+asm : E02005D0, 3260A0 : set_screen_overlay_center : void : int index, int posIndex, int screenX, int screenY
+asm : E02005E0, 3260B0 : set_screen_overlay_center_worldpos : void : int index, int posIndex, int x, int y, int z
+asm : E02005F0, 3260C0 : mdl_get_next_texture_address : ptr data : int size
+asm : E0200600, 3260D0 : guPositionF : void : Matrix4f* mtx, float r, float p, float h, float s, float x, float y, float z
+asm : E0200610, 3260E0 : guOrthoF : void : Matrix4f* mtx, float l, float r, float b, float t, float n, float f, float scale
+asm : E0200620, 3260F0 : guFrustumF : void : Matrix4f* mtx, float l, float r, float b, float t, float n, float f, float scale
+asm : E0200630, 326100 : draw_prev_frame_buffer_at_screen_pos : void : int x, int y, int width, int height, float alpha
+asm : E0200640, 326110 : draw_box : bool failed : varargs
+asm : E0200650, 326120 : draw_msg : void : int msgID, int x, int y, int opacity, int palette, int style
+asm : E0200660, 326130 : get_msg_width : int width : int msgID, int style
+asm : E0200670, 326140 : mdl_get_shroud_tint_params : void : byte* r, byte* g, byte* b, byte* a
+asm : E0200680, 326150 : sfx_play_sound_at_position : void : int soundID, int flags, float x, float y, float z
+
+% The US shim block ends here; E0200690 begins effect-global data.
