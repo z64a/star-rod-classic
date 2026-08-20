@@ -3,18 +3,18 @@ package util.xml;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -23,10 +23,34 @@ import org.xml.sax.SAXException;
 
 import app.input.IOUtils;
 import app.input.InputFileException;
-import util.Logger;
 
 public class XmlWrapper
 {
+	public static DocumentBuilder newSecureDocumentBuilder() throws ParserConfigurationException
+	{
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+		factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+		factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+		factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+		factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+
+		try {
+			factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+			factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+			factory.setXIncludeAware(false);
+			factory.setExpandEntityReferences(false);
+		}
+		catch (IllegalArgumentException | UnsupportedOperationException e) {
+			ParserConfigurationException wrapped = new ParserConfigurationException(
+				"XML parser does not support the required security settings: " + e.getMessage());
+			wrapped.initCause(e);
+			throw wrapped;
+		}
+
+		return factory.newDocumentBuilder();
+	}
+
 	public static interface XmlSerializable
 	{
 		public void fromXML(XmlReader xmr, Element elem);
@@ -45,9 +69,31 @@ public class XmlWrapper
 			Document document;
 
 			try {
-				DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-				DocumentBuilder builder = factory.newDocumentBuilder();
+				DocumentBuilder builder = newSecureDocumentBuilder();
 				document = builder.parse(xmlFile);
+			}
+			catch (ParserConfigurationException e) {
+				throw new InputFileException(xmlFile, e.getMessage());
+			}
+			catch (SAXException e) {
+				throw new InputFileException(xmlFile, e.getMessage());
+			}
+			catch (IOException e) {
+				throw new InputFileException(xmlFile, e.getMessage());
+			}
+
+			document.getDocumentElement().normalize();
+			rootElement = document.getDocumentElement();
+		}
+
+		public XmlReader(InputStream stream, String sourceName)
+		{
+			this.xmlFile = new File(sourceName);
+			Document document;
+
+			try {
+				DocumentBuilder builder = newSecureDocumentBuilder();
+				document = builder.parse(stream);
 			}
 			catch (ParserConfigurationException e) {
 				throw new InputFileException(xmlFile, e.getMessage());
@@ -126,6 +172,14 @@ public class XmlWrapper
 			return Arrays.asList(tokens);
 		}
 
+		public boolean readBoolean(Element elem, XmlKey key, boolean defaultValue)
+		{
+			if (!hasAttribute(elem, key))
+				return defaultValue;
+			else
+				return readBoolean(elem, key);
+		}
+
 		public boolean readBoolean(Element elem, XmlKey key)
 		{
 			String value = getAttribute(elem, key);
@@ -138,6 +192,14 @@ public class XmlWrapper
 				complain("Invalid boolean value for " + key + ": " + value);
 
 			return false;
+		}
+
+		public int readInt(Element elem, XmlKey key, int defaultValue)
+		{
+			if (!hasAttribute(elem, key))
+				return defaultValue;
+			else
+				return readInt(elem, key);
 		}
 
 		public int readInt(Element elem, XmlKey key)
@@ -154,6 +216,14 @@ public class XmlWrapper
 			return v;
 		}
 
+		public int readHex(Element elem, XmlKey key, int defaultValue)
+		{
+			if (!hasAttribute(elem, key))
+				return defaultValue;
+			else
+				return readHex(elem, key);
+		}
+
 		public int readHex(Element elem, XmlKey key)
 		{
 			String value = getAttribute(elem, key);
@@ -168,6 +238,14 @@ public class XmlWrapper
 			return v;
 		}
 
+		public float readFloat(Element elem, XmlKey key, float defaultValue)
+		{
+			if (!hasAttribute(elem, key))
+				return defaultValue;
+			else
+				return readFloat(elem, key);
+		}
+
 		public float readFloat(Element elem, XmlKey key)
 		{
 			String value = getAttribute(elem, key);
@@ -180,6 +258,14 @@ public class XmlWrapper
 				complain("Invalid float value for " + key + ": " + value);
 			}
 			return v;
+		}
+
+		public double readFloat(Element elem, XmlKey key, double defaultValue)
+		{
+			if (!hasAttribute(elem, key))
+				return defaultValue;
+			else
+				return readDouble(elem, key);
 		}
 
 		public double readDouble(Element elem, XmlKey key)
@@ -476,7 +562,11 @@ public class XmlWrapper
 		public XmlWriter(File xmlFile, String ... headerComments) throws FileNotFoundException
 		{
 			try {
-				temp = File.createTempFile(FilenameUtils.getBaseName("StarRod_" + xmlFile.getName()), null);
+				File parent = xmlFile.getAbsoluteFile().getParentFile();
+				if (parent == null || !parent.isDirectory())
+					throw new IOException("Output directory does not exist for " + xmlFile);
+
+				temp = File.createTempFile("StarRod_", ".tmp", parent);
 				temp.deleteOnExit();
 
 				file = xmlFile;
@@ -487,31 +577,49 @@ public class XmlWrapper
 					pw.println("<!-- " + comment + " -->");
 			}
 			catch (IOException e) {
-				e.printStackTrace();
+				FileNotFoundException wrapped = new FileNotFoundException(
+					"Could not create temporary XML output for " + xmlFile + ": " + e.getMessage());
+				wrapped.initCause(e);
+				throw wrapped;
 			}
 		}
 
-		public void save()
+		public void save() throws IOException
 		{
-			if (pw != null) {
-				pw.close();
+			if (pw == null)
+				throw new IOException("XML writer is closed");
 
-				try {
-					FileUtils.copyFile(temp, file);
-				}
-				catch (IOException e) {
-					Logger.printStackTrace(e);
-				}
-			}
+			PrintWriter writer = pw;
+			writer.flush();
+			boolean writeFailed = writer.checkError();
+			writer.close();
+			writeFailed |= writer.checkError();
+			pw = null;
+
+			if (writeFailed)
+				throw new IOException("Could not write temporary XML output for " + file);
+
+			IOUtils.atomicMoveFile(temp, file);
+			temp = null;
+		}
+
+		/** Compatibility alias for callers that explicitly requested checked save failures. */
+		public void saveOrThrow() throws IOException
+		{
+			save();
 		}
 
 		@Override
 		public void close()
 		{
-			if (temp != null)
-				temp.delete();
-			if (pw != null)
+			if (pw != null) {
 				pw.close();
+				pw = null;
+			}
+			if (temp != null) {
+				temp.delete();
+				temp = null;
+			}
 		}
 
 		public void printComment(String comment)
@@ -541,6 +649,18 @@ public class XmlWrapper
 				pw.println();
 		}
 
+		public void increaseIndent()
+		{
+			indentString = indentString + "\t";
+		}
+
+		public void decreaseIndent()
+		{
+			if (indentString.isEmpty())
+				throw new IllegalStateException("XML indentation is already zero");
+			indentString = indentString.substring(1);
+		}
+
 		public void openTag(XmlTag tag)
 		{
 			openTag(tag, null);
@@ -557,7 +677,7 @@ public class XmlWrapper
 				pw.println();
 
 			if (!tag.selfClose)
-				indentString = indentString + "\t";
+				increaseIndent();
 		}
 
 		public void closeTag(XmlTag tag)
@@ -567,7 +687,7 @@ public class XmlWrapper
 
 		public void closeTag(XmlTag tag, String comment)
 		{
-			indentString = indentString.substring(1);
+			decreaseIndent();
 
 			pw.print(indentString);
 			tag.printClose();

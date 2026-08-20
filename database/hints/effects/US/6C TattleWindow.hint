@@ -1,0 +1,11 @@
+add E00D8120 Function
+name E00D8120 Function_Init
+
+add E00D8128 Function
+name E00D8128 Function_Update
+
+add E00D825C Function
+name E00D825C Function_RenderScene
+
+add E00D8264 Function
+name E00D8264 Function_RenderUI

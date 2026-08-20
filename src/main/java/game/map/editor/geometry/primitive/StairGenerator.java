@@ -177,7 +177,7 @@ public class StairGenerator extends ShapeGenerator
 		Vertex[] topL = new Vertex[N];
 
 		int R = Math.round(width / 2.0f);
-		float uvScale = UV_SCALE / width;
+		float uvScale = (float) UV_SCALE / width;
 		int vOffset = (UV_SCALE * 3) / 2;
 
 		for (int i = 0; i < N; i++) {

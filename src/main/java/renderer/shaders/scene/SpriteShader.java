@@ -16,6 +16,7 @@ public final class SpriteShader extends BaseShader
 	public final UniformBool selected;
 	public final UniformBool highlighted;
 	public final UniformBool useFiltering;
+	public final UniformFloatVector color;
 
 	public final UniformBool useShading;
 
@@ -34,6 +35,7 @@ public final class SpriteShader extends BaseShader
 		selected = new UniformBool(program, "u_selected", false);
 		highlighted = new UniformBool(program, "u_highlighted", false);
 		useFiltering = new UniformBool(program, "u_useFiltering", false);
+		color = new UniformFloatVector(program, "u_color", 1.0f, 1.0f, 1.0f, 1.0f);
 
 		useShading = new UniformBool(program, "u_useShading", false);
 		shadingOffset = new UniformFloatVector(program, "u_shadingOffset", 0.0f, 0.0f);

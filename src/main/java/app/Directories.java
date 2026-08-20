@@ -18,16 +18,13 @@ public enum Directories
 	DATABASE_EDITOR		(Root.NONE, DATABASE,		"/editor/"),
 	DATABASE_THEMES		(Root.NONE, DATABASE,		"/themes/"),
 	DATABASE_TYPES		(Root.NONE, DATABASE,		"/types/"),
-	DATABASE_STRUCTS	(Root.NONE, DATABASE,		"/structs/"),
-	DATABASE_RAM_STRUCTS(Root.NONE, DATABASE_STRUCTS,	"/ram/"),
-	DATABASE_ROM_STRUCTS(Root.NONE, DATABASE_STRUCTS,	"/rom/"),
-	DATABASE_WIP_STRUCTS(Root.NONE, DATABASE_STRUCTS,	"/wip/"),
+	DATABASE_LIB		(Root.NONE, DATABASE,		"/lib/"),
 	DATABASE_HINTS		(Root.NONE, DATABASE,		"/hints/"),
 	DATABASE_SYSTEM		(Root.NONE, DATABASE,		"/system/"),
 
-	BACKUPS				(Root.NONE,				"/backups/"),
-	TEMP				(Root.NONE,				"/temp/"),
-	LOGS				(Root.NONE, 			"/logs/"),
+	LOCAL				(Root.NONE,				"/local/"),
+	TEMP				(Root.NONE, LOCAL,			"/temp/"),
+	LOGS				(Root.NONE, LOCAL,			"/logs/"),
 
 	DEFAULTS			(Root.NONE, DATABASE,		"/defaults/"),
 	DEFAULTS_FORM		(Root.NONE, DEFAULTS,			"/formation/"),
@@ -49,10 +46,10 @@ public enum Directories
 	DUMP_MAP_NPC 		(Root.DUMP, DUMP_MAP,		"/npc/"),
 	DUMP_MAP_THUMBNAIL	(Root.DUMP, DUMP_MAP,		"/thumbnail/"),
 
-	DUMP_EFFECT 		(Root.DUMP, 			"/effect/", true),
+	DUMP_EFFECT 		(Root.DUMP, 			"/effect/"),
 	DUMP_EFFECT_GFX		(Root.DUMP, DUMP_EFFECT,	"/grahics/", true),
-	DUMP_EFFECT_RAW		(Root.DUMP, DUMP_EFFECT,	"/raw/", true),
-	DUMP_EFFECT_SRC		(Root.DUMP, DUMP_EFFECT,	"/src/", true),
+	DUMP_EFFECT_RAW		(Root.DUMP, DUMP_EFFECT,	"/raw/"),
+	DUMP_EFFECT_SRC		(Root.DUMP, DUMP_EFFECT,	"/src/"),
 
 	DUMP_WORLD			(Root.DUMP,				"/world/"),
 
@@ -113,6 +110,11 @@ public enum Directories
 	DUMP_SPR_PLR_SHARED	(Root.DUMP, DUMP_SPR_PLR_SRC,		"/shared/"),
 
 	DUMP_AUDIO			(Root.DUMP,				"/audio/"),
+	DUMP_AUDIO_RAW		(Root.DUMP,	DUMP_AUDIO,		"/raw/"),
+	DUMP_AUDIO_BANK		(Root.DUMP,	DUMP_AUDIO,		"/bank/"),
+	DUMP_AUDIO_BGM		(Root.DUMP,	DUMP_AUDIO,		"/bgm/"),
+	DUMP_AUDIO_MSEQ		(Root.DUMP,	DUMP_AUDIO,		"/mseq/"),
+	DUMP_AUDIO_SFX		(Root.DUMP,	DUMP_AUDIO,		"/sfx/"),
 
 	DUMP_GLOBALS		(Root.DUMP,				"/globals/"),
 
@@ -130,10 +132,15 @@ public enum Directories
 
 	DUMP_LIB			(Root.DUMP,				"/lib/"),
 
+	DUMP_YAY0_REFERENCE	(Root.DUMP,				"/yay0/reference/", true),
 	DUMP_YAY0_DECODED	(Root.DUMP,				"/yay0/decoded/", true),
 	DUMP_YAY0_ENCODED	(Root.DUMP,				"/yay0/encoded/", true),
 
 	//=======================================================================================
+
+	MOD_BACKUPS			(Root.MOD,				"/backups/", true),
+	MOD_BACKUPS_PROJECT	(Root.MOD, MOD_BACKUPS,		"/project/", true),
+	MOD_BACKUPS_MAP		(Root.MOD, MOD_BACKUPS,		"/maps/", true),
 
 	MOD_MAP				(Root.MOD,				"/map/"),
 	MOD_MAP_IMPORT		(Root.MOD, MOD_MAP,			"/import/"),		// reusable patch data that can be imported into map patch files
@@ -145,6 +152,11 @@ public enum Directories
 	MOD_MAP_CACHE		(Root.MOD, MOD_MAP, 		"/cache/", true),	// automatically generated files during patch process
 	MOD_MAP_TEMP		(Root.MOD, MOD_MAP, 		"/temp/", true),	// automatically generated files during patch process
 	MOD_MAP_THUMBNAIL	(Root.MOD, MOD_MAP,			"/thumbnail/"),
+
+	MOD_EFFECT			(Root.MOD,				"/effect/"),
+	MOD_EFFECT_SRC		(Root.MOD, MOD_EFFECT,			"/src/"),
+	MOD_EFFECT_PATCH	(Root.MOD, MOD_EFFECT,			"/patch/"),
+	MOD_EFFECT_TEMP		(Root.MOD, MOD_EFFECT,			"/temp/", true),
 
 	MOD_WORLD			(Root.MOD,				"/world/"),
 
@@ -215,6 +227,13 @@ public enum Directories
 	MOD_SPR_PLR_CACHE	(Root.MOD, MOD_SPR_PLR,			"/cache/"),
 
 	MOD_AUDIO			(Root.MOD,				"/audio/"),
+	MOD_AUDIO_BUILD		(Root.MOD,	MOD_AUDIO,		"/build/"),
+	MOD_AUDIO_OVERRIDE  (Root.MOD,	MOD_AUDIO,		"/override/"),
+	MOD_AUDIO_RAW		(Root.MOD,	MOD_AUDIO,		"/raw/"),
+	MOD_AUDIO_BANK		(Root.MOD,	MOD_AUDIO,		"/bank/"),
+	MOD_AUDIO_BGM		(Root.MOD,	MOD_AUDIO,		"/bgm/"),
+	MOD_AUDIO_MSEQ		(Root.MOD,	MOD_AUDIO,		"/mseq/"),
+	MOD_AUDIO_SFX		(Root.MOD,	MOD_AUDIO,		"/sfx/"),
 
 	MOD_EDITOR			(Root.MOD,				"/editor/"),
 
@@ -270,8 +289,13 @@ public enum Directories
 	public static final String FN_SPRITESHEET = "SpriteSheet.xml";
 	public static final String FN_SPRITE_CACHE = "checksums.txt";
 
-	public static final String FN_AUDIO_FILES = "FileList.xml";
-	public static final String FN_AUDIO_SONGS = "SongList.xml";
+	public static final String FN_AUDIO_SONGS = "Songs.xml";
+	public static final String FN_AUDIO_AMBIENTS = "AmbientSounds.xml";
+	public static final String FN_AUDIO_BANKS = "Banks.xml";
+	public static final String FN_AUDIO_DRUMS = "Drums.xml";
+	public static final String FN_AUDIO_PRESETS = "Presets.xml";
+	public static final String FN_SOUND_BANK = "SoundBank.xml";
+	public static final String EXT_BANK = ".bk";
 
 	public static final String FN_STRING_CONSTANTS = "StringConstants.xml";
 
@@ -375,6 +399,11 @@ public enum Directories
 			Logger.printStackTrace(e);
 		}
 		return name;
+	}
+
+	public File getFile(String name)
+	{
+		return new File(this.toFile(), name);
 	}
 
 	private enum Root

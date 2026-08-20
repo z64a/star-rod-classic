@@ -1,0 +1,4 @@
+#new:Data $##[VALUE:Name] {
+##[VALUE:Left]-value
+Before ##[VALUE:Words] After
+}

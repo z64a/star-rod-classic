@@ -9,8 +9,9 @@
             160
         ],
         "editor.tabSize": 4,
+        "editor.trimAutoWhitespace": false,
         "files.insertFinalNewline": true,
-        "files.trimTrailingWhitespace": true
+        "files.trimTrailingWhitespace": false
     },
     "files.encoding": "utf8",
     "java.cleanup.actions": [
@@ -18,7 +19,19 @@
         "lambdaExpressionFromAnonymousClass",
         "organizeImports"
     ],
+    "java.completion.importOrder": [
+        "#",
+        "java",
+        "javax",
+        "org",
+        "com",
+        ""
+    ],
     "java.codeGeneration.useBlocks": true,
+    "java.format.comments.enabled": true,
     "java.format.enabled": true,
-    "java.saveActions.cleanup": true
+    "java.saveActions.cleanup": true,
+    "java.sources.organizeImports.starThreshold": 99,
+    "java.sources.organizeImports.staticStarThreshold": 3,
+    "java.configuration.updateBuildConfiguration": "automatic"
 }

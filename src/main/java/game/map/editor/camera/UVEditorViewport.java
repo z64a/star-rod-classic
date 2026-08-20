@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import common.Vector3f;
+
 import game.map.BoundingBox;
 import game.map.editor.MapEditor;
 import game.map.editor.MapEditor.EditorMode;

@@ -2,6 +2,7 @@ package game.map;
 
 import static app.Directories.MOD_IMG_TEX;
 import static game.map.MapKey.*;
+import static renderer.GLUtils.NO_TEXTURE_ID;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -17,7 +18,6 @@ import java.util.Stack;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.w3c.dom.Element;
 
@@ -49,7 +49,6 @@ import game.map.scripts.ScriptData;
 import game.map.shape.LightSet;
 import game.map.shape.LightSet.LightSetDigest;
 import game.map.shape.Model;
-import game.map.shape.TexturePanner;
 import game.map.shape.UV;
 import game.map.tree.ColliderTreeModel;
 import game.map.tree.MapObjectNode;
@@ -104,7 +103,7 @@ public class Map implements XmlSerializable
 	public transient File saveFile;
 	public transient boolean modified = false;
 	public transient BufferedImage bgImage = null;
-	public transient int glBackgroundTexID = -1;
+	public transient int glBackgroundTexID = NO_TEXTURE_ID;
 
 	@Override
 	public void fromXML(XmlReader xmr, Element mapElem)
@@ -303,9 +302,6 @@ public class Map implements XmlSerializable
 		modelTree.getRoot().getUserObject().lights.set(lightSets.get(0));
 
 		scripts = new ScriptData();
-
-		for (int i = 0; i < 16; i++)
-			scripts.texPanners.addElement(new TexturePanner(i));
 	}
 
 	public void add(MapObject obj)
@@ -786,15 +782,27 @@ public class Map implements XmlSerializable
 
 	public void saveBackupAs(File file, String author) throws Exception
 	{
-		this.editorData = null;
-		saveMapAs(file, author, false);
+		MapEditorMetadata oldEditorData = editorData;
+		File oldSource = source;
+		File oldSaveFile = saveFile;
+		String oldAuthor = this.author;
+		boolean oldModified = modified;
+
+		try {
+			editorData = null;
+			saveMapAs(file, author, false);
+		}
+		finally {
+			editorData = oldEditorData;
+			source = oldSource;
+			saveFile = oldSaveFile;
+			this.author = oldAuthor;
+			modified = oldModified;
+		}
 	}
 
 	private void saveMapAs(File file, String author, boolean overrideName) throws Exception
 	{
-		FileUtils.touch(file);
-		File tempFile = new File(file.getAbsolutePath() + ".temp");
-
 		if (modified)
 			this.author = author;
 
@@ -805,13 +813,11 @@ public class Map implements XmlSerializable
 
 		markerTree.recalculateIndicies();
 
-		try (XmlWriter xmw = new XmlWriter(tempFile)) {
+		try (XmlWriter xmw = new XmlWriter(file)) {
 			toXML(xmw);
 			xmw.save();
 		} // flushed on auto-close
 
-		FileUtils.copyFile(tempFile, file);
-		FileUtils.deleteQuietly(tempFile);
 		source = file;
 		saveFile = file;
 

@@ -80,9 +80,6 @@ public class SpiralRampGenerator extends ShapeGenerator
 		int sideHeight = sideHeightSpinner.getValue();
 		boolean makeBottom = makeBottomCheckbox.isSelected();
 
-		if (innerRadius == outerRadius)
-			outerRadius = innerRadius + 50;
-
 		return generate(steps, stepRise, innerRadius, outerRadius, angle,
 			taperPercent, sideHeight, makeBottom,
 			centerX, centerY, centerZ);
@@ -93,8 +90,12 @@ public class SpiralRampGenerator extends ShapeGenerator
 		int taperPercent, int sideHeight, boolean makeBottom,
 		int centerX, int centerY, int centerZ)
 	{
+		if (innerR == outerR)
+			outerR = innerR + 50;
+
 		int N = steps + 1;
 		double angleRad = Math.toRadians(angle);
+		int radiusDelta = outerR - innerR;
 
 		int uOffset = 0;
 		int vOffset = (UV_SCALE * 3) / 2;
@@ -151,7 +152,7 @@ public class SpiralRampGenerator extends ShapeGenerator
 				upperO[i].uv = new UV(i * UV_SCALE + uOffset, vOffset);
 			}
 
-			float uvScale = UV_SCALE / (outerR - innerR);
+			float uvScale = (float) UV_SCALE / radiusDelta;
 
 			Vertex[] lowerI = new Vertex[N];
 			Vertex[] lowerO = new Vertex[N];

@@ -8,6 +8,7 @@ import javax.swing.JTabbedPane;
 
 import common.CameraInput;
 import common.KeyInput;
+
 import net.miginfocom.swing.MigLayout;
 
 public class SpriteShortcutsPanel extends JPanel

@@ -48,7 +48,9 @@ public class LibraryFixer
 	private static void updateLib(String filename, ROM rom, LibScope scope) throws IOException, InvalidInputException
 	{
 		File lib = new File(Directories.DATABASE + filename + ".lib");
-		FileUtils.copyFile(lib, new File(Directories.DATABASE + filename + ".backup"));
+		File backupDir = new File(Directories.TEMP + "library/");
+		FileUtils.forceMkdir(backupDir);
+		FileUtils.copyFile(lib, new File(backupDir, filename + ".backup"));
 
 		List<String> lines = IOUtils.readPlainTextFile(lib);
 		PrintWriter pw = IOUtils.getBufferedPrintWriter(lib);

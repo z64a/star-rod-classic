@@ -10,7 +10,8 @@ import app.Environment;
  * domains the Option pertains to and the {@link Type} defines acceptable values for it to hold.
  * Type checking is enforced by getter/setter methods in the Config class.
  *
- * Options with Main or Dump scope belong to /cfg/main.cfg
+ * Options with Main scope belong to /local/main.cfg.
+ * Options with Dump scope belong to the dump's /dump.cfg.
  * Options with Editor or Patch scope belong to {mod.dir}/mod.cfg
  */
 public enum Options
@@ -47,6 +48,8 @@ public enum Options
 			"Partner overworld actions."),
 	DumpWorld			(true, Scope.Main, Type.Boolean, "DumpWorld", "True", "World Data",
 			"Scripts for entities and actions."),
+	DumpEffects		(true, Scope.Main, Type.Boolean, "DumpEffects", "True", "Visual Effects",
+			"Effect code and graphics."),
 	DumpTextures		(true, Scope.Main, Type.Boolean, "DumpTextures", "True", "Textures", ""),
 	DumpSprites			(true, Scope.Main, Type.Boolean, "DumpSprites", "True", "Sprites", ""),
 	DumpAudio			(true, Scope.Main, Type.Boolean, "DumpAudio", "True", "Audio Files", ""),
@@ -95,6 +98,12 @@ public enum Options
 	EnableDebugCode		(true, Scope.Patch, Type.Boolean, "EnableDebugCode", "False", "Enable Debug Information",
 			"Print live debug information and enable the cheat menu."),
 
+	EnableFPSCounter	(true, Scope.Patch, Type.Boolean, "EnableFPSCounter", "False", "Show FPS Counter",
+			"Display CPU and GPU frame timing with implied FPS."),
+
+	EnableCrashSymbols	(true, Scope.Patch, Type.Boolean, "EnableCrashSymbols", "False", "Embed Crash Function Names",
+			"Embed always-resident function names for crash-screen stack traces (about 73 KiB of RAM)."),
+
 	EnableVarLogging	(true, Scope.Patch, Type.Boolean, "EnableVarLogging", "False", "Enable Variable Logging",
 			"(Requires debug information enabled) Print a message to the screen whenever a Game/Mod Byte/Flag is written."),
 
@@ -113,8 +122,11 @@ public enum Options
 	PatchFonts			(true, Scope.Patch, Type.Boolean, "PatchFonts",	"False", "Inject Font",
 			"Injects font images, making additional adjustments if they are larger than normal."),
 
-	BuildAudio			(true, Scope.Patch, Type.Boolean, "BuildAudio",	"False", "Inject Audio Files",
+	BuildSoundBanks		(true, Scope.Patch, Type.Boolean, "BuildSoundBanks",	"False", "Build Sound Banks",
 			"Only use this option if you are adding custom music."),
+
+	BuildAudio			(true, Scope.Patch, Type.Boolean, "BuildAudio",	"False", "Inject Audio Files",
+			"Use this option if you are adding custom music or sounds."),
 
 	SkipIntroLogos		(true, Scope.Patch, Type.Boolean, "SkipIntroLogos", "True", "Skip Intro Logos",
 			"Developer logos will not appear during boot."),
@@ -170,8 +182,8 @@ public enum Options
 
 	ModVersionString	(true, Scope.Patch, Type.String, "ModVersionString", "Paper Mario Mod"),
 
-	CompressModPackage	(true, Scope.Patch, Type.Boolean, "CompressModPackage", "True", "Compress Mod Package",
-			"Use Yay0 to compress the final diff file for your mod. May take several additional minutes."),
+	CompressModPackage	(true, Scope.Patch, Type.Boolean, "CompressModPackage", "True", "Compress Legacy MOD Package",
+			"Use Yay0 to compress the legacy .mod diff file. May take several additional minutes."),
 
 	DebugInlineScripts	(false, Scope.Patch, Type.Boolean, "DebugInlineScripts", "False"),
 

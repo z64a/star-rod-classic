@@ -53,6 +53,7 @@ import app.Environment;
 import app.StarRodFrame;
 import app.SwingUtils;
 import app.SwingUtils.OpenDialogCounter;
+import app.ThemesEditor;
 import app.config.PreferencesPanel;
 import common.EditorCanvas;
 import common.KeyBindingsPanel;
@@ -63,10 +64,10 @@ import game.map.Map.ToggleBackground;
 import game.map.Map.ToggleStage;
 import game.map.MapObject;
 import game.map.MapObject.MapObjectType;
-import game.map.editor.MapInput;
 import game.map.editor.MapEditor;
 import game.map.editor.MapEditor.EditorMode;
 import game.map.editor.MapEditor.IShutdownListener;
+import game.map.editor.MapInput;
 import game.map.editor.PaintManager;
 import game.map.editor.commands.AbstractCommand;
 import game.map.editor.commands.ChangeTextureArchive;
@@ -222,16 +223,17 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 			public void windowClosing(WindowEvent e)
 			{
 				openDialogCount.increment();
-				closeRequested = (!editor.map.modified || promptForSave()) && (!ProjectDatabase.SpriteShading.modified || promptSaveShading());
+				closeRequested = (!editor.map.modified || promptForSave())
+					&& (!ProjectDatabase.SpriteShading.modified || promptSaveShading());
 				if (!closeRequested)
 					openDialogCount.decrement();
 			}
 		});
 
 		/* set file chooser behavior */
-		File mapDir = Environment.project.isDecomp ? Environment.project.getDirectory() : MOD_MAP_SAVE.toFile();
-		File texDir = Environment.project.isDecomp ? Environment.project.getDirectory() : MOD_IMG_TEX.toFile();
-		File bgDir = Environment.project.isDecomp ? Environment.project.getDirectory() : MOD_IMG_BG.toFile();
+		File mapDir = MOD_MAP_SAVE.toFile();
+		File texDir = MOD_IMG_TEX.toFile();
+		File bgDir = MOD_IMG_BG.toFile();
 
 		openMapChooser = new OpenFileChooser(mapDir, "Open Map", "Star Rod Maps", Map.EXTENSION.substring(1));
 		saveMapChooser = new SaveFileChooser(mapDir, "Save Map", "Star Rod Maps", Map.EXTENSION.substring(1));
@@ -441,16 +443,15 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 
 		switch (choice) {
 			case JOptionPane.YES_OPTION:
-				editor.action_SaveMap();
+				return editor.action_SaveMap();
 			case JOptionPane.NO_OPTION:
-				break;
+				return true;
 			case JOptionPane.CANCEL_OPTION:
 			case JOptionPane.CLOSED_OPTION:
-				closeRequested = false;
 				return false;
 		}
 
-		return true;
+		return false;
 	}
 
 	private boolean promptSaveShading()
@@ -642,18 +643,20 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 
 		menu.addSeparator();
 
+		item = new JMenuItem("Preferences");
+		addButtonCommand(item, GuiCommand.SHOW_EDITOR_PREFERENCES);
+		menu.add(item);
+
 		item = new JMenuItem("Shortcuts");
 		addButtonCommand(item, GuiCommand.SHOW_SHORTCUTS);
 		menu.add(item);
 		item.setPreferredSize(menuItemDimension);
 
-		item = new JMenuItem("Preferences");
-		addButtonCommand(item, GuiCommand.SHOW_EDITOR_PREFERENCES);
-		menu.add(item);
-
 		item = new JMenuItem("Key Bindings");
 		addButtonCommand(item, GuiCommand.SHOW_KEY_BINDINGS);
 		menu.add(item);
+
+		ThemesEditor.addThemeMenuItem(menu, this);
 	}
 
 	private JMenu getTransformMenu()
@@ -924,7 +927,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 
 	private static void createTab(JTabbedPane tabs, String name, Container contents)
 	{
-		JLabel lbl = SwingUtils.getLabel(name, 12);
+		JLabel lbl = SwingUtils.getTabLabel(tabs, name, 12);
 		lbl.setPreferredSize(new Dimension(60, 20));
 		lbl.setHorizontalAlignment(SwingConstants.CENTER);
 
@@ -940,7 +943,7 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 
 		JScrollPane paintScrollPane = new JScrollPane(paintVertexTab);
 		paintScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		paintScrollPane.setBorder(null);
+		SwingUtils.setBorderless(paintScrollPane);
 
 		createTab(tabbedPane, "Objects", createTransformTab());
 		createTab(tabbedPane, "Texture", createTextureTab());
@@ -1003,13 +1006,13 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		bg.add(vertexRadioButton);
 		bg.add(pointRadioButton);
 
-		JPanel selectionTypePanel = new JPanel(new MigLayout("fill"));
+		JPanel selectModePanel = new JPanel(new MigLayout("fill, ins 0 4 0 4"));
 
-		selectionTypePanel.add(SwingUtils.getLabel("Selection mode:", 12), "growx, wrap, gapbottom 4");
-		selectionTypePanel.add(objectRadioButton, "sg selection_type, growx, split 4");
-		selectionTypePanel.add(triangleRadioButton, "sg selection_type, growx");
-		selectionTypePanel.add(vertexRadioButton, "sg selection_type, growx");
-		selectionTypePanel.add(pointRadioButton, "sg selection_type, growx, wrap");
+		selectModePanel.add(SwingUtils.getLabel("Selection Mode", 14), "growx, wrap, gapbottom 4");
+		selectModePanel.add(objectRadioButton, "sg selection_type, growx, split 4");
+		selectModePanel.add(triangleRadioButton, "sg selection_type, growx");
+		selectModePanel.add(vertexRadioButton, "sg selection_type, growx");
+		selectModePanel.add(pointRadioButton, "sg selection_type, growx, wrap");
 
 		// create dialogs
 		uvOptionsPanel = new UVOptionsPanel();
@@ -1019,14 +1022,11 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		objectPanel = new MapObjectPanel(this, editor, infoPanelContainer);
 
 		JPanel modifyTab = new JPanel();
-		modifyTab.setLayout(new MigLayout("fill, flowy, ins 4"));
-		modifyTab.add(selectionTypePanel, "grow");
-
-		//		modifyTab.add(objectPanel, "grow, pushy");
-		//		modifyTab.add(infoPanelContainer, "h 40%!, grow");
+		modifyTab.setLayout(new MigLayout("fill, flowy, ins 8 4 0 4"));
+		modifyTab.add(selectModePanel, "grow");
 
 		JScrollPane infoScrollPane = new JScrollPane(infoPanelContainer);
-		infoScrollPane.setBorder(null);
+		SwingUtils.setBorderless(infoScrollPane);
 		infoScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 		infoScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
@@ -1140,9 +1140,9 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 		JPanel textureTab = new JPanel();
 		textureTab.setLayout(new MigLayout("fillx, insets 8 8 0 8"));
 
-		textureTab.add(SwingUtils.getLabel("Selected Texture:", 14), "span, wrap");
+		textureTab.add(SwingUtils.getLabel("Selected Texture", 14), "span, wrap");
 		textureTab.add(currentTexturePanel, "span, wrap");
-		textureTab.add(SwingUtils.getLabel("Available Textures:", 14), "span, wrap");
+		textureTab.add(SwingUtils.getLabel("Available Textures", 14), "span, wrap");
 		textureTab.add(textureScrollPane, "span, grow, wrap");
 
 		return textureTab;
@@ -1292,29 +1292,29 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 			// following commands are forwarded directly to the editor
 			/*
 			case SAVE_MAP:
-
+			
 			case COMPILE_SHAPE:
 			case COMPILE_COLLISION:
-
+			
 			case SHOW_MODELS:
 			case SHOW_COLLIDERS:
 			case SHOW_ZONES:
 			case SHOW_MARKERS:
-
+			
 			case RESET_CAMERAS:
 			case RESET_LAYOUT:
-
+			
 			case SEPARATE_VERTS:
 			case FUSE_VERTS:
 			case JOIN_MODELS:
 			case SPLIT_MODEL:
-
+			
 			case CONVERT_COLLIDER_TO_ZONE:
 			case CONVERT_ZONE_TO_COLLIDER:
-
+			
 			case CREATE_COLLIDER_GROUP:
 			case CREATE_ZONE_GROUP:
-
+			
 			case DEBUG_RECOMPUTE_BOUNDING_BOXES:
 			 */
 			default:

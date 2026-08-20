@@ -2,6 +2,7 @@ package game.fold;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.GL_CLAMP_TO_BORDER;
+import static renderer.GLUtils.NO_TEXTURE_ID;
 
 import java.awt.Canvas;
 import java.awt.event.ActionListener;
@@ -14,9 +15,10 @@ import javax.swing.JLabel;
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 
-import app.Environment;
 import common.BaseEditor;
 import common.BaseEditorSettings;
+
+import app.Environment;
 import game.fold.FoldAnimations.FoldAnim;
 import game.fold.FoldAnimations.FoldTriangle;
 import game.fold.FoldAnimations.FoldVertex;
@@ -69,7 +71,7 @@ public class FoldEditor extends BaseEditor
 	private List<FoldAnim> foldAnims;
 
 	private BufferedImage bgImage = null;
-	private int glBackgroundTexID = -1;
+	private int glBackgroundTexID = NO_TEXTURE_ID;
 
 	private int currentAnimID = 6;
 
@@ -115,7 +117,6 @@ public class FoldEditor extends BaseEditor
 	@Override
 	public void glInit()
 	{
-		RenderState.init();
 		TextureManager.bindEditorTextures();
 		loadTextures();
 		ShadowRenderer.init();
@@ -252,19 +253,19 @@ public class FoldEditor extends BaseEditor
 		// left
 		shader.setXYQuadCoords(leftX - 16, 120, leftX + 16, 120 - 16, 0);
 		shader.renderQuad();
-
+		
 		// right
 		shader.setXYQuadCoords(rightX - 16, 120, rightX + 16, 120 - 16, 0);
 		shader.renderQuad();
-
+		
 		// top
 		shader.setXYQuadCoords(160 - 16, topY + 16, 160 + 16, topY, 0);
 		shader.renderQuad();
-
+		
 		// bottom
 		shader.setXYQuadCoords(160 - 16, bottomY, 160 + 16, bottomY - 16, 0);
 		shader.renderQuad();
-
+		
 		*/
 
 		uiText.draw(16, 0, 0, (float) super.getDeltaTime());
@@ -351,9 +352,9 @@ public class FoldEditor extends BaseEditor
 	}
 
 	@Override
-	protected void saveChanges()
+	protected boolean saveChanges()
 	{
-
+		return true;
 	}
 
 	@Override

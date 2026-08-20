@@ -20,8 +20,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
-import com.alexandriasoftware.swing.JSplitButton;
-
 import app.SwingUtils;
 import game.map.MapObject.MapObjectType;
 import game.map.editor.MapEditor;
@@ -39,6 +37,7 @@ import util.ui.HexTextField;
 import util.ui.IntTextField;
 import util.ui.StringField;
 import util.ui.StringSelectorDialog;
+import util.ui.ThemedSplitButton;
 
 public class EntitySubpanel extends JPanel implements ActionListener
 {
@@ -122,7 +121,7 @@ public class EntitySubpanel extends JPanel implements ActionListener
 
 	private final MarkerInfoPanel parent;
 
-	private JSplitButton entityTypeButton;
+	private ThemedSplitButton entityTypeButton;
 
 	private JCheckBox cbHasCallback;
 
@@ -185,7 +184,7 @@ public class EntitySubpanel extends JPanel implements ActionListener
 		//	setLayout(new MigLayout("fillx, hidemode 3, ins 0, wrap"));
 		//	add(SwingUtils.getLabel("Entity Settings", 14), "growx, gapbottom 4");
 
-		entityTypeButton = new JSplitButton("EntityType");
+		entityTypeButton = new ThemedSplitButton("EntityType");
 		entityTypeButton.setPopupMenu(entityTypePopupMenu);
 		entityTypeButton.setAlwaysPopup(true);
 		SwingUtils.addBorderPadding(entityTypeButton);

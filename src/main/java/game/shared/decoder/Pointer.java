@@ -70,41 +70,44 @@ public class Pointer
 	public EntityType assignedToType = null;
 	public Marker assignedToMarker = null;
 
+	// for data structures that describe a marker, such as NPC data and settings
+	public Marker associatedMarker = null;
+
 	/*
 	private ArrayList<Property> properties = new ArrayList<>();
-
+	
 	// many special case fields
 	public static enum PropertyType
 	{
 		NpcBattleID			(-1),
 		FoliageColliderID	(-1),
 		FoliageBombPos		(0);
-
+	
 		private final Object defaultVal;
-
+	
 		private PropertyType(Object defaultVal)
 		{
 			this.defaultVal = defaultVal;
 		}
 	}
-
+	
 	public class Property
 	{
 		private final PropertyType type;
 		private Object obj;
-
+	
 		private Property(PropertyType type, Object obj)
 		{
 			this.type = type;
 			this.obj = obj;
 		}
-
+	
 		public Object getValue()
 		{
 			return obj;
 		}
 	}
-
+	
 	public Object setProperty(PropertyType type, Object obj)
 	{
 		Property prop = null;
@@ -116,7 +119,7 @@ public class Pointer
 				break;
 			}
 		}
-
+	
 		Object prev = null;
 		if(prop != null)
 		{
@@ -130,7 +133,7 @@ public class Pointer
 		}
 		return prev;
 	}
-
+	
 	public Object getProperty(PropertyType type)
 	{
 		for(Property p : properties)
@@ -140,7 +143,7 @@ public class Pointer
 		}
 		return type.defaultVal;
 	}
-
+	
 	public boolean hasProperty(PropertyType type)
 	{
 		for(Property p : properties)

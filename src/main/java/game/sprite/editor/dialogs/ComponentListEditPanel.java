@@ -5,12 +5,13 @@ import javax.swing.JButton;
 
 import game.sprite.SpriteAnimation;
 import game.sprite.SpriteComponent;
+import game.sprite.editor.SpriteEditor;
 
 public class ComponentListEditPanel extends ListEditPanel<SpriteComponent>
 {
-	public ComponentListEditPanel(SpriteAnimation anim, DefaultListModel<SpriteComponent> listModel)
+	public ComponentListEditPanel(SpriteAnimation anim, DefaultListModel<SpriteComponent> listModel, SpriteEditor editor)
 	{
-		super(listModel);
+		super(listModel, editor::markCurrentSpriteModified);
 
 		JButton addButton = new JButton("Add New Component");
 		addButton.addActionListener((e) -> {

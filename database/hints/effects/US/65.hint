@@ -1,0 +1,8 @@
+add E00CA240 Function
+name E00CA240 Function_Init
+
+add E00CA248 Function
+name E00CA248 Function_Update
+
+add E00CA484 Function
+name E00CA484 Function_RenderScene

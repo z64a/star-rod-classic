@@ -1,0 +1,8 @@
+add E002A284 Function
+name E002A284 Function_Init
+
+add E002A28C Function
+name E002A28C Function_Update
+
+add E002A380 Function
+name E002A380 Function_RenderScene

@@ -1,7 +1,15 @@
 package game.shared.encoder;
 
 import static app.Directories.MOD_RESOURCE;
-import static game.shared.StructTypes.*;
+import static game.shared.StructTypes.AsciiT;
+import static game.shared.StructTypes.ConstDoubleT;
+import static game.shared.StructTypes.DataTableT;
+import static game.shared.StructTypes.DisplayListT;
+import static game.shared.StructTypes.FunctionT;
+import static game.shared.StructTypes.ScriptT;
+import static game.shared.StructTypes.SjisT;
+import static game.shared.StructTypes.StringT;
+import static game.shared.StructTypes.UnknownT;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
@@ -17,6 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -112,6 +121,7 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 
 	private final TypeMap typeMap;
 	private final Directories importDirectory;
+	private final HashSet<File> activeImports;
 
 	private LibScope defaultScope;
 
@@ -187,6 +197,7 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 
 		stringLiteralMap = new HashMap<>();
 		stringLiteralOriginMap = new HashMap<>();
+		activeImports = new HashSet<>();
 
 		importDirectory = null;
 	}
@@ -202,6 +213,15 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 			return name;
 		else
 			return name.substring(0, 1) + currentNamespace + NAMESPACE_SEPERATOR + name.substring(1);
+	}
+
+	static String combineImportNamespace(String currentNamespace, String importNamespace)
+	{
+		if (currentNamespace.isEmpty())
+			return importNamespace;
+		if (importNamespace.isEmpty())
+			return currentNamespace;
+		return currentNamespace + NAMESPACE_SEPERATOR + importNamespace;
 	}
 
 	/**
@@ -280,6 +300,27 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 			determineLocalPlacement();
 		else
 			determineGlobalPlacement();
+
+		collectBuildSymbols();
+	}
+
+	private void collectBuildSymbols()
+	{
+		String defaultSource = primarySource == null ? "-" : primarySource.getName();
+		for (Struct struct : declaredStructs.values()) {
+			if (struct.deleted || (!struct.isTypeOf(FunctionT) && !struct.isTypeOf(ScriptT)))
+				continue;
+
+			boolean moved = struct.isDumped() && struct.finalAddress != struct.originalAddress;
+			if (struct.gens != Struct.StructGenus.New && struct.gens != Struct.StructGenus.Hook && !moved)
+				continue;
+
+			String source = defaultSource;
+			if (!struct.patchList.isEmpty() && struct.patchList.get(0).sourceLine != null)
+				source = struct.patchList.get(0).sourceLine.source.getName();
+			String type = struct.isTypeOf(FunctionT) ? "Function" : "Script";
+			globalsDatabase.addBuildSymbol(struct.finalAddress, struct.finalSize, struct.name, type, struct.scope, source, overlayMode);
+		}
 	}
 
 	protected final void buildOverlay(File outFile, File outIndexFile) throws IOException
@@ -598,7 +639,7 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 		Logger.log("Reading patch file: " + IOUtils.getRelativePath(Environment.project.getDirectory(), f));
 
 		List<Line> lines = IOUtils.readPlainInputFile(f);
-		readPatchSource(lines, new CaseInsensitiveMap<>());
+		readPatchSource(lines, rules);
 	}
 
 	private final void readPatchSource(List<Line> lines, CaseInsensitiveMap<String> rules) throws IOException
@@ -1480,7 +1521,16 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 		if (!importNamespace.isEmpty() && !importNamespace.matches("[\\w\\?]+"))
 			throw new InputFileException(unit.declaration, "Invalid namespace: %s (contains illegal character)", importNamespace);
 
-		File f = new File(importDirectory + "/" + filename);
+		File f;
+		try {
+			File importRoot = importDirectory.toFile().getCanonicalFile();
+			f = new File(importRoot, filename).getCanonicalFile();
+			if (!f.toPath().startsWith(importRoot.toPath()))
+				throw new InputFileException(unit.declaration, "Import resolves outside the import directory: %s", filename);
+		}
+		catch (IOException e) {
+			throw new InputFileException(unit.declaration, e);
+		}
 
 		if (!f.exists())
 			throw new InputFileException(unit.declaration, "Import file does not exist: %s", filename);
@@ -1507,15 +1557,21 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 			}
 		}
 
+		if (!activeImports.add(f))
+			throw new InputFileException(unit.declaration, "Import cycle detected: %s", filename);
+
 		String prevNamespace = currentNamespace;
 		try {
-			currentNamespace = importNamespace;
+			currentNamespace = combineImportNamespace(prevNamespace, importNamespace);
 			readPatchFile(f, rules);
 		}
 		catch (IOException e) {
 			throw new InputFileException(f, e);
 		}
-		currentNamespace = prevNamespace;
+		finally {
+			currentNamespace = prevNamespace;
+			activeImports.remove(f);
+		}
 
 		unit.parsed = true;
 	}
@@ -1616,6 +1672,9 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 		if (scopeName != null && !scopeName.isEmpty()) {
 			switch (scopeName.toLowerCase()) {
 				case "global":
+					break;
+				case "effect":
+					scope = LibScope.Effect;
 					break;
 				case "map":
 				case "world":
@@ -2263,7 +2322,7 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 				break;
 
 			case "anim": {
-				if (exprFields.length != 2 && exprFields.length != 3)
+				if (exprFields.length != 3 && exprFields.length != 4)
 					throw new InputFileException(line, "Invalid anim: " + exp);
 
 				String palName = (exprFields.length == 4) ? exprFields[3] : "";
@@ -2279,10 +2338,10 @@ public abstract class BaseDataEncoder implements ConstantDatabase
 				break;
 
 			case "playeranim": {
-				if (exprFields.length != 2 && exprFields.length != 3)
+				if (exprFields.length != 3 && exprFields.length != 4)
 					throw new InputFileException(line, "Invalid player anim: " + exp);
 
-				String palName = (exprFields.length == 3) ? exprFields[3] : "";
+				String palName = (exprFields.length == 4) ? exprFields[3] : "";
 				int id = globalsDatabase.getPlayerAnimID(exprFields[1], exprFields[2], palName);
 				if (id == -1)
 					throw new InputFileException(line, "Invalid player sprite name: " + exprFields[1]);

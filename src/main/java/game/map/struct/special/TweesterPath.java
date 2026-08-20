@@ -19,9 +19,9 @@ public class TweesterPath extends BaseStruct
 	This data structure controls the motion of the Tweester NPC.
 	It appears to be organized as a list of int32[3] vectors, but the game actually
 	reads only the lower halfword of each coordinate.
-
+	
 	End of list is identified by 0x80000001.
-
+	
 	Values are read by func_802BB76C, which returns true if the Tweester comes within
 	10 units in X and Z of the next vector in the list.
 	 */

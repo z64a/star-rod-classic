@@ -2,7 +2,6 @@ package game.string.editor.io;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,7 +12,6 @@ import app.input.InputFileException;
 import app.input.Line;
 import game.string.PMString;
 import game.string.StringEncoder;
-import util.Logger;
 
 public class StringResource
 {
@@ -69,10 +67,10 @@ public class StringResource
 		{
 			if(!string.indexed)
 				continue;
-
+		
 			if(string.section > 0xFF || string.section < 0)
 				string.error = true;
-
+		
 			if(string.index > 0xFFFF)
 				string.error = true;
 		}
@@ -88,10 +86,10 @@ public class StringResource
 
 	public void saveChanges() throws IOException
 	{
-		if (!file.exists() || file.lastModified() != lastModified) {
-			Logger.logError("Could not save changes to " + file.getName());
-			return;
-		}
+		if (!file.exists())
+			throw new IOException("Could not save changes because " + file.getName() + " no longer exists.");
+		if (file.lastModified() != lastModified)
+			throw new IOException("Could not save changes because " + file.getName() + " was modified outside Star Rod.");
 
 		List<Line> linesIn = IOUtils.readPlainInputFile(file);
 		List<String> linesOut = new ArrayList<>((int) (linesIn.size() * 1.2));
@@ -125,13 +123,13 @@ public class StringResource
 			linesOut.add("");
 		}
 
-		file.delete();
-		PrintWriter pw = IOUtils.getBufferedPrintWriter(file);
-		for (String line : linesOut)
-			pw.println(line);
-		pw.close();
+		IOUtils.atomicWriteLines(linesOut, file);
 
 		lastModified = file.lastModified();
+	}
+
+	public void clearModified()
+	{
 		modified = false;
 		for (PMString msg : strings)
 			msg.modified = false;

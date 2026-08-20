@@ -11,6 +11,7 @@ import java.io.File;
 import java.nio.ByteBuffer;
 
 import common.BasicEditorCommand;
+
 import game.texture.ImageConverter;
 import game.texture.Palette;
 import game.texture.Tile;
@@ -840,7 +841,7 @@ public class EditorImage
 				palette[k++] = new Color(intensity, intensity, intensity, alpha);
 			}
 		}
-
+		
 		for(int j = 0; j < 16; j++)
 		{
 			int alpha = 17 * j; // 0 -> 0, 15 -> 255

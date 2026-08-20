@@ -6,8 +6,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
-import app.SwingUtils;
 import common.Vector3f;
+
+import app.SwingUtils;
 import game.map.MutablePoint.SetPosition;
 import game.map.editor.MapEditor;
 import game.map.editor.ui.info.CameraInfoPanel;

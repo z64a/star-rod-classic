@@ -200,7 +200,7 @@ public class ShadingPanel extends JPanel implements IShutdownListener
 		public void exec()
 		{
 			super.exec();
-			if (oldEnabled) {
+			if (oldEnabled && oldShading != null) {
 				removeSourcesFromEditor(oldShading);
 				oldShading.setSelectedSource(oldSelectedSource);
 			}
@@ -255,7 +255,7 @@ public class ShadingPanel extends JPanel implements IShutdownListener
 		public void exec()
 		{
 			super.exec();
-			if (oldValue) {
+			if (oldValue && profile != null) {
 				removeSourcesFromEditor(profile);
 				profile.setSelectedSource(oldSelectedSource);
 			}

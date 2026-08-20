@@ -23,4 +23,4 @@ public interface InlineParserVisitor
 
 	public Object visit(ASTFloat node, Object data);
 }
-/* JavaCC - OriginalChecksum=1653d1a2b69bcc1aaa7e29596e7b4ad1 (do not edit this line) */
+/* JavaCC - OriginalChecksum=b54dcfd368c08e781767fc02efb490ae (do not edit this line) */

@@ -314,7 +314,7 @@ public class SpritePatcher
 		if (palette.isEmpty())
 			return spriteID << 16 | animID;
 
-		Integer palID = spriteNameMap.get(spriteName + PAL_SEPARATOR + animName);
+		Integer palID = spriteNameMap.get(spriteName + PAL_SEPARATOR + palette);
 
 		if (palID == null)
 			return -3;
@@ -839,7 +839,7 @@ public class SpritePatcher
 		/*
 		rp.seek("Sprites List", rp.nextAlignedOffset());
 		int ptrTableAddr = rp.toAddress(rp.getCurrentOffset());
-
+		
 		for(int i = 0; i <= highestID; i++)
 			rp.writeInt(0);
 		int countTableAddr = rp.toAddress(rp.getCurrentOffset());
@@ -855,83 +855,83 @@ public class SpritePatcher
 		/*
 		int upperPtr = (ptrTableAddr >> 16) & 0xFFFF;
 		int lowerPtr = ptrTableAddr & 0xFFFF;
-
+		
 		if((lowerPtr & 8000) != 0)
 			upperPtr += 1;
-
+		
 		int upperCount = (countTableAddr >> 16) & 0xFFFF;
 		int lowerCount = countTableAddr & 0xFFFF;
-
+		
 		if((lowerCount & 8000) != 0)
 			upperCount += 1;
-
+		
 		System.out.printf("@@@ COUNT = %X%n", countTableAddr);
 		System.out.printf("@@@ PTRS  = %X%n", ptrTableAddr);
-
+		
 		// <100AD4> 802DD9E4
 		rp.seek("Sprites Fix", 0x100AD4);
 		rp.writeInt(0x3C040000 | upperCount);
 		rp.writeInt(0x24840000 | lowerCount);
 		rp.writeInt(0x3C030000 | upperPtr);
 		rp.writeInt(0x24630000 | lowerPtr);
-
+		
 		// <101264> 802DE174
 		rp.seek("Sprites Fix", 0x101264);
 		rp.writeInt(0x3C020000 | upperPtr);
 		rp.writeInt(0x24420000 | lowerPtr);
-
+		
 		// <10127C> 802DE18C
 		rp.seek("Sprites Fix", 0x10127C);
 		rp.writeInt(0x3C030000 | upperCount);
 		rp.writeInt(0x24630000 | lowerCount);
-
+		
 		// <1012B8> 802DE1C8
 		rp.seek("Sprites Fix", 0x1012B8);
 		rp.writeInt(0x3C010000 | upperCount);
 		rp.skip(4);
 		rp.writeInt(0xA0220000 | lowerCount);
-
+		
 		// <10172C> 802DE63C
 		rp.seek("Sprites Fix", 0x10172C);
 		rp.writeInt(0x3C030000 | upperCount);
 		rp.writeInt(0x24630000 | lowerCount);
-
+		
 		// <101784> 802DE694
 		rp.seek("Sprites Fix", 0x101784);
 		rp.writeInt(0x3C030000 | upperCount);
 		rp.skip(4);
 		rp.writeInt(0x90630000 | lowerCount);
-
+		
 		// <1017A4> 802DE6B4
 		rp.seek("Sprites Fix", 0x1017A4);
 		rp.writeInt(0x3C010000 | upperPtr);
 		rp.skip(4);
 		rp.writeInt(0xAC200000 | lowerPtr);
-
+		
 		// <101AD0> 802DE9E0
 		rp.seek("Sprites Fix", 0x101AD0);
 		rp.writeInt(0x3C040000 | upperPtr);
 		rp.skip(4);
 		rp.writeInt(0x8C840000 | lowerPtr);
-
+		
 		// <101B34> 802DEA44
 		rp.seek("Sprites Fix", 0x101B34);
 		rp.writeInt(0x3C020000 | upperPtr);
 		rp.skip(4);
 		rp.writeInt(0x8C420000 | lowerPtr);
-
+		
 		// <101B60> 802DEA70
 		rp.seek("Sprites Fix", 0x101B60);
 		rp.writeInt(0x3C020000 | upperPtr);
 		rp.skip(4);
 		rp.writeInt(0x8C420000 | lowerPtr);
-
+		
 		// have sprites use pairs of offsets
-
+		
 		// <101C3C> 802deb4c
 		rp.seek("Sprites Fix", 0x101C3C);
 		AsmUtils.assembleAndWrite("SetInitialMap", rp, "SLL  A0, S5, 3");
-
+		
 		// <101C48> 802deb58
 		rp.seek("Sprites Fix", 0x101C48);
 		AsmUtils.assembleAndWrite("SetInitialMap", rp, "SLL  A0, S5, 3");
@@ -945,37 +945,37 @@ public class SpritePatcher
 		File cache = new File(MOD_SPR_NPC_CACHE + FN_SPRITE_CACHE);
 		if(cache.exists())
 			loadCache(cache);
-
+	
 		int highestID = SpriteLoader.getMaximumID(SpriteSet.Npc);
-
+	
 		raf.seek(SNPCPRITE_TABLE_BASE + (highestID + 1) * 4);
 		int roomLeft = SPRITE_DATA_LIMIT - (int)raf.getFilePointer();
 		boolean reusingRoom = true;
-
+	
 		int[] offsets = new int[highestID + 2];
-
+	
 		// build sprite sheets and write to ROM
 		for(int i = 1; i <= highestID; i++)
 		{
 			String spriteSheetIDName = String.format("%02X", i);
-
+	
 			File out = new File(MOD_SPR_NPC_TEMP + spriteSheetIDName);
 			Logger.log(String.format("Writing sprite sheet %02X of %02X...", i, highestID), Priority.MILESTONE);
-
+	
 			Sprite spr = spriteLoader.getSprite(SpriteSet.Npc, i);
 			SpriteIO.writeBinaryNpc(spr, out);
-
+	
 			byte[] decoded = FileUtils.readFileToByteArray(out);
-
+	
 			Checksum checksum = new CRC32();
 			checksum.update(decoded, 0, decoded.length);
-
+	
 			long newCRC = checksum.getValue();
 			Long cacheCRC = cachedChecksums.get(i);
-
+	
 			byte[] encoded;
 			File cachedFile = new File(MOD_SPR_NPC_CACHE + spriteSheetIDName);
-
+	
 			if(cacheCRC != null && newCRC == cacheCRC)
 			{
 				if(cachedFile.exists())
@@ -987,7 +987,7 @@ public class SpritePatcher
 				{
 					Logger.logWarning("Sprite sheet " + spriteSheetIDName + " matches cached checksum, but cached file is missing!");
 					encoded = Yay0Helper.encode(decoded);
-
+	
 					FileUtils.writeByteArrayToFile(cachedFile, encoded);
 					cachedChecksums.put(i, newCRC);
 				}
@@ -995,7 +995,7 @@ public class SpritePatcher
 			else
 			{
 				encoded = Yay0Helper.encode(decoded);
-
+	
 				FileUtils.writeByteArrayToFile(cachedFile, encoded);
 				cachedChecksums.put(i, newCRC);
 			}

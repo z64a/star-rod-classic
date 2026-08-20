@@ -45,6 +45,7 @@ import app.StarRodFrame;
 import app.SwingUtils;
 import app.SwingUtils.DialogBuilder;
 import app.SwingUtils.OpenDialogCounter;
+import app.ThemesEditor;
 import app.config.Config;
 import app.config.Options;
 import app.config.Options.Scope;
@@ -293,6 +294,7 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 		if (config != null)
 			config.saveConfigFile();
 
+		glCanvas.disposeRenderState();
 		frame.setVisible(false);
 		frame.dispose();
 	}
@@ -343,6 +345,7 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 		}
 
 		createGui(toolPanel, glCanvas, menuBar, infoLabel, openLogAction);
+		ThemesEditor.addThemeMenuItem(menuBar, frame);
 
 		JPanel contentPanel = new JPanel(new MigLayout("fill, insets 0"));
 		contentPanel.add(toolPanel, "grow");
@@ -500,17 +503,15 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 
 		switch (choice) {
 			case JOptionPane.YES_OPTION:
-				saveChanges();
-				break;
+				return saveChanges();
 			case JOptionPane.NO_OPTION:
-				break;
+				return true;
 			case JOptionPane.CANCEL_OPTION:
 			case JOptionPane.CLOSED_OPTION:
-				closeRequested = false;
 				return false;
 		}
 
-		return true;
+		return false;
 	}
 
 	protected final DialogBuilder getMessageDialog(String title, Object message)
@@ -567,7 +568,7 @@ public abstract class BaseEditor extends GLEditor implements Logger.Listener, Mo
 	protected void glDraw()
 	{}
 
-	protected abstract void saveChanges();
+	protected abstract boolean saveChanges();
 
 	/**
 	 * Exposed for children

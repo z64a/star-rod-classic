@@ -3,8 +3,7 @@ package game.map.editor;
 import common.KeyInput;
 
 /**
- * Logical inputs understood by the Map Editor. Physical keyboard bindings,
- * input state, persistence, and Swing presentation are owned by other classes.
+ * Actions available for Map Editor key bindings.
  */
 public enum MapInput implements KeyInput
 {
@@ -22,6 +21,7 @@ public enum MapInput implements KeyInput
 
 	PLAY_IN_EDITOR_TOGGLE,
 	PLAY_IN_EDITOR_JUMP,
+	PLAY_IN_EDITOR_SPIN,
 	PLAY_IN_EDITOR_HOVER,
 	PIE_IGNORE_HIDDEN_COL,
 	PIE_IGNORE_HIDDEN_ZONE,
@@ -32,14 +32,15 @@ public enum MapInput implements KeyInput
 	MOVE_BACKWARD,
 	MOVE_LEFT,
 	MOVE_RIGHT,
+	PLACE_CURSOR_AT_MOUSE,
 
 	TOGGLE_INFO_PANEL,
-	SELECTION_PAINTING,
 
 	SELECT_OBJECTS,
 	SELECT_TRIANGLES,
 	SELECT_VERTICIES,
 	SELECT_POINTS,
+	PAINT_RAINBOW,
 
 	OPEN_MODEL_TAB,
 	OPEN_COLLIDER_TAB,
@@ -130,10 +131,16 @@ public enum MapInput implements KeyInput
 				return "Start / Stop Play in Editor";
 			case PLAY_IN_EDITOR_JUMP:
 				return "Play in Editor Jump";
+			case PLAY_IN_EDITOR_SPIN:
+				return "Play in Editor Spin";
 			case PLAY_IN_EDITOR_HOVER:
 				return "Play in Editor Hover";
+			case PLACE_CURSOR_AT_MOUSE:
+				return "Place 3D Cursor at Mouse";
 			case SELECT_VERTICIES:
 				return "Select Vertices";
+			case PAINT_RAINBOW:
+				return "Rainbow Painting";
 			case OPEN_MODEL_TAB:
 				return "Open Models Tab";
 			case OPEN_COLLIDER_TAB:
@@ -185,41 +192,12 @@ public enum MapInput implements KeyInput
 	public String getCategory()
 	{
 		switch (this) {
-			case SAVE:
 			case UNDO:
 			case REDO:
+			case SAVE:
 			case SWITCH:
 			case QUIT:
-			case TOGGLE_INFO_PANEL:
 				return "General";
-
-			case PLAY_IN_EDITOR_TOGGLE:
-			case PLAY_IN_EDITOR_JUMP:
-			case PLAY_IN_EDITOR_HOVER:
-				return "Play in Editor";
-
-			case MOVE_FORWARD:
-			case MOVE_BACKWARD:
-			case MOVE_LEFT:
-			case MOVE_RIGHT:
-			case CENTER_VIEW:
-				return "Navigation";
-
-			case DRAW_CONVEX:
-			case DRAW_CONCAVE:
-			case DRAW_WALLS:
-			case CUT_GEOMETRY:
-				return "Drawing";
-
-			case SELECT_ALL:
-			case FIND_OBJECT:
-			case COPY_OBJECTS:
-			case PASTE_OBJECTS:
-			case DELETE_SELECTED:
-			case HIDE_SELECTED:
-			case TOGGLE_TWO_SIDED:
-			case TOGGLE_UV_EDIT:
-				return "Selection";
 
 			case SELECT_OBJECTS:
 			case SELECT_TRIANGLES:
@@ -229,8 +207,24 @@ public enum MapInput implements KeyInput
 			case OPEN_COLLIDER_TAB:
 			case OPEN_ZONE_TAB:
 			case OPEN_MARKER_TAB:
-			case SELECTION_PAINTING:
-				return "Modes and Tools";
+			case TOGGLE_UV_EDIT:
+			case TOGGLE_INFO_PANEL:
+				return "Editing Modes";
+
+			case MOVE_FORWARD:
+			case MOVE_BACKWARD:
+			case MOVE_LEFT:
+			case MOVE_RIGHT:
+			case CENTER_VIEW:
+				return "Navigation";
+
+			case SELECT_ALL:
+			case FIND_OBJECT:
+			case COPY_OBJECTS:
+			case PASTE_OBJECTS:
+			case DELETE_SELECTED:
+			case HIDE_SELECTED:
+				return "Selection";
 
 			case OPEN_TRANSFORM_DIALOG:
 			case ROUND_VERTICIES:
@@ -238,6 +232,7 @@ public enum MapInput implements KeyInput
 			case FLIP_SELECTED_Y:
 			case FLIP_SELECTED_Z:
 			case FLIP_NORMALS:
+			case TOGGLE_TWO_SIDED:
 			case NUDGE_UP:
 			case NUDGE_DOWN:
 			case NUDGE_LEFT:
@@ -245,6 +240,19 @@ public enum MapInput implements KeyInput
 			case NUDGE_OUT:
 			case NUDGE_IN:
 				return "Transform";
+
+			case DRAW_CONVEX:
+			case DRAW_CONCAVE:
+			case DRAW_WALLS:
+			case CUT_GEOMETRY:
+				return "Drawing";
+
+			case PLAY_IN_EDITOR_TOGGLE:
+			case PLAY_IN_EDITOR_JUMP:
+			case PLAY_IN_EDITOR_SPIN:
+			case PLAY_IN_EDITOR_HOVER:
+			case PLACE_CURSOR_AT_MOUSE:
+				return "Play in Editor";
 
 			case TOGGLE_GRID:
 			case TOGGLE_GRID_TYPE:
@@ -269,11 +277,14 @@ public enum MapInput implements KeyInput
 			case SHOW_NORMALS:
 			case SHOW_GIZMO:
 			case SHOW_AABB:
-			case USE_GEOMETRY_FLAGS:
+			case TOGGLE_QUADVIEW:
 			case TOGGLE_WIREFRAME:
 			case TOGGLE_EDGES:
-			case TOGGLE_QUADVIEW:
-				return "View";
+			case USE_GEOMETRY_FLAGS:
+				return "Visibility";
+
+			case PAINT_RAINBOW:
+				return "Vertex Painting";
 
 			default:
 				return "Other";

@@ -1,7 +1,8 @@
 package game.map.editor.camera;
 
-import common.MouseInput;
 import common.KeyboardInput;
+import common.MouseInput;
+
 import game.map.BoundingBox;
 import game.map.editor.MapEditor;
 import game.map.marker.Marker;

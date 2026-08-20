@@ -14,13 +14,12 @@ import game.shared.DataUtils;
 import game.shared.ProjectDatabase;
 import game.shared.ProjectDatabase.ConstEnum;
 import game.shared.SyntaxConstants;
-import game.shared.lib.CType.TypeCategory;
 import game.shared.struct.StructType;
 import game.shared.struct.script.ScriptVariable;
 
 public class LibEntry
 {
-	private static final Pattern AddressFieldPattern = Pattern.compile("(80[0-9A-Fa-f]{6})(?:, *([0-9A-Fa-f]{1,8}))?");
+	private static final Pattern AddressFieldPattern = Pattern.compile("((?:80|[Ee]0)[0-9A-Fa-f]{6})(?:, *([0-9A-Fa-f]{1,8}))?");
 	private static final Matcher AddressFieldMatcher = AddressFieldPattern.matcher("");
 
 	private static final Pattern ValidScrTypePattern = Pattern.compile("\\$\\w+");
@@ -150,15 +149,13 @@ public class LibEntry
 
 	public static enum ParamCategory
 	{
-		// types + typedefs
+		// symbolic types
 		Enum,
 		StaticStruct,
-		MemoryStruct,
 
 		// missing information
 		Unknown,
 		MissingStaticStruct,
-		MissingMemoryStruct,
 
 		// contextual
 		StringID,
@@ -168,7 +165,9 @@ public class LibEntry
 		EntryID,
 
 		// formatting
-		Number
+		Number,
+		Boolean,
+		Value
 	}
 
 	public static class LibParam
@@ -386,20 +385,10 @@ public class LibEntry
 		public final ParamCategory category;
 		public final ConstEnum constType;
 		public final StructType staticType;
-		public final CType ctype;
 
 		private LibType(ParamCategory category)
 		{
 			this.category = category;
-			this.ctype = null;
-			this.staticType = null;
-			this.constType = null;
-		}
-
-		private LibType(ParamCategory category, CType type)
-		{
-			this.category = category;
-			this.ctype = type;
 			this.staticType = null;
 			this.constType = null;
 		}
@@ -407,7 +396,6 @@ public class LibEntry
 		private LibType(ParamCategory category, StructType staticType)
 		{
 			this.category = category;
-			this.ctype = null;
 			this.staticType = staticType;
 			this.constType = null;
 		}
@@ -415,7 +403,6 @@ public class LibEntry
 		private LibType(ParamCategory category, ConstEnum constType)
 		{
 			this.category = category;
-			this.ctype = null;
 			this.staticType = null;
 			this.constType = constType;
 		}
@@ -427,9 +414,6 @@ public class LibEntry
 			switch (category) {
 				case Enum:
 					sb.append(constType.getNamespace());
-					break;
-				case MemoryStruct:
-					sb.append(ctype.specifier);
 					break;
 				case StaticStruct:
 					sb.append(staticType.toString());
@@ -755,6 +739,8 @@ public class LibEntry
 		ParamCategory category;
 		if (specifier.equalsIgnoreCase("dec"))
 			category = ParamCategory.Number;
+		else if (specifier.equalsIgnoreCase("bool"))
+			category = ParamCategory.Boolean;
 		else if (specifier.equalsIgnoreCase("stringID"))
 			category = ParamCategory.StringID;
 		else if (specifier.equalsIgnoreCase("modelID"))
@@ -765,23 +751,12 @@ public class LibEntry
 			category = ParamCategory.ZoneID;
 		else if (specifier.equalsIgnoreCase("entryID"))
 			category = ParamCategory.EntryID;
-		else
-			category = ParamCategory.MemoryStruct;
-
-		CType t = CType.getType(specifier);
-		if (t == null) {
-			// pointers to undocumented structs allowed
-			if (specifier.endsWith("*"))
-				return new LibType(ParamCategory.MissingMemoryStruct);
-			else
-				return null;
-		}
-
-		// params can either be primitives or pointers to other types
-		if (t.typeCategory == TypeCategory.Pointer || t.isPrimitive())
-			return new LibType(category, t);
+		else if (specifier.equals("*") || specifier.matches("\\w+(?:(?:\\[[^\\]]+\\])|\\*)*"))
+			category = ParamCategory.Value;
 		else
 			return null;
+
+		return new LibType(category);
 	}
 
 	private static List<List<String>> separate(List<String> tokens, String delimiter)

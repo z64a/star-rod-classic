@@ -6,6 +6,7 @@ import common.CameraInput;
 import common.KeyboardInput;
 import common.MouseInput;
 import common.Vector3f;
+
 import game.map.BoundingBox;
 
 public class PerspFreeCamera extends PerspBaseCamera

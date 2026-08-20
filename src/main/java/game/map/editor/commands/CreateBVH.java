@@ -6,6 +6,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 
 import common.Vector3f;
+
 import game.map.BoundingBox;
 import game.map.MapObject;
 import game.map.MapObject.HitType;

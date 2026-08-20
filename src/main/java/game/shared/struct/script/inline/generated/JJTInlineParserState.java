@@ -12,8 +12,8 @@ public class JJTInlineParserState
 
 	public JJTInlineParserState()
 	{
-		nodes = new java.util.ArrayList<>();
-		marks = new java.util.ArrayList<>();
+		nodes = new java.util.ArrayList<Node>();
+		marks = new java.util.ArrayList<Integer>();
 		sp = 0;
 		mk = 0;
 	}
@@ -130,4 +130,4 @@ public class JJTInlineParserState
 		}
 	}
 }
-/* JavaCC - OriginalChecksum=0f36fc6b0692895e29227a5619800499 (do not edit this line) */
+/* JavaCC - OriginalChecksum=43395797f49afe7653993cf9d7227bcc (do not edit this line) */

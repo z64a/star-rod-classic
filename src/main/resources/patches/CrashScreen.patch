@@ -1,0 +1,554 @@
+% Adds a named stack trace when crash function names are available and best-effort script context to the stock crash screen.
+
+% Builds with crash function names enabled populate this descriptor with a table pointer and entry count.
+#reserve 8 $CrashSymbolTableInfo
+#export $CrashSymbolTableInfo
+
+% Nonzero only while update_scripts is executing an EVT command.
+#reserve 4 $CrashCurrentScript
+
+#new:ASCII $CrashTraceTitle
+{
+"STACK TRACE"
+}
+
+#new:ASCII $CrashTraceFrameFmt
+{
+"%02d %08X"
+}
+
+#new:ASCII $CrashTraceNamedFrameFmt
+{
+"%02d %s+%X"
+}
+
+#new:ASCII $CrashTraceScriptFmt
+{
+"EVT %08X+%X"
+}
+
+% Track the Evt passed through the sole call to evt_execute_next_command, then clear it immediately afterward.
+@Hook E8820 % <--> 802C3E70
+{
+	LIO			T0, $CrashCurrentScript
+	SW			S0, 0 (T0)
+	JAL			802C7404 % evt_execute_next_command
+	SWC1		F0, 154 (S0) % original delay-slot instruction
+	LIO			T0, $CrashCurrentScript
+	SW			R0, 0 (T0)
+	J			802C3E78
+	NOP
+}
+
+% A0 = address
+% V0 = function name or zero, V1 = function offset
+#new:Function $CrashResolveFunction
+{
+	LIO			T0, $CrashSymbolTableInfo
+	LW			T1, 0 (T0) % table
+	BEQ			T1, R0, .Failed
+	LW			T2, 4 (T0) % entry count
+	BEQ			T2, R0, .Failed
+	DADDU		T3, R0, R0 % lower bound
+	.Search
+	SLTU		AT, T3, T2
+	BEQ			AT, R0, .Candidate
+	ADDU		T4, T3, T2
+	SRL			T4, T4, 1
+	SLL			T5, T4, 3
+	SLL			T6, T4, 2
+	ADDU		T5, T5, T6
+	ADDU		T5, T1, T5
+	LW			T6, 0 (T5)
+	SLTU		AT, A0, T6
+	BNE			AT, R0, .MoveUpper
+	NOP
+	B			.Search
+	ADDIU		T3, T4, 1
+	.MoveUpper
+	B			.Search
+	DADDU		T2, T4, R0
+	.Candidate
+	BEQ			T3, R0, .Failed
+	ADDIU		T3, T3, -1
+	SLL			T5, T3, 3
+	SLL			T6, T3, 2
+	ADDU		T5, T5, T6
+	ADDU		T5, T1, T5
+	LW			T6, 0 (T5)
+	SLTU		AT, A0, T6
+	BNE			AT, R0, .Failed
+	LW			T7, 4 (T5)
+	SLTU		AT, A0, T7
+	BEQ			AT, R0, .Failed
+	SUBU		V1, A0, T6
+	JR			RA
+	LW			V0, 8 (T5)
+	.Failed
+	DADDU		V0, R0, R0
+	JR			RA
+	DADDU		V1, R0, R0
+}
+
+% Replace the stock handler epilogue with a tail call to the alternating trace view.
+@Hook 7B98 % <--> 8002C798
+{
+	% The expansion-pack warning uses this handler before global mod code is loaded.
+	LUI			V0, 8000
+	LHU			V0, 318 (V0)
+	ORI			V1, R0, 80
+	BNE			V0, V1, .ReturnOriginal
+	DADDU		A0, S1, R0
+	LW			RA, 24 (SP)
+	LW			S2, 20 (SP)
+	LW			S1, 1C (SP)
+	LW			S0, 18 (SP)
+	J			$CrashTraceLoop
+	ADDIU		SP, SP, 28
+	.ReturnOriginal
+	LW			RA, 24 (SP)
+	LW			S2, 20 (SP)
+	LW			S1, 1C (SP)
+	LW			S0, 18 (SP)
+	JR			RA
+	ADDIU		SP, SP, 28
+}
+
+% A0 = address
+% V0 = whether the address is aligned executable RAM
+#new:Function $CrashValidAddress
+{
+	LI			T0, 80000400
+	SLTU		AT, A0, T0
+	BNE			AT, R0, .Invalid
+	NOP
+	LI			T0, 80800000
+	SLTU		AT, A0, T0
+	BEQ			AT, R0, .Invalid
+	ANDI		T0, A0, 3
+	BNE			T0, R0, .Invalid
+	NOP
+	ADDIU		V0, R0, 1
+	JR			RA
+	NOP
+	.Invalid
+	JR			RA
+	DADDU		V0, R0, R0
+}
+
+% A0 = Evt candidate
+% V0 = whether the candidate is present in the active 128-entry script list
+#new:Function $CrashValidScript
+{
+	LI			T0, 80000400
+	SLTU		AT, A0, T0
+	BNE			AT, R0, .Invalid
+	NOP
+	LI			T0, 80800000
+	SLTU		AT, A0, T0
+	BEQ			AT, R0, .Invalid
+	ANDI		T0, A0, 3
+	BNE			T0, R0, .Invalid
+	NOP
+	LIO			T0, 802DA890 % CurrentScripts
+	LW			T0, 0 (T0)
+	LI			T1, 80000400
+	SLTU		AT, T0, T1
+	BNE			AT, R0, .Invalid
+	NOP
+	LI			T1, 807FFE00 % leave room for all 128 pointers
+	SLTU		AT, T1, T0
+	BNE			AT, R0, .Invalid
+	ANDI		T1, T0, 3
+	BNE			T1, R0, .Invalid
+	ADDIU		T1, R0, 128`
+	.Loop
+	LW			T2, 0 (T0)
+	BEQ			T2, A0, .Valid
+	ADDIU		T0, T0, 4
+	ADDIU		T1, T1, -1
+	BNE			T1, R0, .Loop
+	NOP
+	.Invalid
+	JR			RA
+	DADDU		V0, R0, R0
+	.Valid
+	JR			RA
+	ADDIU		V0, R0, 1
+}
+
+% Analyze a conventional MIPS prologue to find the caller frame.
+% A0 = PC, A1 = SP, A2 = fallback RA for the interrupted frame
+% V0 = caller PC, V1 = caller SP; V0 is zero when unwinding cannot continue
+#new:Function $CrashFindCaller
+{
+	DADDU		T0, A0, R0 % scan position
+	DADDU		T1, R0, R0 % stack size
+	DADDU		T2, R0, R0 % saved RA offset
+	DADDU		T9, R0, R0 % scanned instruction count
+	.Scan
+	LI			T5, 80000400
+	SLTU		AT, T0, T5
+	BNE			AT, R0, .Fallback
+	NOP
+	LI			T5, 80800000
+	SLTU		AT, T0, T5
+	BEQ			AT, R0, .Fallback
+	ANDI		T5, T0, 3
+	BNE			T5, R0, .Fallback
+	NOP
+	LW			T6, 0 (T0)
+	LI			T5, FFFF0000
+	AND			T7, T6, T5
+	LI			T5, 27BD0000
+	BEQ			T7, T5, .FoundStack
+	NOP
+	LI			T5, 67BD0000
+	BEQ			T7, T5, .FoundStack
+	NOP
+	LI			T5, AFBF0000
+	BEQ			T7, T5, .FoundRA
+	NOP
+	LI			T5, FFBF0000
+	BEQ			T7, T5, .FoundDoubleRA
+	NOP
+	.Continue
+	BNE			T1, R0, .CheckComplete
+	NOP
+	B			.Next
+	NOP
+	.CheckComplete
+	BNE			T2, R0, .BuildCaller
+	NOP
+	.Next
+	ADDIU		T9, T9, 1
+	SLTIU		AT, T9, 100 % scan at most 0x400 bytes
+	BEQ			AT, R0, .Fallback
+	ADDIU		T0, T0, -4
+	B			.Scan
+	NOP
+	.FoundStack
+	SLL			T8, T6, 10
+	SRA			T8, T8, 10
+	BGE			T8, R0, .Continue
+	NOP
+	B			.Continue
+	SUBU		T1, R0, T8
+	.FoundRA
+	SLL			T2, T6, 10
+	SRA			T2, T2, 10
+	B			.Continue
+	NOP
+	.FoundDoubleRA
+	SLL			T2, T6, 10
+	SRA			T2, T2, 10
+	B			.Continue
+	ADDIU		T2, T2, 4
+	.BuildCaller
+	ADDU		T3, A1, T2
+	LI			T5, 80000000
+	SLTU		AT, T3, T5
+	BNE			AT, R0, .Fallback
+	NOP
+	LI			T5, 807FFFFD
+	SLTU		AT, T5, T3
+	BNE			AT, R0, .Fallback
+	ANDI		T5, T3, 3
+	BNE			T5, R0, .Fallback
+	NOP
+	LW			V0, 0 (T3)
+	ADDU		V1, A1, T1
+	JR			RA
+	ADDIU		V0, V0, -8
+	.Fallback
+	BEQ			A2, R0, .Failed
+	DADDU		V1, A1, R0
+	JR			RA
+	ADDIU		V0, A2, -8
+	.Failed
+	DADDU		V0, R0, R0
+	JR			RA
+	DADDU		V1, R0, R0
+}
+
+% A0 = register-page buffer
+% V0 = a different buffer from the active NuSystem framebuffer set, or zero
+#new:Function $CrashFindAlternateBuffer
+{
+	LIO			T0, 8009A658 % nuGfxCfb
+	LW			T0, 0 (T0)
+	BEQ			T0, R0, .Failed
+	NOP
+	LIO			T1, 800773F0 % nuGfxCfbNum
+	LW			T1, 0 (T1)
+	LUI			T5, A000
+	.Loop
+	BEQ			T1, R0, .Failed
+	NOP
+	LW			T2, 0 (T0)
+	ADDIU		T0, T0, 4
+	ADDIU		T1, T1, -1
+	BEQ			T2, R0, .Loop
+	OR			T2, T2, T5
+	BEQ			T2, A0, .Loop
+	NOP
+	JR			RA
+	DADDU		V0, T2, R0
+	.Failed
+	JR			RA
+	DADDU		V0, R0, R0
+}
+
+% Copy the completed stock page while preserving the destination's untouched register panel.
+% A0 = source buffer, A1 = destination buffer
+#new:Function $CrashCopyOutsideRegisterBox
+{
+	LIO			T0, 8009BB30 % gCrashScreen
+	LHU			T1, 9D0 (T0) % width
+	LHU			T2, 9D2 (T0) % height
+	ADDIU		T3, R0, 25` % panel x
+	ADDIU		T4, R0, 45` % panel y
+	ADDIU		T5, R0, 270` % panel width
+	ADDIU		T6, R0, 185` % panel height
+	ADDIU		T7, R0, 640`
+	BNE			T1, T7, .Position
+	NOP
+	SLL			T3, T3, 1
+	SLL			T4, T4, 1
+	SLL			T5, T5, 1
+	SLL			T6, T6, 1
+	.Position
+	ADDU		T6, T6, T4 % first row below the panel
+	DADDU		T0, R0, R0 % row
+	.RowLoop
+	SLTU		AT, T0, T4
+	BNE			AT, R0, .FullRow
+	NOP
+	SLTU		AT, T0, T6
+	BEQ			AT, R0, .FullRow
+	NOP
+	DADDU		T9, T3, R0
+	.CopyLeft
+	LHU			V0, 0 (A0)
+	SH			V0, 0 (A1)
+	ADDIU		A0, A0, 2
+	ADDIU		A1, A1, 2
+	ADDIU		T9, T9, -1
+	BNE			T9, R0, .CopyLeft
+	NOP
+	SLL			T7, T5, 1
+	ADDU		A0, A0, T7
+	ADDU		A1, A1, T7
+	SUBU		T9, T1, T3
+	SUBU		T9, T9, T5
+	.CopyRight
+	LHU			V0, 0 (A0)
+	SH			V0, 0 (A1)
+	ADDIU		A0, A0, 2
+	ADDIU		A1, A1, 2
+	ADDIU		T9, T9, -1
+	BNE			T9, R0, .CopyRight
+	NOP
+	B			.NextRow
+	NOP
+	.FullRow
+	DADDU		T9, T1, R0
+	.CopyFull
+	LHU			V0, 0 (A0)
+	SH			V0, 0 (A1)
+	ADDIU		A0, A0, 2
+	ADDIU		A1, A1, 2
+	ADDIU		T9, T9, -1
+	BNE			T9, R0, .CopyFull
+	NOP
+	.NextRow
+	ADDIU		T0, T0, 1
+	SLTU		AT, T0, T2
+	BNE			AT, R0, .RowLoop
+	NOP
+	JR			RA
+	NOP
+}
+
+#new:Function $CrashTraceLoop
+{
+	ADDIU		SP, SP, -60
+	SW			RA, 5C (SP)
+	SW			S0, 58 (SP)
+	SW			S1, 54 (SP)
+	SW			S2, 50 (SP)
+	SW			S3, 4C (SP)
+	SW			S4, 48 (SP)
+	SW			S5, 44 (SP)
+	SW			S6, 40 (SP)
+	SW			S7, 3C (SP)
+	DADDU		S0, A0, R0
+
+	% Preserve the completed stock page and render the trace once into another framebuffer.
+	LIO			T0, 8009BB30 % gCrashScreen
+	LW			T1, 9CC (T0)
+	SW			T1, 20 (SP) % register page
+	JAL			$CrashFindAlternateBuffer
+	DADDU		A0, T1, R0
+	BNE			V0, R0, .HaveTraceBuffer
+	NOP
+	.HoldRegisters
+	B			.HoldRegisters % no second buffer: retain the completed stock page
+	NOP
+	.HaveTraceBuffer
+	SW			V0, 24 (SP) % trace page
+	LW			A0, 20 (SP)
+	BEQ			A0, V0, .DrawTrace
+	DADDU		A1, V0, R0
+	JAL			$CrashCopyOutsideRegisterBox
+	NOP
+	.DrawTrace
+	LIO			T0, 8009BB30 % gCrashScreen
+	LW			T1, 24 (SP)
+	SW			T1, 9CC (T0)
+	ADDIU		A0, R0, 25`
+	ADDIU		A1, R0, 45`
+	ADDIU		A2, R0, 270`
+	JAL			8002BFB0 % stock crash background darkening
+	ADDIU		A3, R0, 185`
+	ADDIU		A0, R0, 30`
+	ADDIU		A1, R0, 50`
+	LIO			A2, $CrashTraceTitle
+	JAL			8002C208 % crash_printf_string
+	NOP
+
+	LW			S1, 11C (S0) % PC
+	LW			S2, F4 (S0) % SP
+	LW			S3, 104 (S0) % RA
+	LW			S5, 9C (S0) % interrupted S0; evt_handle_call retains the current Evt here
+	DADDU		S6, R0, R0 % whether the trace reaches evt_execute_next_command
+	DADDU		S4, R0, R0
+	.FrameLoop
+	JAL			$CrashValidAddress
+	DADDU		A0, S1, R0
+	BEQ			V0, R0, .Scripts
+	NOP
+	LI			T0, 802C7404 % evt_execute_next_command
+	SLTU		AT, S1, T0
+	BNE			AT, R0, .PrintFrame
+	NOP
+	LI			T0, 802C7AB8
+	SLTU		AT, S1, T0
+	BEQ			AT, R0, .PrintFrame
+	NOP
+	ADDIU		S6, R0, 1
+	.PrintFrame
+	JAL			$CrashResolveFunction
+	DADDU		A0, S1, R0
+	BEQ			V0, R0, .PrintRawFrame
+	DADDU		T2, V0, R0
+	SLL			T0, S4, 3
+	SLL			T1, S4, 1
+	ADDU		T0, T0, T1
+	ADDIU		A0, R0, 30`
+	ADDIU		A1, T0, 65`
+	LIO			A2, $CrashTraceNamedFrameFmt
+	DADDU		A3, S4, R0
+	SW			T2, 10 (SP)
+	SW			V1, 14 (SP)
+	JAL			8002C208 % crash_printf_string
+	NOP
+	B			.FramePrinted
+	NOP
+	.PrintRawFrame
+	SLL			T0, S4, 3
+	SLL			T1, S4, 1
+	ADDU		T0, T0, T1
+	ADDIU		A0, R0, 30`
+	ADDIU		A1, T0, 65`
+	LIO			A2, $CrashTraceFrameFmt
+	DADDU		A3, S4, R0
+	SW			S1, 10 (SP)
+	JAL			8002C208 % crash_printf_string
+	NOP
+	.FramePrinted
+	SLTIU		AT, S4, 10`
+	BEQ			AT, R0, .Scripts
+	DADDU		A0, S1, R0
+	DADDU		A1, S2, R0
+	BEQ			S4, R0, .UseSavedRA
+	DADDU		A2, R0, R0
+	B			.FindCaller
+	NOP
+	.UseSavedRA
+	DADDU		A2, S3, R0
+	.FindCaller
+	JAL			$CrashFindCaller
+	NOP
+	BEQ			V0, R0, .Scripts
+	ADDIU		S4, S4, 1
+	DADDU		S1, V0, R0
+	B			.FrameLoop
+	DADDU		S2, V1, R0
+
+	.Scripts
+	LIO			T0, $CrashCurrentScript
+	LW			S7, 0 (T0)
+	BNE			S7, R0, .StartScriptTrace
+	NOP
+	BEQ			S6, R0, .ShowTrace
+	DADDU		S7, S5, R0 % fallback for crashes reached through evt_handle_call
+	.StartScriptTrace
+	DADDU		S4, R0, R0
+	.ScriptLoop
+	JAL			$CrashValidScript
+	DADDU		A0, S7, R0
+	BEQ			V0, R0, .ShowTrace
+	NOP
+	LW			S1, 15C (S7) % first script command
+	LW			S2, 164 (S7) % current script command
+	JAL			$CrashValidAddress
+	DADDU		A0, S1, R0
+	BEQ			V0, R0, .ShowTrace
+	NOP
+	JAL			$CrashValidAddress
+	DADDU		A0, S2, R0
+	BEQ			V0, R0, .ShowTrace
+	SLTU		AT, S2, S1
+	BNE			AT, R0, .ShowTrace
+	NOP
+	SLL			T0, S4, 3
+	SLL			T1, S4, 1
+	ADDU		T0, T0, T1
+	ADDIU		A0, R0, 30`
+	ADDIU		A1, T0, 190`
+	LIO			A2, $CrashTraceScriptFmt
+	DADDU		A3, S1, R0
+	SUBU		T0, S2, S1
+	JAL			8002C208 % crash_printf_string
+	SW			T0, 10 (SP)
+	LW			S7, 64 (S7) % blocking parent
+	ADDIU		S4, S4, 1
+	SLTIU		AT, S4, 3
+	BNE			AT, R0, .ScriptLoop
+	NOP
+
+	.ShowTrace
+	% Restore the stock drawing target. Both pages are now complete and remain unchanged.
+	LIO			T0, 8009BB30 % gCrashScreen
+	LW			T1, 20 (SP)
+	LW			T2, 24 (SP)
+	BEQ			T1, T2, .HoldTrace
+	SW			T1, 9CC (T0)
+	.SwapPages
+	JAL			8002BF40 % crash_delay_msec
+	ADDIU		A0, R0, 2500`
+	LW			A0, 24 (SP)
+	JAL			80067020 % osViSwapBuffer
+	NOP
+	JAL			8002BF40 % crash_delay_msec
+	ADDIU		A0, R0, 3000`
+	LW			A0, 20 (SP)
+	JAL			80067020 % osViSwapBuffer
+	NOP
+	B			.SwapPages
+	NOP
+	.HoldTrace
+	B			.HoldTrace
+	NOP
+}

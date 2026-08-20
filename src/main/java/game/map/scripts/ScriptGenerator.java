@@ -13,11 +13,12 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 
+import common.Vector3f;
+
 import app.Resource;
 import app.Resource.ResourceType;
 import app.input.IOUtils;
 import app.input.InvalidInputException;
-import common.Vector3f;
 import game.map.Map;
 import game.map.MapIndex;
 import game.map.MapObject;
@@ -28,7 +29,6 @@ import game.map.marker.GridComponent;
 import game.map.marker.GridOccupant;
 import game.map.marker.Marker;
 import game.map.marker.Marker.MarkerType;
-import game.map.shading.ShadingProfile;
 import game.map.scripts.generators.Entrance;
 import game.map.scripts.generators.Entrance.EntranceType;
 import game.map.scripts.generators.Exit;
@@ -41,6 +41,7 @@ import game.map.scripts.generators.foliage.FoliageData;
 import game.map.scripts.generators.foliage.FoliageDrop;
 import game.map.scripts.generators.foliage.FoliageModel;
 import game.map.scripts.generators.foliage.FoliageVector;
+import game.map.shading.ShadingProfile;
 import game.map.shape.Model;
 import game.map.shape.TexturePanner;
 import game.map.struct.Header;
@@ -90,9 +91,13 @@ public class ScriptGenerator
 		this.map = map;
 		this.index = new MapIndex(map);
 
+		List<Marker> npcList = new ArrayList<>();
 		List<Marker> entityList = new ArrayList<>();
 		List<String> entityNames = new ArrayList<>();
 		for (Marker m : map.markerTree) {
+			if (m.getType() == MarkerType.NPC && m.npcComponent.generate.get())
+				npcList.add(m);
+
 			if (m.getType() == MarkerType.Entity) {
 				String entityName = m.getName();
 				if (entityNames.contains(entityName))
@@ -109,7 +114,7 @@ public class ScriptGenerator
 		List<String> lines = new LinkedList<>();
 
 		addInitScript(lines);
-		// NPCs
+		addNPCs(npcList, lines);
 		addEntities(entityList, lines);
 		addCameraTargets(lines);
 		addMusic(lines);
@@ -678,6 +683,17 @@ public class ScriptGenerator
 			lines.add("}");
 			lines.add("");
 		}
+	}
+
+	private void addNPCs(List<Marker> npcList, List<String> lines) throws InvalidInputException
+	{
+		NpcGenerator generator = new NpcGenerator(this, npcList);
+		if (generator.getLines().isEmpty())
+			return;
+
+		mainHooks.add("Call  MakeNpcs  ( .False " + NpcGenerator.GROUP_LIST_NAME + " )");
+		lines.addAll(generator.getLines());
+		callbackLines.addAll(generator.getCallbacks());
 	}
 
 	private void addCameraTargets(List<String> camLines) throws InvalidInputException

@@ -6,8 +6,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
-import game.map.editor.MapKeyConfig;
 import game.map.editor.MapInput;
+import game.map.editor.MapKeyConfig;
 import net.miginfocom.swing.MigLayout;
 
 public class MapInputListPanel extends JPanel
@@ -104,6 +104,9 @@ public class MapInputListPanel extends JPanel
 		addShortcut(tab, "Triangles", MapInput.SELECT_TRIANGLES);
 		addShortcut(tab, "Vertices", MapInput.SELECT_VERTICIES);
 		addShortcut(tab, "Points", MapInput.SELECT_POINTS);
+
+		addHeader(tab, "Vertex Painting");
+		addShortcut(tab, "Rainbow Painting", "Hold " + keyConfig.getBindingText(MapInput.PAINT_RAINBOW));
 
 		addHeader(tab, "Switch Object Tab");
 		addShortcut(tab, "Models", MapInput.OPEN_MODEL_TAB);

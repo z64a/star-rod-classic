@@ -61,8 +61,6 @@ import javax.swing.text.StyledDocument;
 
 import org.apache.commons.io.FilenameUtils;
 
-import com.alexandriasoftware.swing.JSplitButton;
-
 import app.Directories;
 import app.Environment;
 import app.StarRodClassic;
@@ -91,6 +89,7 @@ import game.string.editor.StringTokenizer.Sequence;
 import game.string.editor.io.SourceWatcher;
 import game.string.editor.io.SourceWatcher.FileEvent;
 import game.string.editor.io.StringResource;
+import game.string.editor.io.StringTreeNode;
 import game.texture.ImageConverter;
 import game.texture.Tile;
 import game.texture.images.ImageScriptModder;
@@ -98,6 +97,7 @@ import net.miginfocom.swing.MigLayout;
 import renderer.shaders.RenderState;
 import util.Logger;
 import util.ui.ImagePanel;
+import util.ui.ThemedSplitButton;
 
 public class StringEditor extends BaseEditor
 {
@@ -225,7 +225,7 @@ public class StringEditor extends BaseEditor
 			Logger.printStackTrace(e);
 		}
 
-		Directories dir = Environment.project.isDecomp ? DUMP_TXTBOX_IMG : MOD_TXTBOX_IMG;
+		Directories dir = MOD_TXTBOX_IMG;
 		readVarImage(new File(dir + MessageBoxes.Graphic.Letter_Peach.filename + ".png"));
 
 		resourcePanel.fullReload();
@@ -430,21 +430,11 @@ public class StringEditor extends BaseEditor
 	public void startFileWatcher() throws IOException
 	{
 		resourceWatcher = new SourceWatcher();
-		if (Environment.project.isDecomp) {
-			for (File assetDir : Environment.project.decompConfig.assetDirectories) {
-				File msgDir = new File(assetDir, "msg");
-				if (!msgDir.exists())
-					continue;
-				resourceWatcher.registerAll(msgDir.toPath());
-			}
-		}
-		else {
-			resourceWatcher.registerAll(Directories.MOD_STRINGS_SRC.toFile().toPath());
-			resourceWatcher.registerAll(Directories.MOD_STRINGS_PATCH.toFile().toPath());
-			resourceWatcher.registerAll(Directories.MOD_MAP_PATCH.toFile().toPath());
-			resourceWatcher.registerAll(Directories.MOD_FORMA_PATCH.toFile().toPath());
-			resourceWatcher.registerAll(Directories.MOD_PATCH.toFile().toPath());
-		}
+		resourceWatcher.registerAll(Directories.MOD_STRINGS_SRC.toFile().toPath());
+		resourceWatcher.registerAll(Directories.MOD_STRINGS_PATCH.toFile().toPath());
+		resourceWatcher.registerAll(Directories.MOD_MAP_PATCH.toFile().toPath());
+		resourceWatcher.registerAll(Directories.MOD_FORMA_PATCH.toFile().toPath());
+		resourceWatcher.registerAll(Directories.MOD_PATCH.toFile().toPath());
 		resourceWatcher.run();
 	}
 
@@ -493,31 +483,72 @@ public class StringEditor extends BaseEditor
 		handleSaving();
 	}
 
-	private void handleSaving()
+	private boolean handleSaving()
 	{
-		if (pendingFileEvents.isEmpty() && !resourcesToSave.isEmpty()) {
-			saving = true;
-			ArrayList<StringResource> saved = new ArrayList<>();
+		if (!pendingFileEvents.isEmpty())
+			return false;
+		if (resourcesToSave.isEmpty())
+			return true;
 
-			for (StringResource res : resourcesToSave) {
-				try {
-					res.saveChanges();
-					saved.add(res);
-				}
-				catch (IOException e) {
-					Logger.printStackTrace(e);
-					Logger.logError(e.getMessage());
-				}
+		ArrayList<StringResource> saved = new ArrayList<>();
+		boolean allSaved = true;
+
+		for (StringResource res : resourcesToSave) {
+			try {
+				res.saveChanges();
+				saved.add(res);
 			}
-
-			if (saved.size() > 1)
-				Logger.logf("Saved %d resources.", saved.size());
-			else if (saved.size() == 1)
-				Logger.log("Saved resource: " + saved.get(0).file.getName());
-
-			resourcesToSave.clear();
-			resourcePanel.updateEditorInfo();
+			catch (IOException e) {
+				allSaved = false;
+				Logger.printStackTrace(e);
+				Logger.logError(e.getMessage());
+			}
 		}
+
+		if (allSaved) {
+			for (StringResource res : saved)
+				res.clearModified();
+		}
+
+		if (saved.size() > 1)
+			Logger.logf("Saved %d resources.", saved.size());
+		else if (saved.size() == 1)
+			Logger.log("Saved resource: " + saved.get(0).file.getName());
+
+		saving = !saved.isEmpty();
+		resourcesToSave.clear();
+		resourcePanel.updateEditorInfo();
+		modified = resourcePanel.hasModifiedResources();
+		return allSaved;
+	}
+
+	private void synchronizeWorkingString()
+	{
+		if (workingString != null && workingString.isModified())
+			workingString.setMarkup(getInputText());
+		resourcePanel.updateEditorInfo();
+	}
+
+	private boolean saveWorkingString()
+	{
+		synchronizeWorkingString();
+		if (workingString != null && workingString.isModified() && !resourcesToSave.contains(workingString.source))
+			resourcesToSave.add(workingString.source);
+		return handleSaving();
+	}
+
+	boolean saveAllChanges()
+	{
+		synchronizeWorkingString();
+		resourcePanel.queueAllChanges();
+		return handleSaving();
+	}
+
+	boolean saveChangesTo(StringTreeNode node)
+	{
+		synchronizeWorkingString();
+		resourcePanel.queueChangesTo(node);
+		return handleSaving();
 	}
 
 	private ImageIcon getButtonIcon(File imgFile, boolean useInterp) throws IOException
@@ -577,13 +608,7 @@ public class StringEditor extends BaseEditor
 
 		int i = 1;
 		for (SpecialCharacter sc : StringConstants.SpecialCharacter.values()) {
-			File imgFile;
-			if (Environment.project.isDecomp) {
-				imgFile = new File(DUMP_FONT_STANDARD + String.format("%02X", sc.code) + ".png");
-			}
-			else {
-				imgFile = new File(MOD_STD_FONT + String.format("%02X", sc.code) + ".png");
-			}
+			File imgFile = new File(MOD_STD_FONT + String.format("%02X", sc.code) + ".png");
 
 			JButton button = new JButton();
 			try {
@@ -615,13 +640,7 @@ public class StringEditor extends BaseEditor
 
 		ImageIcon[] paletteIcons = new ImageIcon[0x50];
 		for (int palIndex = 0; palIndex < paletteIcons.length; palIndex++) {
-			File imgFile;
-			if (Environment.project.isDecomp) {
-				imgFile = new File(DUMP_FONT_STD_PAL + String.format("%02X", palIndex) + ".png");
-			}
-			else {
-				imgFile = new File(MOD_STD_FONT_PAL + String.format("%02X", palIndex) + ".png");
-			}
+			File imgFile = new File(MOD_STD_FONT_PAL + String.format("%02X", palIndex) + ".png");
 
 			try {
 				paletteIcons[palIndex] = getButtonIcon(imgFile, false);
@@ -637,19 +656,19 @@ public class StringEditor extends BaseEditor
 			showColorSelectionDialog();
 		});
 
-		JSplitButton stylesButton = new JSplitButton("Style");
+		ThemedSplitButton stylesButton = new ThemedSplitButton("Style");
 		stylesButton.setPopupMenu(getStylePopup());
 		stylesButton.setAlwaysPopup(true);
 
-		JSplitButton effectsButton = new JSplitButton("Effect");
+		ThemedSplitButton effectsButton = new ThemedSplitButton("Effect");
 		effectsButton.setPopupMenu(getEffectsPopup());
 		effectsButton.setAlwaysPopup(true);
 
-		JSplitButton functionsButton = new JSplitButton("Function");
+		ThemedSplitButton functionsButton = new ThemedSplitButton("Function");
 		functionsButton.setPopupMenu(getFunctionsPopup());
 		functionsButton.setAlwaysPopup(true);
 
-		JSplitButton presetsButton = new JSplitButton("Preset");
+		ThemedSplitButton presetsButton = new ThemedSplitButton("Preset");
 		presetsButton.setPopupMenu(getPresetPopup());
 		presetsButton.setAlwaysPopup(true);
 
@@ -1105,8 +1124,7 @@ public class StringEditor extends BaseEditor
 		createTab(tabs, "Strings", stringListPanel);
 		createTab(tabs, "Variables", makeVariablesTab());
 		//TODO
-		//	if(!RunContext.project.isDecomp)
-		//		createTab(tabs, "Constants", makeConstantsTab());
+		//createTab(tabs, "Constants", makeConstantsTab());
 
 		// wrap input pane in a scroll pane to let us scroll
 		JScrollPane stringScrollPane = new JScrollPane(inputTextPane);
@@ -1160,7 +1178,7 @@ public class StringEditor extends BaseEditor
 
 	private static void createTab(JTabbedPane tabs, String name, Container contents)
 	{
-		JLabel lbl = SwingUtils.getLabel(name, 12);
+		JLabel lbl = SwingUtils.getTabLabel(tabs, name, 12);
 		lbl.setPreferredSize(new Dimension(60, 20));
 		lbl.setHorizontalAlignment(SwingConstants.CENTER);
 
@@ -1192,7 +1210,7 @@ public class StringEditor extends BaseEditor
 		imgVarNameField.setEditable(false);
 		SwingUtils.addBorderPadding(imgVarNameField);
 
-		File imgDir = Environment.project.isDecomp ? new File(Environment.project.getDirectory(), "assets") : MOD_RESOURCE.toFile();
+		File imgDir = MOD_RESOURCE.toFile();
 		OpenFileChooser openImageChooser = new OpenFileChooser(imgDir, "Choose Image", "Images", "png");
 
 		JButton chooseImgVarButton = new JButton("Choose");
@@ -1265,8 +1283,7 @@ public class StringEditor extends BaseEditor
 		settingsPanel.add(imgVarNameField, "sgy row, skip 1, w 60%!, split 2");
 		settingsPanel.add(chooseImgVarButton, "grow, wrap");
 
-		if (!Environment.project.isDecomp)
-			settingsPanel.add(getCodeButton, "skip 1, sgy row, growy, w 60%!, wrap");
+		settingsPanel.add(getCodeButton, "skip 1, sgy row, growy, w 60%!, wrap");
 
 		settingsPanel.add(varImagePanel, "skip 1, grow, wrap, gaptop 8, pushy");
 
@@ -1360,10 +1377,7 @@ public class StringEditor extends BaseEditor
 		awtKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK);
 		item.setAccelerator(awtKeyStroke);
 		item.addActionListener((e) -> {
-			if (workingString != null && workingString.isModified()) {
-				workingString.setMarkup(getInputText());
-				resourcesToSave.add(workingString.source);
-			}
+			saveWorkingString();
 		});
 		menu.add(item);
 
@@ -1371,7 +1385,7 @@ public class StringEditor extends BaseEditor
 		awtKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK);
 		item.setAccelerator(awtKeyStroke);
 		item.addActionListener((e) -> {
-			resourcePanel.saveAllChanges();
+			saveAllChanges();
 		});
 		menu.add(item);
 
@@ -1467,10 +1481,9 @@ public class StringEditor extends BaseEditor
 	}
 
 	@Override
-	protected void saveChanges()
+	protected boolean saveChanges()
 	{
-		resourcePanel.saveAllChanges();
-		handleSaving();
+		return saveAllChanges();
 	}
 
 	@Override

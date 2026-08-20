@@ -16,7 +16,7 @@ fields and tokens:
 - the remaining elements are tokens, separated by whitespace
 
 limitations:
-- tokens may only contain alphanumeric and _*?# characters
+- tokens may only contain alphanumeric and _*?#[] characters
 - descriptions and options may occur at any position within a field
 - a field may have multiple options, but only one description
 - descriptions may contain any characters, including " and \ through escape sequence: \" and \\
@@ -75,11 +75,11 @@ Unknown lists are indicated by "???"
 asm functions may have "varargs" for the PARAMS field
 
 Types come in five categories:
-(a) 'c' types, like actor, entity, etc. these are structs used at runtime. you will often see these are passed around as pointers in the library asm entries.
-(b) static types, like $Script or $Actor. these are the structs printed by Star Rod for script files. they are found in the data files for maps/formations/etc and typically loaded to a corresponding 'c' type at runtime. these types are always prefixed with $.
+(a) generic values, like int and float, including C-style pointer annotations such as float* and Actor*. pointer annotations document the decomp signature but are not resolved against a separate C type database. named types use the spelling and PascalCase capitalization from papermario-dx. only bool and dec have special formatting behavior.
+(b) static types, like $Script or $Actor. these are the structs printed by Star Rod for script files. they are found in the data files for maps/formations/etc. these types are always prefixed with $.
 (c) enum types, like #actorID or #itemID. corresponding to a Star Rod enum from the database/types folder. flags fields may also be represented this way.
 (d) var/fvar are special types indicating a valid variable reference like FE363C80 or F8405B80.
-(e) typedefs, like stringID or vec3f*, corresponding to values in database/structs/typedefs.txt
+(e) contextual IDs, like stringID, modelID, colliderID, zoneID, and entryID, which control how values are printed.
 
 ============================
   STORAGE

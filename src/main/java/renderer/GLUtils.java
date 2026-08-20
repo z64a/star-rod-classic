@@ -41,6 +41,9 @@ import org.lwjgl.BufferUtils;
 
 public class GLUtils
 {
+	// Texture name zero is reserved by OpenGL and is never returned by glGenTextures().
+	public static final int NO_TEXTURE_ID = 0;
+
 	private static final float[] IDENTITY_MATRIX = new float[] {
 			1.0f, 0.0f, 0.0f, 0.0f,
 			0.0f, 1.0f, 0.0f, 0.0f,

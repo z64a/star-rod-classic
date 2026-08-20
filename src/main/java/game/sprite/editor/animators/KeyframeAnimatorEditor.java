@@ -16,13 +16,12 @@ import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
 import javax.swing.InputMap;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
@@ -31,8 +30,6 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-
-import com.alexandriasoftware.swing.JSplitButton;
 
 import app.SwingUtils;
 import game.sprite.Sprite;
@@ -114,6 +111,7 @@ public class KeyframeAnimatorEditor
 	private static void repaintCommandList()
 	{
 		instance().commandList.repaint();
+		instance().editor.markCurrentSpriteModified();
 	}
 
 	private KeyframeAnimatorEditor()
@@ -122,7 +120,7 @@ public class KeyframeAnimatorEditor
 		commandList.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 		commandList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-		commandListPanel = new JPanel(new MigLayout("fill, ins 0, wrap"));
+		commandListPanel = new JPanel(new MigLayout("fill, ins 0, wrap 3", "[grow, sg col][grow, sg col][grow, sg col]"));
 		commandEditPanel = new JPanel(new MigLayout("fill, ins 0, wrap"));
 
 		commandList.addListSelectionListener((e) -> {
@@ -219,31 +217,24 @@ public class KeyframeAnimatorEditor
 			}
 		});
 
-		JPopupMenu createMenu = new JPopupMenu();
-		JSplitButton createButton = new JSplitButton("Add Command");
-		createButton.setPopupMenu(createMenu);
-		createButton.setAlwaysPopup(true);
+		JButton keyframeButton = new JButton("Keyframe");
+		keyframeButton.addActionListener((e) -> create(animator.new Keyframe()));
 
-		JMenuItem keyframeItem = new JMenuItem("Keyframe");
-		keyframeItem.addActionListener((e) -> create(animator.new Keyframe()));
-		createMenu.add(keyframeItem);
+		JButton repeatButton = new JButton("Repeat");
+		repeatButton.addActionListener((e) -> create(animator.new Loop(null, 3)));
 
-		createMenu.addSeparator();
-
-		JMenuItem waitItem = new JMenuItem("Repeat");
-		waitItem.addActionListener((e) -> create(animator.new Loop(null, 3)));
-		createMenu.add(waitItem);
-
-		JMenuItem imgItem = new JMenuItem("Goto");
-		imgItem.addActionListener((e) -> create(animator.new Goto(null)));
-		createMenu.add(imgItem);
+		JButton gotoButton = new JButton("Goto");
+		gotoButton.addActionListener((e) -> create(animator.new Goto(null)));
 
 		JScrollPane listScrollPane = new JScrollPane(commandList);
 		listScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
-		commandListPanel.add(SwingUtils.getLabel("Commands", 14));
-		commandListPanel.add(listScrollPane, "grow, push");
-		commandListPanel.add(createButton, "growx");
+		commandListPanel.add(SwingUtils.getLabel("Commands", 14), "growx, span");
+		commandListPanel.add(listScrollPane, "grow, span, push");
+
+		commandListPanel.add(keyframeButton, "growx");
+		commandListPanel.add(repeatButton, "growx");
+		commandListPanel.add(gotoButton, "growx");
 
 		commandListListener = new ListDataListener() {
 			@Override
@@ -251,6 +242,7 @@ public class KeyframeAnimatorEditor
 			{
 				animator.recalculateLinks();
 				animator.resetAnimation();
+				editor.markCurrentSpriteModified();
 			}
 
 			@Override
@@ -258,6 +250,7 @@ public class KeyframeAnimatorEditor
 			{
 				animator.recalculateLinks();
 				animator.resetAnimation();
+				editor.markCurrentSpriteModified();
 			}
 
 			@Override
@@ -265,6 +258,7 @@ public class KeyframeAnimatorEditor
 			{
 				animator.recalculateLinks();
 				animator.resetAnimation();
+				editor.markCurrentSpriteModified();
 			}
 		};
 	}
@@ -365,6 +359,8 @@ public class KeyframeAnimatorEditor
 			countSpinner.setModel(new SpinnerNumberModel(1, 0, 300, 1));
 			SwingUtils.centerSpinnerText(countSpinner);
 			countSpinner.addChangeListener((e) -> {
+				if (ignoreChanges)
+					return;
 				cmd.count = (int) countSpinner.getValue();
 				repaintCommandList();
 			});
@@ -391,9 +387,8 @@ public class KeyframeAnimatorEditor
 			ignoreChanges = true;
 			keyframeComboBox.setModel(new ListAdapterComboboxModel<>(keyframes));
 			keyframeComboBox.setSelectedItem(cmd.target);
-			ignoreChanges = false;
-
 			countSpinner.setValue(cmd.count);
+			ignoreChanges = false;
 		}
 	}
 
@@ -412,7 +407,6 @@ public class KeyframeAnimatorEditor
 		private JComboBox<SpritePalette> paletteComboBox;
 		private JComboBox<SpriteComponent> componentComboBox;
 
-		private JCheckBox unknownCheckbox;
 		private JSpinner dxSpinner, dySpinner, dzSpinner;
 		private JSpinner rxSpinner, rySpinner, rzSpinner;
 		private JSpinner sxSpinner, sySpinner, szSpinner;
@@ -435,6 +429,7 @@ public class KeyframeAnimatorEditor
 				if (ignoreChanges)
 					return;
 				cmd.duration = (int) timeSpinner.getValue();
+				repaintCommandList();
 			});
 
 			imageComboBox = new JComboBox<>();
@@ -447,8 +442,21 @@ public class KeyframeAnimatorEditor
 			imageComboBox.addActionListener((e) -> {
 				if (ignoreChanges || cmd == null)
 					return;
-				cmd.img = (SpriteRaster) imageComboBox.getSelectedItem();
+				setRaster((SpriteRaster) imageComboBox.getSelectedItem());
 			});
+
+			JButton selectRasterButton = new JButton("Select");
+			SwingUtils.addBorderPadding(selectRasterButton);
+			selectRasterButton.addActionListener((e) -> {
+				Sprite target = cmd.ownerComp.parentAnimation.parentSprite;
+				SpriteRaster raster = KeyframeAnimatorEditor.instance().editor.promptForRaster(target);
+				if (raster != null)
+					setRaster(raster);
+			});
+
+			JButton clearRasterButton = new JButton("Clear");
+			SwingUtils.addBorderPadding(clearRasterButton);
+			clearRasterButton.addActionListener((e) -> setRaster(null));
 
 			cbEnableImg = new JCheckBox(" Raster");
 			cbEnableImg.addActionListener((e) -> {
@@ -457,6 +465,7 @@ public class KeyframeAnimatorEditor
 				boolean value = cbEnableImg.isSelected();
 				cmd.setImage = value;
 				imageComboBox.setEnabled(value);
+				repaintCommandList();
 			});
 
 			paletteComboBox = new JComboBox<>();
@@ -467,6 +476,7 @@ public class KeyframeAnimatorEditor
 				if (ignoreChanges || cmd == null)
 					return;
 				cmd.pal = (SpritePalette) paletteComboBox.getSelectedItem();
+				repaintCommandList();
 			});
 
 			cbEnablePal = new JCheckBox(" Palette");
@@ -476,6 +486,7 @@ public class KeyframeAnimatorEditor
 				boolean value = cbEnablePal.isSelected();
 				cmd.setPalette = value;
 				paletteComboBox.setEnabled(value);
+				repaintCommandList();
 			});
 
 			componentComboBox = new JComboBox<>();
@@ -486,6 +497,7 @@ public class KeyframeAnimatorEditor
 				if (ignoreChanges)
 					return;
 				cmd.parentComp = (SpriteComponent) componentComboBox.getSelectedItem();
+				repaintCommandList();
 			});
 
 			cbEnableParent = new JCheckBox(" Parent");
@@ -496,6 +508,7 @@ public class KeyframeAnimatorEditor
 				cmd.setParent = value;
 
 				componentComboBox.setEnabled(cmd.setParent);
+				repaintCommandList();
 			});
 
 			notifySpinner = new JSpinner();
@@ -506,6 +519,7 @@ public class KeyframeAnimatorEditor
 				if (ignoreChanges)
 					return;
 				cmd.notifyValue = (int) notifySpinner.getValue();
+				repaintCommandList();
 			});
 
 			dxSpinner = new JSpinner();
@@ -516,6 +530,7 @@ public class KeyframeAnimatorEditor
 				if (ignoreChanges)
 					return;
 				cmd.dx = (int) dxSpinner.getValue();
+				repaintCommandList();
 			});
 
 			dySpinner = new JSpinner();
@@ -526,6 +541,7 @@ public class KeyframeAnimatorEditor
 				if (ignoreChanges)
 					return;
 				cmd.dy = (int) dySpinner.getValue();
+				repaintCommandList();
 			});
 
 			dzSpinner = new JSpinner();
@@ -536,15 +552,8 @@ public class KeyframeAnimatorEditor
 				if (ignoreChanges)
 					return;
 				cmd.dz = (int) dzSpinner.getValue();
+				repaintCommandList();
 			});
-
-			unknownCheckbox = new JCheckBox("Unknown position flag");
-			unknownCheckbox.addActionListener((e) -> {
-				if (ignoreChanges)
-					return;
-				cmd.unknown = unknownCheckbox.isSelected();
-			});
-			unknownCheckbox.setToolTipText("Flag of unknown purpose. I don't think it does anything. Toggle it if you like surprises.");
 
 			rxSpinner = new JSpinner();
 			SwingUtils.setFontSize(rxSpinner, 12);
@@ -554,6 +563,7 @@ public class KeyframeAnimatorEditor
 				if (ignoreChanges)
 					return;
 				cmd.rx = (int) rxSpinner.getValue();
+				repaintCommandList();
 			});
 
 			rySpinner = new JSpinner();
@@ -564,6 +574,7 @@ public class KeyframeAnimatorEditor
 				if (ignoreChanges)
 					return;
 				cmd.ry = (int) rySpinner.getValue();
+				repaintCommandList();
 			});
 
 			rzSpinner = new JSpinner();
@@ -574,6 +585,7 @@ public class KeyframeAnimatorEditor
 				if (ignoreChanges)
 					return;
 				cmd.rz = (int) rzSpinner.getValue();
+				repaintCommandList();
 			});
 
 			sxSpinner = new JSpinner();
@@ -584,6 +596,7 @@ public class KeyframeAnimatorEditor
 				if (ignoreChanges)
 					return;
 				cmd.sx = (int) sxSpinner.getValue();
+				repaintCommandList();
 			});
 
 			sySpinner = new JSpinner();
@@ -594,6 +607,7 @@ public class KeyframeAnimatorEditor
 				if (ignoreChanges)
 					return;
 				cmd.sy = (int) sySpinner.getValue();
+				repaintCommandList();
 			});
 
 			szSpinner = new JSpinner();
@@ -604,6 +618,7 @@ public class KeyframeAnimatorEditor
 				if (ignoreChanges)
 					return;
 				cmd.sz = (int) szSpinner.getValue();
+				repaintCommandList();
 			});
 
 			setLayout(new MigLayout("ins 0 10 0 10", "[grow]4[grow]"));
@@ -616,6 +631,9 @@ public class KeyframeAnimatorEditor
 
 			add(cbEnableImg, "top");
 			add(imageComboBox, "growx, h 120!, wrap");
+			add(new JLabel());
+			add(selectRasterButton, "split 2, growx");
+			add(clearRasterButton, "growx, wrap");
 
 			add(cbEnablePal, "gaptop 2, top");
 			add(paletteComboBox, "growx, wrap, gapbottom 8");
@@ -645,7 +663,18 @@ public class KeyframeAnimatorEditor
 			add(new JLabel(), "w 8!, span, split 2");
 			add(notifySpinner, "sg xyz, wrap");
 
-			add(unknownCheckbox, "gaptop 8, span, wrap");
+		}
+
+		private void setRaster(SpriteRaster raster)
+		{
+			if (cmd == null || cmd.img == raster)
+				return;
+
+			cmd.img = raster;
+			ignoreChanges = true;
+			imageComboBox.setSelectedItem(raster);
+			ignoreChanges = false;
+			repaintCommandList();
 		}
 
 		protected void set(Keyframe cmd)
@@ -679,8 +708,6 @@ public class KeyframeAnimatorEditor
 			cbEnableParent.setSelected(cmd.setParent);
 
 			notifySpinner.setValue(cmd.notifyValue);
-
-			unknownCheckbox.setSelected(cmd.unknown);
 
 			dxSpinner.setValue(cmd.dx);
 			dySpinner.setValue(cmd.dy);

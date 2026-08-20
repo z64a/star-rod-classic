@@ -74,6 +74,7 @@ public enum MapKey implements XmlKey
 
 	TAG_MARKER_GRID		("Grid"),
 	ATTR_MARKER_GRID	("grid"), //TODO deprecated
+	ATTR_MARKER_GRID_INDEX	("index"),
 	ATTR_MARKER_GRID_OCC	("gridContent"),
 	ATTR_MARKER_GRID_GRAV	("blockGravity"),
 
@@ -105,6 +106,8 @@ public enum MapKey implements XmlKey
 	TAG_SPRITE			("Sprite"),
 	ATTR_SPRITE			("sprite"),
 	ATTR_PALETTE		("palette"),
+	ATTR_DEFAULT_ANIMATION	("defaultAnimation"),
+	ATTR_ANIMATION_OVERRIDES	("animationOverrides"),
 	ATTR_ANIMATIONS		("animations"),
 
 	TAG_MODEL			("Model"),
@@ -242,6 +245,14 @@ public enum MapKey implements XmlKey
 	ATTR_NTT_PIPE_ENTRY		("pipeEntry"),
 
 	TAG_NPC				("NPC"),
+	ATTR_NPC_GENERATE	("generate"),
+	ATTR_NPC_FLAGS		("flags"),
+	ATTR_NPC_TATTLE		("tattle"),
+	ATTR_NPC_HEIGHT		("height"),
+	ATTR_NPC_RADIUS		("radius"),
+	ATTR_NPC_LEVEL		("level"),
+	ATTR_NPC_ACTION_FLAGS	("actionFlags"),
+	ATTR_NPC_CALLBACKS	("callbacks"),
 
 	TAG_OVERRIDE		("Override"),
 	ATTR_SHAPE			("shape"),

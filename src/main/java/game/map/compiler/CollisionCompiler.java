@@ -8,10 +8,10 @@ import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
 
+import common.Vector3f;
+
 import app.AssetManager;
 import app.Directories;
-import app.Environment;
-import common.Vector3f;
 import game.map.BoundingBox;
 import game.map.Map;
 import game.map.hit.Collider;
@@ -26,13 +26,13 @@ import util.Priority;
 
 public class CollisionCompiler
 {
+	private static final int MAX_VERTEX_COUNT = 1024;
+
 	public CollisionCompiler(Map map) throws IOException
 	{
-		boolean isDecomp = Environment.project.isDecomp;
-
 		File build_dec = new File(
 			AssetManager.getMapBuildDir(),
-			isDecomp ? map.name + "_hit.bin" : map.name + "_hit_dec"
+			map.name + "_hit_dec"
 		);
 
 		Logger.log("Compiling map collision to " + build_dec.getPath());
@@ -40,23 +40,20 @@ public class CollisionCompiler
 		if (build_dec.exists())
 			build_dec.delete();
 
-		RandomAccessFile raf = new RandomAccessFile(build_dec, "rw");
+		try (RandomAccessFile raf = new RandomAccessFile(build_dec, "rw")) {
+			int colliderHeaderOffset = compileColliders(raf, map);
+			int zoneHeaderOffset = compileZones(raf, map);
 
-		int colliderHeaderOffset = compileColliders(raf, map);
-		int zoneHeaderOffset = compileZones(raf, map);
-
-		raf.seek(0);
-		raf.writeInt(colliderHeaderOffset);
-		raf.writeInt(zoneHeaderOffset);
-		raf.close();
+			raf.seek(0);
+			raf.writeInt(colliderHeaderOffset);
+			raf.writeInt(zoneHeaderOffset);
+		}
 
 		byte[] complete = FileUtils.readFileToByteArray(build_dec);
 		byte[] encoded = Yay0Helper.encode(complete);
 
-		if (!isDecomp) {
-			File build = new File(Directories.MOD_MAP_BUILD + map.name + "_hit");
-			FileUtils.writeByteArrayToFile(build, encoded);
-		}
+		File build = new File(Directories.MOD_MAP_BUILD + map.name + "_hit");
+		FileUtils.writeByteArrayToFile(build, encoded);
 	}
 
 	private int compileColliders(RandomAccessFile raf, Map map) throws IOException
@@ -91,8 +88,8 @@ public class CollisionCompiler
 				}
 		}
 
-		if (uniqueVertexList.size() > 1024) {
-			String err = "Maximum number of vertices exceeded: (" + uniqueVertexList.size() + " / 1024).";
+		if (uniqueVertexList.size() > MAX_VERTEX_COUNT) {
+			String err = "Maximum number of vertices exceeded: (" + uniqueVertexList.size() + " / " + MAX_VERTEX_COUNT + ").";
 			Logger.log("Collision Compile Error: " + err, Priority.ERROR);
 			throw new BuildException(err);
 		}
@@ -125,9 +122,9 @@ public class CollisionCompiler
 
 			c.c_TriangleOffset = (int) raf.getFilePointer();
 			for (Triangle t : c.getMesh()) {
-				int index1 = uniqueVertexMap.get(simpleVertexMap.get(t.vert[0])) & 0x3FF;
-				int index2 = uniqueVertexMap.get(simpleVertexMap.get(t.vert[1])) & 0x3FF;
-				int index3 = uniqueVertexMap.get(simpleVertexMap.get(t.vert[2])) & 0x3FF;
+				int index1 = uniqueVertexMap.get(simpleVertexMap.get(t.vert[0]));
+				int index2 = uniqueVertexMap.get(simpleVertexMap.get(t.vert[1]));
+				int index3 = uniqueVertexMap.get(simpleVertexMap.get(t.vert[2]));
 
 				int triangle = t.doubleSided ? 0 : 0x40000000;
 				triangle = triangle | index1;
@@ -232,6 +229,12 @@ public class CollisionCompiler
 			for (Triangle t : z.getMesh())
 				for (Vertex v : t.vert)
 					if (!vertexMap.containsKey(v)) {
+						if (vertexList.size() >= MAX_VERTEX_COUNT) {
+							String err = String.format("Map %s zone %s exceeds the maximum number of zone vertices: (%d / %d).",
+								map.name, z.getName(), vertexList.size() + 1, MAX_VERTEX_COUNT);
+							Logger.log("Collision Compile Error: " + err, Priority.ERROR);
+							throw new BuildException(err);
+						}
 						vertexMap.put(v, vertexList.size());
 						vertexList.add(v);
 					}
@@ -260,9 +263,9 @@ public class CollisionCompiler
 
 			z.c_TriangleOffset = (int) raf.getFilePointer();
 			for (Triangle t : z.getMesh()) {
-				int index1 = vertexMap.get(t.vert[0]) & 0x3FF;
-				int index2 = vertexMap.get(t.vert[1]) & 0x3FF;
-				int index3 = vertexMap.get(t.vert[2]) & 0x3FF;
+				int index1 = vertexMap.get(t.vert[0]);
+				int index2 = vertexMap.get(t.vert[1]);
+				int index3 = vertexMap.get(t.vert[2]);
 
 				int triangle = t.doubleSided ? 0 : 0x40000000;
 				triangle = triangle | index1;

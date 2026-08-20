@@ -39,9 +39,6 @@ public class LabeledIntegerSpinner extends JComponent
 		SpinnerModel model = new SpinnerNumberModel(initialValue, minValue, maxValue, 1);
 		spinner.setModel(model);
 
-		@SuppressWarnings("unused")
-		final int minimum = minValue;
-
 		JLabel lbl = new JLabel(msg);
 		lbl.setFont(lbl.getFont().deriveFont(12f));
 
@@ -57,9 +54,6 @@ public class LabeledIntegerSpinner extends JComponent
 
 		SpinnerModel model = new SpinnerNumberModel(initialValue, minValue, maxValue, 1);
 		spinner.setModel(model);
-
-		@SuppressWarnings("unused")
-		final int minimum = minValue;
 
 		JLabel lbl = new JLabel(msg);
 		lbl.setFont(lbl.getFont().deriveFont(12f));

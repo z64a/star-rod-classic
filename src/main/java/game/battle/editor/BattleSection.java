@@ -41,12 +41,12 @@ public class BattleSection implements XmlSerializable
 		//	String sectionName = "0B Area ISK Part 1";
 		//	String sectionName = "0C Area ISK Part 2";
 		String sectionName = "19 Area FLO2";
-
+		
 		File index = new File(DUMP_FORMA_SRC + sectionName + ".bidx");
 		File raw = new File(DUMP_FORMA_RAW + sectionName + ".bin");
-
+		
 		BattleSection battle = new BattleSection(raw, index);
-
+		
 		XmlWriter xmw = new XmlWriter(new File(Directories.DUMP_FORMA + "test.xml"));
 		battle.toXML(xmw);
 		*/

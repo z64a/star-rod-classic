@@ -163,7 +163,7 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 	{
 		getFrame().setTransferHandler(new FileTransferHandler(this, fileList -> openImageEDT(fileList.get(fileList.size() - 1))));
 
-		File imgDir = Environment.project.isDecomp ? Environment.project.getDirectory() : MOD_IMG.toFile();
+		File imgDir = MOD_IMG.toFile();
 		importFileChooser = new OpenFileChooser(imgDir, "Import Image", "Images", "png", "jpg", "jpeg", "gif");
 		exportFileChooser = new SaveFileChooser(imgDir, "Export Image", "Images", "png");
 
@@ -795,17 +795,17 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 	}
 
 	@Override
-	protected void saveChanges()
+	protected boolean saveChanges()
 	{
-		exportImage();
+		return exportImage();
 	}
 
-	private void exportImage()
+	private boolean exportImage()
 	{
 		assert (SwingUtilities.isEventDispatchThread());
 
 		if (image == null)
-			return;
+			return true;
 
 		File file = null;
 
@@ -815,7 +815,7 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 			file = promptOverwrite(image.source);
 
 		if (file == null)
-			return;
+			return false;
 
 		Tile out = image.getTile();
 
@@ -825,9 +825,11 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 			modified = false;
 			imageLabel.setText((image.source != null) ? image.source.getName() : "New Image");
 			Logger.log("Exported " + file.getName());
+			return true;
 		}
 		catch (IOException e) {
 			super.showStackTrace(e);
+			return false;
 		}
 	}
 
@@ -854,7 +856,7 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 			exportFileChooser.setCurrentDirectory(file.getParentFile());
 		super.incrementDialogsOpen();
 		if (exportFileChooser.prompt() == ChooseDialogResult.APPROVE)
-			chosen = importFileChooser.getSelectedFile();
+			chosen = exportFileChooser.getSelectedFile();
 		super.decrementDialogsOpen();
 
 		return chosen;
@@ -1000,11 +1002,10 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 
 		Palette pal = null;
 
-		File f = importFileChooser.getSelectedFile();
-		if (f != null && f.exists()) {
+		if (file != null && file.exists()) {
 			try {
 				try {
-					Tile newTile = Tile.load(f, importOptions.getFormat());
+					Tile newTile = Tile.load(file, importOptions.getFormat());
 					pal = newTile.palette;
 				}
 				catch (ImageFormatException e) {
@@ -1033,23 +1034,25 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 		if (image == null)
 			return;
 
-		Palette pal = null;
 		File file = null;
 
 		super.incrementDialogsOpen();
-		if (image != null && image.source != null)
-			importFileChooser.setDirectoryContaining(image.source.getParentFile());
-		if (importFileChooser.prompt() == ChooseDialogResult.APPROVE) {
-			ImportOptionsPanel importOptions = new ImportOptionsPanel();
-			int choice = getConfirmDialog("Import Options", importOptions).choose();
-			if (choice != JOptionPane.OK_OPTION)
-				return;
-
-			file = importFileChooser.getSelectedFile();
-			if (file != null && file.exists())
-				pal = getPaletteEDT(file);
+		try {
+			if (image.source != null)
+				importFileChooser.setDirectoryContaining(image.source.getParentFile());
+			if (importFileChooser.prompt() == ChooseDialogResult.APPROVE)
+				file = importFileChooser.getSelectedFile();
 		}
-		super.decrementDialogsOpen();
+		finally {
+			super.decrementDialogsOpen();
+		}
+
+		if (file == null || !file.exists())
+			return;
+
+		Palette pal = getPaletteEDT(file);
+		if (pal == null)
+			return;
 
 		EditorImage newImage = EditorImage.forcePalette(image, pal);
 		final String filename = file.getName();
@@ -1174,7 +1177,7 @@ public class ImageEditor extends BaseEditor implements MouseManagerListener, Col
 			else
 				image.draw(mousePixelX, mousePixelY, pickedPixel);
 		}
-
+		
 		if(mouseManager.holdingRMB && mousePixelValid)
 			image.deselect(mousePixelX, mousePixelY);
 			*/

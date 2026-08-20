@@ -960,7 +960,7 @@ public class PseudoInstruction
 			assertNoDelaySlot(line, delaySlot);
 			String regName = line.getString(1);
 			int amount = line.getInt(2);
-
+			
 			if(Short.MIN_VALUE < amount && amount < Short.MAX_VALUE) {
 				newinstructions.add(line.createLine("ORI %s, %s, %X", regName, regName, amount));
 			}
@@ -977,16 +977,16 @@ public class PseudoInstruction
 			assertNoDelaySlot(line, delaySlot);
 			String regName = line.getString(1);
 			float amount = line.getFloat(2);
-
+			
 			int bits = Float.floatToRawIntBits(amount);
 			int upper = (bits >>> 16);
 			int lower = (bits & 0xFFFF);
-
+			
 			newinstructions.add(line.createLine("LUI AT, %X", upper));
 			if(lower != 0)
 				newinstructions.add(line.createLine("ORI AT, AT, %X", lower));
 			newinstructions.add(line.createLine("MTC1", "AT, %s", regName));
-
+			
 			continue;
 			}
 			 */
@@ -1104,9 +1104,6 @@ public class PseudoInstruction
 				for (int j = 0; j < replacements.length; j++) {
 					// reorder last branch instruction: move into PI asm
 					if (pi.useDelaySlot && j == replacements.length - 1) {
-						//XXX correct?
-						//	String branch = instructionList.get(i + 1);
-						//	newinstructions.add(branch);
 						newinstructions.add(instructionList.get(i + 1));
 						i += 2;
 					}

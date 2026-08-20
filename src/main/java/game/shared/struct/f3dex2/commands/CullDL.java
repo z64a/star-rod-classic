@@ -35,8 +35,8 @@ public class CullDL extends BaseF3DEX2
 		if (end < 0 || end >= 32)
 			throw new InvalidInputException("%s vertex is out of buffer range (0-31): %X", getName(), end);
 
-		if (end <= start)
-			throw new InvalidInputException("Invalid %s command: end (%d) <= start (%d)", getName(), end, start);
+		if (end < start)
+			throw new InvalidInputException("Invalid %s command: end (%d) < start (%d)", getName(), end, start);
 	}
 
 	public CullDL(CommandType cmd, String ... params) throws InvalidInputException
@@ -52,8 +52,8 @@ public class CullDL extends BaseF3DEX2
 		if (end < 0 || end >= 32)
 			throw new InvalidInputException("%s vertex is out of buffer range (0-31): %X", getName(), end);
 
-		if (end <= start)
-			throw new InvalidInputException("Invalid %s command: end (%d) <= start (%d)", getName(), end, start);
+		if (end < start)
+			throw new InvalidInputException("Invalid %s command: end (%d) < start (%d)", getName(), end, start);
 	}
 
 	@Override

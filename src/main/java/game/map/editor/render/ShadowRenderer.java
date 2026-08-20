@@ -2,6 +2,7 @@ package game.map.editor.render;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL14.GL_MIRRORED_REPEAT;
+import static renderer.GLUtils.NO_TEXTURE_ID;
 import static renderer.buffers.BufferedMesh.VBO_COLOR;
 import static renderer.buffers.BufferedMesh.VBO_INDEX;
 
@@ -12,9 +13,10 @@ import java.nio.ByteBuffer;
 
 import javax.imageio.ImageIO;
 
-import app.Directories;
 import common.BaseCamera;
 import common.Vector3f;
+
+import app.Directories;
 import game.map.shape.TransformMatrix;
 import renderer.buffers.BufferedMesh;
 import renderer.shaders.RenderState;
@@ -27,8 +29,8 @@ import util.Logger;
 public class ShadowRenderer
 {
 	private static boolean initialized = false;
-	private static int glCircularShadowTexture = -1;
-	private static int glSquareShadowTexture = -1;
+	private static int glCircularShadowTexture = NO_TEXTURE_ID;
+	private static int glSquareShadowTexture = NO_TEXTURE_ID;
 
 	private static BufferedMesh circleMesh;
 	private static BufferedMesh squareMesh;
@@ -68,7 +70,9 @@ public class ShadowRenderer
 	{
 		if (initialized) {
 			glDeleteTextures(glCircularShadowTexture);
-			glDeleteTextures(glCircularShadowTexture);
+			glDeleteTextures(glSquareShadowTexture);
+			glCircularShadowTexture = NO_TEXTURE_ID;
+			glSquareShadowTexture = NO_TEXTURE_ID;
 		}
 
 		try {
@@ -89,10 +93,10 @@ public class ShadowRenderer
 			Logger.logError("Unable to load /shadow/circle.png");
 		}
 
-		if (glCircularShadowTexture == -1)
+		if (glCircularShadowTexture == NO_TEXTURE_ID)
 			makeCircleMesh();
 
-		if (glSquareShadowTexture == -1)
+		if (glSquareShadowTexture == NO_TEXTURE_ID)
 			makeSquareMesh();
 
 		initialized = true;
@@ -127,7 +131,7 @@ public class ShadowRenderer
 		RenderState.setDepthWrite(false);
 
 		int texID = circularShadow ? glCircularShadowTexture : glSquareShadowTexture;
-		if (texID == -1) {
+		if (texID == NO_TEXTURE_ID) {
 			ShaderManager.use(BasicSolidShader.class);
 			BufferedMesh fallbackMesh = circularShadow ? circleMesh : squareMesh;
 			fallbackMesh.renderWithTransform(mtx);

@@ -136,7 +136,7 @@ public class DisplayList extends BaseStruct
 		G_LOAD_UCODE		(0xDD, 4, LoadUCode.class),
 		G_DL				(0xDE, NewDL.class),
 		G_ENDDL				(0xDF, NoArg.class),
-		G_NOOP_RDP			(0xE0, NoArg.class),
+		G_SPNOOP			(0xE0, NoArg.class),
 		G_RDPHALF_1			(0xE1), // should not be seen by user
 		G_SetOtherMode_L	(0xE2, SetOtherModeL.class),
 		G_SetOtherMode_H	(0xE3, SetOtherModeH.class),
@@ -167,7 +167,7 @@ public class DisplayList extends BaseStruct
 		G_SETCOMBINE		(0xFC, SetCombine.class),
 		G_SETIMG			(0xFD, SetImg.class),
 		G_SETZIMG			(0xFE, SetBuffer.class),
-		G_SETCIMG			(0xFF, SetBuffer.class);
+		G_SETCIMG			(0xFF, SetImg.class);
 		// @formatter:on
 
 		public final int opcode;
@@ -631,19 +631,19 @@ public class DisplayList extends BaseStruct
 	private static void findLists(ByteBuffer fileBuffer)
 	{
 		fileBuffer.position(fileBuffer.capacity() - 4);
-
+	
 		int pos = fileBuffer.capacity() - 8;
 		int count = 0;
-
+	
 		ArrayList<Integer> starts = new ArrayList<>(2000);
 		ArrayList<Integer> ends = new ArrayList<>(2000);
 		boolean reading = false;
-
+	
 		while(pos > 0)
 		{
 			fileBuffer.position(pos);
 			long h = fileBuffer.getLong();
-
+	
 			if(!reading)
 			{
 				if(h == 0xDF00000000000000L)
@@ -661,42 +661,42 @@ public class DisplayList extends BaseStruct
 					ends.add(pos + 8);
 					//System.out.printf("%5d : %08X%n",  ++count, pos);
 				}
-
+	
 				boolean valid = true;
 				int opcode  = (int)(h >> 56) & 0xFF;
 				CommandType type = decodeMap.get(opcode);
-
+	
 				if(type == null)
 					valid = false;
-
+	
 				switch(opcode)
 				{
 				case 0x00:
 				case 0xFF:
 					valid = false;
 					break;
-
+	
 				case 0x05:
 					valid = ((h & 0xFFFFFFFFL) == 0);
 					break;
 				}
-
+	
 				if(!valid)
 				{
 					starts.add(pos + 8);
 					reading = false;
 				}
 			}
-
+	
 			pos -= 8;
 		}
-
+	
 		if(starts.size() != ends.size())
 			throw new IllegalStateException();
-
+	
 		Collections.reverse(starts);
 		Collections.reverse(ends);
-
+	
 		int i = 0;
 		for(Integer start : starts)
 		{

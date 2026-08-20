@@ -91,9 +91,9 @@ public class BasicMesh extends AbstractMesh implements Iterable<Triangle>, XmlSe
 		for (TriangleBatch batch : getBatches()) {
 			batch.bufferStartPos = -1;
 			for (Triangle t : batch.triangles) {
-				boolean selected = selectionEnabled &&
-					(opts.selectionMode == SelectionMode.TRIANGLE && t.selected) ||
-					(opts.selectionMode == SelectionMode.OBJECT && parentObject.selected);
+				boolean triSelected = opts.selectionMode == SelectionMode.TRIANGLE && t.selected;
+				boolean objSelected = opts.selectionMode == SelectionMode.OBJECT && parentObject.selected;
+				boolean selected = selectionEnabled && (triSelected || objSelected);
 
 				Color4f color = colors[1];
 				if (t.doubleSided)

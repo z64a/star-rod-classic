@@ -1,3 +1,4 @@
+import com.diffplug.gradle.spotless.SpotlessExtension
 import org.gradle.api.tasks.bundling.Zip
 import java.util.Locale
 import java.util.Properties
@@ -18,9 +19,9 @@ repositories {
 
 plugins {
     id("java")
+    id("com.diffplug.spotless") version "8.8.0"
     id("com.gradleup.shadow") version "8.3.11"
     id("net.nemerosa.versioning") version "3.1.0"
-    id("com.cmgapps.licenses") version "4.8.0"
 }
 
 java {
@@ -28,6 +29,27 @@ java {
         languageVersion.set(JavaLanguageVersion.of(targetJavaVersion))
         vendor.set(JvmVendorSpec.ADOPTIUM)
     }
+}
+
+val manualGenerator by sourceSets.creating {
+    java.srcDir("src/manual/java")
+}
+
+configure<SpotlessExtension> {
+    isEnforceCheck = false
+
+    java {
+        target("src/**/*.java")
+        importOrder("\\#", "java", "javax", "org", "com", "")
+        removeUnusedImports()
+        eclipse("4.38").configFile(".settings/org.eclipse.jdt.core.prefs")
+    }
+}
+
+tasks.register("formatJava") {
+    group = "formatting"
+    description = "Format and organize all Java sources under src using the project Eclipse settings"
+    dependsOn("spotlessJavaApply")
 }
 
 tasks.compileJava {
@@ -65,9 +87,6 @@ dependencies {
     implementation("org.lwjgl:lwjgl-tinyfd")
     implementation("org.lwjgl:lwjgl-assimp")
 
-    // A release contains only the native libraries for the platform it runs on.
-    // This avoids collisions between identically named x64 and ARM libraries in
-    // the fat JAR and keeps each download substantially smaller.
     runtimeOnly("org.lwjgl:lwjgl::$lwjglNatives")
     runtimeOnly("org.lwjgl:lwjgl-opengl::$lwjglNatives")
     runtimeOnly("org.lwjgl:lwjgl-glfw::$lwjglNatives")
@@ -87,21 +106,50 @@ dependencies {
     implementation("com.alexdupre:pngj:2.1.2.1")
 
     implementation("com.google.code.gson:gson:2.10.1")
-    implementation("org.yaml:snakeyaml:2.2")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.2")
 
     implementation("com.formdev:flatlaf:3.4.1")
     implementation("com.formdev:flatlaf-intellij-themes:3.4.1")
-
-    implementation(files("lib/org.eclipse.cdt.core-5.11.0.jar"))
-    implementation(files("lib/org.eclipse.equinox.common-3.6.0.jar"))
+    implementation("com.formdev:flatlaf-extras:3.4.1")
 
     implementation("org.ahocorasick:ahocorasick:0.6.3")
+
+    add(manualGenerator.implementationConfigurationName, "org.commonmark:commonmark:0.29.0")
+    add(manualGenerator.implementationConfigurationName, "org.commonmark:commonmark-ext-gfm-tables:0.29.0")
+    add(manualGenerator.implementationConfigurationName, "org.commonmark:commonmark-ext-heading-anchor:0.29.0")
 }
 
-val licenseBuildDir = layout.buildDirectory.dir("reports/licenses/licenseReport")
+tasks.test {
+    useJUnitPlatform()
+}
+
+val manualBuildDir = layout.buildDirectory.dir("generated/manual")
 val releaseBuildDir = layout.buildDirectory.dir("release")
 val runtimeBuildDir = layout.buildDirectory.dir("runtime/$platformName")
 val javaCompiler = javaToolchains.compilerFor(java.toolchain)
+
+val renderManual by tasks.registering(JavaExec::class) {
+    dependsOn(manualGenerator.classesTaskName)
+
+    group = "documentation"
+    description = "Render the user guide as HTML"
+    classpath = manualGenerator.runtimeClasspath
+    mainClass.set("manual.ManualGenerator")
+    args(file("manual").absolutePath, manualBuildDir.get().asFile.absolutePath)
+
+    inputs.dir(file("manual"))
+    outputs.dir(manualBuildDir)
+
+    doFirst {
+        delete(manualBuildDir)
+    }
+}
+
+tasks.compileJava {
+    dependsOn(renderManual)
+}
 
 tasks.shadowJar {
     mergeServiceFiles()
@@ -109,6 +157,11 @@ tasks.shadowJar {
     exclude("META-INF/*.DSA")
     exclude("META-INF/*.RSA")
     exclude("META-INF/LICENSE")
+    exclude("META-INF/LICENSE.txt")
+    exclude("META-INF/NOTICE")
+    exclude("META-INF/NOTICE.txt")
+    exclude("LICENSE.txt")
+    exclude("NOTICE.txt")
     archiveFileName.set("StarRod.jar")
 
     manifest {
@@ -151,7 +204,7 @@ val createRuntime by tasks.registering(Exec::class) {
 }
 
 tasks.register<Zip>("createReleaseZip") {
-    dependsOn(tasks.shadowJar, createRuntime, tasks.licenseReport)
+    dependsOn(tasks.shadowJar, createRuntime, renderManual)
 
     group = "release"
     description = "Create a release for $platformName"
@@ -166,8 +219,14 @@ tasks.register<Zip>("createReleaseZip") {
     from(file("contributed")) {
         into("contributed")
     }
-    from(licenseBuildDir) {
-        into("database/licenses")
+    from(manualBuildDir) {
+        into("manual")
+    }
+    from(file("LICENSE.txt")) {
+        into("license")
+    }
+    from(file("license")) {
+        into("license")
     }
     from(file("exec")) {
         include(if (isWindows) "StarRod.bat" else "StarRod")

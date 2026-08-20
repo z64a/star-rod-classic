@@ -155,7 +155,7 @@ public class ItemPatcher
 			    [B8]    LA      V1, $ItemScriptItemIDs
 			    [100]   LA      V0, $ItemScriptTable
 			}
-
+			
 			% 001968FC --> 8026801C
 			#new:Function $Function_LoadFreeItemScript
 			{

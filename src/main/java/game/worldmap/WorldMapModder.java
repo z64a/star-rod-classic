@@ -9,31 +9,48 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import app.Environment;
-import app.StarRodClassic;
 import app.input.InputFileException;
 import game.shared.ProjectDatabase;
 import patcher.RomPatcher;
 import util.Logger;
+import util.xml.XmlKey;
+import util.xml.XmlWrapper.XmlReader;
+import util.xml.XmlWrapper.XmlTag;
+import util.xml.XmlWrapper.XmlWriter;
 
 public class WorldMapModder
 {
 	public static final int MAP_SIZE = 320;
+
+	private enum Key implements XmlKey
+	{
+		// @formatter:off
+		TAG_ROOT		("WorldMap"),
+		TAG_LOCATION	("Location"),
+		ATTR_ID			("id"),
+		ATTR_PARENT		("parent"),
+		ATTR_POS_X		("posX"),
+		ATTR_POS_Y		("posY"),
+		ATTR_UPDATE		("update"),
+		ATTR_PATH		("path");
+		// @formatter:on
+
+		private final String key;
+
+		Key(String key)
+		{
+			this.key = key;
+		}
+
+		@Override
+		public String toString()
+		{
+			return key;
+		}
+	}
 
 	public static void main(String args[]) throws IOException
 	{
@@ -214,94 +231,85 @@ public class WorldMapModder
 		List<WorldLocation> locations = new ArrayList<>();
 
 		try {
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder builder = factory.newDocumentBuilder();
-			Document document = builder.parse(xmlFile);
-			document.getDocumentElement().normalize();
+			XmlReader xmr = new XmlReader(xmlFile);
+			Element rootElement = xmr.getRootElement();
+			if (!rootElement.getTagName().equals(Key.TAG_ROOT.toString()))
+				xmr.complain("World map XML must use a " + Key.TAG_ROOT + " root element.");
 
-			NodeList nodes = document.getElementsByTagName("Location");
-			if (nodes.getLength() > 0x22)
-				throw new InputFileException(xmlFile, "Only 34 locations may be defined for the world map.");
-			if (nodes.getLength() < 1)
-				throw new InputFileException(xmlFile, "No locations defined for world map.");
+			List<Element> locationElements = xmr.getTags(rootElement, Key.TAG_LOCATION);
+			if (locationElements.size() > 0x22)
+				xmr.complain("Only 34 locations may be defined for the world map.");
+			if (locationElements.isEmpty())
+				xmr.complain("No locations defined for world map.");
 
-			for (int i = 0; i < nodes.getLength(); i++) {
-				Element locationElement = (Element) nodes.item(i);
-
-				if (!locationElement.hasAttribute("posX"))
-					throw new InputFileException(xmlFile, "Location is missing attribute: posX.");
-				int x = Integer.parseInt(locationElement.getAttribute("posX"));
-
-				if (!locationElement.hasAttribute("posY"))
-					throw new InputFileException(xmlFile, "Location is missing attribute: posY.");
-				int y = Integer.parseInt(locationElement.getAttribute("posY"));
+			for (Element locationElement : locationElements) {
+				xmr.requiresAttribute(locationElement, Key.ATTR_POS_X);
+				xmr.requiresAttribute(locationElement, Key.ATTR_POS_Y);
+				int x = xmr.readInt(locationElement, Key.ATTR_POS_X);
+				int y = xmr.readInt(locationElement, Key.ATTR_POS_Y);
 
 				WorldLocation loc = new WorldLocation(x, y);
 				locations.add(loc);
 
-				if (!locationElement.hasAttribute("id"))
-					throw new InputFileException(xmlFile, "Location is missing attribute: id.");
-				loc.id = Integer.parseInt(locationElement.getAttribute("id"), 16);
+				xmr.requiresAttribute(locationElement, Key.ATTR_ID);
+				xmr.requiresAttribute(locationElement, Key.ATTR_PARENT);
+				xmr.requiresAttribute(locationElement, Key.ATTR_UPDATE);
+				loc.id = xmr.readHex(locationElement, Key.ATTR_ID);
+				loc.parentID = xmr.readHex(locationElement, Key.ATTR_PARENT);
+				loc.descUpdate = (byte) xmr.readHex(locationElement, Key.ATTR_UPDATE);
 
-				if (!locationElement.hasAttribute("parent"))
-					throw new InputFileException(xmlFile, "Location is missing attribute: parent.");
-				loc.parentID = Integer.parseInt(locationElement.getAttribute("parent"), 16);
-
-				if (!locationElement.hasAttribute("update"))
-					throw new InputFileException(xmlFile, "Location is missing attribute: update.");
-				loc.descUpdate = (byte) Integer.parseInt(locationElement.getAttribute("update"), 16);
-
-				if (!locationElement.hasAttribute("path"))
-					throw new InputFileException(xmlFile, "Location is missing attribute: path.");
-				String path = locationElement.getAttribute("path").replaceAll("//s+", "");
+				if (!locationElement.hasAttribute(Key.ATTR_PATH.toString()))
+					xmr.complain(Key.TAG_LOCATION + " is missing required attribute: " + Key.ATTR_PATH);
+				String path = xmr.getAttribute(locationElement, Key.ATTR_PATH).replaceAll("\\s+", "");
 				if (!path.isEmpty()) {
 					String[] points = path.split(";");
 					if (points.length > 0x20)
-						throw new InputFileException(xmlFile, "Path length exceeds limit: (" + points.length + " / 32)");
+						xmr.complain("Path length exceeds limit: (" + points.length + " / 32)");
 
 					int curX = loc.x;
 					int curY = loc.y;
 					for (int j = 0; j < points.length; j++) {
 						String[] coords = points[j].split(",");
 						if (coords.length != 2)
-							throw new InputFileException(xmlFile, "Path has invalid coordinate: " + points[j]);
+							xmr.complain("Path has invalid coordinate: " + points[j]);
 
-						curX += (byte) Integer.parseInt(coords[0]);
-						curY += (byte) Integer.parseInt(coords[1]);
+						int deltaX = 0;
+						int deltaY = 0;
+						try {
+							deltaX = Integer.parseInt(coords[0]);
+							deltaY = Integer.parseInt(coords[1]);
+						}
+						catch (NumberFormatException e) {
+							xmr.complain("Path has invalid coordinate: " + points[j]);
+						}
+
+						curX += (byte) deltaX;
+						curY += (byte) deltaY;
 						loc.path.add(new WorldPathElement(loc, curX, curY));
 					}
 				}
 			}
 		}
-		catch (ParserConfigurationException e) {
-			e.printStackTrace();
-			StarRodClassic.displayStackTrace(e);
-		}
-		catch (SAXException e) {
-			e.printStackTrace();
-			StarRodClassic.displayStackTrace(e);
+		catch (InputFileException e) {
+			throw new IOException("Could not read world map XML: " + xmlFile, e);
 		}
 
 		return locations;
 	}
 
-	private static void writeXML(List<WorldLocation> locations, File xmlFile)
+	private static void writeXML(List<WorldLocation> locations, File xmlFile) throws IOException
 	{
-		try {
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder builder = factory.newDocumentBuilder();
-			Document doc = builder.newDocument();
-
-			Element rootElement = doc.createElement("WorldMap");
-			doc.appendChild(rootElement);
+		try (XmlWriter xmw = new XmlWriter(xmlFile)) {
+			XmlTag rootTag = xmw.createTag(Key.TAG_ROOT, false);
+			xmw.openTag(rootTag);
 
 			for (WorldLocation loc : locations) {
-				Element locationElement = doc.createElement("Location");
-				locationElement.setAttribute("id", String.format("%02X", loc.id));
-				locationElement.setAttribute("parent", String.format("%02X", loc.parentID));
-				locationElement.setAttribute("posX", String.format("%d", loc.x));
-				locationElement.setAttribute("posY", String.format("%d", loc.y));
-				locationElement.setAttribute("update", String.format("%02X", loc.descUpdate));
+				XmlTag locationTag = xmw.createTag(Key.TAG_LOCATION, true);
+				xmw.addHex(locationTag, Key.ATTR_ID, "%02X", loc.id);
+				xmw.addHex(locationTag, Key.ATTR_PARENT, "%02X", loc.parentID);
+				xmw.addInt(locationTag, Key.ATTR_POS_X, loc.x);
+				xmw.addInt(locationTag, Key.ATTR_POS_Y, loc.y);
+				xmw.addHex(locationTag, Key.ATTR_UPDATE, "%02X", loc.descUpdate & 0xFF);
 
 				int lastX = loc.x;
 				int lastY = loc.y;
@@ -316,28 +324,12 @@ public class WorldMapModder
 						sb.append(";");
 				}
 
-				locationElement.setAttribute("path", sb.toString());
-				rootElement.appendChild(locationElement);
+				xmw.addAttribute(locationTag, Key.ATTR_PATH, sb.toString());
+				xmw.printTag(locationTag);
 			}
 
-			TransformerFactory transformerFactory = TransformerFactory.newInstance();
-			Transformer transformer = transformerFactory.newTransformer();
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-			transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-
-			DOMSource source = new DOMSource(doc);
-			StreamResult dest = new StreamResult(xmlFile);
-
-			transformer.transform(source, dest);
-
-		}
-		catch (ParserConfigurationException e) {
-			e.printStackTrace();
-			StarRodClassic.displayStackTrace(e);
-		}
-		catch (TransformerException e) {
-			e.printStackTrace();
-			StarRodClassic.displayStackTrace(e);
+			xmw.closeTag(rootTag);
+			xmw.save();
 		}
 	}
 
@@ -357,7 +349,7 @@ public class WorldMapModder
 		return locations;
 	}
 
-	public static void saveLocations(List<WorldLocation> locations)
+	public static void saveLocations(List<WorldLocation> locations) throws IOException
 	{
 		for (WorldLocation loc : locations) {
 			loc.id = ProjectDatabase.LocationType.getID(loc.locationName);

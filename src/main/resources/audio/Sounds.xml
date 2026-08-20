@@ -1,0 +1,1346 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Sounds>
+	<Sound id="0001" name="OpenPopup1"/>
+	<Sound id="0002" name="OpenPopup2"/>
+	<Sound id="0003" name="LowerStatusBar"/>
+	<Sound id="0004" name="RaiseStatusBar"/>
+	<Sound id="0005" name="MenuBadgeEquip"/>
+	<Sound id="0006" name="MenuBadgeUnequip"/>
+	<Sound id="0007" name="Empty_0007" empty="true"/>
+	<Sound id="0008" name="Empty_0008" empty="true"/>
+	<Sound id="0009" name="MenuShowChoice"/>
+	<Sound id="000A" name="ChimeBeginAmbush"/>
+	<Sound id="000B" name="ChimeSolvedPuzzle"/>
+	<Sound id="000C" name="ActivateComputer" unused="true"/>
+	<Sound id="000D" name="PartnerPutAway"/>
+	<Sound id="000E" name="PartnerGetOut"/>
+	<Sound id="000F" name="PartnerSwapBattlePos"/>
+	<Sound id="0010" name="SaveConfirm"/>
+	<Sound id="0011" name="MsgVoice1A"/>
+	<Sound id="0012" name="MsgVoice1B"/>
+	<Sound id="0013" name="MsgVoice2A" unused="true"/>
+	<Sound id="0014" name="MsgVoice2B"/>
+	<Sound id="0015" name="MsgVoice3A" unused="true"/>
+	<Sound id="0016" name="MsgVoice3B" unused="true"/>
+	<Sound id="0017" name="MsgVoice4A"/>
+	<Sound id="0018" name="MsgVoice4B"/>
+	<Sound id="0019" name="MsgVoice5A" unused="true"/>
+	<Sound id="001A" name="MsgVoice5B" unused="true"/>
+	<Sound id="001B" name="MsgVoiceStar"/>
+	<Sound id="001C" name="Empty_001C" empty="true"/>
+	<Sound id="001D" name="Empty_001D" empty="true"/>
+	<Sound id="001E" name="Empty_001E" empty="true"/>
+	<Sound id="001F" name="Empty_001F" empty="true"/>
+	<Sound id="0020" name="Empty_0020" empty="true"/>
+	<Sound id="0021" name="LrawTrdFlowingWater"/>
+	<Sound id="0022" name="LrawTrdRaiseStairs"/>
+	<Sound id="0023" name="TRD_WaterSplash"/>
+	<Sound id="0024" name="LrawTrd02LowerStairs"/>
+	<Sound id="0025" name="TRD_02StairsLowered"/>
+	<Sound id="0026" name="TRD_PuzzlePlatformThud"/>
+	<Sound id="0027" name="LrawTrd04LowerStairs"/>
+	<Sound id="0028" name="TRD_04StairsLowered"/>
+	<Sound id="0029" name="TRD_PoundingHigh"/>
+	<Sound id="002A" name="TRD_PoundingLow"/>
+	<Sound id="002B" name="TRD_MagicDoorJump"/>
+	<Sound id="002C" name="TRD_MagicDoorLand"/>
+	<Sound id="002D" name="PRA_PushStatue"/>
+	<Sound id="002E" name="PRA_FlipWall"/>
+	<Sound id="002F" name="PRA_ExtendHiddenBridge"/>
+	<Sound id="0030" name="PRA_UnfoldExit"/>
+	<Sound id="0031" name="Unused_0031" unused="true"/>
+	<Sound id="0032" name="Unused_0032" unused="true"/>
+	<Sound id="0033" name="LrawKkjRumbling"/>
+	<Sound id="0034" name="LrawOsrRumbling"/>
+	<Sound id="0035" name="OSR_GroundCracking"/>
+	<Sound id="0036" name="OSR_SmokeRising1"/>
+	<Sound id="0037" name="OSR_SmokeRising2"/>
+	<Sound id="0038" name="OSR_SmokeRising3"/>
+	<Sound id="0039" name="LrawMacHarborWater"/>
+	<Sound id="003A" name="Empty_003A" empty="true"/>
+	<Sound id="003B" name="Empty_003B" empty="true"/>
+	<Sound id="003C" name="Empty_003C" empty="true"/>
+	<Sound id="003D" name="Empty_003D" empty="true"/>
+	<Sound id="003E" name="Empty_003E" empty="true"/>
+	<Sound id="003F" name="PRA_ShiftFloorsRumble"/>
+	<Sound id="0040" name="PRA_ShiftFloorsThud"/>
+	<Sound id="0041" name="WhaleJiggle"/>
+	<Sound id="0042" name="WhaleFill"/>
+	<Sound id="0043" name="LrawWhaleGeyser"/>
+	<Sound id="0044" name="WhaleEject"/>
+	<Sound id="0045" name="JrTroopaSplash"/>
+	<Sound id="0046" name="LrawJrTroopaSwim"/>
+	<Sound id="0047" name="BooSpook"/>
+	<Sound id="0048" name="ObjectLand"/>
+	<Sound id="0049" name="UnusedWaterRunning" unused="true"/>
+	<Sound id="004A" name="LrawJanBeachWaves"/>
+	<Sound id="004B" name="Empty_004B" empty="true"/>
+	<Sound id="004C" name="LrawOsrFountainIntact"/>
+	<Sound id="004D" name="LrawOsrFountainBroken"/>
+	<Sound id="004E" name="LrawJanSmallGeyser"/>
+	<Sound id="004F" name="LrawJanLargeGeyser"/>
+	<Sound id="0050" name="LrawWindmillExt"/>
+	<Sound id="0051" name="OMO_FlipTrackThud"/>
+	<Sound id="0052" name="LrawTrompRoll"/>
+	<Sound id="0053" name="ISK_DrainingSand"/>
+	<Sound id="0054" name="ISK_FlipStairs"/>
+	<Sound id="0055" name="LargeLensFlare"/>
+	<Sound id="0056" name="LrawIskLowerStairs"/>
+	<Sound id="0057" name="ISK_StairDropThud"/>
+	<Sound id="0058" name="ISK_StairsEmergeRumble"/>
+	<Sound id="0059" name="ISK_StairsEmergeThud"/>
+	<Sound id="005A" name="KKJ_ArenaLensFlare"/>
+	<Sound id="005B" name="LrawSbkRuinsWhirlwind"/>
+	<Sound id="005C" name="SBK_RuinsFinishRising"/>
+	<Sound id="005D" name="LrawSbkRuinsRising"/>
+	<Sound id="005E" name="SBK_RuinsStepsUnfold"/>
+	<Sound id="005F" name="SBK_RuinsPedestalSink"/>
+	<Sound id="0060" name="LrawSbkRuinsRisingDistant"/>
+	<Sound id="0061" name="GoompaAttacked"/>
+	<Sound id="0062" name="TwinkDepart"/>
+	<Sound id="0063" name="UnusedStarSpiritAppears" unused="true"/>
+	<Sound id="0064" name="MultipleStarSpiritsAppear"/>
+	<Sound id="0065" name="ShimmerFalling" unused="true"/>
+	<Sound id="0066" name="ShimmerRising" unused="true"/>
+	<Sound id="0067" name="NOK_BridgeXylophone1"/>
+	<Sound id="0068" name="NOK_BridgeXylophone2"/>
+	<Sound id="0069" name="NOK_BridgeXylophone3"/>
+	<Sound id="006A" name="NOK_BridgeXylophone4"/>
+	<Sound id="006B" name="NOK_BridgeXylophone5"/>
+	<Sound id="006C" name="NOK_BridgeXylophone6"/>
+	<Sound id="006D" name="NOK_BridgeXylophone7"/>
+	<Sound id="006E" name="Unused_006E" unused="true"/>
+	<Sound id="006F" name="Unused_006F" unused="true"/>
+	<Sound id="0070" name="LrawWindmillGears"/>
+	<Sound id="0071" name="NOK_BridgeThud1"/>
+	<Sound id="0072" name="NOK_BridgeThud2"/>
+	<Sound id="0073" name="NOK_BridgeThud3"/>
+	<Sound id="0074" name="JrTroopaScamper"/>
+	<Sound id="0075" name="Empty_0075" empty="true"/>
+	<Sound id="0076" name="Empty_0076" empty="true"/>
+	<Sound id="0077" name="NOK_HouseConflict"/>
+	<Sound id="0078" name="Empty_0078" empty="true"/>
+	<Sound id="0079" name="Unused_0079" unused="true"/>
+	<Sound id="007A" name="Unused_007A" unused="true"/>
+	<Sound id="007B" name="Unused_007B" unused="true"/>
+	<Sound id="007C" name="Unused_007C" unused="true"/>
+	<Sound id="007D" name="PulseStone"/>
+	<Sound id="007E" name="Unused_007E" unused="true"/>
+	<Sound id="007F" name="Empty_007F" empty="true"/>
+	<Sound id="0080" name="Empty_0080" empty="true"/>
+	<Sound id="0081" name="TrainBell" unused="true"/>
+	<Sound id="0082" name="TrainDeparture"/>
+	<Sound id="0083" name="LrawToyboxTrainGear"/>
+	<Sound id="0084" name="OMO_ToyTrainWhistleB"/>
+	<Sound id="0085" name="OMO_PlatformAscend"/>
+	<Sound id="0086" name="Unused_OMO_PlatformAscendCopy" unused="true"/>
+	<Sound id="0087" name="OMO_PlatformDescend"/>
+	<Sound id="0088" name="Unused_OMO_PlatformDescendCopy" unused="true"/>
+	<Sound id="0089" name="LrawAudienceMurmur"/>
+	<Sound id="008A" name="AudienceCheer"/>
+	<Sound id="008B" name="AudienceBoo"/>
+	<Sound id="008C" name="QuizNextQuestion"/>
+	<Sound id="008D" name="QuizBuzzer"/>
+	<Sound id="008E" name="LrawQuizTicking"/>
+	<Sound id="008F" name="QuizmoVanish"/>
+	<Sound id="0090" name="ClockTicking" unused="true"/>
+	<Sound id="0091" name="LrawPuffPuffMachine"/>
+	<Sound id="0092" name="KKJ_UseSneakyParasol"/>
+	<Sound id="0093" name="KKJ_RotatingWall"/>
+	<Sound id="0094" name="LrawDgbCollapse"/>
+	<Sound id="0095" name="DGB_Collapse1"/>
+	<Sound id="0096" name="DGB_Collapse2"/>
+	<Sound id="0097" name="DGB_Collapse4"/>
+	<Sound id="0098" name="DGB_Collapse3"/>
+	<Sound id="0099" name="LrawObkLowerChain"/>
+	<Sound id="009A" name="Unused_009A" unused="true"/>
+	<Sound id="009B" name="OBK_CageSlam"/>
+	<Sound id="009C" name="Unused_LrawObkLowerChainCopy" unused="true"/>
+	<Sound id="009D" name="OBK_ChandelierSwing"/>
+	<Sound id="009E" name="LrawMoveStatue"/>
+	<Sound id="009F" name="LrawMoveLargeStatue"/>
+	<Sound id="00A0" name="LrawOmoRotatingWheel"/>
+	<Sound id="00A1" name="OMO_ToyboxTrainDrop"/>
+	<Sound id="00A2" name="LrawStarOrbRising"/>
+	<Sound id="00A3" name="StarshipAppears"/>
+	<Sound id="00A4" name="KPA_LightRays"/>
+	<Sound id="00A5" name="KMR_TowerCollapseRumbleLoop"/>
+	<Sound id="00A6" name="KMR_TowerCollapseThud"/>
+	<Sound id="00A7" name="KMR_TowerCollapseUnfold"/>
+	<Sound id="00A8" name="DGB_SmallThud"/>
+	<Sound id="00A9" name="RowfOpenShop"/>
+	<Sound id="00AA" name="RowfPullRugOut"/>
+	<Sound id="00AB" name="RowfCloseShop"/>
+	<Sound id="00AC" name="RowfPushRugIn"/>
+	<Sound id="00AD" name="LrawStarSanctuaryFar"/>
+	<Sound id="00AE" name="LrawStarSanctuaryNear"/>
+	<Sound id="00AF" name="LrawStarSanctuaryInside"/>
+	<Sound id="00B0" name="IntroNextPage"/>
+	<Sound id="00B1" name="MerlarAppears"/>
+	<Sound id="00B2" name="StarOrbBurst"/>
+	<Sound id="00B3" name="Empty_00B3" empty="true"/>
+	<Sound id="00B4" name="TubbaPounding"/>
+	<Sound id="00B5" name="Invalid_00B5"/>
+	<Sound id="00B6" name="Empty_00B6" empty="true"/>
+	<Sound id="00B7" name="Empty_00B7" empty="true"/>
+	<Sound id="00B8" name="Empty_00B8" empty="true"/>
+	<Sound id="00B9" name="Empty_00B9" empty="true"/>
+	<Sound id="00BA" name="Empty_00BA" empty="true"/>
+	<Sound id="00BB" name="Empty_00BB" empty="true"/>
+	<Sound id="00BC" name="Empty_00BC" empty="true"/>
+	<Sound id="00BD" name="Empty_00BD" empty="true"/>
+	<Sound id="00BE" name="Empty_00BE" empty="true"/>
+	<Sound id="00BF" name="Empty_00BF" empty="true"/>
+	<Sound id="00C0" name="Empty_00C0" empty="true"/>
+	<Sound id="00C1" name="BooVanishA"/>
+	<Sound id="00C2" name="BooVanishB"/>
+	<Sound id="00C3" name="BooAppearA"/>
+	<Sound id="00C4" name="BooAppearB"/>
+	<Sound id="00C5" name="MenuOpen"/>
+	<Sound id="00C6" name="MenuClose"/>
+	<Sound id="00C7" name="MenuChangeSelection"/>
+	<Sound id="00C8" name="MenuChangeTab"/>
+	<Sound id="00C9" name="MenuNext"/>
+	<Sound id="00CA" name="MenuBack"/>
+	<Sound id="00CB" name="MsgWait"/>
+	<Sound id="00CC" name="MsgSkip"/>
+	<Sound id="00CD" name="MsgRewind"/>
+	<Sound id="00CE" name="MsgUnrewind"/>
+	<Sound id="00CF" name="Empty_00CF" empty="true"/>
+	<Sound id="00D0" name="Empty_00D0" empty="true"/>
+	<Sound id="00D1" name="JingleGotItem"/>
+	<Sound id="00D2" name="JingleGotKey"/>
+	<Sound id="00D3" name="JingleGotBadge"/>
+	<Sound id="00D4" name="JingleWonBattle"/>
+	<Sound id="00D5" name="FileMenuIn"/>
+	<Sound id="00D6" name="FileMenuOut"/>
+	<Sound id="00D7" name="Empty_00D7" empty="true"/>
+	<Sound id="00D8" name="Empty_00D8" empty="true"/>
+	<Sound id="00D9" name="TransporterIn"/>
+	<Sound id="00DA" name="TransporterOut"/>
+	<Sound id="00DB" name="SlideWhistleIn" unused="true"/>
+	<Sound id="00DC" name="SlideWhistleOut"/>
+	<Sound id="00DD" name="HeavyObjectDrop"/>
+	<Sound id="00DE" name="Unused_HeavyObjectDropCopy" unused="true"/>
+	<Sound id="00DF" name="CheckLaughingFlowers"/>
+	<Sound id="00E0" name="SouncCheckMailbox"/>
+	<Sound id="00E1" name="HitPlayerNormal"/>
+	<Sound id="00E2" name="HitPlayerFire"/>
+	<Sound id="00E3" name="HitPlayerIce"/>
+	<Sound id="00E4" name="Empty_00E4" empty="true"/>
+	<Sound id="00E5" name="Empty_00E5" empty="true"/>
+	<Sound id="00E6" name="Empty_00E6" empty="true"/>
+	<Sound id="00E7" name="FrozenShatter"/>
+	<Sound id="00E8" name="TouchLava"/>
+	<Sound id="00E9" name="HitNormal"/>
+	<Sound id="00EA" name="HitFire"/>
+	<Sound id="00EB" name="HitIce"/>
+	<Sound id="00EC" name="Empty_00EC" empty="true"/>
+	<Sound id="00ED" name="Empty_00ED" empty="true"/>
+	<Sound id="00EE" name="Empty_00EE" empty="true"/>
+	<Sound id="00EF" name="Empty_00EF" empty="true"/>
+	<Sound id="00F0" name="Empty_00F0" empty="true"/>
+	<Sound id="00F1" name="PlantsBell"/>
+	<Sound id="00F2" name="PlantsCymbalCrash"/>
+	<Sound id="00F3" name="PlantsTrumpet"/>
+	<Sound id="00F4" name="PlantsLightUp"/>
+	<Sound id="00F5" name="FireplaceBurst"/>
+	<Sound id="00F6" name="OBK_CheckCabinet"/>
+	<Sound id="00F7" name="OBK_CabinetCrash"/>
+	<Sound id="00F8" name="FlipPage"/>
+	<Sound id="00F9" name="KKJ_RevealButton"/>
+	<Sound id="00FA" name="KKJ_PressButton"/>
+	<Sound id="00FB" name="KKJ_DropIntoAshes"/>
+	<Sound id="00FC" name="KKJ_ExtinguishFire"/>
+	<Sound id="00FD" name="SneakyParasolCopy"/>
+	<Sound id="00FE" name="SneakyParasolTransform"/>
+	<Sound id="00FF" name="StartOvenTimer"/>
+	<Sound id="0100" name="KooperStep"/>
+	<Sound id="0101" name="Empty_0101" empty="true"/>
+	<Sound id="0102" name="Empty_0102" empty="true"/>
+	<Sound id="0103" name="Empty_0103" empty="true"/>
+	<Sound id="0104" name="Empty_0104" empty="true"/>
+	<Sound id="0105" name="Empty_0105" empty="true"/>
+	<Sound id="0106" name="Empty_0106" empty="true"/>
+	<Sound id="0107" name="Empty_0107" empty="true"/>
+	<Sound id="0108" name="HitSpike"/>
+	<Sound id="0109" name="Empty_0109" empty="true"/>
+	<Sound id="010A" name="Empty_010A" empty="true"/>
+	<Sound id="010B" name="HammerWindup"/>
+	<Sound id="010C" name="Immune"/>
+	<Sound id="010D" name="HitBones"/>
+	<Sound id="010E" name="Empty_010E" empty="true"/>
+	<Sound id="010F" name="ActorHurt"/>
+	<Sound id="0110" name="HitRattle"/>
+	<Sound id="0111" name="Empty_0111" empty="true"/>
+	<Sound id="0112" name="Empty_0112" empty="true"/>
+	<Sound id="0113" name="Empty_0113" empty="true"/>
+	<Sound id="0114" name="Empty_0114" empty="true"/>
+	<Sound id="0115" name="Empty_0115" empty="true"/>
+	<Sound id="0116" name="Empty_0116" empty="true"/>
+	<Sound id="0117" name="Empty_0117" empty="true"/>
+	<Sound id="0118" name="Empty_0118" empty="true"/>
+	<Sound id="0119" name="Empty_0119" empty="true"/>
+	<Sound id="011A" name="Empty_011A" empty="true"/>
+	<Sound id="011B" name="Empty_011B" empty="true"/>
+	<Sound id="011C" name="Empty_011C" empty="true"/>
+	<Sound id="011D" name="Empty_011D" empty="true"/>
+	<Sound id="011E" name="Empty_011E" empty="true"/>
+	<Sound id="011F" name="Empty_011F" empty="true"/>
+	<Sound id="0120" name="Empty_0120" empty="true"/>
+	<Sound id="0121" name="Empty_0121" empty="true"/>
+	<Sound id="0122" name="Empty_0122" empty="true"/>
+	<Sound id="0123" name="Empty_0123" empty="true"/>
+	<Sound id="0124" name="Empty_0124" empty="true"/>
+	<Sound id="0125" name="Empty_0125" empty="true"/>
+	<Sound id="0126" name="Empty_0126" empty="true"/>
+	<Sound id="0127" name="Empty_0127" empty="true"/>
+	<Sound id="0128" name="Empty_0128" empty="true"/>
+	<Sound id="0129" name="Empty_0129" empty="true"/>
+	<Sound id="012A" name="Empty_012A" empty="true"/>
+	<Sound id="012B" name="Empty_012B" empty="true"/>
+	<Sound id="012C" name="Empty_012C" empty="true"/>
+	<Sound id="012D" name="Empty_012D" empty="true"/>
+	<Sound id="012E" name="Empty_012E" empty="true"/>
+	<Sound id="012F" name="Empty_012F" empty="true"/>
+	<Sound id="0130" name="Empty_0130" empty="true"/>
+	<Sound id="0131" name="HeartBlock"/>
+	<Sound id="0132" name="Unused_HeartBlockCopy" unused="true"/>
+	<Sound id="0133" name="UnusedHealBlock" unused="true"/>
+	<Sound id="0134" name="AscendingChimes" unused="true"/>
+	<Sound id="0135" name="DescendingChimes" unused="true"/>
+	<Sound id="0136" name="Empty_0136" empty="true"/>
+	<Sound id="0137" name="StarCardAppears"/>
+	<Sound id="0138" name="RescueStarSpirit"/>
+	<Sound id="0139" name="ReceiveStarPower"/>
+	<Sound id="013A" name="Empty_013A" empty="true"/>
+	<Sound id="013B" name="Empty_013B" empty="true"/>
+	<Sound id="013C" name="Empty_013C" empty="true"/>
+	<Sound id="013D" name="MonstarBreaksApart"/>
+	<Sound id="013E" name="StarKidFlying"/>
+	<Sound id="013F" name="Unused_013F" unused="true"/>
+	<Sound id="0140" name="Unused_0140" unused="true"/>
+	<Sound id="0141" name="StepNormal1"/>
+	<Sound id="0142" name="StepNormal2"/>
+	<Sound id="0143" name="StepCrunchy1"/>
+	<Sound id="0144" name="StepCrunchy2"/>
+	<Sound id="0145" name="Unused_0145" unused="true"/>
+	<Sound id="0146" name="SpinJump"/>
+	<Sound id="0147" name="TornadoJump"/>
+	<Sound id="0148" name="LandSoftly"/>
+	<Sound id="0149" name="LandSpinJump"/>
+	<Sound id="014A" name="LandTorandoJump"/>
+	<Sound id="014B" name="Empty_014B" empty="true"/>
+	<Sound id="014C" name="Empty_014C" empty="true"/>
+	<Sound id="014D" name="Empty_014D" empty="true"/>
+	<Sound id="014E" name="HitBlock"/>
+	<Sound id="014F" name="SmashHamerBlock1"/>
+	<Sound id="0150" name="SmashHamerBlock2"/>
+	<Sound id="0151" name="SmashHamerBlock3"/>
+	<Sound id="0152" name="ActivateSwitch"/>
+	<Sound id="0153" name="SearchBush"/>
+	<Sound id="0154" name="Unused_0154" unused="true"/>
+	<Sound id="0155" name="LeavesRustle" unused="true"/>
+	<Sound id="0156" name="PlayerCharge"/>
+	<Sound id="0157" name="Empty_0157" empty="true"/>
+	<Sound id="0158" name="BlockShatter"/>
+	<Sound id="0159" name="SmallBoing" unused="true"/>
+	<Sound id="015A" name="ActorJumped1"/>
+	<Sound id="015B" name="ActorJumped2"/>
+	<Sound id="015C" name="ActorJumped3"/>
+	<Sound id="015D" name="PlayerRunInPlace"/>
+	<Sound id="015E" name="PlayerRunAway"/>
+	<Sound id="015F" name="Unused_015F" unused="true"/>
+	<Sound id="0160" name="LongPlayerJump"/>
+	<Sound id="0161" name="PlayerLongFall"/>
+	<Sound id="0162" name="Trip"/>
+	<Sound id="0163" name="EnterPipe"/>
+	<Sound id="0164" name="Empty_0164" empty="true"/>
+	<Sound id="0165" name="SmackTree"/>
+	<Sound id="0166" name="ShakeTreeLeaves"/>
+	<Sound id="0167" name="Slide"/>
+	<Sound id="0168" name="LrawZiplineRide"/>
+	<Sound id="0169" name="Empty_0169" empty="true"/>
+	<Sound id="016A" name="Empty_016A" empty="true"/>
+	<Sound id="016B" name="Empty_016B" empty="true"/>
+	<Sound id="016C" name="Empty_016C" empty="true"/>
+	<Sound id="016D" name="Empty_016D" empty="true"/>
+	<Sound id="016E" name="Empty_016E" empty="true"/>
+	<Sound id="016F" name="Empty_016F" empty="true"/>
+	<Sound id="0170" name="DullCrash" unused="true"/>
+	<Sound id="0171" name="Unused_0171" unused="true"/>
+	<Sound id="0172" name="DustOff"/>
+	<Sound id="0173" name="RunAwayBuildup"/>
+	<Sound id="0174" name="RunAway"/>
+	<Sound id="0175" name="PaperGlide1"/>
+	<Sound id="0176" name="PaperGlide2"/>
+	<Sound id="0177" name="PaperFloat1" unused="true"/>
+	<Sound id="0178" name="PaperFloat2" unused="true"/>
+	<Sound id="0179" name="LuigiStepA"/>
+	<Sound id="017A" name="LuigiStepB"/>
+	<Sound id="017B" name="Ispy"/>
+	<Sound id="017C" name="StarshipEngineLoop"/>
+	<Sound id="017D" name="StarshipTakeoffLong"/>
+	<Sound id="017E" name="StarshipTakeoffShort"/>
+	<Sound id="017F" name="StarshipArrive"/>
+	<Sound id="0180" name="StarshipNearFlyby"/>
+	<Sound id="0181" name="StarshipAscend"/>
+	<Sound id="0182" name="StarshipFlyAway"/>
+	<Sound id="0183" name="StarshipFlyToward"/>
+	<Sound id="0184" name="SprinkleMagic" unused="true"/>
+	<Sound id="0185" name="LrawZiplineReturn"/>
+	<Sound id="0186" name="JAN_BasketElevator"/>
+	<Sound id="0187" name="FLO_StairsLowering"/>
+	<Sound id="0188" name="GetStarPowerWave"/>
+	<Sound id="0189" name="LrawJanConstruction"/>
+	<Sound id="018A" name="JAN_RaphaelPound"/>
+	<Sound id="018B" name="Unused_018B" unused="true"/>
+	<Sound id="018C" name="JAN_RootWobble1"/>
+	<Sound id="018D" name="JAN_RootWobble2"/>
+	<Sound id="018E" name="JAN_RootWobble3"/>
+	<Sound id="018F" name="Unused_018F" unused="true"/>
+	<Sound id="0190" name="FLO_PuffPuffSmokeBurst"/>
+	<Sound id="0191" name="JAN_BoulderTremble"/>
+	<Sound id="0192" name="Unused_0192" unused="true"/>
+	<Sound id="0193" name="FLO_BlowBubble"/>
+	<Sound id="0194" name="LrawBubbleDrift"/>
+	<Sound id="0195" name="Unused_0195" unused="true"/>
+	<Sound id="0196" name="Unused_0196" unused="true"/>
+	<Sound id="0197" name="LrawFloFillWaterPool"/>
+	<Sound id="0198" name="LrawFloWaterFlow1"/>
+	<Sound id="0199" name="LrawFloWaterFlow2"/>
+	<Sound id="019A" name="LrawFloReleaseFountain"/>
+	<Sound id="019B" name="FLO_BeanstalkStartGrowing"/>
+	<Sound id="019C" name="FLO_RideBeanstalkUpLoop"/>
+	<Sound id="019D" name="FLO_RideBeanstalkDownLoop"/>
+	<Sound id="019E" name="FLO_MagikoopaFlyAway"/>
+	<Sound id="019F" name="FLO_LakituFlyAway"/>
+	<Sound id="01A0" name="FLO_PuffPuffExplode"/>
+	<Sound id="01A1" name="OMO_BoxGlow1"/>
+	<Sound id="01A2" name="OMO_BoxGlow2"/>
+	<Sound id="01A3" name="OMO_BoxGlow3"/>
+	<Sound id="01A4" name="OMO_BoxGlow4"/>
+	<Sound id="01A5" name="OMO_BoxChime1"/>
+	<Sound id="01A6" name="OMO_BoxChime2"/>
+	<Sound id="01A7" name="OMO_BoxChime3"/>
+	<Sound id="01A8" name="OMO_BoxChime4"/>
+	<Sound id="01A9" name="OMO_BoxDone"/>
+	<Sound id="01AA" name="OMO_ToyboxLid"/>
+	<Sound id="01AB" name="OMO_SecretDoorOpen"/>
+	<Sound id="01AC" name="OMO_SecretDoorClose"/>
+	<Sound id="01AD" name="FlyingPyroclast1"/>
+	<Sound id="01AE" name="FlyingPyroclast2"/>
+	<Sound id="01AF" name="JAN_ChestImpact"/>
+	<Sound id="01B0" name="Empty_01B0" empty="true"/>
+	<Sound id="01B1" name="LrawNokWater"/>
+	<Sound id="01B2" name="LrawTrdWaterExt"/>
+	<Sound id="01B3" name="LrawSbkOasisWater"/>
+	<Sound id="01B4" name="Empty_01B4" empty="true"/>
+	<Sound id="01B5" name="Empty_01B5" empty="true"/>
+	<Sound id="01B6" name="Empty_01B6" empty="true"/>
+	<Sound id="01B7" name="Empty_01B7" empty="true"/>
+	<Sound id="01B8" name="Empty_01B8" empty="true"/>
+	<Sound id="01B9" name="Empty_01B9" empty="true"/>
+	<Sound id="01BA" name="Empty_01BA" empty="true"/>
+	<Sound id="01BB" name="Empty_01BB" empty="true"/>
+	<Sound id="01BC" name="Empty_01BC" empty="true"/>
+	<Sound id="01BD" name="Empty_01BD" empty="true"/>
+	<Sound id="01BE" name="Empty_01BE" empty="true"/>
+	<Sound id="01BF" name="Empty_01BF" empty="true"/>
+	<Sound id="01C0" name="Empty_01C0" empty="true"/>
+	<Sound id="01C1" name="BasicDoorOpen"/>
+	<Sound id="01C2" name="BasicDoorClose"/>
+	<Sound id="01C3" name="MetalDoorOpen"/>
+	<Sound id="01C4" name="MetalDoorClose"/>
+	<Sound id="01C5" name="LargeDoorOpen"/>
+	<Sound id="01C6" name="LargeDoorClose"/>
+	<Sound id="01C7" name="CreakyDoorOpen"/>
+	<Sound id="01C8" name="CreakyDoorClose"/>
+	<Sound id="01C9" name="MetalGateOpen"/>
+	<Sound id="01CA" name="MetalGateClose"/>
+	<Sound id="01CB" name="WindowOpenA"/>
+	<Sound id="01CC" name="WindowCloseA"/>
+	<Sound id="01CD" name="WindowOpenB"/>
+	<Sound id="01CE" name="WindowCloseB"/>
+	<Sound id="01CF" name="WoodenDoorOpen"/>
+	<Sound id="01D0" name="WoodenDoorClose"/>
+	<Sound id="01D1" name="SarcophagusOpen"/>
+	<Sound id="01D2" name="GoombaGateOpen"/>
+	<Sound id="01D3" name="OpenChest"/>
+	<Sound id="01D4" name="ForestGateOpen"/>
+	<Sound id="01D5" name="ForestGateClose"/>
+	<Sound id="01D6" name="CreakyRocking"/>
+	<Sound id="01D7" name="Unused_01D7" unused="true"/>
+	<Sound id="01D8" name="KKJ_WindowTap"/>
+	<Sound id="01D9" name="OMO_DoorFlip"/>
+	<Sound id="01DA" name="PushBlockFall"/>
+	<Sound id="01DB" name="FLO_LogOpen"/>
+	<Sound id="01DC" name="FLO_LogClose"/>
+	<Sound id="01DD" name="SAM_RaiseBarrier"/>
+	<Sound id="01DE" name="SAM_LowerBarrier"/>
+	<Sound id="01DF" name="AirshipDockDoorOpen"/>
+	<Sound id="01E0" name="AirshipDockDoorClose"/>
+	<Sound id="01E1" name="KMR_TowerRumble"/>
+	<Sound id="01E2" name="DistantThud"/>
+	<Sound id="01E3" name="TrompDrop"/>
+	<Sound id="01E4" name="TrompCrash"/>
+	<Sound id="01E5" name="PuffPuffSmash"/>
+	<Sound id="01E6" name="PuffPuffPartBreaks"/>
+	<Sound id="01E7" name="PuffPuffPanelBreaks"/>
+	<Sound id="01E8" name="Boing"/>
+	<Sound id="01E9" name="SAM_DropStair"/>
+	<Sound id="01EA" name="SAM_BarrierThud"/>
+	<Sound id="01EB" name="SAM_PlaceStarStone"/>
+	<Sound id="01EC" name="SAM_IceStepThud"/>
+	<Sound id="01ED" name="PRA_RotateAlbinoDino"/>
+	<Sound id="01EE" name="PRA_UnfoldStep"/>
+	<Sound id="01EF" name="KPA_DropWall"/>
+	<Sound id="01F0" name="YoshiKidCry"/>
+	<Sound id="01F1" name="OMO_TrainTrackLever"/>
+	<Sound id="01F2" name="OMO_FlipTrainTrack"/>
+	<Sound id="01F3" name="OMO_ColoredPanelDrop"/>
+	<Sound id="01F4" name="OMO_BarricadeDrop"/>
+	<Sound id="01F5" name="OMO_LanternBreak"/>
+	<Sound id="01F6" name="Unused_01F6" unused="true"/>
+	<Sound id="01F7" name="Unused_01F7" unused="true"/>
+	<Sound id="01F8" name="Unused_01F8" unused="true"/>
+	<Sound id="01F9" name="OMO_TrainSwitchRattle"/>
+	<Sound id="01FA" name="OMO_TrainSwitchSelect"/>
+	<Sound id="01FB" name="TrainChugA"/>
+	<Sound id="01FC" name="TrainChugB"/>
+	<Sound id="01FD" name="TrainReleaseSteam"/>
+	<Sound id="01FE" name="OMO_ToyTrainClick"/>
+	<Sound id="01FF" name="OMO_ToyTrainWhistleA"/>
+	<Sound id="0200" name="Unused_DistantThudCopy" unused="true"/>
+	<Sound id="0201" name="MerleeTwirl"/>
+	<Sound id="0202" name="MerleeGatherEnergy"/>
+	<Sound id="0203" name="MerleeShowCard"/>
+	<Sound id="0204" name="MerleeGatherCards"/>
+	<Sound id="0205" name="MerleeReleasePlayer"/>
+	<Sound id="0206" name="MerleeCompleteSpell"/>
+	<Sound id="0207" name="LrawCrystalBallGlow"/>
+	<Sound id="0208" name="CrystalBallWave"/>
+	<Sound id="0209" name="MerlonGather"/>
+	<Sound id="020A" name="MerlonStrike"/>
+	<Sound id="020B" name="LowerPitchMagic" unused="true"/>
+	<Sound id="020C" name="RavenFallA"/>
+	<Sound id="020D" name="RavenFallB"/>
+	<Sound id="020E" name="RavenFallC"/>
+	<Sound id="020F" name="Unused_FlowerGateCopy" unused="true"/>
+	<Sound id="0210" name="Unused_CrystalBallWaveCopy" unused="true"/>
+	<Sound id="0211" name="CoinPickup"/>
+	<Sound id="0212" name="CoinBounce"/>
+	<Sound id="0213" name="HeartPickup"/>
+	<Sound id="0214" name="HeartBounce"/>
+	<Sound id="0215" name="StarPointPickup"/>
+	<Sound id="0216" name="StarPointRing" unused="true"/>
+	<Sound id="0217" name="FlowerPickup"/>
+	<Sound id="0218" name="FlowerBounce"/>
+	<Sound id="0219" name="StarPieceBounce"/>
+	<Sound id="021A" name="ItemBounce"/>
+	<Sound id="021B" name="BadgeBounce"/>
+	<Sound id="021C" name="Approve"/>
+	<Sound id="021D" name="MenuError"/>
+	<Sound id="021E" name="Empty_021E" empty="true"/>
+	<Sound id="021F" name="Empty_021F" empty="true"/>
+	<Sound id="0220" name="Collect1UpA" unused="true"/>
+	<Sound id="0221" name="LrawKpaChainDrive"/>
+	<Sound id="0222" name="KPA_DumpLava"/>
+	<Sound id="0223" name="KPA_BowserPowerUp"/>
+	<Sound id="0224" name="KPA_BowserPowerDown" unused="true"/>
+	<Sound id="0225" name="KPA_QuizDoorsOpen"/>
+	<Sound id="0226" name="KPA_QuizDoorsClose"/>
+	<Sound id="0227" name="KPA_RaiseStonePlatform"/>
+	<Sound id="0228" name="KPA_LowerStonePlatform"/>
+	<Sound id="0229" name="KPA_PullChain"/>
+	<Sound id="022A" name="LrawKpaFillWater"/>
+	<Sound id="022B" name="LrawKpaDrainWater"/>
+	<Sound id="022C" name="LrawKpaArenaTurnOn"/>
+	<Sound id="022D" name="LrawKpaArenaActive"/>
+	<Sound id="022E" name="KPA_ExplosionA"/>
+	<Sound id="022F" name="KPA_ExplosionB"/>
+	<Sound id="0230" name="KPA_ExplosionCluster"/>
+	<Sound id="0231" name="DamageStars"/>
+	<Sound id="0232" name="Collect1UpB" unused="true"/>
+	<Sound id="0233" name="TimingBarTick"/>
+	<Sound id="0234" name="TimingBarGo"/>
+	<Sound id="0235" name="JumpCombo1"/>
+	<Sound id="0236" name="JumpCombo2"/>
+	<Sound id="0237" name="JumpCombo3"/>
+	<Sound id="0238" name="JumpCombo4"/>
+	<Sound id="0239" name="JumpCombo5" unused="true"/>
+	<Sound id="023A" name="JumpCombo6" unused="true"/>
+	<Sound id="023B" name="JumpCombo7" unused="true"/>
+	<Sound id="023C" name="JumpCombo8" unused="true"/>
+	<Sound id="023D" name="LrawBowserPropeller"/>
+	<Sound id="023E" name="Empty_023E" empty="true"/>
+	<Sound id="023F" name="Empty_023F" empty="true"/>
+	<Sound id="0240" name="Empty_0240" empty="true"/>
+	<Sound id="0241" name="BeginWish"/>
+	<Sound id="0242" name="Refresh"/>
+	<Sound id="0243" name="Unused_ChillOutCopy" unused="true"/>
+	<Sound id="0244" name="ChillOut"/>
+	<Sound id="0245" name="Smooch"/>
+	<Sound id="0246" name="TimeOut"/>
+	<Sound id="0247" name="UpAndAwayCast"/>
+	<Sound id="0248" name="LrawUseStarBeam"/>
+	<Sound id="0249" name="LrawUsePeachBeam"/>
+	<Sound id="024A" name="StarBeamFire"/>
+	<Sound id="024B" name="MerleeAppear"/>
+	<Sound id="024C" name="Empty_024C" empty="true"/>
+	<Sound id="024D" name="Empty_024D" empty="true"/>
+	<Sound id="024E" name="Empty_024E" empty="true"/>
+	<Sound id="024F" name="Empty_024F" empty="true"/>
+	<Sound id="0250" name="Empty_0250" empty="true"/>
+	<Sound id="0251" name="Unused_0251" unused="true"/>
+	<Sound id="0252" name="Unused_0252" unused="true"/>
+	<Sound id="0253" name="Unused_0253" unused="true"/>
+	<Sound id="0254" name="Unused_0254" unused="true"/>
+	<Sound id="0255" name="Unused_0255" unused="true"/>
+	<Sound id="0256" name="Unused_0256" unused="true"/>
+	<Sound id="0257" name="Unused_0257" unused="true"/>
+	<Sound id="0258" name="Unused_0258" unused="true"/>
+	<Sound id="0259" name="ShootingStarFallA"/>
+	<Sound id="025A" name="ShootingStarFallB"/>
+	<Sound id="025B" name="Unused_ShootingStarFallCopy" unused="true"/>
+	<Sound id="025C" name="StarBounceA"/>
+	<Sound id="025D" name="StarBounceB"/>
+	<Sound id="025E" name="Unused_StarBounceCopy" unused="true"/>
+	<Sound id="025F" name="Empty_025F" empty="true"/>
+	<Sound id="0260" name="Empty_0260" empty="true"/>
+	<Sound id="0261" name="ISK_PlaceInSocket"/>
+	<Sound id="0262" name="EmoteIdea"/>
+	<Sound id="0263" name="EmoteQuestion"/>
+	<Sound id="0264" name="Empty_0264" empty="true"/>
+	<Sound id="0265" name="ISK_DoorOpen"/>
+	<Sound id="0266" name="ISK_DoorClose"/>
+	<Sound id="0267" name="ISK_DoorSlam"/>
+	<Sound id="0268" name="Empty_0268" empty="true"/>
+	<Sound id="0269" name="UseKey"/>
+	<Sound id="026A" name="LockDrop"/>
+	<Sound id="026B" name="LargeGateOpen"/>
+	<Sound id="026C" name="LargeGateClose"/>
+	<Sound id="026D" name="Empty_026D" empty="true"/>
+	<Sound id="026E" name="Empty_026E" empty="true"/>
+	<Sound id="026F" name="Empty_026F" empty="true"/>
+	<Sound id="0270" name="MetalCrash" unused="true"/>
+	<Sound id="0271" name="LrawTikWater"/>
+	<Sound id="0272" name="Unused_0272" unused="true"/>
+	<Sound id="0273" name="LrawWaterFlowing1"/>
+	<Sound id="0274" name="LrawWaterFlowing2"/>
+	<Sound id="0275" name="LrawWaterFlowing3"/>
+	<Sound id="0276" name="LrawWaterFlowing4"/>
+	<Sound id="0277" name="Unused_0277" unused="true"/>
+	<Sound id="0278" name="Unused_0278" unused="true"/>
+	<Sound id="0279" name="Empty_0279" empty="true"/>
+	<Sound id="027A" name="Empty_027A" empty="true"/>
+	<Sound id="027B" name="Empty_027B" empty="true"/>
+	<Sound id="027C" name="Empty_027C" empty="true"/>
+	<Sound id="027D" name="Empty_027D" empty="true"/>
+	<Sound id="027E" name="Empty_027E" empty="true"/>
+	<Sound id="027F" name="Empty_027F" empty="true"/>
+	<Sound id="0280" name="Empty_0280" empty="true"/>
+	<Sound id="0281" name="GoombarioHeadbonk"/>
+	<Sound id="0282" name="TattleWindowOpen"/>
+	<Sound id="0283" name="KooperShellKick"/>
+	<Sound id="0284" name="KooperShellSwirl"/>
+	<Sound id="0285" name="Empty_0285" empty="true"/>
+	<Sound id="0286" name="KooperPickup"/>
+	<Sound id="0287" name="LrawBombetteFuse"/>
+	<Sound id="0288" name="LakilesterHurricaneWind"/>
+	<Sound id="0289" name="WattCharge"/>
+	<Sound id="028A" name="WattPowerShock"/>
+	<Sound id="028B" name="WattTurboCharge"/>
+	<Sound id="028C" name="WattMegaDischarge"/>
+	<Sound id="028D" name="WattWhooshShock" unused="true"/>
+	<Sound id="028E" name="RoaringFire"/>
+	<Sound id="028F" name="FireShellLaunch"/>
+	<Sound id="0290" name="DizzyShellLaunch"/>
+	<Sound id="0291" name="BowSpook"/>
+	<Sound id="0292" name="BootlerSpook"/>
+	<Sound id="0293" name="BootlerHide"/>
+	<Sound id="0294" name="SushieDive"/>
+	<Sound id="0295" name="Flight"/>
+	<Sound id="0296" name="Unused_FlightCopy" unused="true"/>
+	<Sound id="0297" name="SushieSquirt"/>
+	<Sound id="0298" name="SushieFountain"/>
+	<Sound id="0299" name="DestroyWaterBlock"/>
+	<Sound id="029A" name="SushieStep"/>
+	<Sound id="029B" name="TidalWaveLeapA"/>
+	<Sound id="029C" name="TidalWaveLeapB"/>
+	<Sound id="029D" name="TidalWaveWater"/>
+	<Sound id="029E" name="Unused_029E" unused="true"/>
+	<Sound id="029F" name="Unused_029F" unused="true"/>
+	<Sound id="02A0" name="SushieFlop"/>
+	<Sound id="02A1" name="PlantFlowers"/>
+	<Sound id="02A2" name="FlowerGate"/>
+	<Sound id="02A3" name="WoodenDoorSpinning"/>
+	<Sound id="02A4" name="WoodenDoorWaves"/>
+	<Sound id="02A5" name="Unused_WoodenDoorWavesCopy" unused="true"/>
+	<Sound id="02A6" name="RavenLeapA"/>
+	<Sound id="02A7" name="RavenLeapB"/>
+	<Sound id="02A8" name="LrawBobombFuse"/>
+	<Sound id="02A9" name="Unused_LrawBobombFuseCopy" unused="true"/>
+	<Sound id="02AA" name="TwinkFlyB"/>
+	<Sound id="02AB" name="Empty_02AB" empty="true"/>
+	<Sound id="02AC" name="Empty_02AC" empty="true"/>
+	<Sound id="02AD" name="Empty_02AD" empty="true"/>
+	<Sound id="02AE" name="Empty_02AE" empty="true"/>
+	<Sound id="02AF" name="Empty_02AF" empty="true"/>
+	<Sound id="02B0" name="Empty_02B0" empty="true"/>
+	<Sound id="02B1" name="Empty_02B1" empty="true"/>
+	<Sound id="02B2" name="Empty_02B2" empty="true"/>
+	<Sound id="02B3" name="Empty_02B3" empty="true"/>
+	<Sound id="02B4" name="Empty_02B4" empty="true"/>
+	<Sound id="02B5" name="Empty_02B5" empty="true"/>
+	<Sound id="02B6" name="Empty_02B6" empty="true"/>
+	<Sound id="02B7" name="Empty_02B7" empty="true"/>
+	<Sound id="02B8" name="Empty_02B8" empty="true"/>
+	<Sound id="02B9" name="Empty_02B9" empty="true"/>
+	<Sound id="02BA" name="Empty_02BA" empty="true"/>
+	<Sound id="02BB" name="Empty_02BB" empty="true"/>
+	<Sound id="02BC" name="Empty_02BC" empty="true"/>
+	<Sound id="02BD" name="Empty_02BD" empty="true"/>
+	<Sound id="02BE" name="Empty_02BE" empty="true"/>
+	<Sound id="02BF" name="Empty_02BF" empty="true"/>
+	<Sound id="02C0" name="Empty_02C0" empty="true"/>
+	<Sound id="02C1" name="ParagoombaDive"/>
+	<Sound id="02C2" name="Empty_02C2" empty="true"/>
+	<Sound id="02C3" name="Empty_02C3" empty="true"/>
+	<Sound id="02C4" name="HurtPlantBite"/>
+	<Sound id="02C5" name="SpikeSummonSpiny"/>
+	<Sound id="02C6" name="SpikeThrowSpiny"/>
+	<Sound id="02C7" name="SpinySpinUp"/>
+	<Sound id="02C8" name="BulletBillFire"/>
+	<Sound id="02C9" name="BulletBillMotion"/>
+	<Sound id="02CA" name="DuplighostStep"/>
+	<Sound id="02CB" name="DuplighostLeap"/>
+	<Sound id="02CC" name="DuplighostPowerDown" unused="true"/>
+	<Sound id="02CD" name="SmokeBurst"/>
+	<Sound id="02CE" name="PokeyThrow"/>
+	<Sound id="02CF" name="EmberJump"/>
+	<Sound id="02D0" name="EmberSpit"/>
+	<Sound id="02D1" name="DryBonesThrow"/>
+	<Sound id="02D2" name="DryBonesCollapse"/>
+	<Sound id="02D3" name="DryBonesArise"/>
+	<Sound id="02D4" name="DryBonesRattle"/>
+	<Sound id="02D5" name="DayzeeJump"/>
+	<Sound id="02D6" name="DayzeeStep"/>
+	<Sound id="02D7" name="DayzeeSong"/>
+	<Sound id="02D8" name="PowerUp"/>
+	<Sound id="02D9" name="HyperCleftLand"/>
+	<Sound id="02DA" name="HyperCleftCharge"/>
+	<Sound id="02DB" name="MagikoopaVanish"/>
+	<Sound id="02DC" name="MagikoopaWandStrike"/>
+	<Sound id="02DD" name="MagikoopaPowerUp"/>
+	<Sound id="02DE" name="SummonCrystalBits"/>
+	<Sound id="02DF" name="SummonCrystalClones"/>
+	<Sound id="02E0" name="CrystalKingIceBolt"/>
+	<Sound id="02E1" name="SkyGuyBalloonPop"/>
+	<Sound id="02E2" name="GrooveGuyTwirl"/>
+	<Sound id="02E3" name="GrooveGuyLeap"/>
+	<Sound id="02E4" name="GrooveGuySpinDown"/>
+	<Sound id="02E5" name="CallForBackup"/>
+	<Sound id="02E6" name="GrooveGuySummon"/>
+	<Sound id="02E7" name="SlingshotDraw"/>
+	<Sound id="02E8" name="SlingshotFire"/>
+	<Sound id="02E9" name="HammerBrosThrow"/>
+	<Sound id="02EA" name="MonstarCastSpell"/>
+	<Sound id="02EB" name="LanternGhostLight"/>
+	<Sound id="02EC" name="PokeyStep"/>
+	<Sound id="02ED" name="PokeySmash"/>
+	<Sound id="02EE" name="PokeyReachDown"/>
+	<Sound id="02EF" name="ActorHop"/>
+	<Sound id="02F0" name="MagikoopaElectrify"/>
+	<Sound id="02F1" name="SnapAwakeA"/>
+	<Sound id="02F2" name="SnapAwakeB"/>
+	<Sound id="02F3" name="BubbleBurst"/>
+	<Sound id="02F4" name="AiAlertA"/>
+	<Sound id="02F5" name="AiAlertB"/>
+	<Sound id="02F6" name="TweesterLaunch"/>
+	<Sound id="02F7" name="SentinelPickup"/>
+	<Sound id="02F8" name="GatherSmall"/>
+	<Sound id="02F9" name="Toss"/>
+	<Sound id="02FA" name="SpearGuyDance1"/>
+	<Sound id="02FB" name="SpearGuyDance2"/>
+	<Sound id="02FC" name="SpearGuyRipSkirt"/>
+	<Sound id="02FD" name="AlbinoDinoStepB"/>
+	<Sound id="02FE" name="Unused_02FE" unused="true"/>
+	<Sound id="02FF" name="CloseShell"/>
+	<Sound id="0300" name="JrTroopaNewPower"/>
+	<Sound id="0301" name="FallQuick"/>
+	<Sound id="0302" name="FallLong"/>
+	<Sound id="0303" name="LargeFallQuick"/>
+	<Sound id="0304" name="LargeFallLong" unused="true"/>
+	<Sound id="0305" name="LongFlutterFallA"/>
+	<Sound id="0306" name="LongFlutterFallB"/>
+	<Sound id="0307" name="Empty_0307" empty="true"/>
+	<Sound id="0308" name="Empty_0308" empty="true"/>
+	<Sound id="0309" name="SpearStab"/>
+	<Sound id="030A" name="SpearThrow"/>
+	<Sound id="030B" name="AlbinoDinoStepA"/>
+	<Sound id="030C" name="ShyGuyScreams1"/>
+	<Sound id="030D" name="ShyGuyScreams2"/>
+	<Sound id="030E" name="ShyGuyScreams3"/>
+	<Sound id="030F" name="ToyTankMove1"/>
+	<Sound id="0310" name="ToyTankMove2"/>
+	<Sound id="0311" name="AimShellShot"/>
+	<Sound id="0312" name="AimSpinyFlip"/>
+	<Sound id="0313" name="Empty_0313" empty="true"/>
+	<Sound id="0314" name="Empty_0314" empty="true"/>
+	<Sound id="0315" name="TubbaGulp"/>
+	<Sound id="0316" name="FireBar0B"/>
+	<Sound id="0317" name="FireBar1B"/>
+	<Sound id="0318" name="FireBar2B"/>
+	<Sound id="0319" name="FireBar3B"/>
+	<Sound id="031A" name="FireBar4B"/>
+	<Sound id="031B" name="FireBar5B"/>
+	<Sound id="031C" name="FireBar6B"/>
+	<Sound id="031D" name="FireBar7B"/>
+	<Sound id="031E" name="FireBar8B"/>
+	<Sound id="031F" name="FireBar9B"/>
+	<Sound id="0320" name="Empty_0320" empty="true"/>
+	<Sound id="0321" name="BurrowSurface"/>
+	<Sound id="0322" name="BurrowDig"/>
+	<Sound id="0323" name="MolePop"/>
+	<Sound id="0324" name="Unused_0324" unused="true"/>
+	<Sound id="0325" name="Unused_0325" unused="true"/>
+	<Sound id="0326" name="Unused_0326" unused="true"/>
+	<Sound id="0327" name="MalletSwing"/>
+	<Sound id="0328" name="BlasterFire"/>
+	<Sound id="0329" name="CreepyLaugh" unused="true"/>
+	<Sound id="032A" name="Unused_032A" unused="true"/>
+	<Sound id="032B" name="Skid"/>
+	<Sound id="032C" name="NpcJump"/>
+	<Sound id="032D" name="LowerNpcJump"/>
+	<Sound id="032E" name="LrawSentinelAlarm"/>
+	<Sound id="032F" name="SnoreInhaleA"/>
+	<Sound id="0330" name="SnoreInhaleB"/>
+	<Sound id="0331" name="FuzzyHopA"/>
+	<Sound id="0332" name="FuzzyHopB"/>
+	<Sound id="0333" name="FuzzyHopC"/>
+	<Sound id="0334" name="SnoreExhaleA"/>
+	<Sound id="0335" name="SnoreExhaleB"/>
+	<Sound id="0336" name="FireBar0A"/>
+	<Sound id="0337" name="FireBar1A"/>
+	<Sound id="0338" name="FireBar2A"/>
+	<Sound id="0339" name="FireBar3A"/>
+	<Sound id="033A" name="FireBar4A"/>
+	<Sound id="033B" name="FireBar5A"/>
+	<Sound id="033C" name="FireBar6A"/>
+	<Sound id="033D" name="FireBar7A"/>
+	<Sound id="033E" name="FireBar8A"/>
+	<Sound id="033F" name="FireBar9A"/>
+	<Sound id="0340" name="FireBarDead"/>
+	<Sound id="0341" name="LrawChargeMeter"/>
+	<Sound id="0342" name="PokeySway"/>
+	<Sound id="0343" name="PokeyWalk"/>
+	<Sound id="0344" name="PokeyLeanForward"/>
+	<Sound id="0345" name="PokeyLeanBack"/>
+	<Sound id="0346" name="PokeyEmergeFromGround"/>
+	<Sound id="0347" name="Unused_ShyGuyStepCopy" unused="true"/>
+	<Sound id="0348" name="WoodRattle" unused="true"/>
+	<Sound id="0349" name="LrawCheering"/>
+	<Sound id="034A" name="ShortClap"/>
+	<Sound id="034B" name="MultiClap" unused="true"/>
+	<Sound id="034C" name="Empty_034C" empty="true"/>
+	<Sound id="034D" name="Unused_034D" unused="true"/>
+	<Sound id="034E" name="ToyTankExplode"/>
+	<Sound id="034F" name="Unused_034F" unused="true"/>
+	<Sound id="0350" name="SlotReels" unused="true"/>
+	<Sound id="0351" name="ActorFlight"/>
+	<Sound id="0352" name="Unused_0352" unused="true"/>
+	<Sound id="0353" name="KoopaBrosSpinup"/>
+	<Sound id="0354" name="KoopaBrosTowerSpin1"/>
+	<Sound id="0355" name="KoopaBrosTowerSpin2"/>
+	<Sound id="0356" name="KoopaBrosTowerSpin3"/>
+	<Sound id="0357" name="BzzapBuzz"/>
+	<Sound id="0358" name="MiniBzzapBuzz"/>
+	<Sound id="0359" name="EmberFly"/>
+	<Sound id="035A" name="Unused_035A" unused="true"/>
+	<Sound id="035B" name="HuffNPuffFireLightning"/>
+	<Sound id="035C" name="ChargeLightning"/>
+	<Sound id="035D" name="HeavyWindLoop"/>
+	<Sound id="035E" name="HeavyNpcSwipe"/>
+	<Sound id="035F" name="BabyBlooperMove"/>
+	<Sound id="0360" name="Unused_0360" unused="true"/>
+	<Sound id="0361" name="PutOnCap"/>
+	<Sound id="0362" name="BecomeStone"/>
+	<Sound id="0363" name="WinteryJingle"/>
+	<Sound id="0364" name="SheepStampede"/>
+	<Sound id="0365" name="ThunderBolt"/>
+	<Sound id="0366" name="LightningStrike"/>
+	<Sound id="0367" name="FrightJar"/>
+	<Sound id="0368" name="MysteryReel"/>
+	<Sound id="0369" name="HustleWhistle"/>
+	<Sound id="036A" name="SmallGlassBreak" unused="true"/>
+	<Sound id="036B" name="CrystalKingDisappear"/>
+	<Sound id="036C" name="LrawShyGuyCrowd1"/>
+	<Sound id="036D" name="LrawShyGuyCrowd2"/>
+	<Sound id="036E" name="MonstarStarStorm"/>
+	<Sound id="036F" name="ToyTankFallApart"/>
+	<Sound id="0370" name="KentCShellTossLoop"/>
+	<Sound id="0371" name="PlayerSpinning"/>
+	<Sound id="0372" name="LifeShroomChime"/>
+	<Sound id="0373" name="RevivalMagic"/>
+	<Sound id="0374" name="PlayerRevive"/>
+	<Sound id="0375" name="RepelGelApply"/>
+	<Sound id="0376" name="RepelGelVanish"/>
+	<Sound id="0377" name="PlantFireFlower"/>
+	<Sound id="0378" name="RecoveryShmmer"/>
+	<Sound id="0379" name="VoltShroomApply"/>
+	<Sound id="037A" name="HitPlayerShock"/>
+	<Sound id="037B" name="HitShock"/>
+	<Sound id="037C" name="KoopaLaunchShell"/>
+	<Sound id="037D" name="LanternGhostStep"/>
+	<Sound id="037E" name="ToyTankStep"/>
+	<Sound id="037F" name="Unused_037F" unused="true"/>
+	<Sound id="0380" name="ShyGuyFly"/>
+	<Sound id="0381" name="GourmetGuyShock1"/>
+	<Sound id="0382" name="GourmetGuyShock2"/>
+	<Sound id="0383" name="GourmetGuyShock3"/>
+	<Sound id="0384" name="GourmetGuyRun"/>
+	<Sound id="0385" name="GourmetGuyLaunch"/>
+	<Sound id="0386" name="BigDrumA"/>
+	<Sound id="0387" name="BigDrumB"/>
+	<Sound id="0388" name="LrawOmoSlotMachine"/>
+	<Sound id="0389" name="SAM_PondCrack1"/>
+	<Sound id="038A" name="SAM_PondCrack2"/>
+	<Sound id="038B" name="SAM_PondShatter"/>
+	<Sound id="038C" name="SAM_SnowmanJump"/>
+	<Sound id="038D" name="SAM_SnowmenRaiseWall"/>
+	<Sound id="038E" name="SAM_SnowmenOpenPassage"/>
+	<Sound id="038F" name="Unused_038F" unused="true"/>
+	<Sound id="0390" name="TossPlayer"/>
+	<Sound id="0391" name="LrawSpinningFlower"/>
+	<Sound id="0392" name="MunchlesiaChew"/>
+	<Sound id="0393" name="MunchlesiaSpit"/>
+	<Sound id="0394" name="OvenTimerTicking"/>
+	<Sound id="0395" name="GeneralWhistle"/>
+	<Sound id="0396" name="IceShatter"/>
+	<Sound id="0397" name="PenguinWhistle"/>
+	<Sound id="0398" name="DragPlayer"/>
+	<Sound id="0399" name="SAM07_RaiseFloor"/>
+	<Sound id="039A" name="SAM07_LowerFloor"/>
+	<Sound id="039B" name="SAM08_RaiseFloor"/>
+	<Sound id="039C" name="SAM_StairsActivate"/>
+	<Sound id="039D" name="SAM_StairsLoudThud"/>
+	<Sound id="039E" name="LrawSamStairsRise"/>
+	<Sound id="039F" name="SAM_StairsFinalThud"/>
+	<Sound id="03A0" name="MIM_MushroomGlow"/>
+	<Sound id="03A1" name="UnusedTappingLoop" unused="true"/>
+	<Sound id="03A2" name="ShyGuyFleeLoop"/>
+	<Sound id="03A3" name="LanternGhostRevealMore1"/>
+	<Sound id="03A4" name="LanternGhostRevealMore2"/>
+	<Sound id="03A5" name="LanternGhostRevealMore3"/>
+	<Sound id="03A6" name="LanternGhostRevealMore4"/>
+	<Sound id="03A7" name="LanternGhostDarken1"/>
+	<Sound id="03A8" name="LanternGhostDarken2"/>
+	<Sound id="03A9" name="LanternGhostDarken3"/>
+	<Sound id="03AA" name="LanternGhostDarken4"/>
+	<Sound id="03AB" name="PiranhaBreath"/>
+	<Sound id="03AC" name="GoombaBrosStep"/>
+	<Sound id="03AD" name="LrawFighting"/>
+	<Sound id="03AE" name="TankBulbShatter"/>
+	<Sound id="03AF" name="CrystalKingInhale"/>
+	<Sound id="03B0" name="HuffNPuffInhale"/>
+	<Sound id="03B1" name="PiranhaSpin"/>
+	<Sound id="03B2" name="PiranhaChomp"/>
+	<Sound id="03B3" name="HuffNPuffRearUp"/>
+	<Sound id="03B4" name="ActorStepB"/>
+	<Sound id="03B5" name="FakeBowserBlast"/>
+	<Sound id="03B6" name="ShyGuyStepA"/>
+	<Sound id="03B7" name="ShyGuyStepB"/>
+	<Sound id="03B8" name="Unused_03B8" unused="true"/>
+	<Sound id="03B9" name="MasterLeap"/>
+	<Sound id="03BA" name="BubbleDown" unused="true"/>
+	<Sound id="03BB" name="LavaPiranhaRecover"/>
+	<Sound id="03BC" name="LrawRumble"/>
+	<Sound id="03BD" name="BowserFireBreathLoop"/>
+	<Sound id="03BE" name="FakeBowserLongWalk"/>
+	<Sound id="03BF" name="Unused_03BF" unused="true"/>
+	<Sound id="03C0" name="HuffNPuffEmerge"/>
+	<Sound id="03C1" name="LavaPiranhaInhale"/>
+	<Sound id="03C2" name="LavaPiranhaShrivel" unused="true"/>
+	<Sound id="03C3" name="LavaPiranhaSpitFire"/>
+	<Sound id="03C4" name="LavaPiranhaFireBreath"/>
+	<Sound id="03C5" name="LavaPiranhaEmerge"/>
+	<Sound id="03C6" name="LavaPiranhaDefeat"/>
+	<Sound id="03C7" name="LavaBudWither"/>
+	<Sound id="03C8" name="LavaPiranhaWither"/>
+	<Sound id="03C9" name="LavaBudSpitPetit"/>
+	<Sound id="03CA" name="PetitPiranhaAscend"/>
+	<Sound id="03CB" name="PetitPiranhaDive"/>
+	<Sound id="03CC" name="LavaPiranhaWrithe"/>
+	<Sound id="03CD" name="LavaPiranhaCollapse"/>
+	<Sound id="03CE" name="PiranhaStep"/>
+	<Sound id="03CF" name="LanternGhostInhale"/>
+	<Sound id="03D0" name="LanternGhostBlow"/>
+	<Sound id="03D1" name="HuffNPuffFly"/>
+	<Sound id="03D2" name="ElectricBuzz"/>
+	<Sound id="03D3" name="HuffNPuffLightningBlast"/>
+	<Sound id="03D4" name="OpenShell"/>
+	<Sound id="03D5" name="RuffPuffFlyA"/>
+	<Sound id="03D6" name="RuffPuffFlyB"/>
+	<Sound id="03D7" name="Empty_03D7" empty="true"/>
+	<Sound id="03D8" name="Unused_03D8" unused="true"/>
+	<Sound id="03D9" name="LightThrow"/>
+	<Sound id="03DA" name="Unused_03DA" unused="true"/>
+	<Sound id="03DB" name="Squeeze"/>
+	<Sound id="03DC" name="BlooperMove"/>
+	<Sound id="03DD" name="BlooperFall"/>
+	<Sound id="03DE" name="BlooperSquirt"/>
+	<Sound id="03DF" name="Empty_03DF" empty="true"/>
+	<Sound id="03E0" name="Leech"/>
+	<Sound id="03E1" name="AiFoundPlayerJump"/>
+	<Sound id="03E2" name="ActorJump"/>
+	<Sound id="03E3" name="ActorTrip"/>
+	<Sound id="03E4" name="ActorTwitch"/>
+	<Sound id="03E5" name="ActorDeath"/>
+	<Sound id="03E6" name="BigPowerUp"/>
+	<Sound id="03E7" name="LargeActorJump"/>
+	<Sound id="03E8" name="MoleThrow"/>
+	<Sound id="03E9" name="KoopaBrosLand"/>
+	<Sound id="03EA" name="FakeBowserStep"/>
+	<Sound id="03EB" name="SmallCrowdWalk"/>
+	<Sound id="03EC" name="LargeCrowdWalk"/>
+	<Sound id="03ED" name="MasterSmack"/>
+	<Sound id="03EE" name="MasterPunch"/>
+	<Sound id="03EF" name="BowserChargeLightning"/>
+	<Sound id="03F0" name="Empty_03F0" empty="true"/>
+	<Sound id="03F1" name="Danger"/>
+	<Sound id="03F2" name="Peril"/>
+	<Sound id="03F3" name="Ding"/>
+	<Sound id="03F4" name="Lullaby"/>
+	<Sound id="03F5" name="BubblesRising" unused="true"/>
+	<Sound id="03F6" name="Drip"/>
+	<Sound id="03F7" name="Unused_DripCopy" unused="true"/>
+	<Sound id="03F8" name="Empty_03F8" empty="true"/>
+	<Sound id="03F9" name="StoneStoneChompStep"/>
+	<Sound id="03FA" name="Throw"/>
+	<Sound id="03FB" name="PlayerCollapse"/>
+	<Sound id="03FC" name="Lucky"/>
+	<Sound id="03FD" name="HornHonk" unused="true"/>
+	<Sound id="03FE" name="Unused_03FE" unused="true"/>
+	<Sound id="03FF" name="Empty_03FF" empty="true"/>
+	<Sound id="2001" name="Unused_2001" unused="true"/>
+	<Sound id="2002" name="Unused_2002" unused="true"/>
+	<Sound id="2003" name="GoombarioGathering"/>
+	<Sound id="2004" name="ParakarryPredive"/>
+	<Sound id="2005" name="ParakarryDive"/>
+	<Sound id="2006" name="ParakarryShellShot"/>
+	<Sound id="2007" name="Unused_2007" unused="true"/>
+	<Sound id="2008" name="Unused_2008" unused="true"/>
+	<Sound id="2009" name="ParakarryFlap"/>
+	<Sound id="200A" name="ParakarryAirRaid1"/>
+	<Sound id="200B" name="ParakarryAirRaid2"/>
+	<Sound id="200C" name="KooperShellSpinup"/>
+	<Sound id="200D" name="GoombarioJump"/>
+	<Sound id="200E" name="BowVanish"/>
+	<Sound id="200F" name="BowAppear"/>
+	<Sound id="2010" name="EggMissileBlast"/>
+	<Sound id="2011" name="WattRepelDarkness"/>
+	<Sound id="2012" name="WattResumeDarkness"/>
+	<Sound id="2013" name="SushieEmbark"/>
+	<Sound id="2014" name="SushieRideIdle"/>
+	<Sound id="2015" name="SushieRideMoving"/>
+	<Sound id="2016" name="BombetteBlastLv1"/>
+	<Sound id="2017" name="BombetteBlastLv2"/>
+	<Sound id="2018" name="BombetteBlastLv3"/>
+	<Sound id="2019" name="BowSmack"/>
+	<Sound id="201A" name="BowFanSmack"/>
+	<Sound id="201B" name="LakilesterThrowSpinyA"/>
+	<Sound id="201C" name="LakilesterThrowSpinyB"/>
+	<Sound id="201D" name="LakilesterMakeCloudNine"/>
+	<Sound id="201E" name="LakilesterHurricaneInhale"/>
+	<Sound id="201F" name="LakilesterHurricaneExhale"/>
+	<Sound id="2020" name="BombetteBodySlam"/>
+	<Sound id="2021" name="ShellSpin"/>
+	<Sound id="2022" name="FanSmackHit"/>
+	<Sound id="2023" name="FanSmackEnd"/>
+	<Sound id="2024" name="WattMegaChargeWave"/>
+	<Sound id="2025" name="Unused_2025" unused="true"/>
+	<Sound id="2026" name="DizzyShell"/>
+	<Sound id="2027" name="Unused_ParakarryAirRaid2Copy1" unused="true"/>
+	<Sound id="2028" name="Empty_2028" empty="true"/>
+	<Sound id="2029" name="Unused_ParakarryAirRaid2Copy2" unused="true"/>
+	<Sound id="202A" name="ShuffleCardA"/>
+	<Sound id="202B" name="ShuffleCardB"/>
+	<Sound id="202C" name="FireFlowerA"/>
+	<Sound id="202D" name="FireFlowerB"/>
+	<Sound id="202E" name="SnowmanDollJump"/>
+	<Sound id="202F" name="NoiseRush" unused="true"/>
+	<Sound id="2030" name="PowBlock"/>
+	<Sound id="2031" name="InflictSleep"/>
+	<Sound id="2032" name="InflictStatus"/>
+	<Sound id="2033" name="DizzyDial"/>
+	<Sound id="2034" name="SushieBellyFlop"/>
+	<Sound id="2035" name="CreateWaterBlock"/>
+	<Sound id="2036" name="WhaleOpenMouth"/>
+	<Sound id="2037" name="WhaleCloseMouth"/>
+	<Sound id="2038" name="TubbaSnoreInhale"/>
+	<Sound id="2039" name="TubbaSnoreExhale"/>
+	<Sound id="203A" name="KPA_BridgeCollapseA"/>
+	<Sound id="203B" name="KPA_BridgeCollapseB"/>
+	<Sound id="203C" name="KPA_ArenaExploding"/>
+	<Sound id="203D" name="OBK_StairsDrop"/>
+	<Sound id="203E" name="ShyGuyOuch"/>
+	<Sound id="203F" name="ShyGuyRunAway"/>
+	<Sound id="2040" name="KPA_FlipBridgePanel"/>
+	<Sound id="2041" name="StarSpiritAppearA"/>
+	<Sound id="2042" name="StarSpiritAppearB"/>
+	<Sound id="2043" name="StarSpiritCastA"/>
+	<Sound id="2044" name="StarSpiritCastB"/>
+	<Sound id="2045" name="StarSpiritDepart1"/>
+	<Sound id="2046" name="StarSpiritDepart2"/>
+	<Sound id="2047" name="StarSpiritDepart3"/>
+	<Sound id="2048" name="Unused_StarSpiritDepart3Copy" unused="true"/>
+	<Sound id="2049" name="DarkToadDispel"/>
+	<Sound id="204A" name="OpenMagicChest"/>
+	<Sound id="204B" name="CloseMagicChest"/>
+	<Sound id="204C" name="QuickHinge" unused="true"/>
+	<Sound id="204D" name="FLO_MovePillar"/>
+	<Sound id="204E" name="Empty_204E" empty="true"/>
+	<Sound id="204F" name="Empty_204F" empty="true"/>
+	<Sound id="2050" name="Empty_2050" empty="true"/>
+	<Sound id="2051" name="WishAscending"/>
+	<Sound id="2052" name="UpAndAwaySendAway"/>
+	<Sound id="2053" name="StarPowerRecovery"/>
+	<Sound id="2054" name="Unused_StarPowerRecoveryCopy" unused="true"/>
+	<Sound id="2055" name="StartRecovery"/>
+	<Sound id="2056" name="Recover"/>
+	<Sound id="2057" name="Empty_2057" empty="true"/>
+	<Sound id="2058" name="Empty_2058" empty="true"/>
+	<Sound id="2059" name="FlowersLightGiggle"/>
+	<Sound id="205A" name="FlowersSadGiggle"/>
+	<Sound id="205B" name="FlowersLaugh"/>
+	<Sound id="205C" name="FlowersWither"/>
+	<Sound id="205D" name="FlowersGrow"/>
+	<Sound id="205E" name="RockLaughter"/>
+	<Sound id="205F" name="TreeLaughter"/>
+	<Sound id="2060" name="ImpishLaugh"/>
+	<Sound id="2061" name="ChainChompBite"/>
+	<Sound id="2062" name="ChainChompThud"/>
+	<Sound id="2063" name="ChainRattle"/>
+	<Sound id="2064" name="ShyStackSquish"/>
+	<Sound id="2065" name="StiltGuyUnfold"/>
+	<Sound id="2066" name="StiltGuyStep"/>
+	<Sound id="2067" name="StiltsFall"/>
+	<Sound id="2068" name="Unused_2068" unused="true"/>
+	<Sound id="2069" name="TankBulbFire"/>
+	<Sound id="206A" name="ToyTankOpenHatch"/>
+	<Sound id="206B" name="ToyTankCloseHatch"/>
+	<Sound id="206C" name="WoodenBlock" unused="true"/>
+	<Sound id="206D" name="RecoverHeart"/>
+	<Sound id="206E" name="FuzzyRumble"/>
+	<Sound id="206F" name="FuzzyShake"/>
+	<Sound id="2070" name="FuzzyDivide"/>
+	<Sound id="2071" name="UpAndAwayCapture"/>
+	<Sound id="2072" name="Yoshi"/>
+	<Sound id="2073" name="HitWhacka"/>
+	<Sound id="2074" name="MagicAscending"/>
+	<Sound id="2075" name="MagicDescending"/>
+	<Sound id="2076" name="BombBlast"/>
+	<Sound id="2077" name="Unused_BombBlastCopy" unused="true"/>
+	<Sound id="2078" name="BulletBillExplodeA"/>
+	<Sound id="2079" name="BulletBillExplodeB"/>
+	<Sound id="207A" name="KammySummonMagic"/>
+	<Sound id="207B" name="KammySummonBlock"/>
+	<Sound id="207C" name="KammyRaiseObject"/>
+	<Sound id="207D" name="KammyLowerObject"/>
+	<Sound id="207E" name="TwinkAttack"/>
+	<Sound id="207F" name="TwinkFlyA"/>
+	<Sound id="2080" name="Empty_2080" empty="true"/>
+	<Sound id="2081" name="QuickPlayerJump"/>
+	<Sound id="2082" name="Jump8BITMario"/>
+	<Sound id="2083" name="QuickPlayerJumpCopy" unused="true"/>
+	<Sound id="2084" name="LongPlayerJumpCopy" unused="true"/>
+	<Sound id="2085" name="StarBoxLauncher"/>
+	<Sound id="2086" name="Spring"/>
+	<Sound id="2087" name="ZiplineFinish"/>
+	<Sound id="2088" name="PushBlock"/>
+	<Sound id="2089" name="PullVine"/>
+	<Sound id="208A" name="FloorSwitchDepress"/>
+	<Sound id="208B" name="FloorSwitchActivate"/>
+	<Sound id="208C" name="NoDamge"/>
+	<Sound id="208D" name="UseItem"/>
+	<Sound id="208E" name="Grow"/>
+	<Sound id="208F" name="ChargeUp"/>
+	<Sound id="2090" name="BallBounce" unused="true"/>
+	<Sound id="2091" name="OpenTrapdoor"/>
+	<Sound id="2092" name="BreakFloor"/>
+	<Sound id="2093" name="SpikesExtend"/>
+	<Sound id="2094" name="JumpScare"/>
+	<Sound id="2095" name="EatOrDrink"/>
+	<Sound id="2096" name="SpitOut"/>
+	<Sound id="2097" name="GlassShatter"/>
+	<Sound id="2098" name="VanishInSmoke"/>
+	<Sound id="2099" name="HeartPlant"/>
+	<Sound id="209A" name="HurtPlantShriek"/>
+	<Sound id="209B" name="MunchlesiaSuction"/>
+	<Sound id="209C" name="LogLandAlt" unused="true" desc="Slightly quieter." tags="wood, thud, jan"/>
+	<Sound id="209D" name="JAN_LogLand"/>
+	<Sound id="209E" name="JAN_LogSplit"/>
+	<Sound id="209F" name="SeparateBushes"/>
+	<Sound id="20A0" name="LargeNpcImpact"/>
+	<Sound id="20A1" name="StarshipBoost"/>
+	<Sound id="20A2" name="IWA_SlideGate"/>
+	<Sound id="20A3" name="CreakyWindowOpen"/>
+	<Sound id="20A4" name="CreakyWindowClose"/>
+	<Sound id="20A5" name="TrainDoorOpen"/>
+	<Sound id="20A6" name="TrainDoorClose"/>
+	<Sound id="20A7" name="TurnMechanism"/>
+	<Sound id="20A8" name="CapsuleOpen"/>
+	<Sound id="20A9" name="Unused_20A9" unused="true"/>
+	<Sound id="20AA" name="Unused_20AA" unused="true"/>
+	<Sound id="20AB" name="FlipPanel"/>
+	<Sound id="20AC" name="ClosePanel"/>
+	<Sound id="20AD" name="WaterSplash"/>
+	<Sound id="20AE" name="BreakCrate"/>
+	<Sound id="20AF" name="HollowRising" unused="true"/>
+	<Sound id="20B0" name="HollowFalling" unused="true"/>
+	<Sound id="20B1" name="PiranhaSpin1"/>
+	<Sound id="20B2" name="PiranhaSpin2"/>
+	<Sound id="20B3" name="PiranhaTense"/>
+	<Sound id="20B4" name="HeavyNpcStepB"/>
+	<Sound id="20B5" name="Unused_20B5" unused="true"/>
+	<Sound id="20B6" name="HuffNPuffJiggle"/>
+	<Sound id="20B7" name="HuffNPuffWobble"/>
+	<Sound id="20B8" name="GhostTransform"/>
+	<Sound id="20B9" name="JrTroopaTransform"/>
+	<Sound id="20BA" name="ActorStepA"/>
+	<Sound id="20BB" name="MasterFlutter"/>
+	<Sound id="20BC" name="MasterKick"/>
+	<Sound id="20BD" name="MasterStanceChange"/>
+	<Sound id="20BE" name="MasterFlip"/>
+	<Sound id="20BF" name="LavaBudRecover"/>
+	<Sound id="20C0" name="Unused_20C0" unused="true"/>
+	<Sound id="20C1" name="SmallNpcStep"/>
+	<Sound id="20C2" name="BanditSteal"/>
+	<Sound id="20C3" name="Disappointed"/>
+	<Sound id="20C4" name="ClubbaStep"/>
+	<Sound id="20C5" name="ClubbaSwing"/>
+	<Sound id="20C6" name="MbushStep"/>
+	<Sound id="20C7" name="Empty_20C7" empty="true"/>
+	<Sound id="20C8" name="TubbaHeartJump"/>
+	<Sound id="20C9" name="MbushLeap"/>
+	<Sound id="20CA" name="BzzapSting"/>
+	<Sound id="20CB" name="MiniBzzapSting"/>
+	<Sound id="20CC" name="BzzapCallSwarm"/>
+	<Sound id="20CD" name="BonyBeetleStep"/>
+	<Sound id="20CE" name="BonyBeetleExtendSpikes"/>
+	<Sound id="20CF" name="BonyBeetleRetractSpikes"/>
+	<Sound id="20D0" name="CleftStep"/>
+	<Sound id="20D1" name="CleftTackle"/>
+	<Sound id="20D2" name="LakituThrowSpiny"/>
+	<Sound id="20D3" name="ShellToss"/>
+	<Sound id="20D4" name="SpellCast1"/>
+	<Sound id="20D5" name="SpellCast2"/>
+	<Sound id="20D6" name="SpellCast3"/>
+	<Sound id="20D7" name="SpellCast4"/>
+	<Sound id="20D8" name="SpellCast5" unused="true"/>
+	<Sound id="20D9" name="FuzzipedeMotion"/>
+	<Sound id="20DA" name="FuzzipedeLeap"/>
+	<Sound id="20DB" name="FuzzipedeStrike"/>
+	<Sound id="20DC" name="CommandLoss"/>
+	<Sound id="20DD" name="GoombaStep"/>
+	<Sound id="20DE" name="PiranhaBite"/>
+	<Sound id="20DF" name="ParagoombaFly"/>
+	<Sound id="20E0" name="ParagoombaPredive"/>
+	<Sound id="20E1" name="TutankoopaMagic"/>
+	<Sound id="20E2" name="JrToopaJump"/>
+	<Sound id="20E3" name="ActorWither"/>
+	<Sound id="20E4" name="ActorCollapse"/>
+	<Sound id="20E5" name="KnockoutChirping"/>
+	<Sound id="20E6" name="TutankoopaLevitate"/>
+	<Sound id="20E7" name="SpookyLevitate"/>
+	<Sound id="20E8" name="IllusionDissolve"/>
+	<Sound id="20E9" name="HeavyNpcFalling"/>
+	<Sound id="20EA" name="HeavyNpcLanding"/>
+	<Sound id="20EB" name="TutankoopaDebrisFall"/>
+	<Sound id="20EC" name="HeavyNpcStepA"/>
+	<Sound id="20ED" name="GoombaKingSpin"/>
+	<Sound id="20EE" name="GulpitLick"/>
+	<Sound id="20EF" name="BuzzarFlap"/>
+	<Sound id="20F0" name="BuzzarWhirlwind"/>
+	<Sound id="20F1" name="BuzzarWindup"/>
+	<Sound id="20F2" name="BuzzarDive"/>
+	<Sound id="20F3" name="SmallLensFlare"/>
+	<Sound id="20F4" name="BuzzarThrow"/>
+	<Sound id="20F5" name="BuzzarGrab"/>
+	<Sound id="20F6" name="HeavyNpcStepC"/>
+	<Sound id="20F7" name="TubbasHeartCharge"/>
+	<Sound id="20F8" name="TubbasHeartChargeCopy" unused="true"/>
+	<Sound id="20F9" name="TubbasHeartSwarmAttack"/>
+	<Sound id="20FA" name="Empty_20FA" empty="true"/>
+	<Sound id="20FB" name="TubbasHeartSwarmDisperse"/>
+	<Sound id="20FC" name="TubbasHeartSwarmVanish"/>
+	<Sound id="20FD" name="FakeBowserSwing"/>
+	<Sound id="20FE" name="FakeBowserStrike"/>
+	<Sound id="20FF" name="FakeBowserLaugh" unused="true"/>
+	<Sound id="2100" name="SmallNpcStepCopy" unused="true"/>
+	<Sound id="2101" name="FileMenuMoveCursor"/>
+	<Sound id="2102" name="CreateFileMoveCursor"/>
+	<Sound id="2103" name="CreateFileSetCharacter"/>
+	<Sound id="2104" name="CreateFileBackspace"/>
+	<Sound id="2105" name="CreateFileChangeCharset"/>
+	<Sound id="2106" name="InflictChillOut"/>
+	<Sound id="2107" name="InflictKO"/>
+	<Sound id="2108" name="SpawnBlock"/>
+	<Sound id="2109" name="MenuChime" unused="true"/>
+	<Sound id="210A" name="DDownHit1"/>
+	<Sound id="210B" name="DDownHit2"/>
+	<Sound id="210C" name="DDownHit3"/>
+	<Sound id="210D" name="Empty_210D" empty="true"/>
+	<Sound id="210E" name="Empty_210E" empty="true"/>
+	<Sound id="210F" name="Empty_210F" empty="true"/>
+	<Sound id="2110" name="Empty_2110" empty="true"/>
+	<Sound id="2111" name="Spin"/>
+	<Sound id="2112" name="SpeedySpin"/>
+	<Sound id="2113" name="SpinAttack"/>
+	<Sound id="2114" name="SpeedySpinAttack"/>
+	<Sound id="2115" name="HammerSwing1"/>
+	<Sound id="2116" name="HammerSwing2"/>
+	<Sound id="2117" name="HammerSwing3"/>
+	<Sound id="2118" name="HammerStrike1"/>
+	<Sound id="2119" name="HammerStrike2"/>
+	<Sound id="211A" name="HammerStrike3"/>
+	<Sound id="211B" name="HammerQuake1"/>
+	<Sound id="211C" name="HammerQuake2"/>
+	<Sound id="211D" name="HammerQuake3"/>
+	<Sound id="211E" name="SpinSmash1"/>
+	<Sound id="211F" name="SpinSmash2"/>
+	<Sound id="2120" name="SpinSmash3"/>
+	<Sound id="2121" name="BowserStarRodUse"/>
+	<Sound id="2122" name="BowserStarRodDrainWave"/>
+	<Sound id="2123" name="BowserStarRodGather"/>
+	<Sound id="2124" name="BowserStarRodShockwave"/>
+	<Sound id="2125" name="BowserStarRodEnchant"/>
+	<Sound id="2126" name="BowserCastRecover"/>
+	<Sound id="2127" name="BowserLightning"/>
+	<Sound id="2128" name="BowserPowerDown"/>
+	<Sound id="2129" name="BowserCollapse"/>
+	<Sound id="212A" name="OBK_ChandelierRelease"/>
+	<Sound id="212B" name="OBK_ChandelierStop"/>
+	<Sound id="212C" name="OBK_ChandelierRetract"/>
+	<Sound id="212D" name="ReleaseEnergy"/>
+	<Sound id="212E" name="GatherEnergy"/>
+	<Sound id="212F" name="Empty_212F" empty="true"/>
+	<Sound id="2130" name="Empty_2130" empty="true"/>
+	<Sound id="2131" name="Empty_2131" empty="true"/>
+	<Sound id="2132" name="Empty_2132" empty="true"/>
+	<Sound id="2133" name="Empty_2133" empty="true"/>
+	<Sound id="2134" name="Empty_2134" empty="true"/>
+	<Sound id="2135" name="Empty_2135" empty="true"/>
+	<Sound id="2136" name="Empty_2136" empty="true"/>
+	<Sound id="2137" name="Empty_2137" empty="true"/>
+	<Sound id="2138" name="Empty_2138" empty="true"/>
+	<Sound id="2139" name="Empty_2139" empty="true"/>
+	<Sound id="213A" name="Empty_213A" empty="true"/>
+	<Sound id="213B" name="Empty_213B" empty="true"/>
+	<Sound id="213C" name="Empty_213C" empty="true"/>
+	<Sound id="213D" name="Empty_213D" empty="true"/>
+	<Sound id="213E" name="Empty_213E" empty="true"/>
+	<Sound id="213F" name="Empty_213F" empty="true"/>
+	<Sound id="2140" name="Empty_2140" empty="true"/>
+</Sounds>

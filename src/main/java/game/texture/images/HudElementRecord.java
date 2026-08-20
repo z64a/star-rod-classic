@@ -26,7 +26,7 @@ import util.Logger;
 
 public class HudElementRecord extends GlobalsRecord
 {
-	public static final String DEFAULT_SCRIPT = "SetVisible"
+	public static final String DEFAULT_SCRIPT = "EnableCI4"
 		+ "\nSetTileSize ( .IconSize:32x32 )"
 		+ "\nLoop"
 		+ "\n\tSetIcon     ( 60` ~ImageIcon:IMAGE_NAME )"
@@ -113,7 +113,7 @@ public class HudElementRecord extends GlobalsRecord
 	public void buildAutoScript(String imageAssetName, int sizeW, int sizeH)
 	{
 		StringBuilder sb = new StringBuilder();
-		sb.append("SetVisible");
+		sb.append("EnableCI4");
 		if (ProjectDatabase.getFromNamespace("IconSize").hasID(sizeW + "x" + sizeH))
 			sb.append("\nSetTileSize ( .IconSize:" + sizeW + "x" + sizeH + " )");
 		else

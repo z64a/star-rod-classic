@@ -45,7 +45,7 @@ public class BufferedPoints
 		BufferVertex vtx = new BufferVertex(points.size());
 		points.add(vtx);
 
-		vtx.setPointSize(size);
+		vtx.setPointSize(RenderState.getPointSizePixels(size));
 
 		return vtx;
 	}
@@ -141,7 +141,9 @@ public class BufferedPoints
 		if (auxVBO != null)
 			glDeleteBuffers(auxVBO.id);
 
-		glDeleteVertexArrays(vao);
+		if (vao >= 0)
+			glDeleteVertexArrays(vao);
+		vao = -1;
 	}
 
 	/**

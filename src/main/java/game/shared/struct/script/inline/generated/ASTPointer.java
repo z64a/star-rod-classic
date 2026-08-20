@@ -38,7 +38,7 @@ public class ASTPointer extends ASTNode
 	{
 		if(!db.hasPointer(name))
 			throw new VisitorException("Unknown pointer: " + name);
-
+	
 		intValue = db.getPointerAddress(name);
 		setType(ValueType.CONST_INT);
 	}

@@ -1,0 +1,10 @@
+#new:Data $Comments {
+Alpha % ignored
+Beta /% ignored
+still ignored
+finished %/ Gamma
+Delta \% literal
+"100% /% literal %/"
+A /* untouched */ B
+A // untouched
+}

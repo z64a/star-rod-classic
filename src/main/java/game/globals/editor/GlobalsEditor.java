@@ -31,6 +31,7 @@ import app.Environment;
 import app.LoadingBar;
 import app.StarRodException;
 import app.SwingUtils;
+import app.ThemesEditor;
 import app.config.Options;
 import app.input.IOUtils;
 import game.globals.editor.GlobalsData.GlobalsCategory;
@@ -242,6 +243,7 @@ public class GlobalsEditor
 		frame.setJMenuBar(menuBar);
 
 		addActionsMenu(menuBar);
+		ThemesEditor.addThemeMenuItem(menuBar, frame);
 	}
 
 	private void addActionsMenu(JMenuBar menuBar)
@@ -305,7 +307,7 @@ public class GlobalsEditor
 	{
 		tabList.add(tab);
 
-		tab.tabLabel = new JLabel(tab.getTabName());
+		tab.tabLabel = SwingUtils.getTabLabel(tabbedPane, tab.getTabName(), 12);
 		tab.tabLabel.setHorizontalTextPosition(JLabel.TRAILING);
 		tab.tabLabel.setIcon(getIcon(tab.getIconPath()));
 		tab.tabLabel.setIconTextGap(8);
@@ -356,19 +358,8 @@ public class GlobalsEditor
 		messageIDMap.clear();
 
 		try {
-			if (Environment.project.isDecomp) {
-				for (File assetDir : Environment.project.decompConfig.assetDirectories) {
-					File msgDir = new File(assetDir, "msg");
-					if (!msgDir.exists())
-						continue;
-
-					loadMessages(IOUtils.getFilesWithExtension(assetDir, new String[] { "msg" }, true));
-				}
-			}
-			else {
-				loadMessages(IOUtils.getFilesWithExtension(MOD_STRINGS_SRC, new String[] { "str", "msg" }, true));
-				loadMessages(IOUtils.getFilesWithExtension(MOD_STRINGS_PATCH, new String[] { "str", "msg" }, true));
-			}
+			loadMessages(IOUtils.getFilesWithExtension(MOD_STRINGS_SRC, new String[] { "str", "msg" }, true));
+			loadMessages(IOUtils.getFilesWithExtension(MOD_STRINGS_PATCH, new String[] { "str", "msg" }, true));
 		}
 		catch (IOException e) {
 			throw new StarRodException("Exception while loading strings! %n%s", e.getMessage());

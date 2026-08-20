@@ -1,0 +1,9 @@
+#new:Data $Selected {
+##[IF:Mode:A]
+MODE_A
+##[ELSEIF:Mode:B]
+MODE_B
+##[ELSE]
+OTHER
+##[ENDIF]
+}

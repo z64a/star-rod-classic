@@ -4,7 +4,9 @@ import static app.Directories.*;
 import static game.map.MapKey.*;
 import static game.map.editor.MapInput.*;
 import static org.lwjgl.opengl.GL11.*;
+import static renderer.GLUtils.NO_TEXTURE_ID;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.KeyboardFocusManager;
@@ -30,6 +32,7 @@ import javax.imageio.ImageIO;
 import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -41,6 +44,7 @@ import app.AssetManager;
 import app.Directories;
 import app.Environment;
 import app.LoadingBar;
+import app.ProjectBackups;
 import app.StackTraceDialog;
 import app.StarRodClassic;
 import app.StarRodException;
@@ -53,9 +57,9 @@ import app.input.InvalidInputException;
 import common.FrameLimiter;
 import common.GLEditor;
 import common.KeyboardInput;
-import common.RawKeyboard;
 import common.MouseInput;
 import common.MouseInput.MouseManagerListener;
+import common.RawKeyboard;
 import common.Vector3f;
 import game.map.Axis;
 import game.map.BoundingBox;
@@ -136,7 +140,6 @@ import game.map.marker.Marker;
 import game.map.marker.Marker.MarkerType;
 import game.map.mesh.Triangle;
 import game.map.mesh.Vertex;
-import game.map.scripts.DecompScriptGenerator;
 import game.map.scripts.ScriptGenerator;
 import game.map.scripts.generators.Exit;
 import game.map.scripts.generators.Generator;
@@ -273,9 +276,6 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 	public Vector3f dragBoxStartPoint;
 	public Vector3f dragBoxEndPoint;
 	public boolean draggingBox;
-
-	public boolean selectionPainting;
-	public float selectionPaintRadius;
 
 	public boolean snapTranslation;
 	public boolean snapRotation;
@@ -541,7 +541,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 		MapKeyBindingsConfig.load(keyBindingsFile, keyConfig);
 		loadRecentMaps();
 
-		crashFile = new File(AssetManager.getMapBuildDir() + "/crash");
+		crashFile = new File(ProjectBackups.getMapDirectory(), "crash");
 
 		// ------------------------------------------------------------
 		// open files
@@ -830,6 +830,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 		if (crashFile == null)
 			return false;
 		try {
+			ProjectBackups.prepareMapDirectory();
 			map.saveBackupAs(crashFile, author);
 			return true;
 		}
@@ -841,9 +842,8 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 
 	private void saveBackup()
 	{
-		File mapDir = map.source.getParentFile();
-		File backupFile = new File(mapDir.getAbsoluteFile() + "/" + map.name + ".backup");
 		try {
+			File backupFile = new File(ProjectBackups.prepareMapDirectory(), map.name + ".backup");
 			map.saveBackupAs(backupFile, author);
 			DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 			Logger.log("Saved backup at " + dateFormatter.format(LocalDateTime.now()));
@@ -886,8 +886,10 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 	private Map checkForBackup(Map newMap)
 	{
 		try {
-			File mapDir = newMap.source.getParentFile();
-			File backupFile = new File(mapDir.getAbsoluteFile() + "/" + newMap.name + ".backup");
+			File backupFile = new File(ProjectBackups.getMapDirectory(), newMap.name + ".backup");
+			File legacyBackupFile = new File(newMap.source.getParentFile(), newMap.name + ".backup");
+			if (legacyBackupFile.exists() && (!backupFile.exists() || legacyBackupFile.lastModified() > backupFile.lastModified()))
+				backupFile = legacyBackupFile;
 
 			if (!backupFile.exists() || (backupFile.lastModified() <= newMap.source.lastModified()))
 				return newMap;
@@ -1035,13 +1037,13 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 		uvViews = new MapEditViewport[2];
 		uvViews[0] = perspectiveView;
 		uvViews[1] = uvEditView;
+		activeView = perspectiveView;
 
 		if (changeMapState == ChangeMapState.NONE) {
 			mainViewMode = ViewMode.FOUR;
 			setViewMode(mainViewMode);
 			resizeViews();
 
-			activeView = perspectiveView;
 			objectGrid = new Grid(false, 4);
 			uvGrid = new UVGrid(8);
 			grid = objectGrid;
@@ -1077,9 +1079,6 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 		dragBoxStartPoint = null;
 		dragBoxEndPoint = null;
 		draggingBox = false;
-
-		selectionPainting = false;
-		selectionPaintRadius = 16.0f;
 
 		selectionManager = new SelectionManager(this);
 		commandManager = new CommandManager(32);
@@ -1303,7 +1302,10 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 
 		if (editorMode == EditorMode.VertexPaint) {
 			PaintManager.update(this, deltaTime);
-			paintPickHit = selectionManager.pickWorld(map, currentRay, activeView, true);
+			if (gui.isFocused())
+				paintPickHit = selectionManager.pickWorld(map, currentRay, activeView, true);
+			else
+				paintPickHit = null;
 		}
 
 		if (editorMode == EditorMode.EditUVs && !selectionManager.uvSelection.transforming())
@@ -1381,14 +1383,14 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 				break;
 		}
 
+		if (isPlayInEditorMode)
+			updatePlayInEditorSimulation(deltaTime);
+
 		perspectiveView.camera.tick(deltaTime);
 		activeView.camera.handleMovementInput(mouse, keyboard, (float) deltaTime);
 
 		if (doStepProfiling)
 			profiler.record("input");
-
-		if (isPlayInEditorMode)
-			updatePlayInEditorSimulation(deltaTime);
 
 		cursor3D.updateShadow(getCollisionMap(), map, deltaTime);
 
@@ -1578,10 +1580,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 			case GENERATE_SCRIPT:
 				try {
 					Logger.log("Generating script for " + map.name + "...");
-					if (Environment.project.isDecomp)
-						new DecompScriptGenerator(map);
-					else
-						new ScriptGenerator(map);
+					new ScriptGenerator(map);
 					Logger.log("Successfully generated script for " + map.name);
 				}
 				catch (IOException ioe) {
@@ -1864,8 +1863,13 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 			if (mouse.isHoldingMMB()) {
 				clickHitMMB = selectionManager.pickWorld(getGeometryMap(), currentRay, activeView, true);
 
-				if (!clickHitMMB.missed())
-					cursor3D.updateDrag(clickHitMMB.point);
+				if (!clickHitMMB.missed()) {
+					if (isPlayInEditorMode)
+						cursor3D.setPosition(clickHitMMB.point);
+					else
+						cursor3D.updateDrag(clickHitMMB.point);
+					requestPlayInEditorCameraCut();
+				}
 			}
 		}
 	}
@@ -2040,10 +2044,6 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 
 		switch (editorMode) {
 			case Modify:
-				// TODO
-				// if(selectionPainting)
-				// ...
-				// else
 				startTranslateScale(selectionManager.currentSelection, clickHitLMB);
 				break;
 			case EditUVs:
@@ -2239,9 +2239,16 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 	{
 		clickRayMMB = currentRay;
 		clickHitMMB = selectionManager.pickWorld(getGeometryMap(), currentRay, activeView, true);
+		placeCursor(clickHitMMB);
+	}
 
-		if (!clickHitMMB.missed())
-			cursor3D.setPosition(clickHitMMB.point);
+	private void placeCursor(PickHit hit)
+	{
+		if (hit.missed())
+			return;
+
+		cursor3D.setPosition(hit.point);
+		requestPlayInEditorCameraCut();
 	}
 
 	@Override
@@ -2464,12 +2471,12 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 				canDoNudgeTranslation = true;
 				break;
 
-			case SELECTION_PAINTING:
-				selectionPainting = false;
-				break;
-
 			case PLAY_IN_EDITOR_JUMP:
 				cursor3D.endInputJump();
+				break;
+
+			case PLAY_IN_EDITOR_SPIN:
+				cursor3D.endInputSpin();
 				break;
 
 			default:
@@ -2542,10 +2549,6 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 
 			case ROUND_VERTICIES:
 				roundVertices();
-				break;
-
-			case SELECTION_PAINTING:
-				selectionPainting = true;
 				break;
 
 			case NUDGE_UP:
@@ -2622,6 +2625,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 
 				if (!isPlayInEditorMode) {
 					cursor3D.startPreviewMode();
+					zoneCam.startPreview(cursor3D.getSimulationPosition());
 					isPlayInEditorMode = true;
 				}
 				else {
@@ -2638,6 +2642,15 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 			case PLAY_IN_EDITOR_JUMP:
 				if (isPlayInEditorMode)
 					cursor3D.startInputJump();
+				break;
+
+			case PLAY_IN_EDITOR_SPIN:
+				if (isPlayInEditorMode)
+					cursor3D.startInputSpin();
+				break;
+
+			case PLACE_CURSOR_AT_MOUSE:
+				placeCursor(selectionManager.pickWorld(getGeometryMap(), currentRay, activeView, true));
 				break;
 
 			case PIE_IGNORE_HIDDEN_COL:
@@ -3015,28 +3028,54 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 	public void updatePlayInEditorSimulation(double deltaTime)
 	{
 		Map collisionMap = getCollisionMap();
+		List<Zone> cameraCandidates = new ArrayList<>();
+		for (Zone zone : collisionMap.zoneTree)
+			cameraCandidates.add(zone);
 
 		// update 'player'
 		boolean allowInput = (changeMapState != ChangeMapState.EXITING) && (changeMapState != ChangeMapState.ENTERING);
+		if (!zoneCam.controller.isInitialized())
+			updatePlayInEditorCamera(cameraCandidates, 0.0);
+		zoneCam.prepareSimulation();
 		cursor3D.tickSimulation(keyboard, collisionMap, map, perspectiveView, deltaTime, (perspectiveView == activeView), allowInput,
-			false);
+			false, (stepTime) -> updatePlayInEditorCamera(cameraCandidates, stepTime));
 
-		Vector3f start = cursor3D.getPosition();
+		Vector3f start = cursor3D.getSimulationPosition();
 		PickRay traceBelowCursor = new PickRay(Channel.COLLISION, new Vector3f(start.x, start.y + 10, start.z), PickRay.DOWN,
 			perspectiveView);
 
-		// update camera
-		List<Zone> candidates = new ArrayList<>();
-		for (Zone z : collisionMap.zoneTree) {
-			if (z.hasCameraData.get())
-				candidates.add(z);
-		}
-		PickHit zoneHit = Map.pickObjectFromSet(traceBelowCursor, candidates, pieIgnoreHiddenZones);
-		if (zoneHit.dist < Float.MAX_VALUE)
-			zoneCam.controlData = ((Zone) zoneHit.obj).camData;
-
 		// update exit trigger + map transition state
 		updateMapTransition(traceBelowCursor);
+	}
+
+	private void updatePlayInEditorCamera(List<Zone> cameraCandidates, double deltaTime)
+	{
+		Vector3f playerPosition = cursor3D.getSimulationPosition();
+		Vector3f samplePosition = playerPosition;
+		if (changeMapState == ChangeMapState.ENTERING) {
+			MapObject obj = map.find(MapObjectType.MARKER, destMarkerName);
+			if (obj != null)
+				samplePosition = ((Marker) obj).position.getVector();
+		}
+
+		PickRay cameraTrace = new PickRay(Channel.COLLISION, new Vector3f(samplePosition.x, samplePosition.y + 10.0f, samplePosition.z), PickRay.DOWN,
+			perspectiveView);
+		PickHit zoneHit = Map.pickObjectFromSet(cameraTrace, cameraCandidates, pieIgnoreHiddenZones);
+
+		CameraZoneData cameraData = null;
+		if (zoneHit.dist < Float.MAX_VALUE) {
+			Zone zone = (Zone) zoneHit.obj;
+			if (zone.hasCameraData.get())
+				cameraData = zone.camData;
+		}
+
+		zoneCam.updateSimulation(cameraData, playerPosition, cursor3D.allowVerticalCameraMovement(), cursor3D.getCameraYInterpRate(), deltaTime);
+	}
+
+	private void requestPlayInEditorCameraCut()
+	{
+		if (isPlayInEditorMode)
+			zoneCam.requestCameraCut(cursor3D.getSimulationPosition());
 	}
 
 	private void updateMapTransition(PickRay traceBelowCursor)
@@ -3133,6 +3172,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 				// eat a frame to ensure the viewport is rendered with complete fade before opening map
 				action_OpenMap(destMap);
 				cursor3D.startPreviewMode();
+				zoneCam.startPreview(cursor3D.getSimulationPosition());
 				isPlayInEditorMode = true;
 
 				CommandBatch syncHidden = new CommandBatch("Set Visibility");
@@ -3166,6 +3206,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 					cursor3D.setPosition(new Vector3f(0.0f, 0.0f, 0.0f));
 					cursor3D.setMoveHeading(0.0f, 0.0f);
 				}
+				zoneCam.requestCameraCut(cursor3D.getSimulationPosition());
 				changeMapState = ChangeMapState.ENTERING;
 				mapChangeTimer = 0.0f;
 				// tryMapExit(traceBelowCursor); // prevents triggering the loading zone until you leave it
@@ -3443,11 +3484,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 		}
 
 		if (needsBackgroundReload) {
-			glDeleteTextures(map.glBackgroundTexID);
-			if (map.bgImage != null)
-				map.glBackgroundTexID = TextureManager.bindBufferedImage(map.bgImage);
-			else
-				map.glBackgroundTexID = TextureManager.glMissingTextureID;
+			reloadBackgroundTexture();
 		}
 
 		if (dummyDraw)
@@ -3494,7 +3531,12 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 			RenderState.setModelMatrix(null);
 
 			RenderState.setLineWidth(2.0f);
-			RenderState.setColor(0.9f, 0.9f, 0.9f, 1.0f);
+			Color background = UIManager.getColor("Panel.background");
+			if (background == null)
+				RenderState.setColor(0.9f, 0.9f, 0.9f, 1.0f);
+			else
+				RenderState.setColor(background.getRed() / 255.0f, background.getGreen() / 255.0f, background.getBlue() / 255.0f,
+					background.getAlpha() / 255.0f);
 
 			if (enableXDivider) {
 				LineRenderQueue.addLine(
@@ -3659,9 +3701,30 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 	{
 		if (reloadTextures)
 			TextureManager.clear();
-		glDeleteTextures(map.glBackgroundTexID);
+		deleteBackgroundTexture();
 		selectionManager = new SelectionManager(this);
 		gui.setSelectedTexture(null);
+	}
+
+	private void reloadBackgroundTexture()
+	{
+		int textureID = TextureManager.glMissingTextureID;
+		if (map.bgImage != null)
+			textureID = TextureManager.bindBufferedImage(map.bgImage);
+
+		if (textureID == NO_TEXTURE_ID)
+			return;
+
+		deleteBackgroundTexture();
+		map.glBackgroundTexID = textureID;
+		needsBackgroundReload = false;
+	}
+
+	private void deleteBackgroundTexture()
+	{
+		if (map.glBackgroundTexID != NO_TEXTURE_ID && map.glBackgroundTexID != TextureManager.glMissingTextureID)
+			glDeleteTextures(map.glBackgroundTexID);
+		map.glBackgroundTexID = NO_TEXTURE_ID;
 	}
 
 	/**
@@ -3809,23 +3872,24 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 	/**
 	 * Saves the map quietly, will prompt for a filename if this is a newly created map.
 	 *
-	 * @throws IOException
+	 * @return whether the map was saved
 	 */
-	public void action_SaveMap()
+	public boolean action_SaveMap()
 	{
 		try {
 			map.saveMap(getAuthor(), new MapEditorMetadata(this));
 		}
 		catch (Exception e) {
 			displayStackTrace(e);
-			return;
+			return false;
 		}
 
 		map.modified = false;
 		lastBackupTime = time;
+		return true;
 	}
 
-	public void action_SaveMapAs(File f)
+	public boolean action_SaveMapAs(File f)
 	{
 		if (!f.exists()) {
 			// append extension if missing
@@ -3839,7 +3903,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 		}
 		catch (Exception e) {
 			displayStackTrace(e);
-			return;
+			return false;
 		}
 
 		map.modified = false;
@@ -3848,6 +3912,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 		updateWindowTitle();
 		updateRecentMaps();
 		gui.setRecentMaps(recentMaps);
+		return true;
 	}
 
 	public void action_OpenMap(File f)
@@ -4294,6 +4359,9 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 		Vector3f pos = cursor3D.getPosition();
 
 		Marker m = new Marker(name, type, pos.x, pos.y, pos.z, 0);
+		if (type == MarkerType.NPC)
+			m.npcComponent.generate.set(true);
+
 		m.getNode().parentNode = parent;
 		m.getNode().childIndex = parent.getChildCount();
 		createObject(m);

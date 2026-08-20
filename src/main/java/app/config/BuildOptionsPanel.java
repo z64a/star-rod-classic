@@ -67,7 +67,6 @@ public class BuildOptionsPanel extends JPanel
 	public BuildOptionsPanel()
 	{
 		optEditors = new ArrayList<>();
-		setPreferredSize(new Dimension(380, 500));
 
 		JTabbedPane tabbedPane = new JTabbedPane();
 		SwingUtils.setFontSize(tabbedPane, 14);
@@ -79,13 +78,15 @@ public class BuildOptionsPanel extends JPanel
 
 		setLayout(new MigLayout("fill, ins 0"));
 		add(tabbedPane, "grow");
+
+		Dimension preferredSize = tabbedPane.getPreferredSize();
+		setPreferredSize(new Dimension(Math.max(380, preferredSize.width), preferredSize.height));
 	}
 
 	private void addTab(JTabbedPane tabbedPane, JPanel tab, String name)
 	{
-		JLabel tabLabel = new JLabel(name);
+		JLabel tabLabel = SwingUtils.getTabLabel(tabbedPane, name, 12);
 		tabLabel.setPreferredSize(new Dimension(60, 18));
-		SwingUtils.setFontSize(tabLabel, 12);
 
 		int index = tabbedPane.getTabCount();
 		tabbedPane.addTab(null, tab);
@@ -102,6 +103,7 @@ public class BuildOptionsPanel extends JPanel
 		addCheckbox(tab, Options.BuildBackgrounds, "growx");
 		addCheckbox(tab, Options.BuildSpriteSheets, "growx");
 		addCheckbox(tab, Options.PatchFonts, "growx");
+		addCheckbox(tab, Options.BuildSoundBanks, "growx");
 		addCheckbox(tab, Options.BuildAudio, "growx, gapbottom 8");
 
 		addCheckbox(tab, Options.ClearMapCache, "growx");
@@ -171,7 +173,9 @@ public class BuildOptionsPanel extends JPanel
 		JPanel tab = new JPanel(new MigLayout("fillx, " + TAB_INSETS, "[]16[]"));
 
 		addCheckbox(tab, Options.EnableDebugCode, "growx, span, wrap, gapbottom 4");
+		addCheckbox(tab, Options.EnableCrashSymbols, "growx, span, wrap, gapbottom 4");
 		addCheckbox(tab, Options.EnableVarLogging, "growx, span, wrap, gapbottom 4");
+		addCheckbox(tab, Options.EnableFPSCounter, "growx, span, wrap, gapbottom 4");
 
 		addCheckbox(tab, Options.QuickLaunch, "growx, wrap, gapbottom 8");
 

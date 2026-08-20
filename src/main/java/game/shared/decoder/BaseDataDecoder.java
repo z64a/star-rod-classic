@@ -33,7 +33,6 @@ import game.shared.ProjectDatabase;
 import game.shared.ProjectDatabase.ConstEnum;
 import game.shared.SyntaxConstants;
 import game.shared.decoder.Pointer.Origin;
-import game.shared.lib.CType.Primitive;
 import game.shared.lib.LibEntry;
 import game.shared.lib.LibEntry.EntryType;
 import game.shared.lib.LibEntry.LibParam;
@@ -47,9 +46,9 @@ import game.shared.struct.function.JumpTable;
 import game.shared.struct.function.JumpTarget;
 import game.shared.struct.script.Script;
 import game.shared.struct.script.Script.ScriptLine;
+import game.shared.struct.script.ScriptVariable;
 import game.string.PMString;
 import game.string.StringDumper;
-import game.shared.struct.script.ScriptVariable;
 import game.texture.Tile;
 import game.texture.TileFormat;
 import patcher.Region;
@@ -86,17 +85,17 @@ public abstract class BaseDataDecoder
 			decoder.scanJumpTable(ptr, fileBuf);
 		};
 		JumpTableT.printer = (decoder, ptr, fileBuf, pw) -> {
-			decoder.printHex(ptr, fileBuf, pw, 4);
+			decoder.printJumpTable(ptr, fileBuf, pw);
 		};
 
 		// These just use default scanning/printing implementation.
 		/*
 		ByteTableT.scanner = (decoder,ptr,fileBuf) -> {};
 		ByteTableT.printer = (decoder,ptr,fileBuf,pw) -> { decoder.printHex(ptr, fileBuf, pw, 8); };
-
+		
 		ShortTableT.scanner = (decoder,ptr,fileBuf) -> {};
 		ShortTableT.printer = (decoder,ptr,fileBuf,pw) -> { decoder.printHex(ptr, fileBuf, pw, 8); };
-
+		
 		IntTableT.scanner = (decoder,ptr,fileBuf) -> {};
 		IntTableT.printer =	(decoder,ptr,fileBuf,pw) -> { decoder.printHex(ptr, fileBuf, pw, 8); };
 		 */
@@ -703,6 +702,27 @@ public abstract class BaseDataDecoder
 		}
 	}
 
+	protected void printJumpTable(Pointer ptr, ByteBuffer fileBuffer, PrintWriter pw)
+	{
+		int wordsPerRow = (ptr.newlineHint == 0) ? 4 : ptr.newlineHint;
+
+		for (int i = 0; i < ptr.listLength; i++) {
+			int address = fileBuffer.getInt();
+			JumpTarget target = jumpTableTargetMap.get(address);
+
+			if (target == null)
+				printWord(pw, address);
+			else
+				pw.printf("%s[%co%X] ", getVariableName(target.functionAddr), Function.LABEL_CHAR, address - target.functionAddr);
+
+			if (((i + 1) % wordsPerRow) == 0)
+				pw.println();
+		}
+
+		if ((ptr.listLength % wordsPerRow) != 0)
+			pw.println();
+	}
+
 	public boolean shouldFunctionsRemoveJumps()
 	{
 		return true;
@@ -794,40 +814,40 @@ public abstract class BaseDataDecoder
 				enqueueAsRoot(h.address, hintType, Origin.HINT);
 			}
 		}
-
+	
 		scanPointerQueue(fileBuffer);
 		TreeSet<String> usedNames = new TreeSet<String>();
-
+	
 		for(Pointer ptr : localPointerMap.values())
 		{
 			usedNames.add(ptr.getPointerName());
 		}
-
+	
 		for(Hint h : hintMap.values())
 		{
 			if(h.hasLength())
 			{
 				if(!finishedPointers.contains(h.address))
 					throw new InputFileException(hintFile, getSourceName() + " has unknown struct referenced by size hint: %08X", h.address);
-
+	
 				Pointer ptr = localPointerMap.get(h.address);
 				ptr.length = h.getLengthSuggestion();
 			}
-
+	
 			if(h.hasWordsPerRow())
 			{
 				if(!finishedPointers.contains(h.address))
 					throw new InputFileException(hintFile, getSourceName() + " has unknown struct referenced by newline hint: %08X", h.address);
-
+	
 				Pointer ptr = localPointerMap.get(h.address);
 				ptr.newlineHint = h.getWordsPerRowSuggestion();
 			}
-
+	
 			if(h.hasName())
 			{
 				if(!finishedPointers.contains(h.address))
 					throw new InputFileException(hintFile, getSourceName() + " has unknown struct referenced by name hint: %08X", h.address);
-
+	
 				Pointer ptr = localPointerMap.get(h.address);
 				String name = h.getNameSuggestion();
 				if(usedNames.contains(name))
@@ -843,6 +863,12 @@ public abstract class BaseDataDecoder
 
 	protected void printPreamble(PrintWriter pw)
 	{} // optional for subclasses
+
+	protected void printOriginAnnotation(PrintWriter pw, Pointer ptr)
+	{
+		if (ptr.origin != Origin.DECODED && ptr.origin != Origin.UNIDENTIFIED)
+			pw.println("% Origin: " + ptr.origin);
+	}
 
 	protected void printScriptFile(File f, ByteBuffer fileBuffer) throws IOException
 	{
@@ -869,8 +895,7 @@ public abstract class BaseDataDecoder
 					pw.print(ancestorPtr.getPointerName() + " ");
 				pw.println();
 			}
-			if (r.ptr.origin != Origin.DECODED && r.ptr.origin != Origin.UNIDENTIFIED)
-				pw.println("% Origin: " + r.ptr.origin);
+			printOriginAnnotation(pw, r.ptr);
 
 			if (annotateIndexInfo)
 				pw.printf("%% %08X --> %08X%n", toOffset(r.ptr.address), r.ptr.address);
@@ -1256,15 +1281,12 @@ public abstract class BaseDataDecoder
 				printEnum(pw, type.constType, value);
 				break;
 
-			case MemoryStruct:
-				if (type.ctype == Primitive.Bool.type)
-					printBoolean(pw, value);
-				else
-					printScriptWord(pw, value);
+			case Boolean:
+				printBoolean(pw, value);
 				break;
 
+			case Value:
 			case Unknown:
-			case MissingMemoryStruct:
 			case MissingStaticStruct:
 				printScriptWord(pw, value);
 				break;

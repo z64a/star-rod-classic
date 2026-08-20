@@ -1412,13 +1412,13 @@ public class MIPS
 	 ** Load and Store Instructions                                            **
 	 ****************************************************************************
 	SYNC                      SYNChronize shared memory
-
+	
 	 ****************************************************************************
 	 ** Special Instructions                                                   **
 	 ****************************************************************************
 	BREAK    offset           BREAKpoint
 	SYSCALL  offset           SYStem CALL
-
+	
 	 ****************************************************************************
 	 ** Exception Instructions                                                 **
 	 ****************************************************************************
@@ -1428,7 +1428,7 @@ public class MIPS
 	TLT      rs,rt            Trap if Less Than
 	TLTU     rs,rt            Trap if Less Than Unsigned
 	TNE      rs,rt            Trap if not Equal
-
+	
 	TEQI     rs,immediate     Trap if EQual Immediate
 	TGEI     rs,immediate     Trap if Greater Than or Equal Immediate
 	TGEIU    rs,immediate     Trap if Greater Than or Equal Immediate Unsigned

@@ -31,19 +31,19 @@ public class Patch
 	public PatchType type;
 	public LibScope scope = LibScope.US_Common;
 	public boolean isNew = true;
-
+	
 	public int address = -1;
-
+	
 	public int fileOffset;
 	public int endFileOffset; // used for @Fill
 	public int reservedSize; // used for #reserve
-
+	
 	// for patches onto reserved space
 	public GlobalPatch target = null;
 	public int targetOffset = 0;
-
+	
 	public Subscription subscription = null;
-
+	
 	// used for offsets into functions
 	public HashMap<String,Integer> labelMap = null;
 	*/

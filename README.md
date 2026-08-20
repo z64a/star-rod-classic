@@ -12,7 +12,7 @@ a stripped-down Java runtime, so users do not need to install Java separately.
 
 **[Download Star Rod][download]**
 
-To get started with modding Paper Mario, see [docs.starhaven.dev](https://docs.starhaven.dev/tools/starrod/00_Introduction.html).
+**[Read the Star Rod Classic User Guide](manual/README.md)**
 
 [discord]: https://discord.gg/star-haven
 [discord-badge]: https://img.shields.io/discord/279322074412089344?color=%237289DA&logo=discord&logoColor=ffffff&label=%23star-rod

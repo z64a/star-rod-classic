@@ -1,6 +1,7 @@
 package game.shared.struct.f3dex2.commands;
 
 import app.input.InvalidInputException;
+import game.shared.DataUtils;
 import game.shared.decoder.BaseDataDecoder;
 import game.shared.struct.f3dex2.BaseF3DEX2;
 import game.shared.struct.f3dex2.DisplayList.CommandType;
@@ -13,8 +14,8 @@ import game.shared.struct.f3dex2.DisplayList.CommandType;
 
 public class GeometryMode extends BaseF3DEX2
 {
-	public boolean clear = false;
-	public int flags = 0;
+	public int clearFlags = 0;
+	public int setFlags = 0;
 
 	private static enum Flag
 	{
@@ -50,52 +51,58 @@ public class GeometryMode extends BaseF3DEX2
 	{
 		super(cmd, args, 2);
 
-		clear = (args[1] == 0);
-		if (!clear && (args[0] != 0xD9FFFFFF))
-			throw new InvalidInputException("%s mixes set and clear bits: %08X %08X", getName(), args[0], args[1]);
-
-		flags = clear ? ~(args[0] | 0xFF000000) : args[1];
-
-		/*
-		int bits = flags;
-		for(Flag flag : Flag.values())
-		{
-			if((flag.mask & bits) != 0)
-				bits ^= flag.mask;
-		}
-		*/
+		clearFlags = ~(args[0] | 0xFF000000) & 0xFFFFFF;
+		setFlags = args[1];
 	}
 
 	public GeometryMode(CommandType cmd, String ... params) throws InvalidInputException
 	{
 		super(cmd, params, -1);
 
-		if (params.length < 2)
-			throw new InvalidInputException("%s requires at least two parameters, read %d", getName(), params.length);
+		if (params.length < 1)
+			throw new InvalidInputException("%s requires at least one parameter", getName());
 
+		boolean setting;
 		if (params[0].equalsIgnoreCase("CLEAR"))
-			clear = true;
+			setting = false;
 		else if (params[0].equalsIgnoreCase("SET"))
-			clear = false;
+			setting = true;
 		else
-			throw new InvalidInputException("%s mode must be 'Set' or 'Clear', read %d", getName(), params[0]);
+			throw new InvalidInputException("%s mode must be 'Set' or 'Clear', read %s", getName(), params[0]);
 
-		if (clear && params[1].equalsIgnoreCase("ALL")) {
-			flags = 0xFFFFFF;
-			return;
-		}
-
-		flags = 0;
-		args:
 		for (int i = 1; i < params.length; i++) {
+			if (params[i].equalsIgnoreCase("SET")) {
+				if (setting)
+					throw new InvalidInputException("%s includes an unexpected 'Set'", getName());
+				setting = true;
+				continue;
+			}
+
+			if (params[i].equalsIgnoreCase("CLEAR"))
+				throw new InvalidInputException("%s may only clear flags before setting flags", getName());
+
+			if (params[i].equalsIgnoreCase("ALL")) {
+				if (setting)
+					throw new InvalidInputException("%s may only use 'ALL' with 'Clear'", getName());
+				clearFlags = 0xFFFFFF;
+				continue;
+			}
+
+			int mask = -1;
 			for (Flag flag : Flag.values()) {
 				if (flag.toString().equalsIgnoreCase(params[i])) {
-					flags |= flag.mask;
-					continue args;
+					mask = flag.mask;
+					break;
 				}
 			}
 
-			throw new InvalidInputException("%s includes unknown flag: %s", getName(), params[i]);
+			if (mask < 0)
+				mask = DataUtils.parseIntString(params[i]);
+
+			if (setting)
+				setFlags |= mask;
+			else
+				clearFlags |= mask;
 		}
 	}
 
@@ -103,18 +110,8 @@ public class GeometryMode extends BaseF3DEX2
 	public int[] assemble()
 	{
 		int[] encoded = new int[2];
-
-		if (clear) {
-			encoded[0] = opField;
-			encoded[1] = 0;
-
-			if (flags != 0xFFFFFF)
-				encoded[0] = opField | (~flags & 0xFFFFFF);
-		}
-		else {
-			encoded[0] = 0xD9FFFFFF;
-			encoded[1] = flags;
-		}
+		encoded[0] = opField | (~clearFlags & 0xFFFFFF);
+		encoded[1] = setFlags;
 
 		return encoded;
 	}
@@ -122,24 +119,40 @@ public class GeometryMode extends BaseF3DEX2
 	@Override
 	public String getString(BaseDataDecoder decoder)
 	{
-		StringBuilder sb = new StringBuilder(String.format("%-16s (%s", getName(), clear ? "Clear" : "Set"));
+		StringBuilder sb = new StringBuilder(String.format("%-16s (", getName()));
 
-		if (clear && flags == 0xFFFFFF) {
-			sb.append(", ALL");
+		if (clearFlags != 0) {
+			sb.append("Clear");
+			if (clearFlags == 0xFFFFFF)
+				sb.append(", ALL");
+			else
+				appendFlags(sb, clearFlags);
 		}
-		else {
-			int bits = flags;
-			for (Flag flag : Flag.values()) {
-				if ((flag.mask & bits) != 0) {
-					sb.append(", ");
-					sb.append(flag.toString());
-					bits ^= flag.mask;
-				}
-			}
+
+		if (setFlags != 0 || clearFlags == 0) {
+			if (clearFlags != 0)
+				sb.append(", ");
+			sb.append("Set");
+			appendFlags(sb, setFlags);
 		}
 
 		sb.append(")");
 
 		return sb.toString();
+	}
+
+	private static void appendFlags(StringBuilder sb, int flags)
+	{
+		int bits = flags;
+		for (Flag flag : Flag.values()) {
+			if ((flag.mask & bits) != 0) {
+				sb.append(", ");
+				sb.append(flag.toString());
+				bits ^= flag.mask;
+			}
+		}
+
+		if (bits != 0)
+			sb.append(String.format(", %X", bits));
 	}
 }

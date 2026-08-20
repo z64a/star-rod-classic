@@ -157,9 +157,6 @@ public class SpiralStairGenerator extends ShapeGenerator
 		int sideHeight = sideHeightSpinner.getValue();
 		boolean makeBottom = makeBottomCheckbox.isSelected();
 
-		if (innerRadius == outerRadius)
-			outerRadius = innerRadius + 50;
-
 		return generate(steps, stepRise, innerRadius, outerRadius, angle, proportionalUVs,
 			sideStyle, sideHeight, makeBottom,
 			centerX, centerY, centerZ);
@@ -170,17 +167,21 @@ public class SpiralStairGenerator extends ShapeGenerator
 		SideStyle sideStyle, int sideHeight, boolean makeBottom,
 		int centerX, int centerY, int centerZ)
 	{
+		if (innerR == outerR)
+			outerR = innerR + 50;
+
 		int N = (2 * steps) + 1;
 		double angleRad = Math.toRadians(angle);
+		int radiusDelta = outerR - innerR;
 
-		float uvScale = UV_SCALE / (outerR - innerR);
+		float uvScale = (float) UV_SCALE / radiusDelta;
 
 		int uOffset = 0;
 		int vOffset = (UV_SCALE * 3) / 2;
 
 		int overflow;
 		if (proportionalUVs) {
-			double arc = (outerR - innerR) * angleRad;
+			double arc = radiusDelta * angleRad;
 			int U = (int) Math.round(uvScale * (steps * stepRise + arc));
 			overflow = U - Short.MAX_VALUE;
 		}
@@ -215,7 +216,7 @@ public class SpiralStairGenerator extends ShapeGenerator
 
 			if (proportionalUVs) {
 				// rescale texture coordinates to fit staircase width
-				double arc = (outerR - innerR) * theta;
+				double arc = radiusDelta * theta;
 				int U = (int) Math.round(uvScale * (H + arc));
 				ringI[i].uv = new UV(U + uOffset, 0);
 				ringO[i].uv = new UV(U + uOffset, UV_SCALE);
@@ -248,7 +249,7 @@ public class SpiralStairGenerator extends ShapeGenerator
 
 					int H = ((i + 1) / 2) * stepRise;
 					double theta = angleRad * (i / 2) / steps;
-					double arc = (outerR - innerR) * theta;
+					double arc = radiusDelta * theta;
 					int U = (int) Math.round(uvScale * arc);
 
 					upperI[i].uv = new UV(U + uOffset, uvScale * H + vOffset);
@@ -286,7 +287,7 @@ public class SpiralStairGenerator extends ShapeGenerator
 
 					int H = ((i + 1) / 2) * stepRise;
 					double theta = angleRad * (i / 2) / steps;
-					double arc = (outerR - innerR) * theta;
+					double arc = radiusDelta * theta;
 					int U = (int) Math.round(uvScale * arc);
 
 					upperI[i].uv = new UV(U + uOffset, uvScale * H + vOffset);
@@ -334,10 +335,10 @@ public class SpiralStairGenerator extends ShapeGenerator
 
 						if (proportionalUVs) {
 							// rescale texture coordinates to fit staircase width
-							double arc = (outerR - innerR) * (angleRad / steps);
+							double arc = radiusDelta * (angleRad / steps);
 							int U = (int) Math.round(uvScale * i * (arc + stepRise));
 
-							bottomI[i].uv = new UV(U + uOffset, uvScale * (outerR - innerR) - vOffset);
+							bottomI[i].uv = new UV(U + uOffset, uvScale * radiusDelta - vOffset);
 							bottomO[i].uv = new UV(U + uOffset, -vOffset);
 						}
 						else {

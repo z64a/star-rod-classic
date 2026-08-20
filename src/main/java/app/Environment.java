@@ -30,8 +30,8 @@ import org.apache.commons.lang3.SystemUtils;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import app.Resource.ResourceType;
 import app.AppVersion.VersionLevel;
+import app.Resource.ResourceType;
 import app.config.Config;
 import app.config.Options;
 import app.config.Options.Scope;
@@ -48,7 +48,8 @@ public abstract class Environment
 {
 	private static DirChooser projectChooser;
 	private static OpenFileChooser romChooser;
-	private static final String FN_MAIN_CONFIG = "cfg/main.cfg";
+	private static final String FN_MAIN_CONFIG = "main.cfg";
+	private static final String FN_LEGACY_MAIN_CONFIG = "cfg/main.cfg";
 	private static final String FN_DUMP_CONFIG = "dump.cfg";
 
 	public static ImageIcon ICON_DEFAULT = loadIconResource(ResourceType.Icon, "icon.png");
@@ -289,39 +290,49 @@ public abstract class Environment
 
 	private static final void readStarRodConfig() throws IOException
 	{
-		File configFile = new File(codeSource.getParent(), FN_MAIN_CONFIG);
+		File configFile = Directories.LOCAL.getFile(FN_MAIN_CONFIG);
+		File legacyConfigFile = new File(getWorkingDirectory(), FN_LEGACY_MAIN_CONFIG);
+		FileUtils.forceMkdir(Directories.LOCAL.toFile());
 
 		// we may need to create a new config file here
 		if (!configFile.exists()) {
-			int choice = SwingUtils.getConfirmDialog()
-				.setTitle("Missing Config")
-				.setMessage("Could not find Star Rod config!", "Create a new one?")
-				.setMessageType(JOptionPane.QUESTION_MESSAGE)
-				.setOptionsType(JOptionPane.YES_NO_OPTION)
-				.choose();
-
-			if (choice != JOptionPane.OK_OPTION)
-				System.exit(0);
-
-			boolean success = makeNewConfig(configFile);
-
-			if (!success) {
-				SwingUtils.getErrorDialog()
-					.setTitle("Create Config Failed")
-					.setMessage("Failed to create new config.",
-						"Please try again.")
-					.show();
-
-				System.exit(0);
+			if (legacyConfigFile.exists()) {
+				mainConfig = new Config(configFile, Scope.Main);
+				mainConfig.readConfig(legacyConfigFile);
+				mainConfig.saveConfigFile();
+				Logger.log("Migrated config from " + FN_LEGACY_MAIN_CONFIG + " to local/" + FN_MAIN_CONFIG);
 			}
+			else {
+				int choice = SwingUtils.getConfirmDialog()
+					.setTitle("Missing Config")
+					.setMessage("Could not find Star Rod config!", "Create a new one?")
+					.setMessageType(JOptionPane.QUESTION_MESSAGE)
+					.setOptionsType(JOptionPane.YES_NO_OPTION)
+					.choose();
 
-			mainConfig.saveConfigFile();
-			return;
+				if (choice != JOptionPane.OK_OPTION)
+					System.exit(0);
+
+				boolean success = makeNewConfig(configFile);
+
+				if (!success) {
+					SwingUtils.getErrorDialog()
+						.setTitle("Create Config Failed")
+						.setMessage("Failed to create new config.",
+							"Please try again.")
+						.show();
+
+					System.exit(0);
+				}
+
+				mainConfig.saveConfigFile();
+				return;
+			}
 		}
-
-		// if config exists, read it
-		mainConfig = new Config(configFile, Scope.Main);
-		mainConfig.readConfig();
+		else {
+			mainConfig = new Config(configFile, Scope.Main);
+			mainConfig.readConfig();
+		}
 
 		String romFilename = mainConfig.getString(Options.RomPath);
 		String modDirectoryName = mainConfig.getString(Options.ModPath);
@@ -533,11 +544,7 @@ public abstract class Environment
 			romChooser.setDirectoryContaining(rom.getParentFile());
 		});
 
-		String dumpPath;
-		if (fromJar && Environment.project.isDecomp)
-			dumpPath = getWorkingDirectory() + "/dump";
-		else
-			dumpPath = rom.getParentFile().getPath() + "/dump";
+		String dumpPath = rom.getParentFile().getPath() + "/dump";
 
 		if (version == RomVersion.US)
 			dumpPath += "/";

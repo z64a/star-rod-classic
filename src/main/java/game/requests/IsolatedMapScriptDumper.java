@@ -86,21 +86,21 @@ public class IsolatedMapScriptDumper extends BaseDataDecoder
 		// only print, don't do any scanning
 		throw new RuntimeException();
 	}
-
+	
 	@Override
 	protected void scanPointer(ByteBuffer fileBuffer, Pointer ptr)
 	{
 		// only print, don't do any scanning
 		throw new RuntimeException();
 	}
-
+	
 	@Override
 	protected Pointer createNewPointer(int address)
 	{
 		// only print, don't do any scanning
 		throw new RuntimeException();
 	}
-
+	
 	@Override
 	protected Struct getType(String typename)
 	{

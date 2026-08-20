@@ -1,0 +1,8 @@
+add E003E3F8 Function
+name E003E3F8 Function_Init
+
+add E003E400 Function
+name E003E400 Function_Update
+
+add E003E5F4 Function
+name E003E5F4 Function_RenderScene

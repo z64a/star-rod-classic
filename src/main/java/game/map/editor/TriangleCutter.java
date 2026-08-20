@@ -6,6 +6,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 
 import common.Vector3f;
+
 import game.map.MapObject;
 import game.map.editor.commands.AbstractCommand;
 import game.map.editor.commands.CommandBatch;

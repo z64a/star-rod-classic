@@ -111,6 +111,15 @@ $UpdateEditStarPieces
 #define .StatsMenuPos		52
 #define .Initialized		54
 
+#define .NavPressUp		    55
+#define .NavPressDown		56
+#define .NavPressLeft		57
+#define .NavPressRight		58
+#define .HoldRepeatUp		59
+#define .HoldRepeatDown		5B
+#define .HoldRepeatLeft		5D
+#define .HoldRepeatRight	5F
+
 #define .HighlightColor		7C
 
 #define .StringBuffer		80
@@ -639,7 +648,7 @@ $UpdateEditStarPieces
 	SW			V0, .PressBits (A0)
 	SW			V1, .ReleaseBits (A0)
 	% get discrete input flags
-	PUSH		S1, S2
+	PUSH		RA, S1, S2
 	LIO			S1, $ButtonMask
 	LIO			S2, $DebugState
 	% check press masks
@@ -673,6 +682,23 @@ $UpdateEditStarPieces
 		%
 		ADDIU		S1, S1, 4
 	ENDLOOP
+	% update D-pad navigation repeat
+	ADDIU		A0, R0, .D-up
+	ADDIU		A1, *Data, .HoldRepeatUp
+	JAL			$UpdateButtonRepeat
+	ADDIU		A2, *Data, .NavPressUp
+	ADDIU		A0, R0, .D-down
+	ADDIU		A1, *Data, .HoldRepeatDown
+	JAL			$UpdateButtonRepeat
+	ADDIU		A2, *Data, .NavPressDown
+	ADDIU		A0, R0, .D-left
+	ADDIU		A1, *Data, .HoldRepeatLeft
+	JAL			$UpdateButtonRepeat
+	ADDIU		A2, *Data, .NavPressLeft
+	ADDIU		A0, R0, .D-right
+	ADDIU		A1, *Data, .HoldRepeatRight
+	JAL			$UpdateButtonRepeat
+	ADDIU		A2, *Data, .NavPressRight
 	% set highlight color
 	LB			V0, .Hold[.R] (*Data)
 	BNEL		V0, R0, 8
@@ -680,10 +706,64 @@ $UpdateEditStarPieces
 	ADDIU 		V1, R0, .HoverColor
 	SW			V1, .HighlightColor (*Data)
 	#UNDEF		S0
-	POP			S1, S2
+	POP			RA, S1, S2
 	JR			RA
 	NOP
 %}
+}
+
+% A0 = button index
+% A1 = repeat state (delay, triggers)
+% A2 = navigation press output
+#new:Function $UpdateButtonRepeat
+{
+	ADDIU		V0, S0, .Press
+	DADDU		V0, V0, A0
+	LBU			V1, 0 (V0)
+	SB			V1, 0 (A2)
+	BEQ			V1, R0, .CheckHold
+	NOP
+	ADDIU		V0, R0, 6
+	SB			V0, 0 (A1)
+	SB			R0, 1 (A1)
+	JR			RA
+	NOP
+	.CheckHold
+	ADDIU		V0, S0, .Hold
+	DADDU		V0, V0, A0
+	LBU			V1, 0 (V0)
+	BEQ			V1, R0, .Reset
+	NOP
+	LB			V0, 0 (A1)
+	ADDIU		V0, V0, -1
+	SB			V0, 0 (A1)
+	BGE			V0, R0, .Done
+	NOP
+	LBU			V1, 1 (A1)
+	ADDIU		V1, V1, 1
+	SB			V1, 1 (A1)
+	ADDIU		V0, R0, 4
+	SLTIU		AT, V1, 5
+	BNE			AT, R0, .Trigger
+	NOP
+	ADDIU		V0, R0, 2
+	SLTIU		AT, V1, 15`
+	BNE			AT, R0, .Trigger
+	NOP
+	ADDIU		V0, R0, 1
+	.Trigger
+	SB			V0, 0 (A1)
+	ADDIU		V1, R0, 1
+	SB			V1, 0 (A2)
+	.Done
+	JR			RA
+	NOP
+	.Reset
+	ADDIU		V0, R0, 127`
+	SB			V0, 0 (A1)
+	SB			R0, 1 (A1)
+	JR			RA
+	NOP
 }
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1964,10 +2044,10 @@ $UpdateEditStarPieces
 	#DEF 		A2, *Max
 	#DEF 		V1, *Delta
 	DADDU		*Delta, R0, R0
-	LB			V0, .Press[.D-down] (S0)
+	LB			V0, .NavPressDown (S0)
 	BNEL		V0, R0, 4
 	ADDI		*Delta, *Delta, -1
-	LB			V0, .Press[.D-up] (S0)
+	LB			V0, .NavPressUp (S0)
 	BNEL		V0, R0, 4
 	ADDIU		*Delta, *Delta, 1
 	DADDU		*Pos, *Pos, *Delta
@@ -1998,10 +2078,10 @@ $UpdateEditStarPieces
 	#DEF 		A2, *Max
 	#DEF 		V1, *Delta
 	DADDU		*Delta, R0, R0
-	LB			V0, .Press[.D-down] (S0)
+	LB			V0, .NavPressDown (S0)
 	BNEL		V0, R0, 4
 	ADDI		*Delta, *Delta, -1
-	LB			V0, .Press[.D-up] (S0)
+	LB			V0, .NavPressUp (S0)
 	BNEL		V0, R0, 4
 	ADDIU		*Delta, *Delta, 1
 	DADDU		*Pos, *Pos, *Delta
@@ -2032,10 +2112,10 @@ $UpdateEditStarPieces
 	#DEF 		A2, *Max
 	#DEF 		V1, *Delta
 	DADDU		*Delta, R0, R0
-	LB			V0, .Press[.D-up] (S0)
+	LB			V0, .NavPressUp (S0)
 	BNEL		V0, R0, 4
 	ADDI		*Delta, *Delta, -1
-	LB			V0, .Press[.D-down] (S0)
+	LB			V0, .NavPressDown (S0)
 	BNEL		V0, R0, 4
 	ADDIU		*Delta, *Delta, 1
 	DADDU		*Pos, *Pos, *Delta
@@ -2066,10 +2146,10 @@ $UpdateEditStarPieces
 	#DEF 		A2, *Max
 	#DEF 		V1, *Delta
 	DADDU		*Delta, R0, R0
-	LB			V0, .Press[.D-left] (S0)
+	LB			V0, .NavPressLeft (S0)
 	BNEL		V0, R0, 4
 	ADDI		*Delta, *Delta, -1
-	LB			V0, .Press[.D-right] (S0)
+	LB			V0, .NavPressRight (S0)
 	BNEL		V0, R0, 4
 	ADDIU		*Delta, *Delta, 1
 	DADDU		*Pos, *Pos, *Delta
@@ -2100,10 +2180,10 @@ $UpdateEditStarPieces
 	#DEF 		A2, *Max
 	#DEF 		V1, *Delta
 	DADDU		*Delta, R0, R0
-	LB			V0, .Press[.D-left] (S0)
+	LB			V0, .NavPressLeft (S0)
 	BNEL		V0, R0, 4
 	ADDI		*Delta, *Delta, -1
-	LB			V0, .Press[.D-right] (S0)
+	LB			V0, .NavPressRight (S0)
 	BNEL		V0, R0, 4
 	ADDIU		*Delta, *Delta, 1
 	DADDU		*Pos, *Pos, *Delta
@@ -2144,7 +2224,7 @@ $UpdateEditStarPieces
 	MULT		*NumRows, *NumCols
 	MFLO		*NumSlots
 	.CheckUp
-	LB			V0, .Press[.D-up] (S0)
+	LB			V0, .NavPressUp (S0)
 	BEQ			V0, R0, .CheckDown
 	NOP
 	ADDIU		*Pos, *Pos, -1
@@ -2161,7 +2241,7 @@ $UpdateEditStarPieces
 	B			.CheckUpWrap
 	ADDIU		*Pos, *Pos, -1	
 	.CheckDown
-	LB			V0, .Press[.D-down] (S0)
+	LB			V0, .NavPressDown (S0)
 	BEQ			V0, R0, .CheckLeft
 	NOP
 	ADDIU		*Pos, *Pos, 1
@@ -2174,7 +2254,7 @@ $UpdateEditStarPieces
 	MULT		V0, *NumRows
 	MFLO		*Pos
 	.CheckLeft
-	LB			V0, .Press[.D-left] (S0)
+	LB			V0, .NavPressLeft (S0)
 	BEQ			V0, R0, .CheckRight
 	NOP
 	SUBU		*Pos, *Pos, *NumRows
@@ -2187,7 +2267,7 @@ $UpdateEditStarPieces
 	B			.CheckLeftWrap
 	SUBU		*Pos, *Pos, *NumRows
 	.CheckRight
-	LB			V0, .Press[.D-right] (S0)
+	LB			V0, .NavPressRight (S0)
 	BEQ			V0, R0, .Done
 	NOP
 	DADDU		*Pos, *Pos, *NumRows
@@ -2230,7 +2310,7 @@ $UpdateEditStarPieces
 	MULT		*NumRows, *NumCols
 	MFLO		*NumSlots
 	.CheckUp
-	LB			V0, .Press[.D-left] (S0)
+	LB			V0, .NavPressLeft (S0)
 	BEQ			V0, R0, .CheckDown
 	NOP
 	ADDIU		*Pos, *Pos, -1
@@ -2247,7 +2327,7 @@ $UpdateEditStarPieces
 	B			.CheckUpWrap
 	ADDIU		*Pos, *Pos, -1	
 	.CheckDown
-	LB			V0, .Press[.D-right] (S0)
+	LB			V0, .NavPressRight (S0)
 	BEQ			V0, R0, .CheckLeft
 	NOP
 	ADDIU		*Pos, *Pos, 1
@@ -2260,7 +2340,7 @@ $UpdateEditStarPieces
 	MULT		V0, *NumRows
 	MFLO		*Pos
 	.CheckLeft
-	LB			V0, .Press[.D-up] (S0)
+	LB			V0, .NavPressUp (S0)
 	BEQ			V0, R0, .CheckRight
 	NOP
 	SUBU		*Pos, *Pos, *NumRows
@@ -2273,7 +2353,7 @@ $UpdateEditStarPieces
 	B			.CheckLeftWrap
 	SUBU		*Pos, *Pos, *NumRows
 	.CheckRight
-	LB			V0, .Press[.D-down] (S0)
+	LB			V0, .NavPressDown (S0)
 	BEQ			V0, R0, .Done
 	NOP
 	DADDU		*Pos, *Pos, *NumRows
@@ -2467,10 +2547,10 @@ $mainMenuViewCollision
 	.NoSelection
 	% check for navigation
 	DADDU		V1, R0, R0
-	LB			V0, .Press[.D-down] (*Data)
+	LB			V0, .NavPressDown (*Data)
 	BNEL		V0, R0, 4
 	ADDI		V1, V1, 1
-	LB			V0, .Press[.D-up] (*Data)
+	LB			V0, .NavPressUp (*Data)
 	BNEL		V0, R0, 4
 	ADDI		V1, V1, -1
 	DADDU		S6, S6, V1
@@ -2991,10 +3071,10 @@ $mainMenuViewCollision
 	.NoSelection
 	% do navigation
 	DADDU		V1, R0, R0
-	LB			V0, .Press[.D-down] (*Data)
+	LB			V0, .NavPressDown (*Data)
 	BNEL		V0, R0, 4
 	ADDI		V1, V1, -1
-	LB			V0, .Press[.D-up] (*Data)
+	LB			V0, .NavPressUp (*Data)
 	BNEL		V0, R0, 4
 	ADDI		V1, V1, 1
 	LBU			V0, .EntryValue (*Data)
@@ -3423,7 +3503,7 @@ $mainMenuViewCollision
 	% do digit selection
 	LBU			A0, .BattleDigit (*Data)
 	ADDIU		A1, R0, 0
-	JAL			$NavigateHorizontalMenu1D
+	JAL			$NavigateHorizontalWrappedMenu1D
 	ADDIU		A2, R0, 2
 	SB			V0, .BattleDigit (*Data)
 	% do digit change
@@ -3584,7 +3664,7 @@ $mainMenuViewCollision
 	% do digit selection
 	LBU			A0, .StoryDigitPos (*Data)
 	ADDIU		A1, R0, 0
-	JAL			$NavigateHorizontalMenu1D
+	JAL			$NavigateHorizontalWrappedMenu1D
 	ADDIU		A2, R0, 1
 	SB			V0, .StoryDigitPos (*Data)
 	% do digit change
@@ -4104,6 +4184,18 @@ $strQuickLoad
 		ADDIU	T0, T0, 8
 		ADDIU	T1, T1, 1
 	ENDLOOP
+	% If the party had no active partner, take out the newly enabled selection.
+	LABU		V0, 8010F2A2 % gPlayerData.curPartner
+	BNE			V0, R0, .Draw
+	NOP
+	LIO			T0, $PartnerData
+	LBU			A0, .PartnerMenuPos (T0)
+	DADDU		T1, T0, A0
+	LBU			V0, 0 (T1)
+	BEQ			V0, R0, .Draw
+	ADDIU		A0, A0, 1 % menu rows 0-10 map to partner IDs 1-11
+	JAL			800EB168 % switch_to_partner
+	NOP
 	B			.Draw
 	NOP
 	.NoSelection
@@ -4713,15 +4805,29 @@ $strInventoryStarPieces
 {
 "Boots"
 }
+
+#new:ASCII $strGearLuckyStar
+{
+"Lucky Star"
+}
+
+#new:ASCII $strGearStarBeam
+{
+"Star Beam"
+}
 	
 #new:Data $PlayerGearData
 {
-00000000
+00000000 00000000
 }
 
 #define .GearHammer		0
 #define .GearBoots		1
-#define .GearMenuPos	2
+#define .GearLuckyStar	2
+#define .GearStarBeam	3
+#define .GearMenuPos	4
+
+#define .LuckyStarItem	7
 
 #new:Function $UpdateEditGear
 {
@@ -4737,6 +4843,10 @@ $strInventoryStarPieces
 	SB			V1, .GearBoots (S1)
 	LBU			V1, 1 (T0)
 	SB			V1, .GearHammer (S1)
+	LBU			V1, A (T0)
+	SB			V1, .GearLuckyStar (S1)
+	LBU			V1, 292 (T0)
+	SB			V1, .GearStarBeam (S1)
 	.CheckCancel % check for exit (L)
 	LB			V0, .Press[.L] (*Data)
 	BEQ			V0, R0, .CheckSelect
@@ -4757,6 +4867,29 @@ $strInventoryStarPieces
 	SB			V1, 0 (T0)
 	LBU			V1, .GearHammer (S1)
 	SB			V1, 1 (T0)
+	LBU			V1, .GearLuckyStar (S1)
+	SB			V1, A (T0)
+	LBU			V1, .GearStarBeam (S1)
+	SB			V1, 292 (T0)
+	LBU			V1, .GearLuckyStar (S1)
+	BEQ			V1, R0, .RemoveLuckyStar
+	NOP
+	JAL			800E7644 % find_item
+	ADDIU		A0, R0, .LuckyStarItem
+	BGE			V0, R0, .Draw
+	NOP
+	JAL			800E7574 % add_item
+	ADDIU		A0, R0, .LuckyStarItem
+	B			.Draw
+	NOP
+	.RemoveLuckyStar
+	JAL			800E7644 % find_item
+	ADDIU		A0, R0, .LuckyStarItem
+	BLTZ		V0, .Draw
+	SLL			V0, V0, 1
+	LIO			V1, 8010F304 % PlayerData.keyItems
+	DADDU		V0, V0, V1
+	SH			R0, 0 (V0)
 	B			.Draw
 	NOP
 	.NoSelection
@@ -4764,20 +4897,26 @@ $strInventoryStarPieces
 	LBU			A0, .GearMenuPos (S1)
 	ADDIU		A1, R0, 0
 	JAL			$NavigateVerticalWrappedMenu1D_Reversed
-	ADDIU		A2, R0, 1
+	ADDIU		A2, R0, 3
 	SB			V0, .GearMenuPos (S1)
 	% change stat
 	DADDU		S2, S1, V0
 	LBU			A0, 0 (S2)
 	ADDIU		A1, R0, 0
-	JAL			$NavigateHorizontalWrappedMenu1D
 	ADDIU		A2, R0, 2
+	ADDIU		V1, R0, .GearLuckyStar
+	BNE			V0, V1, .NavigateValue
+	NOP
+	ADDIU		A2, R0, 1
+	.NavigateValue
+	JAL			$NavigateHorizontalWrappedMenu1D
+	NOP
 	SB			V0, 0 (S2)
 	.Draw
 	ADDIU		A0, R0, .SubBoxPosX
 	ADDIU		A1, R0, .SubBoxPosY[.OffsetRow1]
-	ADDIU		A2, R0, 88`
-	ADDIU		A3, R0, .OffsetRow3[8`]
+	ADDIU		A2, R0, 96`
+	ADDIU		A3, R0, .OffsetRow5[8`]
 %	LIO			T0, $CustomStyle
 	LIO			T0, 14
 	JAL			$DrawMenuBox
@@ -4795,11 +4934,11 @@ $strInventoryStarPieces
 	ADDIU 		A3, R0, .DefaultColor
 	% format digit
 	LIO			A1, $fmtInteger
-	LBU			A2, .StatsHP (S1)
+	LBU			A2, .GearHammer (S1)
 	JAL			800654F0 % sprintf
 	ADDIU		A0, *Data, .PrintfBuffer
 	% draw the digit
-	ADDIU		A1, R0, .SubmenuPosX[60`]
+	ADDIU		A1, R0, .SubmenuPosX[68`]
 	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow2]
 	LBU			V0, .GearMenuPos (S1)
 	ADDIU		V1, R0, 0
@@ -4816,14 +4955,56 @@ $strInventoryStarPieces
 	ADDIU 		A3, R0, .DefaultColor
 	% format digit
 	LIO			A1, $fmtInteger
-	LBU			A2, .StatsFP (S1)
+	LBU			A2, .GearBoots (S1)
 	JAL			800654F0 % sprintf
 	ADDIU		A0, *Data, .PrintfBuffer
 	% draw the digit
-	ADDIU		A1, R0, .SubmenuPosX[60`]
+	ADDIU		A1, R0, .SubmenuPosX[68`]
 	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow3]
 	LBU			V0, .GearMenuPos (S1)
 	ADDIU		V1, R0, 1
+	BNE			V0, V1, 8
+	ADDIU 		A3, R0, .DefaultColor
+	LW			A3, .HighlightColor (*Data)
+	JAL			$DrawStringASCII
+	ADDIU		A0, *Data, .PrintfBuffer
+	% print "Lucky Star"
+	LIO			A0, $strGearLuckyStar
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow4]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% format digit
+	LIO			A1, $fmtInteger
+	LBU			A2, .GearLuckyStar (S1)
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	% draw the digit
+	ADDIU		A1, R0, .SubmenuPosX[68`]
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow4]
+	LBU			V0, .GearMenuPos (S1)
+	ADDIU		V1, R0, 2
+	BNE			V0, V1, 8
+	ADDIU 		A3, R0, .DefaultColor
+	LW			A3, .HighlightColor (*Data)
+	JAL			$DrawStringASCII
+	ADDIU		A0, *Data, .PrintfBuffer
+	% print "Star Beam"
+	LIO			A0, $strGearStarBeam
+	ADDIU		A1, R0, .SubmenuPosX
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow5]
+	JAL			$DrawStringASCII
+	ADDIU 		A3, R0, .DefaultColor
+	% format digit
+	LIO			A1, $fmtInteger
+	LBU			A2, .GearStarBeam (S1)
+	JAL			800654F0 % sprintf
+	ADDIU		A0, *Data, .PrintfBuffer
+	% draw the digit
+	ADDIU		A1, R0, .SubmenuPosX[68`]
+	ADDIU		A2, R0, .SubmenuPosY[.OffsetRow5]
+	LBU			V0, .GearMenuPos (S1)
+	ADDIU		V1, R0, 3
 	BNE			V0, V1, 8
 	ADDIU 		A3, R0, .DefaultColor
 	LW			A3, .HighlightColor (*Data)
@@ -4965,10 +5146,10 @@ $strInventoryStarPieces
 	LBU			A2, 10 (S2)	% min
 	LBU			A3, 18 (S2)	% max
 	CLEAR		V1
-	LB			AT, .Press[.D-left] (*Data)
+	LB			AT, .NavPressLeft (*Data)
 	BNEL		AT, R0, 4
 	SUBU		V1, V1, A1
-	LB			AT, .Press[.D-right] (*Data)
+	LB			AT, .NavPressRight (*Data)
 	BNEL		AT, R0, 4
 	DADDU		V1, V1, A1
 	DADDU		A0, A0, V1
@@ -5667,6 +5848,7 @@ $strInventoryStarPieces
 %{
 
 #define .NumCollisionOptions	6
+#define .MaxCollisionVertices	C00 % 1024 triangles
 
 #new:ASCII $On
 {
@@ -5967,6 +6149,10 @@ $collisionMenu6
 		LHU		*NumTriangles, A (*Collider)
 		LW		*Triangle, C (*Collider)
 		LOOP	*TrianglesPos = 0, *NumTriangles
+			LAW		V0, $VertexBufferCount
+			SLTIU	V0, V0, .MaxCollisionVertices
+			BEQ		V0, R0, .DoneColliders
+			NOP
 			COPY	A0, *Triangle
 			COPY	A1, *DisplayList
 			ADDIU	A2, R0, 0
@@ -5979,6 +6165,10 @@ $collisionMenu6
 			NOP
 			LHU		A0, 3C (*Triangle)
 			BNE		A0, R0, .NextTriangle
+			NOP
+			LAW		V0, $VertexBufferCount
+			SLTIU	V0, V0, .MaxCollisionVertices
+			BEQ		V0, R0, .DoneColliders
 			NOP
 			COPY	A0, *Triangle
 			COPY	A1, *DisplayList
@@ -6095,12 +6285,9 @@ $collisionMenu6
 	MFC1	T2, F2
 	BEQ		A3, R0, .BuildColor
 	NOP
-	ADDIU	T1, T1, 196`
-	ADDIU	T2, T3, 196`
-	ADDIU	T3, T2, 196`
-	ANDI	T1, T1, FF
-	ANDI	T2, T2, FF
-	ANDI	T3, T3, FF
+	ADDIU	T0, R0, 196`
+	ADDIU	T1, R0, 196`
+	ADDIU	T2, R0, 196`
 	% build color
 	.BuildColor
 	SLL		A2, T0, 8

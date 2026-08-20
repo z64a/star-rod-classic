@@ -31,6 +31,8 @@ public class LoadVertex extends BaseF3DEX2
 		pos = (args[0] & 0xFF);
 		pos = (pos >> 1) - num;
 		addr = args[1];
+
+		checkRanges();
 	}
 
 	public LoadVertex(CommandType cmd, String ... params) throws InvalidInputException
@@ -47,11 +49,19 @@ public class LoadVertex extends BaseF3DEX2
 		num = DataUtils.parseIntString(params[1]);
 		pos = DataUtils.parseIntString(params[2]);
 
+		checkRanges();
+	}
+
+	private void checkRanges() throws InvalidInputException
+	{
 		if (num <= 0 || num > 32)
 			throw new InvalidInputException("Can't load %d vertices to the vertex buffer!", num);
 
 		if (pos < 0 || pos >= 32)
 			throw new InvalidInputException("%d is not a valid position in the vertex buffer!", pos);
+
+		if (pos + num > 32)
+			throw new InvalidInputException("Can't load %d vertices at position %d in the vertex buffer!", num, pos);
 	}
 
 	@Override

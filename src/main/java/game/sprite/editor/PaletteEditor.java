@@ -87,7 +87,11 @@ public class PaletteEditor extends JPanel
 				if (ignoreChanges || selectedPal == null || name.isEmpty())
 					return;
 
+				if (name.equals(selectedPal.name))
+					return;
+
 				selectedPal.name = name;
+				editor.markCurrentSpriteModified();
 				for (ListDataListener listener : sprite.palettes.getListDataListeners()) {
 					listener.contentsChanged(new ListDataEvent(sprite.palettes,
 						ListDataEvent.CONTENTS_CHANGED,
@@ -171,6 +175,7 @@ public class PaletteEditor extends JPanel
 				}
 				selectedPal.dirty = true;
 				selectedPal.modified = true;
+				editor.markCurrentSpriteModified();
 				editor.repaintRasterPreview();
 			}
 		};
@@ -206,6 +211,7 @@ public class PaletteEditor extends JPanel
 				}
 				selectedPal.dirty = true;
 				selectedPal.modified = true;
+				editor.markCurrentSpriteModified();
 				editor.repaintRasterPreview();
 			}
 		});

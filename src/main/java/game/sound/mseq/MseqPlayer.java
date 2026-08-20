@@ -1,0 +1,641 @@
+package game.sound.mseq;
+
+import game.sound.DrumPreset;
+import game.sound.engine.AudioClient;
+import game.sound.engine.AudioEngine;
+import game.sound.engine.Envelope.EnvelopePair;
+import game.sound.engine.Instrument;
+import game.sound.engine.PlaybackSession;
+import game.sound.engine.SoundBank;
+import game.sound.engine.SoundBank.DrumQueryResult;
+import game.sound.engine.SoundBank.InstrumentQueryResult;
+import game.sound.engine.Voice;
+import game.sound.mseq.Mseq.DelayCommand;
+import game.sound.mseq.Mseq.EndLoopCommand;
+import game.sound.mseq.Mseq.MseqCommand;
+import game.sound.mseq.Mseq.PlayDrumCommand;
+import game.sound.mseq.Mseq.PlaySoundCommand;
+import game.sound.mseq.Mseq.SetInstrumentCommand;
+import game.sound.mseq.Mseq.SetPanCommand;
+import game.sound.mseq.Mseq.SetResumableCommand;
+import game.sound.mseq.Mseq.SetReverbCommand;
+import game.sound.mseq.Mseq.SetTuneCommand;
+import game.sound.mseq.Mseq.SetVolCommand;
+import game.sound.mseq.Mseq.StartLoopCommand;
+import game.sound.mseq.Mseq.StopSoundCommand;
+import game.sound.mseq.Mseq.TrackRamp;
+import game.sound.mseq.Mseq.TrackRampType;
+import util.Logger;
+
+public class MseqPlayer implements AudioClient, PlaybackSession
+{
+	private static final int NUM_VOICES = 16;
+	private static final int MAX_COMMANDS_PER_UPDATE = 65536;
+	public static final int SAMPLES_PER_TICK = 2 * AudioEngine.FRAME_SAMPLES;
+
+	public static enum PlayerState
+	{
+		PLAYING,
+		PAUSED,
+		DONE
+	}
+
+	private static boolean debugCommands = false;
+
+	private final AudioEngine engine;
+	private final SoundBank bank;
+	private boolean attached;
+
+	private PlayerState state;
+
+	private Mseq mseq;
+	private int curPos;
+	private int delayTime;
+
+	private int curTime;
+	private int curDuration;
+
+	private MseqTrack[] tracks;
+	private MseqVoice[] voices;
+
+	// loop state
+	private int[] loopPositions;
+	private int[] loopIterations;
+	private int[] timelineLoopCounts;
+
+	// these values cause the player to only update/tick on every other audio frame
+	private static final int UPDATE_INTERVAL = 2;
+	private int updateCounter = UPDATE_INTERVAL;
+
+	public static class MseqVoice extends Voice
+	{
+		public final MseqTrack track;
+		public final int tuneID;
+
+		public float baseVolume;
+		public int baseDetune;
+
+		public MseqVoice(MseqTrack track, int tuneID)
+		{
+			this.track = track;
+			this.tuneID = tuneID;
+		}
+
+		public void updateVolume()
+		{
+			setVolume(baseVolume * track.volumeLerp.current);
+		}
+
+		public void updatePitch()
+		{
+			int detune = baseDetune;
+			if (track.index != Mseq.DRUM_TRACK)
+				detune += Math.round(track.tuneLerp.current);
+			setPitch(AudioEngine.detuneToPitchRatio(detune));
+		}
+	}
+
+	public static class LerpState
+	{
+		float current = 1.0f;
+		float goal = 1.0f;
+		float step;
+		int time;
+	}
+
+	public static class MseqTrack
+	{
+		public final int index;
+
+		public Instrument instrument;
+		public EnvelopePair envelope;
+
+		public LerpState volumeLerp = new LerpState();
+		public LerpState tuneLerp = new LerpState();
+
+		public int pan;
+		public int reverb;
+		public boolean isResumable;
+
+		public MseqTrack(int index)
+		{
+			this.index = index;
+		}
+
+		public void reset()
+		{
+			volumeLerp = new LerpState();
+			tuneLerp = new LerpState();
+
+			volumeLerp.current = 1.0f;
+			tuneLerp.current = 0;
+
+			pan = 64;
+			reverb = 0;
+			isResumable = false;
+		}
+	}
+
+	public MseqPlayer(AudioEngine engine, SoundBank bank)
+	{
+		this.engine = engine;
+		this.bank = bank;
+	}
+
+	@Override
+	public void attach()
+	{
+		if (!attached) {
+			engine.addClient(this);
+			attached = true;
+		}
+	}
+
+	@Override
+	public boolean isPaused()
+	{
+		return state == PlayerState.PAUSED;
+	}
+
+	@Override
+	public boolean isPlaying()
+	{
+		return state == PlayerState.PLAYING || state == PlayerState.PAUSED;
+	}
+
+	public void triggerTrackRamps()
+	{
+		if (mseq == null)
+			return;
+
+		for (TrackRamp ramp : mseq.trackRamps) {
+			MseqTrack track = tracks[ramp.track];
+			if (ramp.type == TrackRampType.TUNE) {
+				track.tuneLerp.time = ramp.time;
+				track.tuneLerp.goal = ramp.goal;
+				track.tuneLerp.step = ((float) ramp.delta) / ramp.time;
+			}
+			else if (ramp.type == TrackRampType.VOLUME) {
+				track.volumeLerp.time = ramp.time;
+				track.volumeLerp.goal = ramp.goal / Mseq.MAX_VOL_16;
+				track.volumeLerp.step = (ramp.delta / Mseq.MAX_VOL_16) / ramp.time;
+			}
+		}
+	}
+
+	@Override
+	public int getTimelineLoopCount()
+	{
+		if (timelineLoopCounts == null)
+			return 0;
+		return Math.max(timelineLoopCounts[0], timelineLoopCounts[1]);
+	}
+
+	@Override
+	public void stop()
+	{
+		if (voices != null) {
+			for (MseqVoice voice : voices) {
+				if (voice != null)
+					voice.kill();
+			}
+		}
+		state = PlayerState.DONE;
+	}
+
+	@Override
+	public void restart()
+	{
+		if (mseq != null)
+			setMseq(mseq);
+	}
+
+	@Override
+	public void setPaused(boolean pause)
+	{
+		boolean changed = false;
+
+		if (state == PlayerState.PLAYING && pause) {
+			state = PlayerState.PAUSED;
+			changed = true;
+		}
+		else if (state == PlayerState.PAUSED && !pause) {
+			state = PlayerState.PLAYING;
+			changed = true;
+		}
+
+		if (changed) {
+			for (MseqVoice voice : voices) {
+				if (voice != null) {
+					voice.setPaused(pause);
+				}
+			}
+		}
+	}
+
+	@Override
+	public int getTime()
+	{
+		long time = (long) (curTime + (curDuration - delayTime)) * SAMPLES_PER_TICK;
+		return (int) Math.min(Integer.MAX_VALUE, time);
+	}
+
+	@Override
+	public int getDuration()
+	{
+		if (mseq == null)
+			return 0;
+		return (int) Math.min(Integer.MAX_VALUE, (long) mseq.duration * SAMPLES_PER_TICK);
+	}
+
+	@Override
+	public void seekTime(int seekTime)
+	{
+		if (mseq == null || mseq.commands.isEmpty())
+			return;
+
+		if (seekTime < 0 || seekTime >= getDuration())
+			return;
+
+		if (seekTime == getTime())
+			return;
+
+		boolean wasPaused = (state == PlayerState.PAUSED);
+
+		// hard reset playback to the very start
+		setMseq(this.mseq);
+
+		engine.prepareForSeek();
+
+		// silently fast forward through everything until seek time
+		while (getTime() < seekTime && state != PlayerState.DONE)
+			engine.renderFrame(AudioEngine.MIXER_BLOCK_TIME, true);
+
+		// resume audible playback (or not)
+		if (wasPaused) {
+			state = PlayerState.PAUSED;
+			for (MseqVoice voice : voices) {
+				if (voice != null) {
+					voice.setPaused(true);
+				}
+			}
+		}
+		else {
+			state = PlayerState.PLAYING;
+		}
+
+		engine.finishSeek();
+	}
+
+	@Override
+	public void close()
+	{
+		stop();
+		if (attached) {
+			engine.removeClient(this);
+			attached = false;
+		}
+	}
+
+	public void setMseq(Mseq mseq)
+	{
+		if (this.mseq != null) {
+			// kill any voices from previous MSEQ
+			for (int i = 0; i < voices.length; i++) {
+				MseqVoice voice = voices[i];
+				if (voice != null) {
+					voice.kill();
+				}
+			}
+		}
+
+		this.mseq = mseq;
+		mseq.calculateTiming();
+
+		tracks = new MseqTrack[Mseq.NUM_TRACKS];
+		for (int i = 0; i < Mseq.NUM_TRACKS; i++) {
+			tracks[i] = new MseqTrack(i);
+		}
+
+		voices = new MseqVoice[NUM_VOICES];
+
+		// loop state
+		loopPositions = new int[2];
+		loopIterations = new int[2];
+		timelineLoopCounts = new int[2];
+
+		curPos = 0;
+		curTime = 0;
+		curDuration = 0;
+		delayTime = 0;
+		updateCounter = UPDATE_INTERVAL;
+
+		for (int i = 0; i < tracks.length; i++) {
+			tracks[i].reset();
+		}
+
+		engine.resetRenderState();
+		state = PlayerState.PLAYING;
+	}
+
+	@Override
+	public void nextFrame(boolean fastForward)
+	{
+		updateCounter--;
+		if (updateCounter <= 0) {
+			updateCounter += UPDATE_INTERVAL;
+			update(fastForward);
+		}
+	}
+
+	private void update(boolean fastForward)
+	{
+		if (mseq == null)
+			return;
+
+		if (state != PlayerState.PLAYING)
+			return;
+
+		// clear voices which have finished playing/releasing
+		for (int i = 0; i < voices.length; i++) {
+			MseqVoice voice = voices[i];
+			if (voice != null && voice.isDone())
+				voices[i] = null;
+		}
+
+		// update track ramps
+		for (MseqTrack track : tracks) {
+			if (track.volumeLerp.time != 0) {
+				track.volumeLerp.time--;
+				if (track.volumeLerp.time != 0)
+					track.volumeLerp.current += track.volumeLerp.step;
+				else
+					track.volumeLerp.current = track.volumeLerp.goal;
+			}
+
+			if (track.tuneLerp.time != 0) {
+				track.tuneLerp.time--;
+				if (track.tuneLerp.time != 0)
+					track.tuneLerp.current += track.tuneLerp.step;
+				else
+					track.tuneLerp.current = track.tuneLerp.goal;
+			}
+		}
+
+		// update client params for voices
+		for (int i = 0; i < voices.length; i++) {
+			MseqVoice voice = voices[i];
+			if (voice == null)
+				continue;
+
+			voice.updateVolume();
+			voice.updatePitch();
+		}
+
+		if (delayTime > 0)
+			delayTime--;
+
+		// consume commands
+		int executed = 0;
+		while (delayTime == 0) {
+			if (++executed > MAX_COMMANDS_PER_UPDATE) {
+				Logger.logfError("MSEQ %s exceeded the per-update command limit", mseq.name);
+				stop();
+				curTime = mseq.duration;
+				curDuration = 0;
+				return;
+			}
+
+			if (mseq.commands.size() == curPos) {
+				state = PlayerState.DONE;
+				curTime = mseq.duration;
+				curDuration = 0;
+				return;
+			}
+
+			MseqCommand abs = mseq.commands.get(curPos);
+			curTime = abs.startTime;
+			curDuration = abs.duration;
+			curPos++;
+
+			// could have a method in the command classes, but id rather have them only store state
+			// and keep all the playback related code in this class
+			if (abs instanceof DelayCommand cmd) {
+				logCommand("    Delay " + cmd.duration);
+
+				delayTime = cmd.duration;
+			}
+			else if (abs instanceof StopSoundCommand cmd) {
+				logCommand("[%X] Stop Sound %X", cmd.track, cmd.pitch);
+
+				for (int i = 0; i < voices.length; i++) {
+					MseqVoice voice = voices[i];
+					if (voice == null)
+						continue;
+
+					if (voice.track == tracks[cmd.track]) {
+						if (voice.tuneID == cmd.pitch) {
+							voice.release();
+						}
+					}
+				}
+			}
+			else if (abs instanceof PlaySoundCommand cmd) {
+				MseqTrack track = tracks[cmd.track];
+				if (track.instrument == null) {
+					Logger.logfWarning("[%X] Play Sound: Instrument is null!", cmd.track);
+				}
+				else {
+					Instrument ins = track.instrument;
+					EnvelopePair envelope = track.envelope;
+					int detune = ((cmd.pitch & 0x7F) * 100) - ins.keyBase;
+
+					logCommand("[%X] Play Sound %X @ %X (detune = %d)", cmd.track, cmd.pitch, cmd.volume, detune);
+
+					int index = claimVoice();
+					MseqVoice voice = new MseqVoice(track, cmd.pitch);
+					voices[index] = voice;
+					engine.addVoice(voice);
+
+					voice.baseVolume = (cmd.volume & 0x7F) / Mseq.MAX_VOL_8;
+					voice.baseDetune = detune;
+					voice.setInstrument(ins);
+					voice.setEnvelope(envelope);
+					voice.setPan(track.pan);
+					voice.setReverb(track.reverb);
+
+					voice.updateVolume();
+					voice.updatePitch();
+
+					voice.play();
+				}
+			}
+			else if (abs instanceof PlayDrumCommand cmd) {
+				logCommand("[%X] Play Drum %X @ %X", Mseq.DRUM_TRACK, cmd.drumID, cmd.volume);
+
+				MseqTrack track = tracks[Mseq.DRUM_TRACK];
+				DrumQueryResult res = bank.getDrum(cmd.drumID & 0x7F);
+				if (res == null) {
+					track.instrument = null;
+					track.envelope = null;
+				}
+				else {
+					DrumPreset drum = res.drum();
+					Instrument ins = track.instrument = res.instrument();
+					EnvelopePair envelope = track.envelope = res.envelope();
+
+					int index = claimVoice();
+					MseqVoice voice = new MseqVoice(track, cmd.drumID);
+					voices[index] = voice;
+					engine.addVoice(voice);
+
+					voice.baseVolume = (drum.volume / Mseq.MAX_VOL_8) * (cmd.volume & 0x7F) / Mseq.MAX_VOL_8;
+					voice.baseDetune = drum.keybase - ins.keyBase;
+					voice.setInstrument(ins);
+					voice.setEnvelope(envelope);
+					voice.setReverb(drum.reverb);
+					voice.setPan(drum.pan);
+
+					voice.updateVolume();
+					voice.updatePitch();
+
+					voice.play();
+				}
+			}
+			else if (abs instanceof SetVolCommand cmd) {
+				logCommand("[%X] Set Volume: %X", cmd.track, cmd.volume);
+
+				MseqTrack track = tracks[cmd.track];
+				track.volumeLerp.current = cmd.volume / Mseq.MAX_VOL_8;
+
+				for (int i = 0; i < voices.length; i++) {
+					MseqVoice voice = voices[i];
+					if (voice == null)
+						continue;
+
+					if (voice.track == track) {
+						voice.updateVolume();
+					}
+				}
+			}
+			else if (abs instanceof SetTuneCommand cmd) {
+				logCommand("[%X] Set Tune: %d", cmd.track, cmd.value);
+
+				MseqTrack track = tracks[cmd.track];
+				track.tuneLerp.current = (short) cmd.value;
+
+				for (int i = 0; i < voices.length; i++) {
+					MseqVoice voice = voices[i];
+					if (voice == null)
+						continue;
+
+					if (voice.track == track) {
+						voice.updatePitch();
+					}
+				}
+			}
+			else if (abs instanceof SetPanCommand cmd) {
+				logCommand("[%X] SetPan %X", cmd.track, cmd.pan);
+
+				MseqTrack track = tracks[cmd.track];
+				track.pan = cmd.pan;
+
+				if (cmd.track != Mseq.DRUM_TRACK) {
+					for (int i = 0; i < voices.length; i++) {
+						MseqVoice voice = voices[i];
+						if (voice == null)
+							continue;
+
+						if (voice.track == track) {
+							voice.setPan(cmd.pan);
+						}
+					}
+				}
+			}
+			else if (abs instanceof SetInstrumentCommand cmd) {
+				logCommand("[%X] Set Instrument: %2X %2X", cmd.track, cmd.bank, cmd.patch);
+
+				MseqTrack track = tracks[cmd.track];
+				InstrumentQueryResult res = bank.getInstrument(cmd.bank, cmd.patch);
+				if (res == null) {
+					track.instrument = null;
+					track.envelope = null;
+				}
+				else {
+					track.instrument = res.instrument();
+					track.envelope = res.envelope();
+				}
+			}
+			else if (abs instanceof SetReverbCommand cmd) {
+				logCommand("[%X] Set Reverb: %X", cmd.track, cmd.reverb);
+
+				MseqTrack track = tracks[cmd.track];
+				track.reverb = cmd.reverb;
+			}
+			else if (abs instanceof SetResumableCommand cmd) {
+				logCommand("[%X] Set Resumable: %b", cmd.track, cmd.resumable);
+
+				MseqTrack track = tracks[cmd.track];
+				track.isResumable = cmd.resumable;
+			}
+			else if (abs instanceof StartLoopCommand cmd) {
+				logCommand("--- Start Loop %X", cmd.loopID & 1);
+
+				loopPositions[cmd.loopID & 1] = curPos;
+			}
+			else if (abs instanceof EndLoopCommand cmd) {
+				logCommand("--- End Loop %X (%d/%d)", cmd.loopID & 1, loopIterations[cmd.loopID & 1], cmd.count);
+
+				int loopID = cmd.loopID & 1;
+				int startPos = loopPositions[loopID];
+
+				if (fastForward) {
+					loopIterations[loopID] = 0;
+					continue;
+				}
+
+				if (cmd.count == 0) {
+					// infinite loop, jump to loop start
+					loopIterations[loopID] = 0;
+					timelineLoopCounts[loopID]++;
+					curPos = startPos;
+				}
+				else {
+					if (loopIterations[loopID] != 0) {
+						loopIterations[loopID]--;
+						if (loopIterations[loopID] != 0) {
+							// not the last iteration, jump to loop start
+							curPos = startPos;
+						}
+					}
+					else {
+						// first iteration, jump to loop start
+						loopIterations[loopID] = cmd.count;
+						curPos = startPos;
+					}
+				}
+			}
+		}
+	}
+
+	private int claimVoice()
+	{
+		for (int i = 0; i < voices.length; i++) {
+			if (voices[i] == null)
+				return i;
+		}
+
+		// try stealing the first voice -- an odd choice, but OK
+		voices[0].kill();
+		voices[0] = null;
+		return 0;
+	}
+
+	private static void logCommand(String string, Object ... args)
+	{
+		if (debugCommands) {
+			System.out.printf(string, args);
+			System.out.println();
+		}
+	}
+}

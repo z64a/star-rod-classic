@@ -2,13 +2,13 @@
 % battle loading code
 @Hook:Global 80072C18 % 4E018
 {
-	% dmacopy to 804E0000-80500000
-	LIO		A2, 804E0000
+	% copy the compressed section to the temporary buffer
+	LIO		A2, $Global_BattleYay0Buffer
 	JAL		8002973C
 	RESERVED
-	% decode Yay0 from 804E0000 to dest
+	% decode Yay0 from the temporary buffer to dest
 	LW		A1, C (S1)
-	LIO		A0, 804E0000
+	LIO		A0, $Global_BattleYay0Buffer
 	JAL		8006EDF0
 	RESERVED
 	% jump back
@@ -19,15 +19,15 @@
 % LoadBattleSection
 @Hook:Battle 80269E10
 {
-   	% dmacopy to 804E0000-80500000
-   	LW		A2, C (V0)
+	% copy the compressed section to the temporary buffer
+	LW		A2, C (V0)
 	SW		A2, 14 (SP) % unused stack var
-	LIO		A2, 804E0000
+	LIO		A2, $Global_BattleYay0Buffer
 	JAL		8002973C
-    RESERVED
-	% decode Yay0 from 804E0000 to dest
+	RESERVED
+	% decode Yay0 from the temporary buffer to dest
 	LW		A1, 14 (SP) % unused stack var
-	LIO		A0, 804E0000
+	LIO		A0, $Global_BattleYay0Buffer
 	JAL		8006EDF0
 	RESERVED
 	J		80269E18
@@ -38,14 +38,14 @@
 % LoadBattleDmaData
 @Hook:Battle 80253690 % 181F70
 {	
-	% dmacopy to 804E0000-80500000
+	% copy the compressed section to the temporary buffer
 	SW		A2, 14 (SP) % unused stack var
-	LIO		A2, 804E0000
+	LIO		A2, $Global_BattleYay0Buffer
 	JAL		8002973C
 	RESERVED
-	% decode Yay0 from 804E0000 to dest
+	% decode Yay0 from the temporary buffer to dest
 	LW		A1, 14 (SP) % unused stack var
-	LIO		A0, 804E0000
+	LIO		A0, $Global_BattleYay0Buffer
 	JAL		8006EDF0
 	RESERVED
 	% jump back

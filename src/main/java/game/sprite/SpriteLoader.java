@@ -13,8 +13,6 @@ import java.util.TreeMap;
 import org.apache.commons.io.FileUtils;
 import org.w3c.dom.Element;
 
-import app.AssetManager;
-import app.Environment;
 import app.StarRodException;
 import game.texture.Palette;
 import util.Logger;
@@ -236,63 +234,48 @@ public class SpriteLoader
 		npcSpriteData = new TreeMap<>();
 		playerSpriteData = new TreeMap<>();
 
-		if (Environment.project.isDecomp) {
-			for (int i = 0; i < Environment.project.decompConfig.npcSpriteNames.size(); i++) {
-				String name = Environment.project.decompConfig.npcSpriteNames.get(i);
-				File xml = AssetManager.getNpcSprite(name);
+		File in = new File(MOD_SPRITE + FN_SPRITE_TABLE);
+		XmlReader xmr = new XmlReader(in);
+		Element rootElem = xmr.getRootElement();
 
-				if (xml == null) {
-					Logger.logWarning("Cannot find npc sprite '" + name + "'!");
-					continue;
-				}
+		Element npcListElem = xmr.getUniqueRequiredTag(rootElem, TAG_NPC_LIST);
+		List<Element> npcElems = xmr.getTags(npcListElem, TAG_SPRITE);
+		for (Element npcElem : npcElems) {
+			xmr.requiresAttribute(npcElem, ATTR_ID);
+			xmr.requiresAttribute(npcElem, ATTR_NAME);
+			xmr.requiresAttribute(npcElem, ATTR_SOURCE);
 
-				npcSpriteData.put(i + 1, new SpriteMetadata(i + 1, name, xml));
+			int id = xmr.readHex(npcElem, ATTR_ID);
+			String name = xmr.getAttribute(npcElem, ATTR_NAME);
+			String dir = MOD_SPR_NPC_SRC + "/" + xmr.getAttribute(npcElem, ATTR_SOURCE) + "/";
+			File xml = new File(dir + FN_SPRITESHEET);
+			if (!xml.exists()) {
+				Logger.logWarning(dir + FN_SPRITESHEET + " does not exist!");
+				continue;
 			}
+
+			//	System.out.printf("NPC %2X %s%n", id, name);
+			npcSpriteData.put(id, new SpriteMetadata(id, name, xml));
 		}
-		else {
-			File in = new File(MOD_SPRITE + FN_SPRITE_TABLE);
-			XmlReader xmr = new XmlReader(in);
-			Element rootElem = xmr.getRootElement();
 
-			Element npcListElem = xmr.getUniqueRequiredTag(rootElem, TAG_NPC_LIST);
-			List<Element> npcElems = xmr.getTags(npcListElem, TAG_SPRITE);
-			for (Element npcElem : npcElems) {
-				xmr.requiresAttribute(npcElem, ATTR_ID);
-				xmr.requiresAttribute(npcElem, ATTR_NAME);
-				xmr.requiresAttribute(npcElem, ATTR_SOURCE);
+		Element playerListElem = xmr.getUniqueRequiredTag(rootElem, TAG_PLAYER_LIST);
+		List<Element> playerElems = xmr.getTags(playerListElem, TAG_SPRITE);
+		for (Element playerElem : playerElems) {
+			xmr.requiresAttribute(playerElem, ATTR_ID);
+			xmr.requiresAttribute(playerElem, ATTR_NAME);
+			xmr.requiresAttribute(playerElem, ATTR_SOURCE);
 
-				int id = xmr.readHex(npcElem, ATTR_ID);
-				String name = xmr.getAttribute(npcElem, ATTR_NAME);
-				String dir = MOD_SPR_NPC_SRC + "/" + xmr.getAttribute(npcElem, ATTR_SOURCE) + "/";
-				File xml = new File(dir + FN_SPRITESHEET);
-				if (!xml.exists()) {
-					Logger.logWarning(dir + FN_SPRITESHEET + " does not exist!");
-					continue;
-				}
-
-				//	System.out.printf("NPC %2X %s%n", id, name);
-				npcSpriteData.put(id, new SpriteMetadata(id, name, xml));
+			int id = xmr.readHex(playerElem, ATTR_ID);
+			String name = xmr.getAttribute(playerElem, ATTR_NAME);
+			String dir = MOD_SPR_PLR_SRC + "/" + xmr.getAttribute(playerElem, ATTR_SOURCE) + "/";
+			File xml = new File(dir + FN_SPRITESHEET);
+			if (!xml.exists()) {
+				Logger.logWarning(dir + FN_SPRITESHEET + " does not exist!");
+				continue;
 			}
 
-			Element playerListElem = xmr.getUniqueRequiredTag(rootElem, TAG_PLAYER_LIST);
-			List<Element> playerElems = xmr.getTags(playerListElem, TAG_SPRITE);
-			for (Element playerElem : playerElems) {
-				xmr.requiresAttribute(playerElem, ATTR_ID);
-				xmr.requiresAttribute(playerElem, ATTR_NAME);
-				xmr.requiresAttribute(playerElem, ATTR_SOURCE);
-
-				int id = xmr.readHex(playerElem, ATTR_ID);
-				String name = xmr.getAttribute(playerElem, ATTR_NAME);
-				String dir = MOD_SPR_PLR_SRC + "/" + xmr.getAttribute(playerElem, ATTR_SOURCE) + "/";
-				File xml = new File(dir + FN_SPRITESHEET);
-				if (!xml.exists()) {
-					Logger.logWarning(dir + FN_SPRITESHEET + " does not exist!");
-					continue;
-				}
-
-				//	System.out.printf("PLR %2X %s%n", id, name);
-				playerSpriteData.put(id, new SpriteMetadata(id, name, xml));
-			}
+			//	System.out.printf("PLR %2X %s%n", id, name);
+			playerSpriteData.put(id, new SpriteMetadata(id, name, xml));
 		}
 	}
 

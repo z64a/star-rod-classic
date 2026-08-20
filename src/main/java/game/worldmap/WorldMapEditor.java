@@ -1,6 +1,7 @@
 package game.worldmap;
 
 import static org.lwjgl.opengl.GL11.*;
+import static renderer.GLUtils.NO_TEXTURE_ID;
 
 import java.awt.Canvas;
 import java.awt.Dimension;
@@ -74,6 +75,7 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 	private static final int MAX_SIZE = 320;
 
 	private List<WorldLocation> locations;
+	private boolean loadedSuccessfully;
 
 	private JCheckBox cbMoveTogether;
 	private JCheckBox cbUseOriginals;
@@ -84,9 +86,9 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 	private final BasicCamera cam;
 
 	private boolean glTexDirty = true;
-	private int glBackgroundTexID;
-	private int glLocationMarkerTexID;
-	private int glPathMarkerTexID;
+	private int glBackgroundTexID = NO_TEXTURE_ID;
+	private int glLocationMarkerTexID = NO_TEXTURE_ID;
+	private int glPathMarkerTexID = NO_TEXTURE_ID;
 
 	private boolean bDrawBackground = true;
 	private boolean bDrawGrid = true;
@@ -194,6 +196,12 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 	public void glInit()
 	{
 		TextureManager.bindEditorTextures();
+	}
+
+	@Override
+	protected void cleanup(boolean crashed)
+	{
+		runInContext(this::deleteWorldTextures);
 	}
 
 	private void addOptionsMenu(JMenuBar menuBar, ActionListener openLogAction)
@@ -425,11 +433,8 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 	@Override
 	public void glDraw()
 	{
-		if (glTexDirty) {
-			glBackgroundTexID = TextureManager.loadTexture(new File(Directories.MOD_IMG_ASSETS + "ui/pause/map.png"));
-			glLocationMarkerTexID = TextureManager.loadTexture(new File(Directories.MOD_IMG_ASSETS + "ui/pause/map_location.png"));
-			glPathMarkerTexID = TextureManager.loadTexture(new File(Directories.MOD_IMG_ASSETS + "ui/pause/map_path_marker.png"));
-		}
+		if (glTexDirty)
+			reloadWorldTextures();
 
 		cam.glSetViewport(0, 0, glCanvasWidth(), glCanvasHeight());
 
@@ -649,19 +654,73 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 	{
 		try {
 			locations = WorldMapModder.loadLocations();
+			loadedSuccessfully = true;
 			Logger.log("Loaded world map.");
 		}
 		catch (IOException e) {
-			locations = new ArrayList<>();
+			if (locations == null)
+				locations = new ArrayList<>();
 			Logger.printStackTrace(e);
 		}
 	}
 
 	@Override
-	protected void saveChanges()
+	protected boolean saveChanges()
 	{
-		WorldMapModder.saveLocations(locations);
-		Logger.log("Saved world map.");
+		if (!loadedSuccessfully) {
+			Logger.logError("Cannot save the world map because it was not loaded successfully.");
+			return false;
+		}
+
+		try {
+			WorldMapModder.saveLocations(locations);
+			modified = false;
+			Logger.log("Saved world map.");
+			return true;
+		}
+		catch (IOException e) {
+			Logger.logError("Failed to save world map.");
+			super.showStackTrace(e);
+			return false;
+		}
+	}
+
+	private void reloadWorldTextures()
+	{
+		int backgroundTexID = TextureManager.loadTexture(new File(Directories.MOD_IMG_ASSETS + "ui/pause/map.png"));
+		int locationMarkerTexID = TextureManager.loadTexture(new File(Directories.MOD_IMG_ASSETS + "ui/pause/map_location.png"));
+		int pathMarkerTexID = TextureManager.loadTexture(new File(Directories.MOD_IMG_ASSETS + "ui/pause/map_path_marker.png"));
+
+		if (backgroundTexID == NO_TEXTURE_ID || locationMarkerTexID == NO_TEXTURE_ID || pathMarkerTexID == NO_TEXTURE_ID) {
+			deleteTexture(backgroundTexID);
+			deleteTexture(locationMarkerTexID);
+			deleteTexture(pathMarkerTexID);
+			Logger.logError("Failed to load world map textures.");
+		}
+		else {
+			deleteWorldTextures();
+			glBackgroundTexID = backgroundTexID;
+			glLocationMarkerTexID = locationMarkerTexID;
+			glPathMarkerTexID = pathMarkerTexID;
+		}
+
+		glTexDirty = false;
+	}
+
+	private void deleteWorldTextures()
+	{
+		deleteTexture(glBackgroundTexID);
+		deleteTexture(glLocationMarkerTexID);
+		deleteTexture(glPathMarkerTexID);
+		glBackgroundTexID = NO_TEXTURE_ID;
+		glLocationMarkerTexID = NO_TEXTURE_ID;
+		glPathMarkerTexID = NO_TEXTURE_ID;
+	}
+
+	private static void deleteTexture(int textureID)
+	{
+		if (textureID != NO_TEXTURE_ID)
+			glDeleteTextures(textureID);
 	}
 
 	@Override

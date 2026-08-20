@@ -239,7 +239,7 @@ public class AuxBattleDumper
 		unusedDriedShroom.mainAddressList.add(0x802A18FC);
 		unusedDriedShroom.mainNameList.add("UseItem_UnusedDriedShroom");
 		scriptDataMap.put(0x71CCE0, unusedDriedShroom);
-
+		
 		MoveSectionData unusedUltraShroom = new MoveSectionData("Item_UnusedUltraShroom", 0x723780, 0x724CE0);
 		unusedUltraShroom.mainAddressList.add(0x802A23BC);
 		unusedUltraShroom.mainNameList.add("UseItem_UnusedUltraShroom");

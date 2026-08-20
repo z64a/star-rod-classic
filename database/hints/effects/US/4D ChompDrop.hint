@@ -1,0 +1,8 @@
+add E009A138 Function
+name E009A138 Function_Init
+
+add E009A140 Function
+name E009A140 Function_Update
+
+add E009A398 Function
+name E009A398 Function_RenderScene

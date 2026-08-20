@@ -6,6 +6,7 @@ import static org.lwjgl.opengl.GL30.*;
 import java.util.List;
 
 import common.Vector3f;
+
 import game.map.BoundingBox;
 import game.map.Map;
 import game.map.MapObject;
@@ -147,17 +148,15 @@ public class PerspectiveViewport extends MapEditViewport
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// render final viewport
-		PostProcessFX.NONE.apply(0, sceneBuffer, null, prevBuffer, opts.time);
-
-		RenderState.bindFramebuffer(GL_READ_FRAMEBUFFER, sceneBuffer.getFrameBuffer());
-		RenderState.bindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-		glBlitFramebuffer(minX, minY, minX + sizeX, minY + sizeY,
-			RenderState.toFramebufferX(minX), RenderState.toFramebufferY(minY),
-			RenderState.toFramebufferX(minX + sizeX), RenderState.toFramebufferY(minY + sizeY),
-			GL_DEPTH_BUFFER_BIT,
-			GL_NEAREST);
-
-		RenderState.bindFramebuffer(GL_FRAMEBUFFER, 0);
+		RenderState.enableDepthTest(false);
+		RenderState.setDepthWrite(false);
+		try {
+			PostProcessFX.NONE.apply(0, sceneBuffer, null, prevBuffer, opts.time);
+		}
+		finally {
+			RenderState.setDepthWrite(true);
+			RenderState.enableDepthTest(true);
+		}
 
 		if (doPerspProfiling)
 			profiler.print();
@@ -248,6 +247,8 @@ public class PerspectiveViewport extends MapEditViewport
 
 		if (opts.selectionMode == SelectionManager.SelectionMode.VERTEX)
 			renderer.drawVertices(editor.selectionManager.getVertices(), false);
+		else if (opts.selectionMode == SelectionManager.SelectionMode.TRIANGLE)
+			renderer.drawTriangleCentroids(opts, shapeMap, hitMap);
 
 		if (opts.selectionMode == SelectionManager.SelectionMode.POINT) {
 			List<MapObject> selectedObjects = MapEditor.instance().selectionManager.getSelectedObjects();

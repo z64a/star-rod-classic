@@ -64,7 +64,7 @@ public class FontManager
 
 	public static void loadData() throws IOException
 	{
-		XmlReader xmr = new XmlReader(new File((Environment.project.isDecomp ? DUMP_STRINGS_FONT : MOD_STRINGS_FONT) + "fonts.xml"));
+		XmlReader xmr = new XmlReader(new File(MOD_STRINGS_FONT + "fonts.xml"));
 
 		List<Element> fontElems = xmr.getTags(xmr.getRootElement(), TAG_FONT);
 		if (fontElems.size() != 4)
@@ -177,7 +177,7 @@ public class FontManager
 		int upper = CharSet.Normal.patch_ptrRasters >>> 16;
 		if((lower & 0x8000) != 0)
 			upper++;
-
+		
 		rp.seek("Custom Font", 0xB9E58);
 		rp.writeInt(0x3C060000 | upper);
 		rp.writeInt(0x24C60000 | lower);

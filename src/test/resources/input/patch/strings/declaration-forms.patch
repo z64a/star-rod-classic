@@ -1,0 +1,9 @@
+#string $Classic {
+Classic[End]
+}
+#new:String $New {
+New[End]
+}
+#export:Message $Exported {
+Exported[End]
+}

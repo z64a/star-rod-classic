@@ -1,0 +1,30 @@
+#reserve 400 $ExtendedBankSet6
+
+% 0002FB44 --> 80054744
+% $Function_au_get_BK_instruments
+@Hook 2FB44
+{
+	LI		V0, 6
+	BEQ		A0, V0, .Group6
+	CLEAR	V1
+	J		8005474C
+	LUI		A2, 800A
+
+	.Group6
+	SLL		V0, A1, 6
+	LA		V1, $ExtendedBankSet6
+	ADDU	V0, V1, V0
+	JR		RA
+	NOP
+}
+
+% 0002E6A0 --> 800532A0
+% $Function_au_engine_init[444]
+@Hook 2E6A0
+{
+	SW		V1, 12EC (S4)
+	LA		V0, $ExtendedBankSet6
+	SW		V0, 1304 (S4)
+	J		800532AC
+	NOP
+}

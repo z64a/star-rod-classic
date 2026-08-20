@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -33,9 +34,11 @@ import app.config.Options;
 import app.config.WatchListEntry;
 import app.input.IOUtils;
 import app.input.InvalidInputException;
+import game.ROM.LibScope;
 import game.battle.ActorTypesEditor;
 import game.battle.AuxBattlePatcher;
 import game.battle.BattlePatcher;
+import game.effects.EffectPatcher;
 import game.globals.ItemModder;
 import game.globals.MoveModder;
 import game.map.Map;
@@ -51,7 +54,7 @@ import game.shared.ProjectDatabase;
 import game.shared.ProjectDatabase.ConstEnum.EnumPair;
 import game.shared.encoder.GlobalPatchManager;
 import game.shared.struct.script.ScriptVariable;
-import game.sound.AudioEditor;
+import game.sound.AudioModder;
 import game.sprite.SpriteLoader.SpriteSet;
 import game.sprite.SpritePatcher;
 import game.string.MessageBoxes;
@@ -92,6 +95,13 @@ public class Patcher implements IGlobalDatabase
 	private boolean addingUserGlobals = false;
 
 	private SpritePatcher spritePatcher;
+	private BuildSymbolMap buildSymbolMap;
+
+	public enum ModPackageFormat
+	{
+		BPS,
+		MOD
+	}
 
 	public Patcher() throws IOException
 	{
@@ -103,12 +113,34 @@ public class Patcher implements IGlobalDatabase
 	private void patchROM() throws IOException
 	{
 		timerLookup = new LinkedHashMap<>();
+		buildSymbolMap = new BuildSymbolMap();
 		long startTime = System.nanoTime();
 		Logger.log(new java.util.Date().toString(), Priority.IMPORTANT);
 		Logger.log("Preparing patching process.", Priority.MILESTONE);
 
 		// get build options from the mod config
 		Config cfg = Environment.project.config;
+		boolean buildAudio = cfg.getBoolean(Options.BuildAudio);
+		boolean buildSoundBanks = cfg.getBoolean(Options.BuildSoundBanks);
+		int minimumAudioHeapSize = 0;
+
+		if (buildAudio || buildSoundBanks)
+			AudioModder.prepareBuildDirectory();
+
+		if (buildSoundBanks) {
+			Logger.log("Building sound banks...", Priority.MILESTONE);
+			AudioModder.buildSoundBanks();
+			recordTime("Sound Banks Built");
+		}
+
+		if (buildAudio) {
+			Logger.log("Building audio files...", Priority.MILESTONE);
+			AudioModder.buildAudioFiles();
+			recordTime("Audio Files Built");
+		}
+
+		if (buildAudio || buildSoundBanks)
+			minimumAudioHeapSize = AudioModder.getMinimumAudioHeapSize();
 
 		if (cfg.getBoolean(Options.ClearMapCache) && MapIndex.getFile().exists())
 			FileUtils.forceDelete(MapIndex.getFile());
@@ -166,6 +198,7 @@ public class Patcher implements IGlobalDatabase
 		spritePatcher = new SpritePatcher(this);
 		CompressedImagePatcher imgPatcher = new CompressedImagePatcher();
 		PartnerWorldPatcher partnerPatcher = new PartnerWorldPatcher(this);
+		EffectPatcher effectPatcher = new EffectPatcher(this);
 		Logger.log("Reading map config files...", Priority.MILESTONE);
 		MapConfigTable mapTable = mapPatcher.readConfigs();
 		recordTime("Map Configs Read");
@@ -209,10 +242,12 @@ public class Patcher implements IGlobalDatabase
 		Logger.log("Reading direct ROM patches...", Priority.MILESTONE);
 		GlobalPatchManager gpm = new GlobalPatchManager(this);
 
-		FunctionPatcher.modifyHeaps(this, cfg, gpm, rp);
+		FunctionPatcher.modifyHeaps(this, cfg, gpm, rp, minimumAudioHeapSize);
+		gpm.readInternalPatch("ExtendedSoundBanks.patch");
 		gpm.readInternalPatch("ExtendedGlobals.patch",
 			cfg.getBoolean(Options.EnableDebugCode) && cfg.getBoolean(Options.EnableVarLogging) ? "LogVars" : "");
 		gpm.readInternalPatch("ExtendedScripts.patch");
+		gpm.readInternalPatch("CrashScreen.patch");
 		gpm.readInternalPatch("ExtraMoves.patch");
 		gpm.readInternalPatch("MoreStringVars.patch");
 
@@ -240,6 +275,9 @@ public class Patcher implements IGlobalDatabase
 		WorldMapModder.patch(rp);
 
 		recordTime("Item/Move Data Patched");
+
+		if (cfg.getBoolean(Options.EnableFPSCounter))
+			gpm.readInternalPatch("FPSCounter.patch");
 
 		if (cfg.getBoolean(Options.EnableDebugCode)) {
 			CaseInsensitiveMap<String> debugRules = writeDebugSettings(cfg, rp);
@@ -305,6 +343,10 @@ public class Patcher implements IGlobalDatabase
 		partnerPatcher.patchData(this);
 		recordTime("World Data Built");
 
+		boolean patchedEffects = effectPatcher.buildData();
+		if (patchedEffects)
+			recordTime("Effect Data Built");
+
 		// preprocessing
 		battlePatcher.updateConfigs();
 		auxPatcher.generateConfigs();
@@ -321,6 +363,8 @@ public class Patcher implements IGlobalDatabase
 
 		// add things to load during boot
 		gpm.addNewStructs();
+		if (cfg.getBoolean(Options.EnableCrashSymbols))
+			buildSymbolMap.writeEmbeddedFunctionTable(rp, getGlobalPointerAddress("$CrashSymbolTableInfo"));
 
 		SubscriptionManager.writeHooks(rp);
 		FunctionPatcher.showVersionInfo(rp, rp.nextAlignedOffset());
@@ -350,18 +394,18 @@ public class Patcher implements IGlobalDatabase
 
 		/*
 		// ======== Phase 4: add things that will be loaded via DMA -- these can move around!
-
+		
 		// clear old map table - will help to root out hard-coded map table instructions
 		//clearRegion(0x6B450, 0x6EAC0); // map and area config tables
 		clearRegion(0x6B860, 0x6EAC0); // map and area config tables (with extended move table)
 		clearRegion(0x73DA0, 0x73E10); // area SJIS strings
 		clearRegion(0x73E2C, 0x74EA0); // map and area name strings
-
+		
 		clearRegion(0x65A80, 0x66508);
 		clearRegion(0x66508, 0x691D4);
 		clearRegion(0x691D4, 0x697D8);
 		clearRegion(0x5B8F0, 0x62CE0);
-
+		
 		 */
 
 		imgPatcher.patchCompressedImages();
@@ -390,15 +434,20 @@ public class Patcher implements IGlobalDatabase
 		Logger.log("Writing partner data...", Priority.MILESTONE);
 		partnerPatcher.writeData(this);
 
+		if (patchedEffects) {
+			effectPatcher.writeData();
+			recordTime("Effect Data Patched");
+		}
+
 		if (cfg.getBoolean(Options.BuildSpriteSheets)) {
 			Logger.log("Patching sprite sheets...", Priority.MILESTONE);
 			spritePatcher.patchSpriteSheets();
 			recordTime("Sprite Sheets Patched");
 		}
 
-		if (cfg.getBoolean(Options.BuildAudio)) {
+		if (buildAudio || buildSoundBanks) {
 			Logger.log("Writing audio data...", Priority.MILESTONE);
-			AudioEditor.patchAudio(this, rp);
+			AudioModder.patchAudio(this, rp);
 			recordTime("Audio Patched");
 		}
 
@@ -421,6 +470,7 @@ public class Patcher implements IGlobalDatabase
 		printTimes();
 
 		rp.writeFile();
+		buildSymbolMap.write();
 
 		cfg.setString(Options.CompileVersion, Environment.getVersionString()); // another successful compile. great job!
 		cfg.setBoolean(Options.ClearMapCache, false);
@@ -578,16 +628,16 @@ public class Patcher implements IGlobalDatabase
 
 		// the in-game debug format/print buffer is 0x40 = 64 bytes
 		// leave 4 bytes for formatting, 1 for terminator char, and 1 extra for safety
-		if (name.length() > 58)
-			name.substring(0, 58);
+		byte[] nameBytes = name.getBytes(StandardCharsets.US_ASCII);
+		int nameLength = Math.min(nameBytes.length, 58);
 
 		// always have one extra byte for \0 and pad to 4 bytes
-		int len = (name.length() + 4) & -4;
+		int len = (nameLength + 4) & -4;
 		rp.writeShort(index);
 		rp.writeByte(4 + len);
 		rp.writeByte(unused ? 1 : 0);
-		rp.write(name.getBytes());
-		int padding = len - name.length();
+		rp.write(nameBytes, 0, nameLength);
+		int padding = len - nameLength;
 		if (padding > 0)
 			rp.write(new byte[padding]);
 	}
@@ -599,6 +649,12 @@ public class Patcher implements IGlobalDatabase
 			throw new IllegalStateException("Cannot add compiled global pointers!");
 
 		globalPointerMap.put(global.toString(), addr);
+	}
+
+	@Override
+	public void addBuildSymbol(int address, int size, String name, String type, LibScope scope, String source, boolean overlay)
+	{
+		buildSymbolMap.add(address, size, name, type, scope, source, overlay);
 	}
 
 	@Override
@@ -734,9 +790,11 @@ public class Patcher implements IGlobalDatabase
 
 	public static void packageMod(File rom) throws IOException
 	{
-		LinkedList<Integer> diffStarts = new LinkedList<>();
-		LinkedList<Integer> diffLengths = new LinkedList<>();
+		packageMod(rom, ModPackageFormat.BPS);
+	}
 
+	public static void packageMod(File rom, ModPackageFormat format) throws IOException
+	{
 		Config cfg = Environment.project.config;
 
 		String modName = cfg.getString(Options.ModVersionString);
@@ -746,18 +804,38 @@ public class Patcher implements IGlobalDatabase
 		byte[] base = Environment.getBaseRomBytes();
 		byte[] patched = FileUtils.readFileToByteArray(rom);
 
-		/*
-		Delta delta = new Delta();
-		byte[] diff = delta.compute(base, patched);
-		File outXDelta = new File(MOD_OUT + modName + ".xdelta");
-		FileUtils.writeByteArrayToFile(outXDelta, diff);
-		Logger.log("Wrote XDELTA file to " + outXDelta, Priority.IMPORTANT);
-		 */
+		Logger.log("Starting mod packaging: " + new java.util.Date().toString(), Priority.IMPORTANT);
+
+		switch (format) {
+			case BPS:
+				packageBPS(base, patched, modName);
+				break;
+			case MOD:
+				packageStarRodMod(base, patched, modName, cfg);
+				break;
+			default:
+				throw new IllegalStateException("Unknown mod package format: " + format);
+		}
+
+		Logger.log("Mod package complete. " + new java.util.Date().toString(), Priority.IMPORTANT);
+	}
+
+	private static void packageBPS(byte[] base, byte[] patched, String modName) throws IOException
+	{
+		Logger.log("Creating BPS patch...", Priority.MILESTONE);
+		byte[] patch = BPSPatch.create(base, patched);
+		File outBPS = new File(MOD_OUT + modName + ".bps");
+		FileUtils.writeByteArrayToFile(outBPS, patch);
+		Logger.log("Wrote BPS file to " + outBPS, Priority.IMPORTANT);
+	}
+
+	private static void packageStarRodMod(byte[] base, byte[] patched, String modName, Config cfg) throws IOException
+	{
+		LinkedList<Integer> diffStarts = new LinkedList<>();
+		LinkedList<Integer> diffLengths = new LinkedList<>();
 
 		if (patched.length < base.length)
 			throw new RuntimeException("Patched ROM should not be smaller than base ROM!");
-
-		Logger.log("Starting mod packaging: " + new java.util.Date().toString(), Priority.IMPORTANT);
 
 		boolean mismatching = false;
 		int mismatchStart = -1;
@@ -789,15 +867,13 @@ public class Patcher implements IGlobalDatabase
 			}
 		}
 
-		if (patched.length > base.length) {
-			if (mismatching) {
-				diffStarts.add(mismatchStart);
-				diffLengths.add(patched.length - mismatchStart);
-			}
-			else {
-				diffStarts.add(base.length);
-				diffLengths.add(patched.length - base.length);
-			}
+		if (mismatching) {
+			diffStarts.add(mismatchStart);
+			diffLengths.add(patched.length - mismatchStart);
+		}
+		else if (patched.length > base.length) {
+			diffStarts.add(base.length);
+			diffLengths.add(patched.length - base.length);
 		}
 
 		Logger.log("Found " + diffStarts.size() + " different byte sequences.", Priority.MILESTONE);
@@ -832,7 +908,6 @@ public class Patcher implements IGlobalDatabase
 		File outMod = new File(MOD_OUT + modName + ".mod");
 		FileUtils.writeByteArrayToFile(outMod, diffBytes);
 		Logger.log("Wrote MOD file to " + outMod, Priority.IMPORTANT);
-		Logger.log("Mod package complete. " + new java.util.Date().toString(), Priority.IMPORTANT);
 	}
 
 	/*
@@ -1041,6 +1116,6 @@ public class Patcher implements IGlobalDatabase
 	@Override
 	public int getPlayerAnimID(String spriteName, String animName, String palName)
 	{
-		return spritePatcher.getAnimationID(SpriteSet.Npc, spriteName, animName, palName);
+		return spritePatcher.getAnimationID(SpriteSet.Player, spriteName, animName, palName);
 	}
 }

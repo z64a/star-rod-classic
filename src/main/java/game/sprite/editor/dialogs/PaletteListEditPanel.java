@@ -5,13 +5,14 @@ import javax.swing.JButton;
 
 import game.sprite.Sprite;
 import game.sprite.SpritePalette;
+import game.sprite.editor.SpriteEditor;
 import game.texture.Palette;
 
 public class PaletteListEditPanel extends ListEditPanel<SpritePalette>
 {
-	public PaletteListEditPanel(Sprite sprite, DefaultListModel<SpritePalette> listModel)
+	public PaletteListEditPanel(Sprite sprite, DefaultListModel<SpritePalette> listModel, SpriteEditor editor)
 	{
-		super(listModel);
+		super(listModel, editor::markCurrentSpriteModified);
 
 		JButton addButton = new JButton("Add New Palette");
 		addButton.addActionListener((e) -> {

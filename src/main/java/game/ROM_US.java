@@ -128,7 +128,7 @@ public class ROM_US extends ROM
 			MemoryRegion.globalFromROM(LibScope.Common, 0x802EE8D0, 0x802F39D0, 0x10F1B0, "Normal Font Images"),
 			MemoryRegion.globalFromROM(LibScope.Common, 0x802F39D0, 0x802F4560, 0x115910, "Credits 2 Font Images"), // actually ends at 802F4558
 			MemoryRegion.globalFromROM(LibScope.Common, 0x802F4560, 0x802F4A60, 0x1144B0, "Font Palettes"), // or 0x80 bytes from 0x116498 used when loading credits
-			//	MemoryRegion.globalFromROM(LibScope.Common, 0xE0200000, 0xE0200940, 0x0325AD0, "FX common"),
+			MemoryRegion.globalFromROM(LibScope.Effect, 0xE0200000, 0xE0200940, 0x0325AD0, "FX Common"),
 
 			MemoryRegion.globalFromROM(LibScope.World, 0x80280000, 0x80286520, 0x7E0E80, "World Lib"),
 			MemoryRegion.globalFromROM(LibScope.World, 0x802C05CC, 0x802C0ECC, 0x3251D0, "World Lib"),

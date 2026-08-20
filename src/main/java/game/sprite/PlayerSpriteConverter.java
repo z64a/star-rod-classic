@@ -383,7 +383,7 @@ public class PlayerSpriteConverter
 		{
 			count++;
 		}
-
+		
 		public int getCount()
 		{
 			return count;

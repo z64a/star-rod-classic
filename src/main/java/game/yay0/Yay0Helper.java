@@ -1,48 +1,7 @@
 package game.yay0;
 
-/**
- * Yay0 is an implementation of LZSS.
- */
 public final class Yay0Helper
 {
-	/*
-	public static void main(String args[]) throws IOException
-	{
-		File source = new File("./yay0/decoded/0210ACFC.bin");
-		encode(FileUtils.readFileToByteArray(source));
-
-		/*
-		File sourceFile = new File("./test/dro_01_shape.yay0");
-		byte[] source = FileUtils.readFileToByteArray(sourceFile);
-
-		byte[] decoded = decode(source);
-
-		File out = new File("./test/dro_01_shape.bin");
-		FileUtils.writeByteArrayToFile(out, decoded);
-		 */
-
-	/*
-	File sourceRefFile = new File("./yay0/ref/comp/024F64DC.bin");
-	decode(FileUtils.readFileToByteArray(sourceRefFile));
-	 */
-
-	/*
-
-	File sourceFile = new File("./yay0/ver/decomp/024F64DC.bin");
-	byte[] yay0 = encode(FileUtils.readFileToByteArray(sourceFile));
-
-	for(int i = 0; i < yay0.length;)
-	{
-		System.out.print(String.format("%02X", yay0[i]));
-		i++;
-		if(i % 4 == 0)
-			System.out.print(" ");
-		if(i % 16 == 0)
-			System.out.println("");
-	}
-	 */
-	//}
-
 	public static byte[] encode(byte[] source)
 	{
 		return encode(source, false);

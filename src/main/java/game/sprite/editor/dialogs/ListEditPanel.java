@@ -14,6 +14,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.ListDataEvent;
+import javax.swing.event.ListDataListener;
 
 import net.miginfocom.swing.MigLayout;
 import util.ui.DragReorderList;
@@ -22,10 +24,13 @@ public abstract class ListEditPanel<T> extends JPanel
 {
 	protected final DragReorderList<T> list;
 	protected final DefaultListModel<T> listModel;
+	private final Runnable onModified;
+	private final ListDataListener modificationListener;
 
-	public ListEditPanel(DefaultListModel<T> listModel)
+	public ListEditPanel(DefaultListModel<T> listModel, Runnable onModified)
 	{
 		this.listModel = listModel;
+		this.onModified = onModified;
 
 		list = new DragReorderList<>();
 		list.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
@@ -64,13 +69,34 @@ public abstract class ListEditPanel<T> extends JPanel
 					else
 						return;
 
-					if (!newName.isEmpty())
+					if (!newName.isEmpty()) {
 						rename(index, newName);
+						onModified.run();
+					}
 				}
 			}
 		});
 
 		list.setModel(listModel);
+		modificationListener = new ListDataListener() {
+			@Override
+			public void intervalAdded(ListDataEvent e)
+			{
+				onModified.run();
+			}
+
+			@Override
+			public void intervalRemoved(ListDataEvent e)
+			{
+				onModified.run();
+			}
+
+			@Override
+			public void contentsChanged(ListDataEvent e)
+			{
+				onModified.run();
+			}
+		};
 
 		JScrollPane listScrollPane = new JScrollPane(list);
 		listScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -78,6 +104,20 @@ public abstract class ListEditPanel<T> extends JPanel
 		setPreferredSize(new Dimension(300, 400));
 		setLayout(new MigLayout("fill, wrap"));
 		add(listScrollPane, "grow, pushy, gapbottom 4");
+	}
+
+	@Override
+	public void addNotify()
+	{
+		super.addNotify();
+		listModel.addListDataListener(modificationListener);
+	}
+
+	@Override
+	public void removeNotify()
+	{
+		listModel.removeListDataListener(modificationListener);
+		super.removeNotify();
 	}
 
 	protected boolean canDelete(T item)

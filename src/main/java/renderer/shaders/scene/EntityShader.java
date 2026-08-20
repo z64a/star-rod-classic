@@ -33,9 +33,9 @@ public class EntityShader extends BaseShader
 		textured = new UniformBool(program, "u_textured", false);
 		useFiltering = new UniformBool(program, "u_useFiltering", false);
 
-		enableFog = new UniformBool(program, "u_useFog", false);
-		fogDist = new UniformFloatVector(program, "u_fogDist", 950.0f, 1000.0f);
-		fogColor = new UniformFloatVector(program, "u_fogColor", 0.0f, 0.0f, 0.0f, 0.0f);
+		enableFog = new UniformBool(false, program, "u_useFog", false);
+		fogDist = new UniformFloatVector(false, program, "u_fogDist", 950.0f, 1000.0f);
+		fogColor = new UniformFloatVector(false, program, "u_fogColor", 0.0f, 0.0f, 0.0f, 0.0f);
 
 		initializeCache();
 	}

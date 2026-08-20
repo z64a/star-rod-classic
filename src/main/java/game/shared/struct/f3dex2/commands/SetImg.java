@@ -33,6 +33,8 @@ public class SetImg extends BaseF3DEX2
 			fmt = TileFormat.get(fmtType, bitDepth);
 		}
 		catch (IllegalArgumentException e) {}
+
+		checkRanges();
 	}
 
 	public SetImg(CommandType cmd, String ... params) throws InvalidInputException
@@ -64,6 +66,18 @@ public class SetImg extends BaseF3DEX2
 		catch (NumberFormatException e) {
 			throw new InvalidInputException("Could not parse address: " + params[N + 2]);
 		}
+
+		checkRanges();
+	}
+
+	private void checkRanges() throws InvalidInputException
+	{
+		if (fmtType < 0 || fmtType > 7)
+			throw new InvalidInputException("%s image type is out of range (0-7): %d", getName(), fmtType);
+		if (bitDepth < 0 || bitDepth > 3)
+			throw new InvalidInputException("%s image depth is out of range (0-3): %d", getName(), bitDepth);
+		if (width < 1 || width > 0x1000)
+			throw new InvalidInputException("%s image width is out of range (1-4096): %d", getName(), width);
 	}
 
 	@Override

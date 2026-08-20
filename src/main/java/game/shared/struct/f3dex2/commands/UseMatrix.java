@@ -20,7 +20,7 @@ public class UseMatrix extends BaseF3DEX2
 	/*
 	0x04 	projection (default: model view)
 	0x02 	load (default: multiply)
-	0x01 	push (default: no push)
+	0x01 	no push
 	 */
 
 	public UseMatrix(CommandType cmd, Integer ... args) throws InvalidInputException
@@ -32,8 +32,8 @@ public class UseMatrix extends BaseF3DEX2
 
 		addr = args[1];
 
-		int modes = args[1] & 0xFF;
-		push = ((modes & 1) != 0);
+		int modes = args[0] & 0xFF;
+		push = ((modes & 1) == 0);
 		load = ((modes & 2) != 0);
 		proj = ((modes & 4) != 0);
 	}
@@ -62,7 +62,7 @@ public class UseMatrix extends BaseF3DEX2
 		if (param.equalsIgnoreCase(options[1]))
 			return true;
 
-		throw new InvalidInputException("Invalid param: %s (expected %s or %s)" + param, options[0], options[1]);
+		throw new InvalidInputException("Invalid param: %s (expected %s or %s)", param, options[0], options[1]);
 	}
 
 	@Override
@@ -71,7 +71,7 @@ public class UseMatrix extends BaseF3DEX2
 		int[] encoded = new int[2];
 		encoded[0] = opField | 0x00380000;
 
-		if (push)
+		if (!push)
 			encoded[0] |= 1;
 		if (load)
 			encoded[0] |= 2;

@@ -1,0 +1,333 @@
+package game.sound;
+
+import static app.Directories.*;
+import static game.sound.BankModder.BankKey.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.TreeMap;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.w3c.dom.Element;
+
+import app.Environment;
+import app.StarRodException;
+import app.input.IOUtils;
+import game.sound.engine.Envelope;
+import game.sound.engine.Instrument;
+import util.DynamicByteBuffer;
+import util.Logger;
+import util.xml.XmlKey;
+import util.xml.XmlWrapper.XmlReader;
+import util.xml.XmlWrapper.XmlTag;
+import util.xml.XmlWrapper.XmlWriter;
+
+public class BankModder
+{
+	public enum BankKey implements XmlKey
+	{
+		// @formatter:off
+		TAG_SOUND_BANK	("SoundBank"),
+		TAG_INS_LIST	("Instruments"),
+		TAG_INSTRUMENT	("Instrument"),
+		TAG_ENV_LIST	("Envelopes"),
+		TAG_ENVELOPE	("Envelope"),
+		TAG_ENV_CMDS	("Commands"),
+		TAG_PRESS		("Press"),
+		TAG_RELEASE		("Release"),
+		ATTR_WAV		("wav"),
+		ATTR_LOOP		("loop"),
+		ATTR_LOOP_COUNT	("loopCount"),
+		ATTR_ENV_NAME	("envName"),
+		ATTR_KEY_BASE	("keyBase"),
+		ATTR_NUM_PRED	("numPred"),
+		ATTR_RELATIVE	("relative");
+		// @formatter:on
+
+		private final String key;
+
+		private BankKey(String key)
+		{
+			this.key = key;
+		}
+
+		@Override
+		public String toString()
+		{
+			return key;
+		}
+	}
+
+	public static void main(String[] args) throws IOException
+	{
+		Environment.initialize();
+		buildAll();
+		Environment.exit();
+	}
+
+	public static void dumpAll() throws IOException
+	{
+		SampleNames sampleNames = SampleNames.loadBundled();
+		for (File binFile : IOUtils.getFilesWithExtension(DUMP_AUDIO_RAW, new String[] { "bk" }, true))
+			new Bank(binFile, sampleNames).dump();
+	}
+
+	public static void buildAll() throws IOException
+	{
+		for (File dir : MOD_AUDIO_BANK.toFile().listFiles(File::isDirectory)) {
+			buildBank(dir);
+		}
+	}
+
+	public static void dumpBank(File binFile) throws IOException
+	{
+		Bank bank = new Bank(binFile);
+		bank.dump();
+	}
+
+	public static void buildBank(File bankDir) throws IOException
+	{
+		String bankName = FilenameUtils.getBaseName(bankDir.getName());
+		String outputName = bankName + EXT_BANK;
+
+		if (AudioModder.hasOverride(outputName)) {
+			Logger.log("Using audio override for " + outputName);
+			return;
+		}
+
+		if (!bankDir.isDirectory())
+			throw new StarRodException(bankDir.getName() + " is not a directory!");
+
+		File xmlFile = new File(bankDir, FN_SOUND_BANK);
+		if (!xmlFile.exists())
+			throw new StarRodException("Could not find %s for sound bank %s", xmlFile.getName(), bankName);
+
+		File outFile = MOD_AUDIO_BUILD.getFile(outputName);
+
+		Bank bank = new Bank(bankName, xmlFile);
+		bank.build(bankDir, outFile);
+	}
+
+	public static class Bank
+	{
+		public final String name;
+
+		public final ArrayList<Instrument> instruments = new ArrayList<>();
+		public final ArrayList<Envelope> envelopes = new ArrayList<>();
+
+		public Bank(File binFile) throws IOException
+		{
+			this(binFile, SampleNames.loadBundled());
+		}
+
+		private Bank(File binFile, SampleNames sampleNames) throws IOException
+		{
+			this.name = FilenameUtils.getBaseName(binFile.getName());
+			ByteBuffer bb = IOUtils.getDirectBuffer(binFile);
+
+			// read header
+			bb.position(0x12);
+			int[] instrumentOffsets = new int[16];
+			int instrumentCount = 0;
+			for (int i = 0; i < 16; i++) {
+				instrumentOffsets[i] = bb.getShort();
+				if (instrumentOffsets[i] != 0)
+					instrumentCount++;
+			}
+
+			TreeMap<Integer, Envelope> envMap = new TreeMap<>();
+
+			// read instruments
+			for (int i = 0; i < instrumentCount; i++) {
+				String rawName = String.format("%s_%02X", name, i);
+				String insName = sampleNames.get(rawName);
+				Instrument ins = new Instrument(bb, instrumentOffsets[i], insName);
+				if (ins.hasLoop)
+					ins.loopFilename = sampleNames.get(rawName + "_Loop") + ".wav";
+				instruments.add(ins);
+
+				if (!envMap.containsKey(ins.envelopeOffset))
+					envMap.put(ins.envelopeOffset, new Envelope(bb, ins.envelopeOffset));
+			}
+
+			// assign envelope references
+			for (Instrument ins : instruments) {
+				ins.envelope = envMap.get(ins.envelopeOffset);
+			}
+
+			envelopes.addAll(envMap.values());
+
+			// assign basic envelope names
+			for (int i = 0; i < envelopes.size(); i++) {
+				envelopes.get(i).name = "env" + (i + 1);
+			}
+		}
+
+		public Bank(String name, File xmlFile)
+		{
+			this.name = name;
+
+			if (name.length() > 4)
+				throw new StarRodException("Bank names must be 4 characters or less: ", name);
+
+			XmlReader xmr = new XmlReader(xmlFile);
+
+			Element rootElem = xmr.getRootElement();
+
+			Element envelopesElem = xmr.getUniqueRequiredTag(rootElem, TAG_ENV_LIST);
+			HashMap<String, Envelope> envMap = new HashMap<>();
+
+			for (Element elem : xmr.getTags(envelopesElem, TAG_ENVELOPE)) {
+				Envelope env = new Envelope(xmr, elem);
+				envMap.put(env.name, env);
+				envelopes.add(env);
+			}
+
+			Element instrumentsElem = xmr.getUniqueRequiredTag(rootElem, TAG_INS_LIST);
+
+			for (Element elem : xmr.getTags(instrumentsElem, TAG_INSTRUMENT)) {
+				Instrument ins = new Instrument(xmr, elem);
+
+				if (!envMap.containsKey(ins.envelopeName))
+					throw new StarRodException("Instrument %s of bank %s uses unknown envelope %s", ins.name, name, ins.envelopeName);
+
+				ins.envelope = envMap.get(ins.envelopeName);
+				instruments.add(ins);
+			}
+		}
+
+		public void dump() throws IOException
+		{
+			File dir = DUMP_AUDIO_BANK.getFile(name);
+			File xmlFile = new File(dir, FN_SOUND_BANK);
+			FileUtils.forceMkdir(dir);
+
+			for (Instrument ins : instruments) {
+				ins.dump(dir);
+			}
+
+			try (XmlWriter xmw = new XmlWriter(xmlFile)) {
+				XmlTag rootTag = xmw.createTag(TAG_SOUND_BANK, false);
+				xmw.openTag(rootTag);
+
+				XmlTag instrumentsTag = xmw.createTag(TAG_INS_LIST, false);
+				xmw.openTag(instrumentsTag);
+				for (Instrument ins : instruments) {
+					ins.toXML(xmw);
+				}
+				xmw.closeTag(instrumentsTag);
+
+				XmlTag envelopesTag = xmw.createTag(TAG_ENV_LIST, false);
+				xmw.openTag(envelopesTag);
+				for (Envelope env : envelopes) {
+					env.toXML(xmw);
+				}
+				xmw.closeTag(envelopesTag);
+
+				xmw.closeTag(rootTag);
+				xmw.save();
+			}
+		}
+
+		public void build(File bankDir, File outFile) throws IOException
+		{
+			Logger.log("Building bank: " + bankDir.getName());
+
+			for (Instrument ins : instruments) {
+				ins.load(bankDir);
+				ins.build();
+			}
+
+			DynamicByteBuffer dbb = new DynamicByteBuffer(4096);
+
+			// reserve space for header and instruments
+			dbb.position(0x40 + 0x30 * instruments.size());
+
+			int loopStatesOffset = dbb.position();
+			for (Instrument ins : instruments)
+				ins.buildLoop(dbb);
+
+			dbb.align(16);
+
+			int predictorsOffset = dbb.position();
+			for (Instrument ins : instruments)
+				ins.buildBook(dbb);
+
+			dbb.align(16);
+
+			int envelopesOffset = dbb.position();
+			for (Envelope env : envelopes)
+				env.build(dbb);
+
+			dbb.align(16);
+
+			int wavDataOffset = dbb.position();
+			for (Instrument ins : instruments)
+				ins.buildWav(dbb);
+
+			dbb.align(16);
+			int endOffset = dbb.position();
+
+			// write header
+			dbb.position(0);
+
+			dbb.putUTF8("BK  ", false);
+			dbb.putInt(dbb.size());
+			dbb.putUTF8(String.format("%-4s", name), false);
+			dbb.putUTF8("CR", false);
+			dbb.skip(4);
+
+			// write instrument offsets
+			for (int i = 0; i < instruments.size(); i++) {
+				dbb.putShort(0x40 + 0x30 * i);
+			}
+
+			// continue header
+			dbb.position(0x32);
+			dbb.putShort(instruments.size() * 0x30);
+
+			dbb.putShort(loopStatesOffset);
+			dbb.putShort(predictorsOffset - loopStatesOffset);
+
+			dbb.putShort(predictorsOffset);
+			dbb.putShort(envelopesOffset - predictorsOffset);
+
+			dbb.putShort(envelopesOffset);
+			dbb.putShort(wavDataOffset - envelopesOffset);
+
+			// write instruments
+			for (int i = 0; i < instruments.size(); i++) {
+				Instrument ins = instruments.get(i);
+				dbb.position(0x40 + 0x30 * i);
+
+				/* 0x00 */ dbb.putInt(ins.wavOffset);
+				/* 0x04 */ dbb.putInt(ins.wavLength);
+
+				if (ins.hasLoop) {
+					/* 0x08 */ dbb.putInt(ins.loopStateOffset);
+					/* 0x0C */ dbb.putInt(ins.loopStart);
+					/* 0x10 */ dbb.putInt(ins.loopEnd);
+					/* 0x14 */ dbb.putInt(ins.loopCount);
+				}
+				else {
+					/* 0x08 */ dbb.skip(0x10);
+				}
+
+				/* 0x18 */ dbb.putInt(ins.predictorOffset);
+				/* 0x1C */ dbb.putShort(ins.numPredictors * 0x20);
+
+				/* 0x1E */ dbb.putShort(ins.keyBase);
+				/* 0x20 */ dbb.putInt(ins.sampleRate);
+				/* 0x24 */ dbb.skip(8);
+
+				/* 0x2C */ dbb.putInt(ins.envelope.buildOffset);
+			}
+
+			IOUtils.writeBufferToFile(dbb.getFixedBuffer(16), outFile);
+		}
+	}
+}

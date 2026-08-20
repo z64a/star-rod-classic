@@ -81,7 +81,6 @@ public class FastML
 					parse(xml, keyMap);
 				}
 				catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			});

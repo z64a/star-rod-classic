@@ -1,6 +1,7 @@
 package game.map.editor.geometry;
 
 import common.Vector3f;
+
 import game.map.editor.MapEditor;
 import game.map.marker.PathPoint;
 import game.map.mesh.Triangle;
@@ -13,6 +14,116 @@ import util.MathUtil;
 
 public class FromPathsGenerator
 {
+	public static TriangleBatch generate(
+		IterableListModel<PathPoint> path,
+		boolean twistPerUnitLength, boolean rollWithSpline,
+		int radius, int taper, int startAngle, int twist)
+	{
+		int num = path.size();
+		if (num < 2)
+			return null;
+
+		Vector3f[] center = new Vector3f[num];
+		Vector3f[] fwd = new Vector3f[num];
+		Vector3f[] norm = new Vector3f[num];
+		Vector3f[] tang = new Vector3f[num];
+		TransformMatrix[] transforms = new TransformMatrix[num];
+
+		for (int i = 0; i < num; i++)
+			center[i] = path.get(i).getPosition();
+
+		fwd[0] = Vector3f.sub(center[1], center[0]);
+		for (int i = 1; i < num - 1; i++) {
+			Vector3f prev = Vector3f.sub(center[i], center[i - 1]);
+			Vector3f next = Vector3f.sub(center[i + 1], center[i]);
+			fwd[i] = Vector3f.add(next, prev);
+			if (fwd[i].length() < MathUtil.SMALL_NUMBER)
+				fwd[i].set(prev);
+			if (fwd[i].length() < MathUtil.SMALL_NUMBER)
+				fwd[i].set(next);
+		}
+		fwd[num - 1] = Vector3f.sub(center[num - 1], center[num - 2]);
+
+		for (int i = 0; i < num; i++) {
+			if (fwd[i].length() < MathUtil.SMALL_NUMBER) {
+				if (i > 0)
+					fwd[i].set(fwd[i - 1]);
+				else
+					fwd[i].set(1.0f, 0.0f, 0.0f);
+			}
+			else
+				fwd[i].normalize();
+		}
+
+		norm[0] = getHorizontalNormal(fwd[0], null);
+		for (int i = 1; i < num; i++) {
+			if (rollWithSpline)
+				norm[i] = transportNormal(norm[i - 1], fwd[i - 1], fwd[i]);
+			else
+				norm[i] = getHorizontalNormal(fwd[i], norm[i - 1]);
+		}
+
+		for (int i = 0; i < num; i++) {
+			tang[i] = Vector3f.cross(fwd[i], norm[i]);
+			if (tang[i].length() < MathUtil.SMALL_NUMBER)
+				tang[i].set(0.0f, -1.0f, 0.0f);
+			else
+				tang[i].normalize();
+
+			transforms[i] = new TransformMatrix();
+			transforms[i].makeRotation(fwd[i], norm[i], tang[i]);
+		}
+
+		return generateTwistedRibbon(transforms, center, center, norm, tang,
+			true, twistPerUnitLength,
+			radius, taper, startAngle, twist, 2);
+	}
+
+	private static Vector3f getHorizontalNormal(Vector3f fwd, Vector3f previous)
+	{
+		Vector3f norm = Vector3f.cross(fwd, new Vector3f(0.0f, 1.0f, 0.0f));
+		if (norm.length() < MathUtil.SMALL_NUMBER) {
+			if (previous != null)
+				norm.set(previous);
+			else
+				norm.set(1.0f, 0.0f, 0.0f);
+		}
+		else
+			norm.normalize();
+
+		if (previous != null && Vector3f.dot(norm, previous) < 0.0f)
+			norm.negate();
+
+		return norm;
+	}
+
+	private static Vector3f transportNormal(Vector3f norm, Vector3f prevFwd, Vector3f nextFwd)
+	{
+		Vector3f axis = Vector3f.cross(prevFwd, nextFwd);
+		float sinAngle = axis.length();
+		float cosAngle = MathUtil.clamp(Vector3f.dot(prevFwd, nextFwd), -1.0f, 1.0f);
+
+		Vector3f transported = new Vector3f(norm);
+		if (sinAngle >= MathUtil.SMALL_NUMBER) {
+			axis.scale(1.0f / sinAngle);
+			Vector3f cross = Vector3f.cross(axis, norm);
+			float projection = Vector3f.dot(axis, norm) * (1.0f - cosAngle);
+
+			transported.x = norm.x * cosAngle + cross.x * sinAngle + axis.x * projection;
+			transported.y = norm.y * cosAngle + cross.y * sinAngle + axis.y * projection;
+			transported.z = norm.z * cosAngle + cross.z * sinAngle + axis.z * projection;
+		}
+
+		float forwardProjection = Vector3f.dot(transported, nextFwd);
+		transported.x -= forwardProjection * nextFwd.x;
+		transported.y -= forwardProjection * nextFwd.y;
+		transported.z -= forwardProjection * nextFwd.z;
+		if (transported.length() < MathUtil.SMALL_NUMBER)
+			return getHorizontalNormal(nextFwd, norm);
+
+		return transported.normalize();
+	}
+
 	public static TriangleBatch generate(
 		IterableListModel<PathPoint> pathA, IterableListModel<PathPoint> pathB,
 		boolean overrideRadius, boolean twistPerUnitLength,

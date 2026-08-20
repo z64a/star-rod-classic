@@ -1264,14 +1264,14 @@ public abstract class Script
 		fileBuffer.position(offset);
 		int opcode = fileBuffer.getInt();
 		int nargs = fileBuffer.getInt();
-
+	
 		int[] line = new int[nargs + 2];
 		line[0] = opcode;
 		line[1] = nargs;
-
+	
 		for(int i = 2; i < line.length; i++)
 			line[i] = fileBuffer.getInt();
-
+	
 		return line;
 	}
 	 */

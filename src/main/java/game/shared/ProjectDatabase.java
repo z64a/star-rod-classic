@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.swing.JComboBox;
@@ -32,8 +33,11 @@ import game.globals.editor.GlobalsRecord;
 import game.map.shading.SpriteShadingData;
 import game.map.shading.SpriteShadingEditor;
 import game.shared.ProjectDatabase.ConstEnum.EnumPair;
-import game.shared.lib.CType;
 import game.shared.struct.script.ScriptVariable;
+import game.sound.AudioCatalog;
+import game.sound.sfx.SfxNames;
+import game.sound.sfx.SfxXml;
+import game.string.MessageDatabase;
 import game.string.StringConstKey;
 import game.string.StringEncoder;
 import game.texture.images.ImageDatabase;
@@ -57,6 +61,7 @@ public class ProjectDatabase
 
 	public static ImageDatabase images;
 	public static GlobalsData globalsData;
+	public static MessageDatabase messages;
 
 	public static DualHashMap<Integer, String> EffectType;
 
@@ -89,6 +94,9 @@ public class ProjectDatabase
 
 	public static final String ITEM_NAMESPACE = "Item";
 	public static final String MOVE_NAMESPACE = "Move";
+	public static final String SOUND_NAMESPACE = "Sound";
+	public static final String SONG_NAMESPACE = "Song";
+	public static final String AMBIENT_SOUND_NAMESPACE = "AmbientSounds";
 
 	public static final String SHADING_NAMESPACE = "Shading";
 	public static SpriteShadingData SpriteShading;
@@ -108,7 +116,7 @@ public class ProjectDatabase
 
 	public static void initialize() throws IOException
 	{
-		initialize(false); // !RunContext.currentProject.isDecomp
+		initialize(false);
 	}
 
 	public static void initialize(boolean hasProject) throws IOException
@@ -157,7 +165,10 @@ public class ProjectDatabase
 			}
 		}
 
-		CType.loadTypes();
+		if (hasProject)
+			loadAudioEnums();
+
+		addSoundAliases();
 
 		actorNameMap = readDecode(DATABASE_TYPES + "actors.txt");
 		miscConstantsMap = readEncode(DATABASE_TYPES + "misc.txt");
@@ -221,6 +232,10 @@ public class ProjectDatabase
 
 	public static void loadGlobals(boolean fromProject)
 	{
+		messages = new MessageDatabase();
+		if (fromProject)
+			messages.load();
+
 		globalsData = new GlobalsData();
 		globalsData.loadDataStrict(fromProject);
 
@@ -230,16 +245,60 @@ public class ProjectDatabase
 
 	private static void replaceEnum(String namespace, String libName, Iterable<? extends GlobalsRecord> entries)
 	{
-		constNameMap.remove(namespace);
-		constLibMap.remove(libName);
-
 		LinkedHashMap<Integer, String> decodeMap = new LinkedHashMap<>();
 		for (GlobalsRecord rec : entries)
 			decodeMap.put(rec.listIndex, rec.getIdentifier());
+		replaceEnum(namespace, libName, decodeMap);
+	}
+
+	private static void loadAudioEnums()
+	{
+		File soundEffects = MOD_AUDIO.getFile(SfxXml.FN_SOUND_EFFECTS);
+		if (soundEffects.isFile())
+			replaceEnum(SOUND_NAMESPACE, "soundID", SfxXml.readNames(soundEffects.toPath()));
+
+		File songs = MOD_AUDIO.getFile(FN_AUDIO_SONGS);
+		if (songs.isFile())
+			replaceEnum(SONG_NAMESPACE, "songID", AudioCatalog.readSongNameTable(songs));
+
+		File ambientSounds = MOD_AUDIO.getFile(FN_AUDIO_AMBIENTS);
+		if (ambientSounds.isFile())
+			replaceEnum(AMBIENT_SOUND_NAMESPACE, "ambientSFX",
+				AudioCatalog.readAmbientNameTable(ambientSounds));
+	}
+
+	private static void addSoundAliases() throws IOException
+	{
+		ConstEnum soundEnum = constNameMap.get(SOUND_NAMESPACE);
+		if (soundEnum != null)
+			soundEnum.addAliases(new ConstEnum(SOUND_NAMESPACE, "soundID", new File(DATABASE_TYPES + "sound_aliases.txt")));
+	}
+
+	private static void replaceEnum(String namespace, String libName, Map<Integer, String> entries)
+	{
+		LinkedHashMap<Integer, String> decodeMap = new LinkedHashMap<>();
+		decodeMap.putAll(entries);
+		installEnum(namespace, libName, decodeMap);
+	}
+
+	private static void replaceEnum(String namespace, String libName, SfxNames entries)
+	{
+		LinkedHashMap<Integer, String> decodeMap = new LinkedHashMap<>();
+		for (Entry<Integer, String> entry : entries.entries())
+			decodeMap.put(entry.getKey(), entry.getValue());
+		installEnum(namespace, libName, decodeMap);
+	}
+
+	private static ConstEnum installEnum(String namespace, String libName,
+		LinkedHashMap<Integer, String> decodeMap)
+	{
+		constNameMap.remove(namespace);
+		constLibMap.remove(libName);
 
 		ConstEnum ce = new ConstEnum(namespace, libName, decodeMap);
 		constNameMap.put(ce.namespace, ce);
 		constLibMap.put(ce.libName, ce);
+		return ce;
 	}
 
 	public static boolean hasItem(int index)
@@ -477,7 +536,7 @@ public class ProjectDatabase
 		int chance = DataUtils.parseIntString(fields[3]);
 
 		if (fields[1].contains("|")) {
-			String[] typeFields = fields[1].split("|");
+			String[] typeFields = fields[1].split("\\|");
 			if (typeFields.length != 2)
 				throw new InvalidInputException(DebuffType.getNamespace() + " type has invalid format: " + fields[1]);
 
@@ -493,7 +552,16 @@ public class ProjectDatabase
 		if (DebuffType.hasID(typeString))
 			type = DebuffType.getID(typeString);
 		else
-			type = DataUtils.parseIntString(fields[2]);
+			type = DataUtils.parseIntString(typeString);
+
+		if (msn < 0 || msn > 0xF)
+			throw new InvalidInputException(DebuffType.getNamespace() + " leading value is out of range (0-F): " + msn);
+		if ((type & ~0x0FFFF000) != 0)
+			throw new InvalidInputException(DebuffType.getNamespace() + " type uses bits outside 0FFFF000: " + typeString);
+		if (duration < 0 || duration > 0xF)
+			throw new InvalidInputException(DebuffType.getNamespace() + " duration is out of range (0-F): " + duration);
+		if (chance < 0 || chance > 0xFF)
+			throw new InvalidInputException(DebuffType.getNamespace() + " chance is out of range (0-255): " + chance);
 
 		return ((msn & 0xF) << 0x1C) | (type & 0x0FFFF000) | ((duration & 0xF) << 8) | (chance & 0xFF);
 	}
@@ -589,6 +657,18 @@ public class ProjectDatabase
 
 			encodeMap.putAll(ce.encodeMap);
 			decodeMap.putAll(ce.decodeMap);
+		}
+
+		private void addAlias(int id, String name)
+		{
+			if (!encodeMap.containsKey(name))
+				encodeMap.put(name, String.format("%08X", id));
+		}
+
+		private void addAliases(ConstEnum aliases)
+		{
+			for (Entry<String, String> e : aliases.encodeMap.entrySet())
+				addAlias((int) Long.parseLong(e.getValue(), 16), e.getKey());
 		}
 
 		public String getNamespace()
@@ -693,7 +773,6 @@ public class ProjectDatabase
 
 		public int getNumDefined()
 		{
-			assert (decodeMap.size() == encodeMap.size());
 			return decodeMap.size();
 		}
 
@@ -836,9 +915,6 @@ public class ProjectDatabase
 	private static HashMap<String, ByteBuffer> loadStringConstants()
 	{
 		HashMap<String, ByteBuffer> constMap = new HashMap<>();
-		if (Environment.project.isDecomp)
-			return constMap;
-
 		File f = new File(MOD_STRINGS + FN_STRING_CONSTANTS);
 		if (!f.exists())
 			return constMap;
@@ -907,35 +983,35 @@ public class ProjectDatabase
 	private static void readVariableDictionary(ScriptVariable type, DualHashMap<Integer, String> nameMap, File byteFile) throws IOException
 	{
 		nameMap.clear();
-
+	
 		if(!byteFile.exists())
 			return;
-
+	
 		List<String> lines = IOUtils.readFormattedTextFile(byteFile);
 		HashSet<Integer> indexSet = new HashSet<>();
-
+	
 		for(int i = 0; i < lines.size(); i++)
 		{
 			String line = lines.get(i);
-
+	
 			if(line.isEmpty() || !line.contains("="))
 				continue;
-
+	
 			String[] tokens = IOUtils.getKeyValuePair(byteFile, line, i);
 			String newName = SCRIPT_VAR_PREFIX + tokens[1];
 			int offset = Integer.parseInt(tokens[0], 16);
-
+	
 			int max = type.getMaxIndex();
 			if(offset < 0 || offset >= max)
 				throw new InputFileException(byteFile, i, "%s index is out of range (0 to %X): %n%s", type.getTypeName(), max, line);
-
+	
 			if(indexSet.contains(offset))
 				throw new InputFileException(byteFile, i, "Duplicate %s index: %n%s", type.getTypeName(), line);
 			indexSet.add(offset);
-
+	
 			if(nameMap.containsInverse(newName))
 				throw new InputFileException(byteFile, i, "Duplicate %s name: %n%s", type.getTypeName(), line);
-
+	
 			nameMap.add(offset, newName);
 		}
 	}
@@ -947,82 +1023,82 @@ public class ProjectDatabase
 		List<String> lines = IOUtils.readTextFile(byteFile);
 		HashSet<Integer> indexSet = new HashSet<>();
 		nameMap.clear();
-
+	
 		for(int i = 0; i < lines.size(); i++)
 		{
 			String line = lines.get(i);
-
+	
 			if(line.isEmpty() || !line.contains("="))
 				continue;
-
+	
 			String[] tokens = IOUtils.getKeyValuePair(byteFile, line, i);
 			String newName = SCRIPT_VAR_PREFIX + tokens[1];
 			int offset = Integer.parseInt(tokens[0], 16);
-
+	
 			int max = ScriptVariable.GameByte.getMaxValue();
 			if(offset < 0 || offset >= max)
 				throw new InputFileException(byteFile, i, "Saved byte index is out of range (0 to %X): %s", max, line);
-
+	
 			if(indexSet.contains(offset))
 				throw new InputFileException(byteFile, i, "Duplicate saved byte index: ", line);
 			indexSet.add(offset);
-
+	
 			if(nameMap.containsInverse(newName))
 				throw new InputFileException(byteFile, i, "Duplicate saved byte name: " + line);
-
+	
 			nameMap.add(offset, newName);
 		}
 	}
-
+	
 	private static void readGameFlags(DualHashMap<Integer, String> nameMap, File flagFile) throws IOException
 	{
 		List<String> lines = IOUtils.readTextFile(flagFile);
 		HashSet<Integer> indexSet = new HashSet<>();
 		nameMap.clear();
-
+	
 		for(int i = 0; i < lines.size(); i++)
 		{
 			String line = lines.get(i);
-
+	
 			if(line.isEmpty() || !line.contains("="))
 				continue;
-
+	
 			String[] tokens = IOUtils.getKeyValuePair(flagFile, line, i);
 			String newName = SCRIPT_VAR_PREFIX + tokens[1];
 			int offset = Integer.parseInt(tokens[0], 16);
-
+	
 			int max = ScriptVariable.GameFlag.getMaxValue();
 			if(offset < 0 || offset >= max)
 				throw new InputFileException(flagFile, i, "Saved flag index is out of range (0 to %X): %s", max, line);
-
+	
 			if(indexSet.contains(offset))
 				throw new InputFileException(flagFile, i, "Duplicate saved flag index: ", line);
 			indexSet.add(offset);
-
+	
 			if(nameMap.containsInverse(newName))
 				throw new InputFileException(flagFile, i, "Saved flag may not share name with byte: " + line);
-
+	
 			if(nameMap.containsInverse(newName))
 				throw new InputFileException(flagFile, i, "Duplicate saved flag name: " + line);
-
+	
 			nameMap.add(offset, newName);
 		}
 	}
-
+	
 	private static void readModItems(File file) throws IOException
 	{
 		List<String> lines = IOUtils.readTextFile(file);
 		modItemMap.clear();
-
+	
 		for(int i = 0; i < lines.size(); i++)
 		{
 			String line = lines.get(i);
-
+	
 			if(line.isEmpty())
 				continue;
-
+	
 			String[] tokens = IOUtils.getKeyValuePair(file, line, i);
-
+	
 			int index = (int)Long.parseLong(tokens[0], 16);
 			modItemMap.put(tokens[1], String.format("%08X", index));
 		}

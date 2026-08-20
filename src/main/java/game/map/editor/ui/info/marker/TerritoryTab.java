@@ -160,7 +160,7 @@ public class TerritoryTab extends JPanel
 
 		JScrollPane scrollPane = new JScrollPane(patrolPathList);
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		scrollPane.setBorder(null);
+		SwingUtils.setBorderless(scrollPane);
 
 		patrolPanel = new JPanel(new MigLayout("fill, ins 0"));
 		patrolPanel.add(new JLabel("Patrol Path"), "growx, wrap");

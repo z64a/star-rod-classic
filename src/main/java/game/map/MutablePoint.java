@@ -6,6 +6,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import common.Vector3f;
+
 import game.map.editor.commands.AbstractCommand;
 
 public class MutablePoint implements Externalizable

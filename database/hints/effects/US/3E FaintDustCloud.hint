@@ -1,0 +1,8 @@
+add E007C128 Function
+name E007C128 Function_Init
+
+add E007C130 Function
+name E007C130 Function_Update
+
+add E007C1B0 Function
+name E007C1B0 Function_RenderScene

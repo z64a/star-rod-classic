@@ -1,0 +1,11 @@
+add E0086270 Function
+name E0086270 Function_Init
+
+add E0086278 Function
+name E0086278 Function_Update
+
+add E0086390 Function
+name E0086390 Function_RenderScene
+
+add E0086398 Function
+name E0086398 Function_RenderUI

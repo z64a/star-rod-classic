@@ -5,8 +5,9 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
-import app.SwingUtils;
 import common.InfoPanel;
+
+import app.SwingUtils;
 import game.battle.editor.Actor;
 import game.battle.editor.BattleEditor;
 import net.miginfocom.swing.MigLayout;
@@ -20,9 +21,9 @@ public class ActorPanel extends InfoPanel<Actor>
 	//TODO
 	public String name = "";
 	public String scriptName = "";
-
+	
 	public int actorType;
-
+	
 	... parts ...
 	public IterableListModel<ActorPart> parts = new IterableListModel<>();
 	 */

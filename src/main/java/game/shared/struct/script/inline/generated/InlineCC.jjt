@@ -1,6 +1,7 @@
 
 options {
 	MULTI=true;
+	BUILD_NODE_FILES=false;
 //	KEEP_LINE_COLUMN = false;
 	STATIC=false;
 
@@ -14,11 +15,12 @@ options {
 
 PARSER_BEGIN(InlineParser)
 
-package romdata.shared.struct.script.inline.generated;
+package game.shared.struct.script.inline.generated;
 
+@SuppressWarnings("all")
 public class InlineParser
 {
-	/** Main entry point. 
+	/** Main entry point.
 	public static void compile(String line)
 	{
 		System.out.println("Reading from standard input...");

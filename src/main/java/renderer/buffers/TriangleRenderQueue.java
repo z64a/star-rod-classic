@@ -74,6 +74,9 @@ public class TriangleRenderQueue
 
 	public static void delete()
 	{
-		mesh.glDelete();
+		if (mesh != null) {
+			mesh.glDelete();
+			mesh = null;
+		}
 	}
 }

@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 import org.w3c.dom.Element;
 
 import common.Vector3f;
+
 import game.map.Map;
 import game.map.MutablePoint;
 import game.map.MutablePoint.PointBackup;
@@ -184,13 +185,16 @@ public class CamTargetComponent extends BaseMarkerComponent
 
 		useZone.set(xmr.readBoolean(compElem, ATTR_CAM_USE_SAMPLE));
 		if (useZone.get()) {
-			if (xmr.hasAttribute(compElem, ATTR_CAM_OVERRIDE_LENGTH))
+			if (xmr.hasAttribute(compElem, ATTR_CAM_OVERRIDE_LENGTH)) {
 				boomLength.set(xmr.readFloat(compElem, ATTR_CAM_OVERRIDE_LENGTH));
+				overrideDist.set(true);
+			}
 
 			if (xmr.hasAttribute(compElem, ATTR_CAM_OVERRIDE_ANGLES)) {
 				float[] angles = xmr.readFloatArray(compElem, ATTR_CAM_OVERRIDE_ANGLES, 2);
 				boomPitch.set(angles[0]);
 				viewPitch.set(angles[1]);
+				overrideAngles.set(true);
 			}
 		}
 		else {

@@ -37,6 +37,8 @@ public class BranchZ extends BaseF3DEX2
 		int vidx5 = (args[0] >> 12) & 0xFFF;
 		if (vidx5 != 5 * vidx)
 			throw new InvalidInputException("%s has inconsistent vertex buffer indices: %X vs %X", getName(), vidx, vidx5 / 5);
+
+		checkVertex();
 	}
 
 	public BranchZ(CommandType cmd, String ... params) throws InvalidInputException
@@ -46,6 +48,14 @@ public class BranchZ extends BaseF3DEX2
 		addr = DataUtils.parseIntString(params[0]);
 		vidx = DataUtils.parseIntString(params[1]);
 		zval = DataUtils.parseIntString(params[2]);
+
+		checkVertex();
+	}
+
+	private void checkVertex() throws InvalidInputException
+	{
+		if (vidx < 0 || vidx >= 32)
+			throw new InvalidInputException("%s vertex is out of buffer range (0-31): %X", getName(), vidx);
 	}
 
 	@Override

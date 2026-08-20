@@ -52,8 +52,6 @@ import app.config.DumpOptionsPanel;
 import app.config.Options;
 import app.input.IOUtils;
 import app.input.InvalidInputException;
-import app.update.BackupCreator;
-import app.update.MinorUpdator;
 import asm.AsmUtils;
 import common.BaseEditor;
 import game.ROM;
@@ -77,16 +75,14 @@ import game.map.compiler.CollisionCompiler;
 import game.map.compiler.GeometryCompiler;
 import game.map.config.LevelEditor;
 import game.map.editor.MapEditor;
-import game.map.editor.ui.dialogs.ChooseDialogResult;
-import game.map.editor.ui.dialogs.DirChooser;
 import game.map.patching.MapDumper;
-import game.map.scripts.DecompScriptGenerator;
 import game.map.scripts.ScriptGenerator;
 import game.map.shading.SpriteShadingEditor;
 import game.requests.SpecialRequestDumper;
 import game.shared.ProjectDatabase;
 import game.shared.struct.script.ScriptVariable;
-import game.sound.AudioEditor;
+import game.sound.AudioModder;
+import game.sound.booth.AudioBooth;
 import game.sprite.SpriteDumper;
 import game.sprite.editor.SpriteEditor;
 import game.string.MessageBoxes;
@@ -195,15 +191,19 @@ public class StarRodClassic extends JFrame
 							showMenu = worldEditor.launch();
 							break;
 
+						case AUDIO_BOOTH:
+							editorClosedSignal = new CountDownLatch(1);
+							AudioBooth audioBooth = new AudioBooth(editorClosedSignal);
+							editorClosedSignal.await();
+							showMenu = audioBooth.exitToMainMenu;
+							break;
+
 						case THEMES:
 							editorClosedSignal = new CountDownLatch(1);
 							ThemesEditor themesEditor = new ThemesEditor(editorClosedSignal);
 							editorClosedSignal.await();
 							showMenu = themesEditor.exitToMainMenu;
 							break;
-
-						//	default:
-						//		throw new IllegalStateException("Tool does not exist for " + chosenTool);
 					}
 				}
 			}
@@ -222,7 +222,6 @@ public class StarRodClassic extends JFrame
 	private final Listener progressListener;
 	private final JPanel progressPanel;
 	private final JProgressBar progressBar;
-	//	private final JLabel taskLabel;
 	private final JLabel progressLabel;
 
 	private boolean exitToMainMenu = false;
@@ -234,15 +233,6 @@ public class StarRodClassic extends JFrame
 	private JButton compileModButton;
 	private JButton packageModButton;
 	private JButton compileOptionsButton;
-
-	private void updateButtonAvailablity()
-	{
-		boolean modButtonsEnabled = !Environment.project.isDecomp;
-		createModButton.setEnabled(modButtonsEnabled);
-		compileModButton.setEnabled(modButtonsEnabled);
-		packageModButton.setEnabled(modButtonsEnabled);
-		compileOptionsButton.setEnabled(modButtonsEnabled);
-	}
 
 	private StarRodClassic()
 	{
@@ -266,7 +256,6 @@ public class StarRodClassic extends JFrame
 				modFolderField.setText(choice.getAbsolutePath());
 				try {
 					checkVersion();
-					updateButtonAvailablity();
 				}
 				catch (Throwable t) {
 					displayStackTrace(t);
@@ -470,8 +459,36 @@ public class StarRodClassic extends JFrame
 
 		packageModButton = new JButton("Package Mod");
 		packageModButton.addActionListener(e -> {
+			String bpsOption = "BPS";
+			String modOption = "MOD";
+			String cancelOption = "Cancel";
+			int choice = SwingUtils.getOptionDialog()
+				.setTitle("Package Mod")
+				.setMessage(
+					"Select patch format:",
+					"BPS - Widely supported (recommended).",
+					"MOD - Legacy Star Rod.",
+					"")
+				.setMessageType(JOptionPane.QUESTION_MESSAGE)
+				.setOptions(bpsOption, modOption, cancelOption)
+				.setDefault(bpsOption)
+				.setParent(this)
+				.choose();
+
+			Patcher.ModPackageFormat format;
+			switch (choice) {
+				case 0:
+					format = Patcher.ModPackageFormat.BPS;
+					break;
+				case 1:
+					format = Patcher.ModPackageFormat.MOD;
+					break;
+				default:
+					return;
+			}
+
 			new TaskWorker(() -> {
-				packageMod();
+				packageMod(format);
 			});
 		});
 		buttons.add(packageModButton);
@@ -529,13 +546,11 @@ public class StarRodClassic extends JFrame
 			cb.setContents(stringSelection, null);
 		});
 
-		//	taskLabel = new JLabel("Current Task");
 		progressLabel = new JLabel("The march of progress.");
 		progressBar = new JProgressBar();
 		progressBar.setIndeterminate(true);
 		progressPanel = new JPanel();
 		progressPanel.setLayout(new MigLayout("fillx"));
-		//	progressPanel.add(taskLabel,"w 25%");
 		progressPanel.add(progressLabel, "wrap");
 		progressPanel.add(progressBar, "grow, wrap 8");
 		progressPanel.setVisible(false);
@@ -565,8 +580,6 @@ public class StarRodClassic extends JFrame
 				}
 			}
 		});
-
-		updateButtonAvailablity();
 
 		setLayout(new MigLayout("fillx, ins 16 16 n 16, hidemode 3"));
 
@@ -759,6 +772,11 @@ public class StarRodClassic extends JFrame
 				EntityDecompiler.decompileAll();
 			}
 
+			if (fullDump || cfg.getBoolean(DumpEffects)) {
+				Logger.log("Dumping visual effects...", Priority.MILESTONE);
+				EffectEditor.dumpEffects(fileBuffer);
+			}
+
 			if (cfg.getBoolean(DumpReports)) {
 				PrintWriter pw = IOUtils.getBufferedPrintWriter(Directories.DUMP_REPORTS + "enemy_names.txt");
 				for (int i = 0; i < 0xD4; i++) {
@@ -802,7 +820,7 @@ public class StarRodClassic extends JFrame
 
 			if (fullDump || cfg.getBoolean(DumpAudio)) {
 				Logger.log("Dumping audio...", Priority.MILESTONE);
-				AudioEditor.dumpAudio();
+				AudioModder.dumpAudio();
 			}
 
 			WorldMapModder.dump();
@@ -810,7 +828,6 @@ public class StarRodClassic extends JFrame
 			if (fullDump || cfg.getBoolean(DumpLibrary)) {
 				Logger.log("Dumping libraries...", Priority.MILESTONE);
 				LibraryScriptDumper.dumpAll();
-				EffectEditor.dumpEffects(fileBuffer);
 			}
 
 			if (cfg.getBoolean(CleanDump)) {
@@ -868,6 +885,10 @@ public class StarRodClassic extends JFrame
 			FileUtils.cleanDirectory(MOD_MAP_SRC.toFile());
 			FileUtils.copyDirectory(DUMP_MAP_SRC.toFile(), MOD_MAP_SRC.toFile());
 			Directories.copyAllMissing(DUMP_MAP_THUMBNAIL, MOD_MAP_THUMBNAIL);
+
+			Logger.log("Copying effect data...", Priority.MILESTONE);
+			FileUtils.cleanDirectory(MOD_EFFECT_SRC.toFile());
+			FileUtils.copyDirectory(DUMP_EFFECT_SRC.toFile(), MOD_EFFECT_SRC.toFile());
 
 			Logger.log("Copying world data...", Priority.MILESTONE);
 			FileUtils.cleanDirectory(MOD_ASSIST_SRC.toFile());
@@ -973,7 +994,7 @@ public class StarRodClassic extends JFrame
 		return true;
 	}
 
-	private boolean packageMod()
+	private boolean packageMod(Patcher.ModPackageFormat format)
 	{
 		try {
 			Environment.project.config.readConfig(); // refresh
@@ -987,7 +1008,7 @@ public class StarRodClassic extends JFrame
 				return false;
 			}
 
-			Patcher.packageMod(patchedRom);
+			Patcher.packageMod(patchedRom, format);
 
 			if (!Environment.isCommandLine()) {
 				SwingUtilities.invokeLater(() -> {
@@ -1062,6 +1083,31 @@ public class StarRodClassic extends JFrame
 		}
 	}
 
+	private static void openUserGuide()
+	{
+		File workingDirectory = Environment.getWorkingDirectory().toPath().toAbsolutePath().normalize().toFile();
+		File file = new File(workingDirectory, "manual/README.html");
+
+		if (!file.exists())
+			file = new File(workingDirectory, "build/generated/manual/README.html");
+
+		if (!file.exists()) {
+			SwingUtils.getWarningDialog()
+				.setTitle("User Guide Not Found")
+				.setMessage("Could not find the local user guide.", file.getAbsolutePath())
+				.show();
+			return;
+		}
+
+		try {
+			Desktop.getDesktop().browse(file.toURI());
+		}
+		catch (IOException e) {
+			Logger.logWarning("Could not open user guide: " + file.getAbsolutePath());
+			Logger.printStackTrace(e);
+		}
+	}
+
 	private static void runCommandLine(String[] args)
 	{
 		for (int i = 0; i < args.length; i++) {
@@ -1106,10 +1152,7 @@ public class StarRodClassic extends JFrame
 							if (args[i].equalsIgnoreCase("-CompileMap")) {
 								new GeometryCompiler(map);
 								new CollisionCompiler(map);
-								if (Environment.project.isDecomp)
-									new DecompScriptGenerator(map);
-								else
-									new ScriptGenerator(map);
+								new ScriptGenerator(map);
 							}
 							else if (args[i].equalsIgnoreCase("-CompileShape"))
 								new GeometryCompiler(map);
@@ -1144,10 +1187,7 @@ public class StarRodClassic extends JFrame
 
 								new GeometryCompiler(map);
 								new CollisionCompiler(map);
-								if (Environment.project.isDecomp)
-									new DecompScriptGenerator(map);
-								else
-									new ScriptGenerator(map);
+								new ScriptGenerator(map);
 							}
 							catch (BuildException be) {
 								be.printStackTrace();
@@ -1241,6 +1281,7 @@ public class StarRodClassic extends JFrame
 		SPRITE_EDITOR,
 		STRING_EDITOR,
 		WORLD_MAP_EDITOR,
+		AUDIO_BOOTH,
 		THEMES
 	}
 
@@ -1325,6 +1366,14 @@ public class StarRodClassic extends JFrame
 				dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 			});
 
+			JButton audioBoothButton = new JButton("Audio Booth");
+			trySetIcon(audioBoothButton, "item/key/boo_record");
+			SwingUtils.setFontSize(audioBoothButton, 12);
+			audioBoothButton.addActionListener((e) -> {
+				selected = GreetingChoice.AUDIO_BOOTH;
+				dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+			});
+
 			JButton themesEditorButton = new JButton("Themes");
 			trySetIcon(themesEditorButton, "item/badge/PUpDDown");
 			SwingUtils.setFontSize(themesEditorButton, 12);
@@ -1333,27 +1382,30 @@ public class StarRodClassic extends JFrame
 				dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
 			});
 
+			JButton userGuideButton = new JButton("User Manual");
+			trySetIcon(userGuideButton, "item/badge/refund");
+			SwingUtils.setFontSize(userGuideButton, 12);
+			userGuideButton.addActionListener(e -> openUserGuide());
+
 			setTitle(Environment.decorateTitle("Star Rod"));
 			setIconImage(Environment.getDefaultIconImage());
 
-			//	setMinimumSize(new Dimension(320,64)); // 2x2
-			setMinimumSize(new Dimension(220, 220));
+			setMinimumSize(new Dimension(400, 220));
 			setLocationRelativeTo(null);
 
 			String fmtButton = "sg buttons, grow, push";
 
-			setLayout(new MigLayout("fill, wrap"));
+			setLayout(new MigLayout("fill, wrap 2"));
 			add(modManagerButton, fmtButton);
-			if (!Environment.project.isDecomp)
-				add(globalsEditorButton, fmtButton);
-			add(stringEditorButton, fmtButton);
-			if (!Environment.project.isDecomp)
-				add(levelEditorButton, fmtButton);
+			add(globalsEditorButton, fmtButton);
 			add(mapEditorButton, fmtButton);
+			add(levelEditorButton, fmtButton);
 			add(spriteEditorButton, fmtButton);
 			add(imageEditorButton, fmtButton);
-			if (!Environment.project.isDecomp)
-				add(worldMapEditorButton, fmtButton);
+			add(stringEditorButton, fmtButton);
+			add(worldMapEditorButton, fmtButton);
+			add(audioBoothButton, fmtButton);
+			add(userGuideButton, fmtButton);
 			add(themesEditorButton, fmtButton);
 
 			pack();
@@ -1394,7 +1446,7 @@ public class StarRodClassic extends JFrame
 		imageIcon = new ImageIcon(image);
 
 		button.setIcon(imageIcon);
-		button.setIconTextGap(24);
+		button.setIconTextGap(16);
 		button.setHorizontalAlignment(SwingConstants.LEFT);
 		button.setVerticalTextPosition(SwingConstants.CENTER);
 		button.setHorizontalTextPosition(SwingConstants.RIGHT);
@@ -1450,93 +1502,7 @@ public class StarRodClassic extends JFrame
 			if (MapIndex.getFile().exists())
 				FileUtils.forceDelete(MapIndex.getFile());
 
-			update(modVersion, modConfig, (f) -> {
-				new MinorUpdator(f);
-			});
+			Logger.logf("Opening project from %s. Its build version will be updated after the next successful compile.", modVersion);
 		}
-	}
-
-	private static void update(AppVersion modVersion, Config modConfig, UpdateFunction updateFunc) throws IOException, InterruptedException
-	{
-		int choice = SwingUtils.getConfirmDialog()
-			.setTitle("Out of Date Mod")
-			.setMessage("Detected mod version " + modVersion + ".",
-				"Migrate mod to " + Environment.getVersion() + "?")
-			.setOptionsType(JOptionPane.YES_NO_OPTION)
-			.setMessageType(JOptionPane.WARNING_MESSAGE)
-			.choose();
-
-		if (choice != JOptionPane.OK_OPTION)
-			Environment.exit();
-
-		choice = SwingUtils.getConfirmDialog()
-			.setTitle("Make Backup")
-			.setMessage("Create a backup of your mod directory?")
-			.setOptionsType(JOptionPane.YES_NO_OPTION)
-			.setMessageType(JOptionPane.WARNING_MESSAGE)
-			.choose();
-
-		if (choice == JOptionPane.OK_OPTION) {
-			try {
-				new BackupCreator(Environment.project);
-			}
-			catch (IOException e) {
-				SwingUtils.getErrorDialog()
-					.setTitle("Backup Failed")
-					.setMessage("Failed to create backup!", e.getMessage())
-					.show();
-
-				Logger.printStackTrace(e);
-				Environment.exit();
-			}
-
-			SwingUtils.getMessageDialog()
-				.setTitle("Backup Successful")
-				.setMessage("Backup complete.")
-				.setMessageType(JOptionPane.INFORMATION_MESSAGE)
-				.show();
-		}
-
-		SwingUtils.getMessageDialog()
-			.setTitle("Find Old Database")
-			.setMessage("Select the old Star Rod database folder.")
-			.setMessageType(JOptionPane.INFORMATION_MESSAGE)
-			.show();
-
-		DirChooser dbChooser = new DirChooser(Environment.getWorkingDirectory(), "Select Old Database Directory");
-		if (dbChooser.prompt() == ChooseDialogResult.APPROVE) {
-			File dbChoice = dbChooser.getSelectedFile();
-			if (dbChoice == null) {
-				SwingUtils.getErrorDialog()
-					.setTitle("Update Failed")
-					.setMessage("Can't update without reading the old database.")
-					.show();
-
-				Environment.exit();
-			}
-
-			updateFunc.update(dbChoice);
-			modConfig.setString(Options.CompileVersion, Environment.getVersionString());
-			modConfig.saveConfigFile();
-
-			SwingUtils.getMessageDialog()
-				.setTitle("Update Complete")
-				.setMessage("Automatic update done.", "Don't forget to copy assets to your mod.")
-				.setMessageType(JOptionPane.INFORMATION_MESSAGE)
-				.show();
-		}
-		else {
-			SwingUtils.getErrorDialog()
-				.setTitle("Update Failed")
-				.setMessage("Can't update without reading the old database.")
-				.show();
-
-			Environment.exit();
-		}
-	}
-
-	private static abstract interface UpdateFunction
-	{
-		public void update(File dbFile) throws IOException, InterruptedException;
 	}
 }

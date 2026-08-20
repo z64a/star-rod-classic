@@ -2,6 +2,7 @@ package renderer.text;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
+import static renderer.GLUtils.NO_TEXTURE_ID;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -27,7 +28,7 @@ public class TextFont
 	protected final TextChar[] chars;
 
 	private boolean glLoaded;
-	protected int glTexID;
+	protected int glTexID = NO_TEXTURE_ID;
 
 	public TextFont(String fontName)
 	{
@@ -120,6 +121,7 @@ public class TextFont
 	{
 		if (glLoaded)
 			glDeleteTextures(glTexID);
+		glTexID = NO_TEXTURE_ID;
 		glLoaded = false;
 	}
 }

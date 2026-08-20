@@ -8,6 +8,7 @@ import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
 import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL14.GL_MIRRORED_REPEAT;
 import static org.lwjgl.opengl.GL30.*;
+import static renderer.GLUtils.NO_TEXTURE_ID;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
@@ -42,7 +43,7 @@ public class Tile
 
 	private boolean glLoaded = false;
 	//	private ByteBuffer glBuffer;
-	private int glTexID;
+	private int glTexID = NO_TEXTURE_ID;
 
 	public Tile(TileFormat fmt, int h, int w)
 	{
@@ -323,40 +324,41 @@ public class Tile
 		int paletteSize = 1 << format.bpp;
 		ImageInfo info = new ImageInfo(width, height, 8, false, false, true); // 8 -> format.bpp
 
-		PngWriter writer = new PngWriter(out, info);
-		writer.setCompLevel(9);
+		try (PngWriter writer = new PngWriter(out, info)) {
+			writer.setCompLevel(9);
 
-		PngChunkPLTE paletteChunk = new PngChunkPLTE(info);
-		paletteChunk.setNentries(256); // paletteSize
-		for (int i = 0; i < paletteSize; i++)
-			paletteChunk.setEntry(i, (palette.r[i] & 0xFF), (palette.g[i] & 0xFF), (palette.b[i] & 0xFF));
+			PngChunkPLTE paletteChunk = new PngChunkPLTE(info);
+			paletteChunk.setNentries(256); // paletteSize
+			for (int i = 0; i < paletteSize; i++)
+				paletteChunk.setEntry(i, (palette.r[i] & 0xFF), (palette.g[i] & 0xFF), (palette.b[i] & 0xFF));
 
-		PngChunkTRNS alphaChunk = new PngChunkTRNS(info);
-		alphaChunk.setNentriesPalAlpha(256); // paletteSize
-		for (int i = 0; i < paletteSize; i++)
-			alphaChunk.setEntryPalAlpha(i, (palette.a[i] & 0xFF));
+			PngChunkTRNS alphaChunk = new PngChunkTRNS(info);
+			alphaChunk.setNentriesPalAlpha(256); // paletteSize
+			for (int i = 0; i < paletteSize; i++)
+				alphaChunk.setEntryPalAlpha(i, (palette.a[i] & 0xFF));
 
-		writer.getMetadata().queueChunk(paletteChunk);
-		writer.getMetadata().queueChunk(alphaChunk);
+			writer.getMetadata().queueChunk(paletteChunk);
+			writer.getMetadata().queueChunk(alphaChunk);
 
-		for (int i = 0; i < height; i++) {
-			ImageLineByte line = new ImageLineByte(info);
+			for (int i = 0; i < height; i++) {
+				ImageLineByte line = new ImageLineByte(info);
 
-			byte[] scanline = line.getScanlineByte();
-			for (int j = 0; j < width;) {
-				byte b = raster.get();
+				byte[] scanline = line.getScanlineByte();
+				for (int j = 0; j < width;) {
+					byte b = raster.get();
 
-				if (format == CI_4) {
-					scanline[j++] = (byte) ((b >>> 4) & 0xF);
-					scanline[j++] = (byte) (b & 0xF);
+					if (format == CI_4) {
+						scanline[j++] = (byte) ((b >>> 4) & 0xF);
+						scanline[j++] = (byte) (b & 0xF);
+					}
+					else {
+						scanline[j++] = b;
+					}
 				}
-				else {
-					scanline[j++] = b;
-				}
+				writer.writeRow(line, i);
 			}
-			writer.writeRow(line, i);
+			writer.end();
 		}
-		writer.end();
 	}
 
 	public static BufferedImage readTGA(File file) throws IOException
@@ -511,7 +513,7 @@ public class Tile
 
 		/*
 		GL_TEXTURE_MIN_FILTER:
-
+		
 		GL_NEAREST_MIPMAP_NEAREST
 		GL_NEAREST_MIPMAP_LINEAR
 		GL_LINEAR_MIPMAP_NEAREST
@@ -568,6 +570,8 @@ public class Tile
 	{
 		if (glLoaded)
 			glDeleteTextures(glTexID);
+		glTexID = NO_TEXTURE_ID;
+		glLoaded = false;
 	}
 
 	public static Tile getSpritePaletteImage()

@@ -24,8 +24,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.undo.UndoManager;
 
-import com.alexandriasoftware.swing.JSplitButton;
-
 import app.StarRodException;
 import app.SwingUtils;
 import app.input.IOUtils;
@@ -39,6 +37,7 @@ import game.texture.images.HudElementRecord;
 import net.miginfocom.swing.MigLayout;
 import util.Logger;
 import util.ui.StringField;
+import util.ui.ThemedSplitButton;
 
 public class HudElementTab extends MultiListTab<HudElementRecord>
 {
@@ -99,7 +98,7 @@ public class HudElementTab extends MultiListTab<HudElementRecord>
 		});
 		SwingUtils.addBorderPadding(addButton);
 
-		JSplitButton actionsButton = new JSplitButton("Actions  ");
+		ThemedSplitButton actionsButton = new ThemedSplitButton("Actions  ");
 		JPopupMenu actionsPopup = new JPopupMenu();
 		actionsButton.setPopupMenu(actionsPopup);
 		actionsButton.setAlwaysPopup(true);

@@ -29,8 +29,8 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 import game.map.MapObject;
-import game.map.editor.MapInput;
 import game.map.editor.MapEditor;
+import game.map.editor.MapInput;
 import game.map.editor.commands.AbstractCommand;
 import game.map.editor.ui.GuiCommand;
 import game.map.editor.ui.MapObjectPanel;

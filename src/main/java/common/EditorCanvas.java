@@ -19,7 +19,7 @@ public class EditorCanvas extends AWTGLCanvas
 	{
 		GLData data = new GLData();
 		data.samples = 4;
-		data.swapInterval = 0;
+		data.swapInterval = 1;
 		data.majorVersion = 3;
 		data.minorVersion = 3;
 		data.profile = GLData.Profile.CORE;
@@ -30,11 +30,13 @@ public class EditorCanvas extends AWTGLCanvas
 	private final GLEditor editor;
 	private double framebufferScaleX = Double.NaN;
 	private double framebufferScaleY = Double.NaN;
+	private boolean renderStateInitialized;
 
 	public EditorCanvas(GLEditor editor)
 	{
 		super(getConfiguration());
 		this.editor = editor;
+		setIgnoreRepaint(true);
 	}
 
 	@Override
@@ -51,7 +53,32 @@ public class EditorCanvas extends AWTGLCanvas
 
 		updateFramebufferScale();
 		RenderState.init();
+		renderStateInitialized = true;
 		editor.glInit();
+	}
+
+	@Override
+	public void disposeCanvas()
+	{
+		try {
+			disposeRenderState();
+		}
+		finally {
+			super.disposeCanvas();
+		}
+	}
+
+	void disposeRenderState()
+	{
+		if (!renderStateInitialized)
+			return;
+
+		try {
+			runInContext(RenderState::shutdown);
+		}
+		finally {
+			renderStateInitialized = false;
+		}
 	}
 
 	@Override
@@ -60,7 +87,6 @@ public class EditorCanvas extends AWTGLCanvas
 		updateFramebufferScale();
 		editor.glDraw();
 		swapBuffers();
-		repaint();
 	}
 
 	private void updateFramebufferScale()

@@ -12,12 +12,16 @@ import java.util.List;
 
 import common.BaseCamera;
 import common.Vector3f;
+
+import game.map.Map;
+import game.map.MapObject;
 import game.map.editor.MapEditor;
 import game.map.editor.MapEditor.IShutdownListener;
 import game.map.editor.PaintManager;
 import game.map.editor.camera.MapEditViewport;
 import game.map.editor.selection.PickRay.PickHit;
 import game.map.hit.Collider;
+import game.map.hit.HitObject;
 import game.map.hit.Zone;
 import game.map.marker.Marker;
 import game.map.marker.Marker.MarkerType;
@@ -32,6 +36,7 @@ import game.map.shape.TransformMatrix;
 import game.map.shape.TriangleBatch;
 import game.world.entity.EntityInfo;
 import renderer.buffers.BufferVertex;
+import renderer.buffers.BufferedPoints;
 import renderer.buffers.CubeMesh;
 import renderer.buffers.DeferredLineRenderer;
 import renderer.buffers.LineBatch;
@@ -48,6 +53,7 @@ import renderer.shaders.scene.HitShader;
 import renderer.shaders.scene.LineShader;
 import renderer.shaders.scene.ModelShader;
 import renderer.shaders.scene.PointShader;
+import renderer.shaders.scene.TriangleCentroidShader;
 import renderer.text.TextRenderer;
 import util.MathUtil;
 
@@ -58,6 +64,7 @@ public class Renderer implements IShutdownListener
 	private LineSphere sphere36;
 	private LineSphere sphere48;
 	private CubeMesh cube;
+	private BufferedPoints triangleCentroids;
 
 	// paint sphere + interp info
 	private float paintPosX, paintPosY, paintPosZ, paintAlpha;
@@ -86,7 +93,6 @@ public class Renderer implements IShutdownListener
 		glEnable(GL_SCISSOR_TEST);
 		glEnable(GL_DEPTH_CLAMP);
 
-		RenderState.init();
 		ShadowRenderer.init();
 		DeferredLineRenderer.init();
 		TextRenderer.init();
@@ -96,6 +102,7 @@ public class Renderer implements IShutdownListener
 		sphere36 = new LineSphere(36, 36, 3);
 		sphere48 = new LineSphere(48, 48, 3);
 		cube = new CubeMesh();
+		triangleCentroids = new BufferedPoints();
 	}
 
 	public void renderTexturedCube(TransformMatrix mtx)
@@ -362,6 +369,63 @@ public class Renderer implements IShutdownListener
 				bv.setColor(PresetColor.YELLOW);
 		}
 
+		drawPoints(ignoreDepth);
+	}
+
+	public void drawTriangleCentroids(RenderingOptions opts, Map shapeMap, Map hitMap)
+	{
+		triangleCentroids.clear();
+
+		addTriangleCentroids(opts, shapeMap.modelTree);
+		addTriangleCentroids(opts, hitMap.colliderTree);
+		addTriangleCentroids(opts, hitMap.zoneTree);
+
+		ShaderManager.use(TriangleCentroidShader.class);
+		RenderState.enableDepthTest(true);
+		RenderState.setDepthWrite(false);
+		glPolygonOffset(-1.0f, -1.0f);
+		glEnable(GL_POLYGON_OFFSET_POINT);
+		triangleCentroids.loadBuffers();
+		triangleCentroids.render();
+		glDisable(GL_POLYGON_OFFSET_POINT);
+		RenderState.setDepthWrite(true);
+	}
+
+	private void addTriangleCentroids(RenderingOptions opts, Iterable<? extends MapObject> objects)
+	{
+		for (MapObject obj : objects) {
+			if (!obj.shouldDraw())
+				continue;
+
+			Color4f[] hitColors = null;
+			if (obj instanceof HitObject)
+				hitColors = ((HitObject) obj).getColors(opts.useColliderColoring);
+
+			for (Triangle t : obj.getMesh()) {
+				BufferVertex bv = triangleCentroids.addPoint(3.0f);
+				bv.setPosition(
+					(t.vert[0].getCurrentX() + t.vert[1].getCurrentX() + t.vert[2].getCurrentX()) / 3.0f,
+					(t.vert[0].getCurrentY() + t.vert[1].getCurrentY() + t.vert[2].getCurrentY()) / 3.0f,
+					(t.vert[0].getCurrentZ() + t.vert[1].getCurrentZ() + t.vert[2].getCurrentZ()) / 3.0f);
+
+				if (hitColors != null) {
+					Color4f color = t.selected ? hitColors[0] : t.doubleSided ? hitColors[2] : hitColors[1];
+					bv.setColor(color.r, color.g, color.b, 0.8f);
+				}
+				else if (t.selected)
+					bv.setColor(PresetColor.RED);
+				else
+					bv.setColor(
+						((t.vert[0].r & 0xFF) + (t.vert[1].r & 0xFF) + (t.vert[2].r & 0xFF)) / (3.0f * 255.0f),
+						((t.vert[0].g & 0xFF) + (t.vert[1].g & 0xFF) + (t.vert[2].g & 0xFF)) / (3.0f * 255.0f),
+						((t.vert[0].b & 0xFF) + (t.vert[1].b & 0xFF) + (t.vert[2].b & 0xFF)) / (3.0f * 255.0f),
+						((t.vert[0].a & 0xFF) + (t.vert[1].a & 0xFF) + (t.vert[2].a & 0xFF)) / (3.0f * 255.0f));
+			}
+		}
+	}
+
+	private void drawPoints(boolean ignoreDepth)
+	{
 		//	glPushAttrib(GL_ENABLE_BIT);
 		//	glEnable(GL_POLYGON_OFFSET_POINT);
 		//	glPolygonOffset(-1.5f, -1.5f);

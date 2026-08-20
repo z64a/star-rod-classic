@@ -5,10 +5,7 @@ import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.glUseProgram;
-import static org.lwjgl.opengl.GL30.GL_DRAW_FRAMEBUFFER;
-import static org.lwjgl.opengl.GL30.GL_FRAMEBUFFER;
-import static org.lwjgl.opengl.GL30.glBindFramebuffer;
-import static org.lwjgl.opengl.GL30.glBindVertexArray;
+import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.opengl.GL31.GL_UNIFORM_BUFFER;
 import static org.lwjgl.opengl.GL32.GL_PROGRAM_POINT_SIZE;
 
@@ -28,8 +25,13 @@ import renderer.buffers.TriangleRenderQueue;
 
 public abstract class RenderState
 {
+	private static boolean initialized;
+
 	public static final void init()
 	{
+		if (initialized)
+			throw new IllegalStateException("RenderState is already initialized");
+
 		rec = new StateRecord();
 		stack = new Stack<>();
 		drawFramebuffer = 0;
@@ -41,6 +43,7 @@ public abstract class RenderState
 
 		initProgram();
 		initVAO();
+		initMatrices();
 		initUBO();
 		initPolygonMode();
 		initDepthTest();
@@ -58,6 +61,31 @@ public abstract class RenderState
 		TriangleRenderQueue.init();
 		PointRenderQueue.init();
 		LineRenderQueue.init();
+
+		initialized = true;
+	}
+
+	public static final void shutdown()
+	{
+		if (!initialized)
+			return;
+
+		setShaderProgram(null);
+		TriangleRenderQueue.delete();
+		PointRenderQueue.delete();
+		LineRenderQueue.delete();
+		ShaderManager.shutdown();
+
+		glBindBufferBase(GL_UNIFORM_BUFFER, 0, 0);
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
+		if (matrixUBO != 0)
+			glDeleteBuffers(matrixUBO);
+		matrixUBO = 0;
+
+		stack.clear();
+		modelMatrixStack.clear();
+		rec = null;
+		initialized = false;
 	}
 
 	private static class StateRecord
@@ -190,9 +218,24 @@ public abstract class RenderState
 		rec.glColor.a = a;
 	}
 
-	public static final Color4f getColor()
+	public static final float getColorR()
 	{
-		return rec.glColor; //TODO encapsulation violated
+		return rec.glColor.r;
+	}
+
+	public static final float getColorG()
+	{
+		return rec.glColor.g;
+	}
+
+	public static final float getColorB()
+	{
+		return rec.glColor.b;
+	}
+
+	public static final float getColorA()
+	{
+		return rec.glColor.a;
 	}
 
 	// --------------------------------------------------------------------------
@@ -248,6 +291,15 @@ public abstract class RenderState
 		return rec.glPointSize;
 	}
 
+	public static final float getPointSizePixels(float size)
+	{
+		if (drawFramebuffer != 0)
+			return size;
+
+		double scale = (defaultFramebufferScaleX + defaultFramebufferScaleY) * 0.5;
+		return (float) (size * scale);
+	}
+
 	// --------------------------------------------------------------------------
 	// cache shader program
 
@@ -275,11 +327,6 @@ public abstract class RenderState
 		glBindVertexArray(rec.glVertexArray);
 	}
 
-	public static final void useDefaultVAO()
-	{
-		glBindVertexArray(0);
-	}
-
 	public static final void setVAO(int vao)
 	{
 		if (rec.glVertexArray == vao)
@@ -304,11 +351,29 @@ public abstract class RenderState
 	private static void initUBO()
 	{
 		ByteBuffer bb = BufferUtils.createByteBuffer(GLOBALS_UBO_TOTAL_SIZE);
+		putMatrix(bb, GLOBALS_UBO_POS_PERSPMTX, projectionMatrix);
+		putMatrix(bb, GLOBALS_UBO_POS_VIEWMTX, viewMatrix);
+		putMatrix(bb, GLOBALS_UBO_POS_MODELMTX, modelMatrix);
+
+		bb.position(GLOBALS_UBO_POS_VIEWPORT);
+		bb.putInt(0);
+		bb.putInt(0);
+		bb.putInt(rec.glViewSizeX);
+		bb.putInt(rec.glViewSizeY);
+		bb.position(GLOBALS_UBO_POS_TIME);
+		bb.putFloat(0.0f);
+		bb.rewind();
 
 		matrixUBO = glGenBuffers();
 		glBindBuffer(GL_UNIFORM_BUFFER, matrixUBO);
 		glBufferData(GL_UNIFORM_BUFFER, bb, GL_DYNAMIC_DRAW);
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	}
+
+	private static void putMatrix(ByteBuffer bb, int pos, TransformMatrix mtx)
+	{
+		bb.position(pos);
+		bb.asFloatBuffer().put(mtx.toFloatBuffer());
 	}
 
 	public static int getGlobalsUBO()
@@ -341,6 +406,14 @@ public abstract class RenderState
 		modelMatrix = new TransformMatrix(defaultModelMatrix);
 
 		modelMatrixStack = new Stack<>();
+	}
+
+	private static void initMatrices()
+	{
+		projectionMatrix.set(defaultProjectionMatrix);
+		viewMatrix.set(defaultViewMatrix);
+		modelMatrix.set(defaultModelMatrix);
+		modelMatrixStack.clear();
 	}
 
 	public static void setProjectionMatrix(TransformMatrix mtx)
@@ -607,7 +680,7 @@ public abstract class RenderState
 
 	public static void setBlendFunc(int srcFactor, int destFactor)
 	{
-		if (srcFactor == rec.blendDestFactor && destFactor == rec.blendDestFactor)
+		if (srcFactor == rec.blendSrcFactor && destFactor == rec.blendDestFactor)
 			return;
 
 		rec.blendSrcFactor = srcFactor;

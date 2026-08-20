@@ -124,10 +124,7 @@ public enum CharSet implements XmlSerializable
 
 	private File getImageDirectory()
 	{
-		if (Environment.project.isDecomp)
-			return new File(DUMP_STRINGS_FONT + name + "/");
-		else
-			return new File(MOD_STRINGS_FONT + name + "/");
+		return new File(MOD_STRINGS_FONT + name + "/");
 	}
 
 	public static void loadImages(FontManager manager) throws IOException

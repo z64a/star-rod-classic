@@ -115,7 +115,7 @@ public class LightingPanel extends JPanel implements IShutdownListener
 
 		JScrollPane lightListScrollPane = new JScrollPane(lightListPanel);
 		lightListScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-		lightListScrollPane.setBorder(null);
+		SwingUtils.setBorderless(lightListScrollPane);
 
 		JPanel lightSetPanel = new JPanel(new MigLayout("fill", "[grow][push][grow]"));
 

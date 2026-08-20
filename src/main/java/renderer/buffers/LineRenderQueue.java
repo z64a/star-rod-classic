@@ -88,7 +88,10 @@ public abstract class LineRenderQueue
 
 	public static void delete()
 	{
-		lines.delete();
+		if (lines != null) {
+			lines.delete();
+			lines = null;
+		}
 	}
 
 	public static void printContents()

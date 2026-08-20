@@ -8,12 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import game.string.MessageBoxes;
-import game.string.StringEncoder;
 import game.string.MessageBoxes.WindowPalette;
 import game.string.StringConstants.ControlCharacter;
 import game.string.StringConstants.StringEffect;
 import game.string.StringConstants.StringFunction;
 import game.string.StringConstants.StringStyle;
+import game.string.StringEncoder;
 import game.string.editor.MessageUtil.StringProperties;
 import game.string.editor.StringTokenizer.Sequence;
 import util.MathUtil;

@@ -43,6 +43,11 @@ public class SymGenerator
 					case data:
 						pw.printf("%08X,data,%s%n", e.address, e.name);
 						break;
+					case lbl:
+						pw.printf("%08X,data,%s%n", e.address, e.name);
+						break;
+					case sig:
+						break;
 				}
 			}
 			pw.close();
@@ -55,22 +60,19 @@ public class SymGenerator
 			pw.println(scope.name());
 			for (LibEntry e : lib) {
 				switch (e.type) {
-					/*
 					case api:
-						pw.printf("\tCPU 0x%08X: %s%n", e.address, "api_" + e.name);
 						break;
-						*/
 					case asm:
 						pw.printf("\tCPU 0x%08X: %s%n", e.address, e.name);
 						break;
-					/*
 					case script:
-						pw.printf("\tMEM 0x%08X: %s%n", e.address, "Script_" + e.name);
 						break;
 					case data:
-						pw.printf("\tMEM 0x%08X: %s%n", e.address, e.name);
 						break;
-					*/
+					case lbl:
+						break;
+					case sig:
+						break;
 				}
 			}
 		}
