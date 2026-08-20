@@ -2,32 +2,53 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.6.0] - 2026-08-XX
+## [0.6.0] - 2026-08-20
 
 ### Added
 - Releases include a packaged runtime, users no longer need to install Java
+- A comprehensive user guide with introductions, tutorials, guides, and reference material
+- Audio Booth for browsing, previewing, and exporting BGM, ambient sounds, sound effects, and instrument samples
+- Editable audio assets for sound banks, BGM, ambient sequences, and sound effects from project sources
+- Increased engine sound bank limits to allow over 160 new instruments
+- BPS is now the default format for packaged mods; legacy `.mod` packages remain available
 - Existing `PlayEffect` code and graphics can be rebuilt from `.epat` files
+- Custom themes can be created and previewed live with the new Theme Designer
+- Compiled mods include a crash-screen stack trace and external symbol map, with an option to embed function names
+- A build option can add an in-game CPU/GPU frame-time and FPS counter
 - (Map Editor) Keyboard shortcuts can now be rebound
 - (Map Editor) Vertex paint controls now support hex colors and undo/redo
+- (Map Editor) NPC markers can generate entries for the default NPC group, including settings and callback scripts
+- (Map Editor) Play in Editor now simulates spin inputs
 
 ### Fixed
+- Fixed Linux deadlocks involving editor logging, the Sprite Editor, and the String Editor
 - Viewport scaling in various editors now correctly accounts for HiDPI
 - Lines render via shaders instead of relying on the deprecated GL_LINES
+- Expanded and corrected F3DEX2 display-list dumping and parsing
 - Sprite-loading failures are now reported more clearly
+- (Map Editor) Texture LODs and various render modes now display more accurately
 - (Map Editor) Fixed crashes involving the "Cutting Triangles" tool
 - (Map Editor) Fixed crashes involving empty models and undo/redo during active transforms
 - (Map Editor) Fuse vertices no longer merges vertices with different UVs or colors
 - (Map Editor) More reliable handling of sprite shading light sources
+- (Map Editor) Fixed a crash when undoing shading changes without an active profile
 - (Map Editor) Camera target override toggles now save properly
+- (Map Editor) Duplicate texture-panner definitions from older dumps no longer overwrite the first definition
+- (Map Editor) Play in Editor camera behavior now follows zone changes and destination markers more accurately
 
 ### Changed
 - JumpTable offsets dump as labels rather than hex
 - Copy Assets to Mod now copies missing assets into partially populated directories
 - Hitting escape during a "Save and Quit?" dialog now cancels the dialog rather than exiting without saving
+- Audio archive members are discovered automatically from the raw, build, and override directories; `Files.xml` is no longer used
 - (Map Editor) Improved triangle cutting to handle shared edges more reliably
+- (Map Editor) Triangle selection now uses visible centroid handles
+- (Sprite Editor) Slightly redeisgned animation controls and added a visual raster chooser
 
 ### Removed
 - Support for decomp projects; use the current Star Rod release for decomp-based projects
+- Automatic migration for projects created by older Star Rod Classic versions
+- C-style memory-structure metadata from library function parameters
 
 ## [0.5.9] - 2025-02-07
 
