@@ -102,6 +102,25 @@ public abstract class SongModder
 		}
 	}
 
+	public static void importBgm(File bgmFile, File xmlFile) throws IOException
+	{
+		File songListFile = MOD_AUDIO.getFile(FN_AUDIO_SONGS);
+		String bgmFilename = FilenameUtils.getBaseName(bgmFile.getName()) + ".bgm";
+		SoundBankCatalog catalog = SoundBankCatalog.loadMod().withSongBanks(songListFile, bgmFilename);
+		Song song = new Song(bgmFile, catalog);
+
+		Map<String, String> names = AudioCatalog.readSongNames(songListFile);
+		String predefinedName = AudioCatalog.getName(names, bgmFilename);
+		song.name = predefinedName == null ? FilenameUtils.getBaseName(bgmFile.getName()) : predefinedName;
+		if (bgmFilename.equals(getBgmForSong(songListFile, TOAD_TOWN_SONG_ID)) && song.branchOptions == TOAD_TOWN_BRANCH_NAMES.size())
+			song.setBranchNames(TOAD_TOWN_BRANCH_NAMES);
+
+		try (XmlWriter xmw = new XmlWriter(xmlFile)) {
+			song.toXML(xmw);
+			xmw.save();
+		}
+	}
+
 	public static void buildAll() throws IOException
 	{
 		SoundBankCatalog catalog = SoundBankCatalog.loadMod();

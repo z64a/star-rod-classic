@@ -19,20 +19,21 @@ import util.Priority;
 
 public class FunctionPatcher
 {
+	private static final int AUDIO_HEAP_PRIMARY_SIZE = 0x56000;
+
 	// func_80025C60 is called while the game is initializing
 	// it comes right after an empty space at 80025C40, so well just move the whole thing up
 	// and set up a DmaCopy for our global code in the formerly empty space.
 	public static void hookBoot(Patcher p, Config cfg, RomPatcher rp, int size) throws IOException
 	{
 		int endOfAvailableMemory = 0x80800000;
-		int audioHeapBase = p.getGlobalPointerAddress(DefaultGlobals.AUDIO_HEAP.toString());
-		boolean heapsRelocated = cfg.getBoolean(Options.IncreaseHeapSizes) || audioHeapBase != DefaultGlobals.AUDIO_HEAP.getDefaultValue();
-		if (heapsRelocated)
+		if (cfg.getBoolean(Options.IncreaseHeapSizes))
 			endOfAvailableMemory = Math.min(endOfAvailableMemory, p.getGlobalPointerAddress(DefaultGlobals.WORLD_HEAP.toString()));
-		if (audioHeapBase != DefaultGlobals.AUDIO_HEAP.getDefaultValue())
-			endOfAvailableMemory = Math.min(endOfAvailableMemory, audioHeapBase);
 		if (cfg.getBoolean(Options.CompressBattleData))
 			endOfAvailableMemory = Math.min(endOfAvailableMemory, p.getGlobalPointerAddress(DefaultGlobals.BATTLE_YAY0_BUFFER.toString()));
+		int audioOverflowBase = p.getGlobalPointerAddress(DefaultGlobals.AUDIO_HEAP_OVERFLOW.toString());
+		if (audioOverflowBase != 0)
+			endOfAvailableMemory = Math.min(endOfAvailableMemory, audioOverflowBase);
 
 		Logger.log(String.format("In-game RAM usage: %X bytes (%.02f%% of available)", size,
 			(100.0 * size) / (endOfAvailableMemory - RAM_BASE)), Priority.IMPORTANT);
@@ -258,19 +259,25 @@ public class FunctionPatcher
 		rp.writeInt(0); // NOP
 	}
 
-	public static void modifyHeaps(Patcher p, Config cfg, GlobalPatchManager gpm, RomPatcher rp, int minimumAudioHeapSize) throws IOException
+	public static void modifyHeaps(Patcher p, Config cfg, GlobalPatchManager gpm, RomPatcher rp,
+		int requiredAudioHeapSize, int minimumAudioOverflowSize) throws IOException
 	{
+		rp.seek("BGM/MSEQ Workspace Size", 0x2E33C);
+		rp.writeInt(0x34068040); // ORI A2, R0, 8040
+
 		int worldHeapSize = 0x54000;
 		int collisionHeapSize = 0x18000;
 		int spriteHeapSize = 0x40000;
 		int battleHeapSize = 0x25800;
-		int audioHeapSize = 0x56000;
+		int configuredAudioHeapSize = AUDIO_HEAP_PRIMARY_SIZE;
+		int audioOverflowSize = minimumAudioOverflowSize;
 
 		int mapHeapBase = 0x802FB800;
 		int collisionHeapBase = 0x80268000;
 		int spriteHeapBase = 0x8034F800;
 		int battleHeapBase = 0x803DA800;
-		int audioHeapBase = 0x801AA000;
+		int audioHeapBase = DefaultGlobals.AUDIO_HEAP.getDefaultValue();
+		int audioOverflowBase = 0;
 		int BattleYay0BufferBase = DefaultGlobals.BATTLE_YAY0_BUFFER.getDefaultValue();
 		int expansionHeapBase = 0x80800000;
 
@@ -281,15 +288,10 @@ public class FunctionPatcher
 			collisionHeapSize = cfg.getHex(Options.HeapSizeCollision);
 			spriteHeapSize = cfg.getHex(Options.HeapSizeSprite);
 			battleHeapSize = cfg.getHex(Options.HeapSizeBattle);
-			audioHeapSize = cfg.getHex(Options.HeapSizeAudio);
+			configuredAudioHeapSize = cfg.getHex(Options.HeapSizeAudio);
 		}
 
-		if (minimumAudioHeapSize > audioHeapSize) {
-			Logger.logf("Increasing audio heap from %X to %X to fit compiled audio assets.", audioHeapSize, minimumAudioHeapSize);
-			audioHeapSize = minimumAudioHeapSize;
-		}
-
-		if (increaseHeapSizes || audioHeapSize > 0x56000) {
+		if (increaseHeapSizes) {
 			if ((worldHeapSize & 0x7FF) != 0)
 				throw new StarRodException("Invalid world heap size: %X %nSize must be multiple of 800.", worldHeapSize);
 
@@ -302,8 +304,8 @@ public class FunctionPatcher
 			if ((spriteHeapSize & 0xFFFF) != 0)
 				throw new StarRodException("Invalid sprite heap size: %X %nSize must be multiple of 10000.", spriteHeapSize);
 
-			if ((audioHeapSize & 0x7FF) != 0)
-				throw new StarRodException("Invalid audio heap size: %X %nSize must be multiple of 800.", audioHeapSize);
+			if ((configuredAudioHeapSize & 0x7FF) != 0)
+				throw new StarRodException("Invalid audio heap size: %X %nSize must be multiple of 800.", configuredAudioHeapSize);
 
 			if (worldHeapSize < 0x54000)
 				throw new StarRodException("Invalid world heap size: %X %nSize cannot be smaller than default: 54000.", worldHeapSize);
@@ -317,8 +319,8 @@ public class FunctionPatcher
 			if (spriteHeapSize < 0x40000)
 				throw new StarRodException("Invalid world heap size: %X %nSize cannot be smaller than default: 40000.", spriteHeapSize);
 
-			if (audioHeapSize < 0x56000)
-				throw new StarRodException("Invalid audio heap size: %X %nSize cannot be smaller than default: 56000.", audioHeapSize);
+			if (configuredAudioHeapSize < AUDIO_HEAP_PRIMARY_SIZE)
+				throw new StarRodException("Invalid audio heap size: %X %nSize cannot be smaller than default: 56000.", configuredAudioHeapSize);
 
 			battleHeapBase = expansionHeapBase - battleHeapSize;
 			spriteHeapBase = battleHeapBase - spriteHeapSize;
@@ -327,18 +329,31 @@ public class FunctionPatcher
 			expansionHeapBase = mapHeapBase;
 		}
 
+		int configuredAudioOverflowSize = configuredAudioHeapSize - AUDIO_HEAP_PRIMARY_SIZE;
+		if (configuredAudioOverflowSize > audioOverflowSize)
+			audioOverflowSize = configuredAudioOverflowSize;
+		if (minimumAudioOverflowSize > configuredAudioOverflowSize) {
+			Logger.logf("Adding an audio overflow arena of %X bytes to fit %X bytes of compiled audio allocations.",
+				minimumAudioOverflowSize, requiredAudioHeapSize);
+		}
+
 		if (compressBattleData) {
 			BattleYay0BufferBase = expansionHeapBase - RAM.BATTLE_DATA_MAX_SIZE;
 			expansionHeapBase = BattleYay0BufferBase;
 		}
 
-		if (audioHeapSize > 0x56000)
-			audioHeapBase = expansionHeapBase - audioHeapSize;
+		if (audioOverflowSize > 0) {
+			audioOverflowBase = expansionHeapBase - audioOverflowSize;
+			expansionHeapBase = audioOverflowBase;
+		}
+		gpm.readInternalPatch("SplitAudioHeap.patch",
+			String.format("%s=%08X", "OverflowBase", audioOverflowBase),
+			String.format("%s=%08X", "OverflowSize", audioOverflowSize));
 
-		if (increaseHeapSizes || audioHeapSize > 0x56000) {
+		if (increaseHeapSizes) {
 			gpm.readInternalPatch("EnlargeHeaps.patch",
 				String.format("%s=%08X", "AudioBase", audioHeapBase),
-				String.format("%s=%08X", "AudioSize", audioHeapSize),
+				String.format("%s=%08X", "AudioSize", AUDIO_HEAP_PRIMARY_SIZE),
 				String.format("%s=%08X", "WorldBase", mapHeapBase),
 				String.format("%s=%08X", "WorldSize", worldHeapSize),
 				String.format("%s=%08X", "CollisionBase", collisionHeapBase),
@@ -355,13 +370,15 @@ public class FunctionPatcher
 		p.setGlobalPointer(DefaultGlobals.SPRITE_HEAP, spriteHeapBase);
 		p.setGlobalPointer(DefaultGlobals.BATTLE_HEAP, battleHeapBase);
 		p.setGlobalPointer(DefaultGlobals.AUDIO_HEAP, audioHeapBase);
+		p.setGlobalPointer(DefaultGlobals.AUDIO_HEAP_OVERFLOW, audioOverflowBase);
 		p.setGlobalPointer(DefaultGlobals.BATTLE_YAY0_BUFFER, BattleYay0BufferBase);
 
 		p.setGlobalConstant(DefaultGlobals.WORLD_HEAP_SIZE, String.format("%08X", worldHeapSize));
 		p.setGlobalConstant(DefaultGlobals.COLLISION_HEAP_SIZE, String.format("%08X", collisionHeapSize));
 		p.setGlobalConstant(DefaultGlobals.SPRITE_HEAP_SIZE, String.format("%08X", spriteHeapSize));
 		p.setGlobalConstant(DefaultGlobals.BATTLE_HEAP_SIZE, String.format("%08X", battleHeapSize));
-		p.setGlobalConstant(DefaultGlobals.AUDIO_HEAP_SIZE, String.format("%08X", audioHeapSize));
+		p.setGlobalConstant(DefaultGlobals.AUDIO_HEAP_SIZE, String.format("%08X", AUDIO_HEAP_PRIMARY_SIZE + audioOverflowSize));
+		p.setGlobalConstant(DefaultGlobals.AUDIO_HEAP_OVERFLOW_SIZE, String.format("%08X", audioOverflowSize));
 	}
 
 	@Deprecated

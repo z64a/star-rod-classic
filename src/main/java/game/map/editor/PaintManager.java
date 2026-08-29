@@ -134,7 +134,7 @@ public class PaintManager
 						case HSL:
 							int[] vhsl = RGBtoHSL(new int[] { v.r & 0xFF, v.g & 0xFF, v.b & 0xFF });
 							int[] out_hsl = new int[3];
-							out_hsl[0] = getNewComponent(paintVertexTab.channelH, vhsl[0], brushStrength);
+							out_hsl[0] = getNewHue(paintVertexTab.channelH, vhsl[0], brushStrength);
 							out_hsl[1] = getNewComponent(paintVertexTab.channelS, vhsl[1], brushStrength);
 							out_hsl[2] = getNewComponent(paintVertexTab.channelV, vhsl[2], brushStrength);
 							out_rgb = HSLtoRGB(out_hsl);
@@ -257,14 +257,32 @@ public class PaintManager
 		MapEditor.execute(new SetPaintColor(oldColor, newColor));
 	}
 
+	// Slider values cannot always be recovered from RGB; for example, hue 0 and 3600 produce the same color.
+	private static void commitSelectedColor(PaintSlider slider, int oldSliderValue, int newSliderValue, Color oldColor, Color newColor)
+	{
+		paintVertexTab.applySliderColor(slider, newSliderValue, newColor);
+		MapEditor.execute(new SetPaintColor(slider, oldSliderValue, newSliderValue, oldColor, newColor));
+	}
+
 	private static final class SetPaintColor extends AbstractCommand
 	{
+		private final PaintSlider slider;
+		private final int oldSliderValue;
+		private final int newSliderValue;
 		private final Color oldColor;
 		private final Color newColor;
 
 		private SetPaintColor(Color oldColor, Color newColor)
 		{
+			this(null, 0, 0, oldColor, newColor);
+		}
+
+		private SetPaintColor(PaintSlider slider, int oldSliderValue, int newSliderValue, Color oldColor, Color newColor)
+		{
 			super("Set Paint Color");
+			this.slider = slider;
+			this.oldSliderValue = oldSliderValue;
+			this.newSliderValue = newSliderValue;
 			this.oldColor = oldColor;
 			this.newColor = newColor;
 		}
@@ -272,6 +290,9 @@ public class PaintManager
 		@Override
 		public boolean shouldExec()
 		{
+			if (slider != null)
+				return oldSliderValue != newSliderValue;
+
 			return !oldColor.equals(newColor);
 		}
 
@@ -285,14 +306,22 @@ public class PaintManager
 		public void exec()
 		{
 			super.exec();
-			paintVertexTab.setSelectedColor(newColor);
+			apply(newColor, newSliderValue);
 		}
 
 		@Override
 		public void undo()
 		{
 			super.undo();
-			paintVertexTab.setSelectedColor(oldColor);
+			apply(oldColor, oldSliderValue);
+		}
+
+		private void apply(Color color, int sliderValue)
+		{
+			if (slider == null)
+				paintVertexTab.setSelectedColor(color);
+			else
+				paintVertexTab.applySliderColor(slider, sliderValue, color);
 		}
 	}
 
@@ -403,7 +432,7 @@ public class PaintManager
 			group.add(hslButton);
 
 			// update the color preview when the sliders are adjusted
-			SliderListener colorPreviewListener = (preview, oldValue, value) -> {
+			SliderListener colorPreviewListener = (slider, preview, oldValue, value) -> {
 				if (ignoreSliderUpdates)
 					return;
 
@@ -417,7 +446,7 @@ public class PaintManager
 				else {
 					Color oldColor = colorBeforeAdjustment == null ? selectedColor : colorBeforeAdjustment;
 					colorBeforeAdjustment = null;
-					commitSelectedColor(oldColor, c);
+					commitSelectedColor(slider, oldValue, value, oldColor, c);
 				}
 			};
 
@@ -455,16 +484,16 @@ public class PaintManager
 			makePaintChannelUndoable(channelV, "Lightness");
 			makePaintChannelUndoable(channelA, "Alpha");
 
-			innerRadiusSlider = new PaintSlider("Inner", "w 50!", (preview, oldValue, value) -> {
+			innerRadiusSlider = new PaintSlider("Inner", "w 50!", (slider, preview, oldValue, value) -> {
 				if (!preview)
 					commitBrushSettings("Set Inner Brush Radius");
 			}, 0, 150, 0, 50, false);
-			outerRadiusSlider = new PaintSlider("Outer", "w 50!", (preview, oldValue, value) -> {
+			outerRadiusSlider = new PaintSlider("Outer", "w 50!", (slider, preview, oldValue, value) -> {
 				innerRadiusSlider.setMaximum(value);
 				if (!preview)
 					commitBrushSettings("Set Outer Brush Radius");
 			}, 1, 500, 150, 50, false);
-			forceSlider = new PaintSlider("Power", "w 50!", (preview, oldValue, value) -> {
+			forceSlider = new PaintSlider("Power", "w 50!", (slider, preview, oldValue, value) -> {
 				if (!preview)
 					commitBrushSettings("Set Brush Power");
 			}, 1, 100, 100, 10, false);
@@ -635,6 +664,13 @@ public class PaintManager
 			selectedColor = c;
 			colorPreview.setForeground(c);
 			colorHexField.setValue((c.getRed() << 16) | (c.getGreen() << 8) | c.getBlue());
+		}
+
+		private void applySliderColor(PaintSlider slider, int value, Color c)
+		{
+			colorBeforeAdjustment = null;
+			slider.setValue(value);
+			previewSelectedColor(c);
 		}
 
 		private Color getColorFromControls()
@@ -942,7 +978,7 @@ public class PaintManager
 
 	private static interface SliderListener
 	{
-		public void update(boolean preview, int oldValue, int newValue);
+		public void update(PaintSlider slider, boolean preview, int oldValue, int newValue);
 	}
 
 	private static class PaintSlider extends JComponent
@@ -1117,7 +1153,7 @@ public class PaintManager
 			if (mode == UpdateMode.FROM_SLIDER)
 				textField.setText(Integer.toString(value));
 
-			listener.update(true, committedValue, value);
+			listener.update(this, true, committedValue, value);
 			update = UpdateMode.NONE;
 		}
 
@@ -1129,7 +1165,7 @@ public class PaintManager
 			else if (mode == UpdateMode.FROM_TEXTFIELD)
 				slider.setValue(value);
 
-			listener.update(false, committedValue, value);
+			listener.update(this, false, committedValue, value);
 			committedValue = value;
 			update = UpdateMode.NONE;
 		}
@@ -1148,6 +1184,15 @@ public class PaintManager
 		{
 			return hasCheckbox && checkbox.isSelected();
 		}
+	}
+
+	private static int getNewHue(PaintSlider slider, int hue, int increment)
+	{
+		// RGB cannot preserve the hue branch at the red seam or for gray colors, so choose the branch nearest the target.
+		if (hue == 0 && slider.isPaintEnabled() && slider.getValue() > hmax / 2)
+			hue = hmax;
+
+		return getNewComponent(slider, hue, increment);
 	}
 
 	public static int getNewComponent(PaintSlider slider, int val, int increment)

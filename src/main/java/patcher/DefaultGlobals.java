@@ -21,6 +21,8 @@ public enum DefaultGlobals
 	BATTLE_HEAP_SIZE	("BattleHeapSize",		0x25800),
 	AUDIO_HEAP			("AudioHeap",			0x801AA000),
 	AUDIO_HEAP_SIZE		("AudioHeapSize",		0x56000),
+	AUDIO_HEAP_OVERFLOW	("AudioHeapOverflow",	0),
+	AUDIO_HEAP_OVERFLOW_SIZE	("AudioHeapOverflowSize",	0),
 	BATTLE_YAY0_BUFFER  ("BattleYay0Buffer", 	0x804E0000),
 
 	MOD_BYTES			("ModBytes",			0x80356000),

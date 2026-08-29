@@ -51,7 +51,7 @@ Audio Booth reads the project XML and sound banks directly. A successful preview
 
 Enable **Inject Audio Files** in the project build options and use **Compile Mod**. Star Rod builds `SoundEffects.xml` and any referenced files under `audio/sfx/` into `DAT1.sef`, rebuilds the audio catalogs, and injects the selected audio files into the ROM.
 
-`DAT1.sef` is not limited to its original `0x5200`-byte allocation. Star Rod adjusts the allocation to the rebuilt file and increases the audio heap when necessary.
+`DAT1.sef` is not limited to its original `0x5200`-byte allocation. Star Rod adjusts the allocation to the rebuilt file and reserves audio overflow space when the selected startup allocations do not fit in the retail heap.
 
 ## Use the Sound
 

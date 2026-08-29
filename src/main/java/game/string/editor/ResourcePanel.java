@@ -164,8 +164,7 @@ public class ResourcePanel extends JPanel
 
 			if (nodeData.getType() == FileType.Resource && nodeData.modified) {
 				StringResource res = nodeData.getResource();
-				if (!editor.resourcesToSave.contains(res))
-					editor.resourcesToSave.add(res);
+				editor.queueResourceForSave(res);
 			}
 
 			for (int i = 0; i < node.getChildCount(); i++)

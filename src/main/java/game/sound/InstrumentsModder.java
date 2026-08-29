@@ -19,6 +19,7 @@ import org.w3c.dom.Element;
 
 import app.Environment;
 import app.input.IOUtils;
+import app.input.InputFileException;
 import util.DynamicByteBuffer;
 import util.Logger;
 import util.xml.XmlWrapper.XmlReader;
@@ -57,6 +58,8 @@ public class InstrumentsModder
 		}
 
 		ArrayList<InstrumentPreset> instruments = load(MOD_AUDIO.getFile(FN_AUDIO_PRESETS));
+		if (instruments.size() > 64)
+			throw new InputFileException(MOD_AUDIO.getFile(FN_AUDIO_PRESETS), "Instrument preset list contains more than 64 entries");
 		SoundBankCatalog catalog = SoundBankCatalog.loadMod();
 		for (InstrumentPreset instrument : instruments)
 			instrument.resolveWav(catalog);
