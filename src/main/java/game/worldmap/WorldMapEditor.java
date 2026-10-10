@@ -76,6 +76,7 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 
 	private List<WorldLocation> locations;
 	private boolean loadedSuccessfully;
+	private boolean ignoreChanges;
 
 	private JCheckBox cbMoveTogether;
 	private JCheckBox cbUseOriginals;
@@ -162,8 +163,13 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 
 		locationsBox = new JComboBox<>(ProjectDatabase.LocationType.getValues());
 		locationsBox.addActionListener((e) -> {
-			if (selectedLocation != null)
-				selectedLocation.locationName = (String) locationsBox.getSelectedItem();
+			if (!ignoreChanges && selectedLocation != null) {
+				String name = (String) locationsBox.getSelectedItem();
+				if (name != null && !name.equals(selectedLocation.locationName)) {
+					selectedLocation.locationName = name;
+					modified = true;
+				}
+			}
 		});
 		locationsBox.setMaximumRowCount(20);
 		SwingUtils.addBorderPadding(locationsBox);
@@ -655,6 +661,11 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 		try {
 			locations = WorldMapModder.loadLocations();
 			loadedSuccessfully = true;
+			modified = false;
+			mouseMarker = null;
+			dragMarker = null;
+			parentingMarker = null;
+			setSelectedLocation(null);
 			Logger.log("Loaded world map.");
 		}
 		catch (IOException e) {
@@ -673,6 +684,7 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 		}
 
 		try {
+			stopHoldingLMB();
 			WorldMapModder.saveLocations(locations);
 			modified = false;
 			Logger.log("Saved world map.");
@@ -730,11 +742,15 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 			float scale = cam.getZoom();
 			dragMarker.dragX += dx * scale;
 			dragMarker.dragY += dy * scale;
+			if (Math.round(dragMarker.dragX) != 0 || Math.round(dragMarker.dragY) != 0)
+				modified = true;
 
 			if ((dragMarker instanceof WorldLocation loc) && cbMoveTogether.isSelected()) {
 				for (WorldPathElement elem : loc.path) {
 					elem.dragX += dx * scale;
 					elem.dragY += dy * scale;
+					if (Math.round(elem.dragX) != 0 || Math.round(elem.dragY) != 0)
+						modified = true;
 				}
 			}
 		}
@@ -775,25 +791,26 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 	{
 		if (dragMarker != null) {
 			for (WorldLocation loc : locations) {
-				if (loc.dragX != 0 || loc.dragY != 0) {
-					loc.x += Math.round(loc.dragX);
-					loc.y += Math.round(loc.dragY);
-					loc.dragX = 0;
-					loc.dragY = 0;
-				}
-
-				for (WorldPathElement elem : loc.path) {
-					if (elem.dragX != 0 || elem.dragY != 0) {
-						elem.x += Math.round(elem.dragX);
-						elem.y += Math.round(elem.dragY);
-						elem.dragX = 0;
-						elem.dragY = 0;
-					}
-				}
+				finishDrag(loc);
+				for (WorldPathElement elem : loc.path)
+					finishDrag(elem);
 			}
 
 			dragMarker = null;
 		}
+	}
+
+	private void finishDrag(WorldMarker marker)
+	{
+		int dx = Math.round(marker.dragX);
+		int dy = Math.round(marker.dragY);
+		if (dx != 0 || dy != 0) {
+			marker.x += dx;
+			marker.y += dy;
+			modified = true;
+		}
+		marker.dragX = 0;
+		marker.dragY = 0;
 	}
 
 	@Override
@@ -809,17 +826,23 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 	{
 		if (parentingMarker != null) {
 			if (mouseMarker != null) {
+				WorldLocation loc = (WorldLocation) parentingMarker;
+				WorldLocation parent = loc.parent;
 				if (mouseMarker instanceof WorldLocation)
-					((WorldLocation) parentingMarker).parent = ((WorldLocation) mouseMarker);
+					parent = (WorldLocation) mouseMarker;
 				else if (mouseMarker instanceof WorldPathElement)
-					((WorldLocation) parentingMarker).parent = ((WorldPathElement) mouseMarker).owner;
+					parent = ((WorldPathElement) mouseMarker).owner;
+				if (loc.parent != parent) {
+					loc.parent = parent;
+					modified = true;
+				}
 			}
 
 			parentingMarker = null;
 		}
 	}
 
-	private static void addPathPoint(WorldMarker marker)
+	private void addPathPoint(WorldMarker marker)
 	{
 		if (marker instanceof WorldLocation loc) {
 			if (loc.path.size() >= 32) {
@@ -856,6 +879,7 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 			int dX = prev1X - prev2X;
 			int dY = prev1Y - prev2Y;
 			loc.path.add(new WorldPathElement(loc, prev1X + dX, prev1Y + dY));
+			modified = true;
 		}
 		else if (marker instanceof WorldPathElement elem) {
 			if (elem.owner.path.size() >= 32) {
@@ -902,10 +926,11 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 			}
 
 			elem.owner.path.add(pos + 1, new WorldPathElement(elem.owner, prev1X + dX, prev1Y + dY));
+			modified = true;
 		}
 	}
 
-	private static void removePathPoint(WorldMarker marker)
+	private void removePathPoint(WorldMarker marker)
 	{
 		if (marker instanceof WorldLocation loc) {
 			if (loc.path.size() == 0) {
@@ -915,9 +940,11 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 			}
 
 			loc.path.remove(loc.path.size() - 1);
+			modified = true;
 		}
 		else if (marker instanceof WorldPathElement elem) {
-			elem.owner.path.remove(elem);
+			if (elem.owner.path.remove(elem))
+				modified = true;
 		}
 	}
 
@@ -926,7 +953,9 @@ public class WorldMapEditor extends BaseEditor implements MouseManagerListener
 		selectedLocation = loc;
 		selectedPanel.setVisible(selectedLocation != null);
 		if (selectedLocation != null) {
+			ignoreChanges = true;
 			locationsBox.setSelectedItem(selectedLocation.locationName);
+			ignoreChanges = false;
 		}
 	}
 }

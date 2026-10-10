@@ -8,8 +8,26 @@ import util.Logger;
 
 public class CommandManager
 {
-	private EvictingStack<AbstractCommand> undoStack;
-	private Stack<AbstractCommand> redoStack;
+	private EvictingStack<HistoryEntry> undoStack;
+	private Stack<HistoryEntry> redoStack;
+
+	private long currentState;
+	private long savedState;
+	private long nextState;
+
+	private static class HistoryEntry
+	{
+		private final AbstractCommand command;
+		private final long beforeState;
+		private final long afterState;
+
+		private HistoryEntry(AbstractCommand command, long beforeState, long afterState)
+		{
+			this.command = command;
+			this.beforeState = beforeState;
+			this.afterState = afterState;
+		}
+	}
 
 	public CommandManager(int undoLimit)
 	{
@@ -28,11 +46,7 @@ public class CommandManager
 			return;
 
 		cmd.exec();
-		undoStack.push(cmd);
-		redoStack.clear();
-
-		if (cmd.modifiesMap())
-			MapEditor.instance().map.modified = true;
+		pushCommand(cmd);
 	}
 
 	/**
@@ -43,16 +57,36 @@ public class CommandManager
 	 */
 	public void pushCommand(AbstractCommand cmd)
 	{
-		undoStack.push(cmd);
+		long beforeState = currentState;
+		if (cmd.modifiesMap())
+			currentState = ++nextState;
+
+		undoStack.push(new HistoryEntry(cmd, beforeState, currentState));
 		redoStack.clear();
+		if (cmd.modifiesMap())
+			updateModified();
+	}
+
+	public void markSaved()
+	{
+		savedState = currentState;
+		updateModified();
+	}
+
+	private void updateModified()
+	{
+		MapEditor.instance().map.modified = currentState != savedState;
 	}
 
 	public void action_Undo()
 	{
 		if (undoStack.size() > 0) {
-			AbstractCommand cmd = undoStack.pop();
-			cmd.undo();
-			redoStack.push(cmd);
+			HistoryEntry entry = undoStack.pop();
+			entry.command.undo();
+			currentState = entry.beforeState;
+			redoStack.push(entry);
+			if (entry.command.modifiesMap())
+				updateModified();
 		}
 		else {
 			Logger.log("Can't undo any more.");
@@ -62,9 +96,12 @@ public class CommandManager
 	public void action_Redo()
 	{
 		if (redoStack.size() > 0) {
-			AbstractCommand cmd = redoStack.pop();
-			cmd.exec();
-			undoStack.push(cmd);
+			HistoryEntry entry = redoStack.pop();
+			entry.command.exec();
+			currentState = entry.afterState;
+			undoStack.push(entry);
+			if (entry.command.modifiesMap())
+				updateModified();
 		}
 		else {
 			Logger.log("Can't redo anything.");

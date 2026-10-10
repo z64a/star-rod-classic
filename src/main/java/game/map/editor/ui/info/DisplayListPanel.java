@@ -10,6 +10,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -40,7 +41,9 @@ import game.map.editor.ui.SwingGUI;
 import game.map.mesh.AbstractMesh;
 import game.map.mesh.TexturedMesh.DisplayListModel;
 import game.map.mesh.Triangle;
+import game.map.mesh.Vertex;
 import game.map.shape.Model;
+import game.map.shape.TransformMatrix;
 import game.map.shape.TriangleBatch;
 import game.map.shape.commands.ChangeGeometryFlags;
 import game.map.shape.commands.ChangeGeometryFlags.GeometryFlagsPanel;
@@ -53,6 +56,7 @@ import game.map.shape.commands.FlushPipeline;
 import game.map.shape.commands.SetGeometryFlags;
 import net.miginfocom.swing.MigLayout;
 import util.Logger;
+import util.identity.IdentityArrayList;
 import util.identity.IdentityHashSet;
 import util.ui.ThemedSplitButton;
 
@@ -796,7 +800,7 @@ public class DisplayListPanel extends JPanel implements IShutdownListener, ListS
 							newOrder.add(mergeBatch);
 
 							if (mergeSelected)
-								newSelection.add(newOrder.size());
+								newSelection.add(newOrder.size() - 1);
 
 							if (!mergeTriangles.isEmpty())
 								addCommands.add(new AddTriangles(mergeBatch, mergeTriangles));
@@ -819,7 +823,7 @@ public class DisplayListPanel extends JPanel implements IShutdownListener, ListS
 					newOrder.add(mergeBatch);
 
 					if (mergeSelected)
-						newSelection.add(newOrder.size());
+						newSelection.add(newOrder.size() - 1);
 
 					if (!mergeTriangles.isEmpty())
 						addCommands.add(new AddTriangles(mergeBatch, mergeTriangles));
@@ -827,6 +831,15 @@ public class DisplayListPanel extends JPanel implements IShutdownListener, ListS
 			}
 
 			super.setNewOrder(newOrder, newSelection);
+		}
+
+		@Override
+		public boolean shouldExec()
+		{
+			for (AddTriangles cmd : addCommands)
+				if (!cmd.shouldExec())
+					return false;
+			return super.shouldExec();
 		}
 
 		@Override
@@ -853,8 +866,10 @@ public class DisplayListPanel extends JPanel implements IShutdownListener, ListS
 		private final TriangleBatch newParent;
 
 		private final List<Triangle> triangles;
-		private final List<TriangleBatch> oldParent;
+		private final IdentityHashMap<TriangleBatch, IdentityArrayList<Triangle>> oldTriangles;
 		private final IdentityHashSet<AbstractMesh> meshes;
+		private final TriangleTransfer transfer;
+		private final AbstractCommand selectionChange;
 
 		public MergeTriangles(Model mdl, TriangleBatch newParent)
 		{
@@ -872,18 +887,26 @@ public class DisplayListPanel extends JPanel implements IShutdownListener, ListS
 					iter.remove();
 			}
 
-			oldParent = new ArrayList<>(triangles.size());
+			oldTriangles = new IdentityHashMap<>();
+			oldTriangles.put(newParent, new IdentityArrayList<>(newParent.triangles));
 			for (int i = 0; i < triangles.size(); i++) {
 				TriangleBatch parentBatch = triangles.get(i).parentBatch;
-				oldParent.add(parentBatch);
+				oldTriangles.computeIfAbsent(parentBatch, batch -> new IdentityArrayList<>(batch.triangles));
 				meshes.add(parentBatch.parentMesh);
 			}
+			transfer = new TriangleTransfer(newParent, triangles);
+			if (transfer.valid && transfer.copiedVertices) {
+				selectionChange = editor.selectionManager.getVertexSelectionUpdate(triangles, transfer.oldVertices, transfer.newVertices);
+				selectionChange.silence();
+			}
+			else
+				selectionChange = null;
 		}
 
 		@Override
 		public boolean shouldExec()
 		{
-			return triangles.size() > 0;
+			return triangles.size() > 0 && transfer.valid;
 		}
 
 		@Override
@@ -893,10 +916,12 @@ public class DisplayListPanel extends JPanel implements IShutdownListener, ListS
 
 			for (int i = 0; i < triangles.size(); i++) {
 				Triangle t = triangles.get(i);
-				oldParent.get(i).triangles.remove(t);
+				t.parentBatch.triangles.remove(t);
 				newParent.triangles.add(t);
-				t.setParent(newParent);
 			}
+			transfer.exec();
+			if (selectionChange != null)
+				selectionChange.exec();
 
 			for (AbstractMesh mesh : meshes)
 				mesh.parentObject.dirtyAABB = true;
@@ -910,12 +935,11 @@ public class DisplayListPanel extends JPanel implements IShutdownListener, ListS
 		{
 			super.undo();
 
-			for (int i = 0; i < triangles.size(); i++) {
-				Triangle t = triangles.get(i);
-				newParent.triangles.remove(t);
-				oldParent.get(i).triangles.add(t);
-				t.setParent(oldParent.get(i));
-			}
+			for (TriangleBatch batch : oldTriangles.keySet())
+				batch.triangles = new IdentityArrayList<>(oldTriangles.get(batch));
+			transfer.undo();
+			if (selectionChange != null)
+				selectionChange.undo();
 
 			for (AbstractMesh mesh : meshes)
 				mesh.parentObject.dirtyAABB = true;
@@ -929,18 +953,20 @@ public class DisplayListPanel extends JPanel implements IShutdownListener, ListS
 	{
 		private final TriangleBatch batch;
 		private final List<Triangle> triangles;
+		private final TriangleTransfer transfer;
 
 		public AddTriangles(TriangleBatch parent, List<Triangle> triangles)
 		{
 			super("Add " + triangles.size() + " Triangles");
 			this.batch = parent;
-			this.triangles = triangles;
+			this.triangles = new ArrayList<>(triangles);
+			transfer = new TriangleTransfer(batch, this.triangles);
 		}
 
 		@Override
 		public boolean shouldExec()
 		{
-			return triangles.size() > 0;
+			return triangles.size() > 0 && transfer.valid;
 		}
 
 		@Override
@@ -948,11 +974,8 @@ public class DisplayListPanel extends JPanel implements IShutdownListener, ListS
 		{
 			super.exec();
 
-			for (int i = 0; i < triangles.size(); i++) {
-				Triangle t = triangles.get(i);
-				batch.triangles.add(t);
-				t.setParent(batch);
-			}
+			batch.triangles.addAll(triangles);
+			transfer.exec();
 
 			batch.parentMesh.parentObject.dirtyAABB = true;
 
@@ -969,11 +992,104 @@ public class DisplayListPanel extends JPanel implements IShutdownListener, ListS
 				Triangle t = triangles.get(i);
 				batch.triangles.remove(t);
 			}
+			transfer.undo();
 
 			batch.parentMesh.parentObject.dirtyAABB = true;
 
 			// update the display command descriptions
 			DisplayListPanel.instance().commandList.repaint();
+		}
+	}
+
+	private static final class TriangleTransfer
+	{
+		private final TriangleBatch batch;
+		private final List<Triangle> triangles;
+		private final List<TriangleBatch> oldParents = new ArrayList<>();
+		private final List<Vertex> oldVertices = new ArrayList<>();
+		private final List<Vertex> newVertices = new ArrayList<>();
+		private boolean copiedVertices;
+		private boolean valid = true;
+
+		private TriangleTransfer(TriangleBatch batch, List<Triangle> triangles)
+		{
+			this.batch = batch;
+			this.triangles = triangles;
+			for (Triangle t : triangles) {
+				oldParents.add(t.parentBatch);
+				for (Vertex v : t.vert) {
+					oldVertices.add(v);
+					copiedVertices |= v.parentMesh != batch.parentMesh;
+				}
+			}
+			if (!copiedVertices) {
+				newVertices.addAll(oldVertices);
+				return;
+			}
+
+			Model model = batch.parentMesh.parentObject instanceof Model ? (Model) batch.parentMesh.parentObject : null;
+			boolean transformed = model != null && (model.hasTransformMatrix.get() || model.recievesTransform);
+			TransformMatrix inverse = null;
+			if (transformed) {
+				inverse = model.cumulativeTransformMatrix.getInverse();
+				TransformMatrix product = TransformMatrix.multiply(model.cumulativeTransformMatrix, inverse);
+				for (int row = 0; row < 4; row++) {
+					for (int col = 0; col < 4; col++) {
+						double value = product.get(row, col);
+						if (!Double.isFinite(value) || Math.abs(value - (row == col ? 1.0 : 0.0)) > 0.00001) {
+							Logger.logWarning("Cannot transfer triangles: the destination transform could not be inverted.");
+							valid = false;
+							return;
+						}
+					}
+				}
+			}
+
+			IdentityHashMap<Vertex, Vertex> vertexMap = new IdentityHashMap<>();
+			for (Vertex v : oldVertices) {
+				if (v.parentMesh == batch.parentMesh) {
+					newVertices.add(v);
+					continue;
+				}
+				Vertex replacement = vertexMap.get(v);
+				if (replacement == null) {
+					// Keep vertices still used by the source mesh independent of the destination.
+					replacement = v.deepCopy();
+					replacement.parentMesh = batch.parentMesh;
+					replacement.useLocal = false;
+					replacement.getPosition().setPosition(v.getCurrentPos());
+					if (transformed) {
+						inverse.forceTransform(replacement.getPosition(), replacement.getLocalPosition());
+						replacement.forceTransform(model.cumulativeTransformMatrix);
+					}
+					else {
+						replacement.copyWorldToLocal();
+						replacement.useLocal = model != null;
+					}
+					vertexMap.put(v, replacement);
+				}
+				newVertices.add(replacement);
+			}
+		}
+
+		private void exec()
+		{
+			for (int i = 0; i < triangles.size(); i++) {
+				Triangle t = triangles.get(i);
+				t.setParent(batch);
+				for (int j = 0; j < 3; j++)
+					t.vert[j] = newVertices.get(3 * i + j);
+			}
+		}
+
+		private void undo()
+		{
+			for (int i = 0; i < triangles.size(); i++) {
+				Triangle t = triangles.get(i);
+				t.setParent(oldParents.get(i));
+				for (int j = 0; j < 3; j++)
+					t.vert[j] = oldVertices.get(3 * i + j);
+			}
 		}
 	}
 }

@@ -466,16 +466,16 @@ public final class SwingGUI extends StarRodFrame implements ActionListener, Logg
 
 		switch (choice) {
 			case JOptionPane.YES_OPTION:
-				editor.action_SaveShading();
+				return editor.action_SaveShading();
 			case JOptionPane.NO_OPTION:
-				break;
+				return true;
 			case JOptionPane.CANCEL_OPTION:
 			case JOptionPane.CLOSED_OPTION:
 				closeRequested = false;
 				return false;
 		}
 
-		return true;
+		return false;
 	}
 
 	/**

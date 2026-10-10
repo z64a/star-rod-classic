@@ -239,6 +239,9 @@ public abstract class Environment
 
 	public static void checkForUpdate()
 	{
+		if (isCommandLine())
+			return;
+
 		try {
 			URL url = new URI("https://api.github.com/repos/z64a/star-rod-classic/releases/latest").toURL();
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();

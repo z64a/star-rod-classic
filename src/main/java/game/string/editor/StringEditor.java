@@ -184,8 +184,8 @@ public class StringEditor extends BaseEditor
 
 	// IO
 	private ArrayList<FileEvent> pendingFileEvents = new ArrayList<>();
-	public ArrayList<StringResource> resourcesToSave = new ArrayList<>();
-	private boolean saving = false;
+	private final ArrayList<StringResource> resourcesToSave = new ArrayList<>();
+	private volatile boolean saving = false;
 
 	public static enum PollResult
 	{
@@ -483,7 +483,13 @@ public class StringEditor extends BaseEditor
 		handleSaving();
 	}
 
-	private boolean handleSaving()
+	synchronized void queueResourceForSave(StringResource res)
+	{
+		if (!resourcesToSave.contains(res))
+			resourcesToSave.add(res);
+	}
+
+	private synchronized boolean handleSaving()
 	{
 		if (!pendingFileEvents.isEmpty())
 			return false;
@@ -529,22 +535,22 @@ public class StringEditor extends BaseEditor
 		resourcePanel.updateEditorInfo();
 	}
 
-	private boolean saveWorkingString()
+	private synchronized boolean saveWorkingString()
 	{
 		synchronizeWorkingString();
-		if (workingString != null && workingString.isModified() && !resourcesToSave.contains(workingString.source))
-			resourcesToSave.add(workingString.source);
+		if (workingString != null && workingString.isModified())
+			queueResourceForSave(workingString.source);
 		return handleSaving();
 	}
 
-	boolean saveAllChanges()
+	synchronized boolean saveAllChanges()
 	{
 		synchronizeWorkingString();
 		resourcePanel.queueAllChanges();
 		return handleSaving();
 	}
 
-	boolean saveChangesTo(StringTreeNode node)
+	synchronized boolean saveChangesTo(StringTreeNode node)
 	{
 		synchronizeWorkingString();
 		resourcePanel.queueChangesTo(node);

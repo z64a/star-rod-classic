@@ -1,0 +1,65 @@
+/%
+default values:
+804DE800 = OverflowBase
+1800 = OverflowSize
+%/
+
+#new:Data $AudioOverflowHeap
+{
+	00000000 00000000 00000000 00000000
+}
+
+% Initialize the overflow arena immediately after the primary audio heap setup.
+% 00025F48 --> 8004AB48
+@Hook 25F48
+{
+	LA		A0, $AudioOverflowHeap
+	LI		A1, ##[VALUE:OverflowBase]
+	LI		A2, ##[VALUE:OverflowSize]
+	JAL		~Func:alHeapInit
+	NOP
+	LI		A0, 7D00
+	J		8004AB50
+	LI		V0, 18
+}
+
+% Try each allocation in the primary arena, then spill it into the overflow arena.
+% Unlike the retail allocator, this preserves the full 32-bit aligned size.
+#new:Function $SplitAudioHeapAlloc
+{
+	MULT	A1, A2
+	MFLO	V1
+	ADDIU	V1, V1, F
+	SRL		V1, V1, 4
+	SLL		V1, V1, 4
+	LA		T0, $AudioOverflowHeap
+
+	.TryHeap
+	LW		T1, 4 (A0)
+	LW		T2, 8 (A0)
+	LW		T3, 0 (A0)
+	ADDU	V0, T1, V1
+	ADDU	T3, T3, T2
+	SLTU	T3, T3, V0
+	BEQ		T3, R0, .Success
+	NOP
+	BEQ		A0, T0, .Failed
+	NOP
+	B		.TryHeap
+	COPY	A0, T0
+
+	.Success
+	SW		V0, 4 (A0)
+	JR		RA
+	COPY	V0, T1
+
+	.Failed
+	JR		RA
+	CLEAR	V0
+}
+
+@Function $alHeapAlloc
+{
+	J		$SplitAudioHeapAlloc
+	NOP
+}

@@ -15,8 +15,11 @@ import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.apache.commons.io.FilenameUtils;
 import org.w3c.dom.Element;
@@ -29,6 +32,7 @@ import game.sound.SoundBankCatalog;
 import game.sound.bgm.BgmPlayer;
 import game.sound.bgm.Song;
 import game.sound.bgm.SongKey;
+import game.sound.bgm.SongModder;
 import game.sound.engine.AudioEngine;
 import game.sound.engine.SoundBank;
 import net.miginfocom.swing.MigLayout;
@@ -37,6 +41,8 @@ import util.xml.XmlWrapper.XmlReader;
 
 final class BgmTab extends AudioBoothTab
 {
+	private static final Comparator<File> FILE_NAME_COMPARATOR = Comparator.comparing(File::getName, String.CASE_INSENSITIVE_ORDER);
+
 	private enum ProximityAmount
 	{
 		NONE ("None", 0),
@@ -61,6 +67,9 @@ final class BgmTab extends AudioBoothTab
 
 	private final BgmPlayer player;
 	private final JList<File> fileList;
+	private final DefaultListModel<File> fileModel;
+	private final Map<File, BgmSummary> summaries;
+	private final Map<String, String> names;
 	private final JComboBox<Integer> compositionBox;
 	private final JComboBox<Integer> proximityMixBox;
 	private final JComboBox<ProximityAmount> proximityAmountBox;
@@ -76,19 +85,19 @@ final class BgmTab extends AudioBoothTab
 		super(booth, "BGM", new BgmPlayer(engine, bank));
 		player = (BgmPlayer) getSession();
 
-		Map<String, String> names = loadNames();
+		names = loadNames();
 		Collection<File> files = findAssets();
-		Map<File, BgmSummary> summaries = new HashMap<>();
+		summaries = new HashMap<>();
 		for (File file : files)
 			summaries.put(file, readSummary(file));
 
 		List<File> sortedFiles = new ArrayList<>(files);
-		sortedFiles.sort(Comparator.comparing(File::getName, String.CASE_INSENSITIVE_ORDER));
+		sortedFiles.sort(FILE_NAME_COMPARATOR);
 
-		DefaultListModel<File> model = new DefaultListModel<>();
-		model.addAll(sortedFiles);
+		fileModel = new DefaultListModel<>();
+		fileModel.addAll(sortedFiles);
 
-		fileList = new JList<>(model);
+		fileList = new JList<>(fileModel);
 		configureList(fileList);
 		fileList.setCellRenderer(new DefaultListCellRenderer() {
 			@Override
@@ -110,7 +119,7 @@ final class BgmTab extends AudioBoothTab
 				selectBgm(selected);
 		});
 
-		JPanel listPanel = createListPanel(fileList, model, MOD_AUDIO_BGM.toFile(),
+		JPanel listPanel = createListPanel(fileList, fileModel, MOD_AUDIO_BGM.toFile(),
 			(file) -> formatName(file, summaries.get(file), names));
 
 		compositionBox = new JComboBox<>();
@@ -168,6 +177,67 @@ final class BgmTab extends AudioBoothTab
 		setLayout(new MigLayout("fill, ins 0", "[grow,fill]", "[grow][]"));
 		add(listPanel, "grow, push, wrap");
 		add(controls, "growx");
+	}
+
+	void chooseImport()
+	{
+		JFileChooser chooser = new JFileChooser(MOD_AUDIO_RAW.toFile());
+		chooser.setDialogTitle("Import BGM");
+		chooser.setFileFilter(new FileNameExtensionFilter("Paper Mario BGM (*.bgm)", "bgm"));
+		chooser.setAcceptAllFileFilterUsed(false);
+		if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION)
+			return;
+
+		File bgmFile = chooser.getSelectedFile();
+		File xmlFile = MOD_AUDIO_BGM.getFile(FilenameUtils.getBaseName(bgmFile.getName()) + ".xml");
+		if (xmlFile.isFile()) {
+			int choice = SwingUtils.getConfirmDialog()
+				.setParent(this)
+				.setTitle("Replace BGM Source")
+				.setMessage(xmlFile.getName() + " already exists. Replace it?")
+				.setOptionsType(JOptionPane.YES_NO_OPTION)
+				.choose();
+			if (choice != JOptionPane.YES_OPTION)
+				return;
+		}
+
+		try {
+			SongModder.importBgm(bgmFile, xmlFile);
+			addImportedFile(xmlFile);
+			Logger.logf("Imported %s as %s", bgmFile.getName(), xmlFile.getName());
+			if (selectedSong != null)
+				booth.setStatus("Imported " + xmlFile.getName());
+		}
+		catch (Exception e) {
+			Logger.logfError("Could not import BGM file %s", bgmFile.getName());
+			Logger.printStackTrace(e);
+			SwingUtils.getErrorDialog()
+				.setParent(this)
+				.setTitle("BGM Import Failed")
+				.setMessage("Could not import " + bgmFile.getName() + ".", e.getMessage(),
+					"If the song uses auxiliary banks, assign its bk1, bk2, and bk3 entries in Songs.xml before importing.")
+				.show();
+		}
+	}
+
+	private void addImportedFile(File file)
+	{
+		summaries.put(file, readSummary(file));
+		int existingIndex = fileModel.indexOf(file);
+		if (existingIndex >= 0) {
+			fileModel.set(existingIndex, file);
+		}
+		else {
+			int insertIndex = 0;
+			while (insertIndex < fileModel.size() && FILE_NAME_COMPARATOR.compare(fileModel.get(insertIndex), file) < 0)
+				insertIndex++;
+			fileModel.add(insertIndex, file);
+		}
+
+		suppressEvents = true;
+		fileList.setSelectedValue(file, true);
+		suppressEvents = false;
+		selectBgm(file);
 	}
 
 	private void selectBgm(File file)

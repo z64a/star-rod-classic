@@ -175,10 +175,14 @@ public class AudioBooth
 
 		JMenuBar menuBar = new JMenuBar();
 		JMenu fileMenu = new JMenu("File");
+		JMenuItem importBgmItem = new JMenuItem("Import BGM...");
+		importBgmItem.addActionListener((e) -> chooseBgmImport());
 		JMenuItem switchToolsItem = new JMenuItem("Switch Tools");
 		switchToolsItem.addActionListener((e) -> close(frame, true));
 		JMenuItem exitItem = new JMenuItem("Exit");
 		exitItem.addActionListener((e) -> close(frame, false));
+		fileMenu.add(importBgmItem);
+		fileMenu.addSeparator();
 		fileMenu.add(switchToolsItem);
 		fileMenu.add(exitItem);
 		menuBar.add(fileMenu);
@@ -235,6 +239,16 @@ public class AudioBooth
 			}
 		}, "Audio Booth");
 		audioThread.start();
+	}
+
+	private void chooseBgmImport()
+	{
+		for (AudioBoothTab tab : boothTabs) {
+			if (tab instanceof BgmTab bgmTab) {
+				bgmTab.chooseImport();
+				return;
+			}
+		}
 	}
 
 	private static SoundBank createSoundBank() throws IOException

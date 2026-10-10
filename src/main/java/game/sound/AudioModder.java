@@ -71,9 +71,20 @@ public class AudioModder
 
 	private static final int SBN_BASE = 0xF00000;
 	private static final int AUDIO_DATA_END = 0x1942C40;
-	// audio heap allocations which do not depend on SBN or INIT contents
-	private static final int AUDIO_HEAP_FIXED_ALLOC_SIZE = 0x3A9A0;
+	private static final int AUDIO_HEAP_PRIMARY_SIZE = 0x56000;
+	private static final int AUDIO_HEAP_FIXED_PREFIX_SIZE = 0x38B50;
+	private static final int AUDIO_HEAP_FIXED_AFTER_SEF_SIZE = 0x5D0;
+	private static final int AUDIO_HEAP_AUX_BANK_COUNT = 3;
+	private static final int BGM_MAIN_BUFFER_SIZE = 0x5000;
+	private static final int MSEQ_BUFFER_SIZE = 0x1040;
+	private static final int RADIO_MSEQ_BUFFER_SIZE = 0x3000;
+	private static final int RADIO_MSEQ_FILE_GAP = 0x40;
+	private static final int AUX_BANK_BUFFER_SIZE = 0x840;
+	private static final int PER_BUFFER_SIZE = 0x370;
+	private static final int PRG_BUFFER_SIZE = 0x210;
 	private static final String FN_SFX_BINARY = "DAT1.sef";
+	private static final String FN_DRUM_PRESETS = "SET1.per";
+	private static final String FN_INSTRUMENT_PRESETS = "SET1.prg";
 	private static final String FN_SFX_ARCHIVE = SfxXml.FN_SOUND_EFFECTS;
 	private static final String FN_LEGACY_FILE_LIST = "Files.xml";
 	private static final String RESOURCE_SBN_FILES = "/audio/DefaultFileOrder.txt";
@@ -87,6 +98,7 @@ public class AudioModder
 		private int vanillaOrder = -1;
 		private int fmt;
 		private int romOffset;
+		private int declaredSize;
 		private int size;
 		private int paddedSize;
 		private String type;
@@ -103,6 +115,35 @@ public class AudioModder
 		private int getTotal()
 		{
 			return fileList + songList + resourceList + banks + sef;
+		}
+	}
+
+	public static final class AudioHeapLayout
+	{
+		public final int requiredSize;
+		public final int primaryUsed;
+		public final int overflowSize;
+
+		private AudioHeapLayout(int requiredSize, int primaryUsed, int overflowSize)
+		{
+			this.requiredSize = requiredSize;
+			this.primaryUsed = primaryUsed;
+			this.overflowSize = overflowSize;
+		}
+	}
+
+	private static class AudioHeapSimulation
+	{
+		private int primaryUsed;
+		private int overflowUsed;
+
+		private void allocate(int size)
+		{
+			int alignedSize = align16(size);
+			if (primaryUsed + alignedSize <= AUDIO_HEAP_PRIMARY_SIZE)
+				primaryUsed += alignedSize;
+			else
+				overflowUsed += alignedSize;
 		}
 	}
 
@@ -546,8 +587,8 @@ public class AudioModder
 		}
 		fileList.sort(AudioModder::compareFileEntries);
 
-		if (fileList.size() > 0x10000)
-			throw new InputFileException(MOD_AUDIO.toFile(), "SBN contains more than 65536 files");
+		if (fileList.size() > 0xFFFF)
+			throw new InputFileException(MOD_AUDIO.toFile(), "SBN contains more than 65535 files");
 
 		for (int index = 0; index < fileList.size(); index++) {
 			FileEntry af = fileList.get(index);
@@ -704,9 +745,9 @@ public class AudioModder
 		if (fileBytes.length < 8)
 			throw new InputFileException(af.file, "Audio file is too short to contain a valid header");
 
-		int declaredSize = ByteBuffer.wrap(fileBytes).getInt(4);
-		if (declaredSize < 8 || declaredSize > fileBytes.length)
-			throw new InputFileException(af.file, String.format("Invalid declared audio file size: %X", declaredSize));
+		af.declaredSize = ByteBuffer.wrap(fileBytes).getInt(4);
+		if (af.declaredSize < 8 || af.declaredSize > fileBytes.length)
+			throw new InputFileException(af.file, String.format("Invalid declared audio file size: %X", af.declaredSize));
 
 		byte[] typeBytes = new byte[] { fileBytes[0], fileBytes[1], fileBytes[2], fileBytes[3] };
 		af.type = new String(typeBytes).trim();
@@ -765,19 +806,89 @@ public class AudioModder
 		return fileBytes;
 	}
 
-	public static int getMinimumAudioHeapSize() throws IOException
+	private static FileEntry getReferencedFile(List<FileEntry> fileList, int fileIndex, String expectedType, String usage)
+	{
+		if (fileIndex < 0 || fileIndex >= fileList.size())
+			throw new InputFileException(MOD_AUDIO.toFile(), usage + " has an invalid SBN file index: " + fileIndex);
+
+		FileEntry af = fileList.get(fileIndex);
+		if (!af.type.equals(expectedType))
+			throw new InputFileException(af.file, usage + " must reference a " + expectedType + " file");
+		return af;
+	}
+
+	private static void validateMaximumSize(FileEntry af, int size, int maximum, String usage)
+	{
+		if (size > maximum) {
+			throw new InputFileException(af.file,
+				String.format("%s requires %X bytes, but its fixed runtime buffer holds only %X", usage, size, maximum));
+		}
+	}
+
+	private static void validateFixedAudioBuffers(List<FileEntry> fileList, List<SongEntry> songList, int[] resourceFileIndices) throws IOException
+	{
+		for (FileEntry af : fileList) {
+			inspectAudioFile(af);
+			if (af.type.equals("BGM"))
+				validateMaximumSize(af, af.paddedSize, BGM_MAIN_BUFFER_SIZE, "BGM");
+		}
+
+		Set<Integer> auxiliaryBankIndices = new HashSet<>();
+		for (SongEntry song : songList) {
+			if (song.bk1FileIndex != 0)
+				auxiliaryBankIndices.add(song.bk1FileIndex);
+			if (song.bk2FileIndex != 0)
+				auxiliaryBankIndices.add(song.bk2FileIndex);
+			if (song.bk3FileIndex != 0)
+				auxiliaryBankIndices.add(song.bk3FileIndex);
+		}
+		auxiliaryBankIndices.add(resourceFileIndices[AudioCatalog.RADIO_BANK_RESOURCE_INDEX]);
+		for (int fileIndex : auxiliaryBankIndices) {
+			FileEntry af = getReferencedFile(fileList, fileIndex, "BK", "Auxiliary sound bank");
+			validateMaximumSize(af, af.size, AUX_BANK_BUFFER_SIZE, "Auxiliary sound bank");
+		}
+
+		Set<Integer> ambientMseqIndices = new HashSet<>();
+		for (int resourceIndex : AudioCatalog.AMBIENT_RESOURCE_INDICES)
+			ambientMseqIndices.add(resourceFileIndices[resourceIndex]);
+		for (int fileIndex : ambientMseqIndices) {
+			FileEntry af = getReferencedFile(fileList, fileIndex, "MSEQ", "Ambient sound");
+			validateMaximumSize(af, af.paddedSize, MSEQ_BUFFER_SIZE, "Ambient MSEQ");
+		}
+
+		int radioMseqSize = RADIO_MSEQ_FILE_GAP * (AudioCatalog.RADIO_PLAYER_COUNT - 1);
+		for (int i = 0; i < AudioCatalog.RADIO_PLAYER_COUNT; i++) {
+			int resourceIndex = AudioCatalog.FIRST_RADIO_MSEQ_RESOURCE_INDEX + i;
+			FileEntry af = getReferencedFile(fileList, resourceFileIndices[resourceIndex], "MSEQ", "Radio station");
+			radioMseqSize += af.paddedSize;
+		}
+		if (radioMseqSize > RADIO_MSEQ_BUFFER_SIZE) {
+			throw new InputFileException(MOD_AUDIO.getFile(FN_AUDIO_AMBIENTS),
+				String.format("Radio MSEQ files require %X bytes, but their shared runtime buffer holds only %X",
+					radioMseqSize, RADIO_MSEQ_BUFFER_SIZE));
+		}
+
+		FileEntry per = getReferencedFile(fileList, resourceFileIndices[1], "PER", FN_DRUM_PRESETS);
+		validateMaximumSize(per, per.declaredSize, PER_BUFFER_SIZE, FN_DRUM_PRESETS);
+
+		FileEntry prg = getReferencedFile(fileList, resourceFileIndices[2], "PRG", FN_INSTRUMENT_PRESETS);
+		validateMaximumSize(prg, prg.declaredSize, PRG_BUFFER_SIZE, FN_INSTRUMENT_PRESETS);
+	}
+
+	public static AudioHeapLayout getAudioHeapLayout() throws IOException
 	{
 		HashMap<String, Integer> sbnFileIndices = new HashMap<>(250);
 		List<FileEntry> fileList = buildFileList(sbnFileIndices);
 		List<SongEntry> songList = readSongListXML(MOD_AUDIO.getFile(FN_AUDIO_SONGS), sbnFileIndices);
 		List<BankEntry> bankList = readBankListXML(MOD_AUDIO.getFile(FN_AUDIO_BANKS), sbnFileIndices);
 		AudioHeapUsage modUsage = new AudioHeapUsage();
+		List<Integer> permanentBankSizes = new ArrayList<>(bankList.size());
+		File ambientSounds = MOD_AUDIO.getFile(FN_AUDIO_AMBIENTS);
+		int[] resourceFileIndices = AudioCatalog.buildInitResourceList(ambientSounds, sbnFileIndices);
+		validateFixedAudioBuffers(fileList, songList, resourceFileIndices);
 
 		modUsage.fileList = align16(fileList.size() * 8);
 		modUsage.songList = align16((songList.size() + 1) * 8);
-
-		File ambientSounds = MOD_AUDIO.getFile(FN_AUDIO_AMBIENTS);
-		int[] resourceFileIndices = AudioCatalog.buildInitResourceList(ambientSounds, sbnFileIndices);
 		modUsage.resourceList = align16((resourceFileIndices.length + 1) * 2);
 
 		for (BankEntry bank : bankList) {
@@ -786,6 +897,7 @@ public class AudioModder
 			if (!af.type.equals("BK"))
 				throw new InputFileException(af.file, "Bank list entry is not a sound bank");
 			modUsage.banks += af.size;
+			permanentBankSizes.add(af.size);
 		}
 
 		for (FileEntry af : fileList) {
@@ -804,10 +916,30 @@ public class AudioModder
 		if (modUsage.sef == 0)
 			throw new InputFileException(MOD_AUDIO.toFile(), "Missing mandatory audio file: " + FN_SFX_BINARY);
 
-		int requiredSize = AUDIO_HEAP_FIXED_ALLOC_SIZE + modUsage.getTotal();
-		int minimumSize = (requiredSize + 0x7FF) & -0x800;
-		Logger.logf("Audio heap requires %X bytes; minimum heap size is %X.", requiredSize, minimumSize);
-		return minimumSize;
+		AudioHeapSimulation heap = new AudioHeapSimulation();
+		heap.allocate(AUDIO_HEAP_FIXED_PREFIX_SIZE);
+		heap.allocate(modUsage.sef);
+		heap.allocate(AUDIO_HEAP_FIXED_AFTER_SEF_SIZE);
+		heap.allocate(modUsage.fileList);
+		heap.allocate(modUsage.songList);
+		heap.allocate(modUsage.resourceList);
+		for (int i = 0; i < AUDIO_HEAP_AUX_BANK_COUNT; i++)
+			heap.allocate(AUX_BANK_BUFFER_SIZE);
+		for (int bankSize : permanentBankSizes)
+			heap.allocate(bankSize);
+
+		int requiredSize = AUDIO_HEAP_FIXED_PREFIX_SIZE + AUDIO_HEAP_FIXED_AFTER_SEF_SIZE
+			+ AUDIO_HEAP_AUX_BANK_COUNT * AUX_BANK_BUFFER_SIZE + modUsage.getTotal();
+		if (heap.primaryUsed + heap.overflowUsed != requiredSize)
+			throw new IllegalStateException("Audio heap allocation simulation does not match the calculated total");
+
+		Logger.logf("Audio allocations require %X bytes; primary heap uses %X of %X.",
+			requiredSize, heap.primaryUsed, AUDIO_HEAP_PRIMARY_SIZE);
+		if (heap.overflowUsed > 0) {
+			Logger.logf("Audio overflow requires %X bytes; %X bytes remain unused in the primary heap.",
+				heap.overflowUsed, AUDIO_HEAP_PRIMARY_SIZE - heap.primaryUsed);
+		}
+		return new AudioHeapLayout(requiredSize, heap.primaryUsed, heap.overflowUsed);
 	}
 
 	private static void writeAudioFiles(RomPatcher rp, List<FileEntry> fileList) throws IOException

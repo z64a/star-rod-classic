@@ -32,9 +32,9 @@ public final class AudioCatalog
 {
 	private static final int LAST_AMBIENT_ID = 0xF;
 	private static final int RADIO_ID = 0x10;
-	private static final int RADIO_PLAYER_COUNT = 4;
-	private static final int FIRST_RADIO_MSEQ_RESOURCE_INDEX = 0x13;
-	private static final int RADIO_BANK_RESOURCE_INDEX = 0x17;
+	static final int RADIO_PLAYER_COUNT = 4;
+	static final int FIRST_RADIO_MSEQ_RESOURCE_INDEX = 0x13;
+	static final int RADIO_BANK_RESOURCE_INDEX = 0x17;
 	private static final int INIT_RESOURCE_COUNT = 0x18;
 	private static final Pattern IDENTIFIER = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
 	private static final Set<Integer> VANILLA_UNUSED_SONG_IDS = Set.of(
@@ -44,7 +44,7 @@ public final class AudioCatalog
 	private static final Set<Integer> VANILLA_UNUSED_AMBIENT_IDS = Set.of(
 		0x06, 0x0D, 0x0E, 0x0F);
 
-	private static final int[] AMBIENT_RESOURCE_INDICES = {
+	static final int[] AMBIENT_RESOURCE_INDICES = {
 			0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
 			0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10,
 			0x11, 0x12

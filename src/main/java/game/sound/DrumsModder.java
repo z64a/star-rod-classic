@@ -19,6 +19,7 @@ import org.w3c.dom.Element;
 
 import app.Environment;
 import app.input.IOUtils;
+import app.input.InputFileException;
 import util.DynamicByteBuffer;
 import util.Logger;
 import util.xml.XmlWrapper.XmlReader;
@@ -57,6 +58,8 @@ public class DrumsModder
 		}
 
 		ArrayList<DrumPreset> drums = load(MOD_AUDIO.getFile(FN_AUDIO_DRUMS));
+		if (drums.size() > 72)
+			throw new InputFileException(MOD_AUDIO.getFile(FN_AUDIO_DRUMS), "Drum preset list contains more than 72 entries");
 		SoundBankCatalog catalog = SoundBankCatalog.loadMod();
 		for (DrumPreset drum : drums)
 			drum.resolveWav(catalog);

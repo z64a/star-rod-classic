@@ -110,7 +110,7 @@ After changing the WAV or `SoundBank.xml`, choose **Selected → Reload**. Fix c
 
 ## Build the Sound Bank
 
-Enable **Build Sound Banks** and compile the mod. Star Rod rebuilds the BK file, drum definitions, and global instrument presets, then injects the resulting audio files. It also raises the configured audio heap when the rebuilt permanent-bank data requires more room.
+Enable **Build Sound Banks** and compile the mod. Star Rod rebuilds the BK file, drum definitions, and global instrument presets, then injects the resulting audio files. It keeps the retail audio heap in place and reserves only the overflow arena needed by resident allocations which do not fit there.
 
 If you also changed editable BGM, MSEQ, or SFX sources, enable **Inject Audio Files** for that build as well. **Build Sound Banks** rebuilds the instruments, but it does not compile a changed `SoundEffects.xml` by itself.
 

@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.1] - 2026-10-09
+
+### Added
+- (Audio Booth) Binary BGM files can now be imported as editable project XML
+
+### Fixed
+- Update notifications no longer appear when running from the command line
+- Fixed audio memory overlap with battle loading that could corrupt music and sound effects
+- Audio builds now reject files that exceed fixed runtime buffer limits
+- (String Editor) Fixed a crash when saving messages while the save queue is being updated
+- (World Map Editor) Unsaved changes now prompt for saving when closing the editor
+- (World Map Editor) Fixed saving parent links when changing location names
+- (Map Editor) Undo and redo now correctly track unsaved changes
+- (Map Editor) Failing to save a map under a new name no longer changes its name or save location
+- (Map Editor) Failing to save sprite shading data no longer closes the editor
+- (Map Editor) Fixed HSL slider values changing during color conversion and undo/redo
+- (Map Editor) Painting near the end of the hue slider no longer cycles through colors
+- (Map Editor) Fuse and Separate Vertices now work in vertex selection mode
+- (Map Editor) Vertex and UV selections now update properly when fusing or separating vertices
+- (Map Editor) Copying models, triangle batches, and selected triangles now preserves shared vertices
+- (Map Editor) Fixed vertex editing and positioning of primitives added to existing models
+- (Map Editor) Moving triangles between models now accounts for model transforms without affecting vertices still used by the original model
+- (Map Editor) Undoing triangle moves now restores the original triangle order
+- (Map Editor) Undoing display-list cleanup now restores triangles to their original batches
+- (Map Editor) Display-list cleanup now keeps the correct draw commands selected
+
+### Changed
+- Audio heap expansion now reserves only the additional space needed, leaving more room for global patches
+- (Map Editor) Joining models now reuses the final triangle batch where possible
+- (Map Editor) Fuse Vertices tooltips and messages now explain the UV, color, and triangle batch requirements
+
 ## [0.6.0] - 2026-08-20
 
 ### Added

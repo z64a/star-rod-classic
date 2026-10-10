@@ -122,7 +122,8 @@ public class Patcher implements IGlobalDatabase
 		Config cfg = Environment.project.config;
 		boolean buildAudio = cfg.getBoolean(Options.BuildAudio);
 		boolean buildSoundBanks = cfg.getBoolean(Options.BuildSoundBanks);
-		int minimumAudioHeapSize = 0;
+		int requiredAudioHeapSize = 0;
+		int minimumAudioOverflowSize = 0;
 
 		if (buildAudio || buildSoundBanks)
 			AudioModder.prepareBuildDirectory();
@@ -139,8 +140,11 @@ public class Patcher implements IGlobalDatabase
 			recordTime("Audio Files Built");
 		}
 
-		if (buildAudio || buildSoundBanks)
-			minimumAudioHeapSize = AudioModder.getMinimumAudioHeapSize();
+		if (buildAudio || buildSoundBanks) {
+			AudioModder.AudioHeapLayout audioHeapLayout = AudioModder.getAudioHeapLayout();
+			requiredAudioHeapSize = audioHeapLayout.requiredSize;
+			minimumAudioOverflowSize = audioHeapLayout.overflowSize;
+		}
 
 		if (cfg.getBoolean(Options.ClearMapCache) && MapIndex.getFile().exists())
 			FileUtils.forceDelete(MapIndex.getFile());
@@ -242,7 +246,7 @@ public class Patcher implements IGlobalDatabase
 		Logger.log("Reading direct ROM patches...", Priority.MILESTONE);
 		GlobalPatchManager gpm = new GlobalPatchManager(this);
 
-		FunctionPatcher.modifyHeaps(this, cfg, gpm, rp, minimumAudioHeapSize);
+		FunctionPatcher.modifyHeaps(this, cfg, gpm, rp, requiredAudioHeapSize, minimumAudioOverflowSize);
 		gpm.readInternalPatch("ExtendedSoundBanks.patch");
 		gpm.readInternalPatch("ExtendedGlobals.patch",
 			cfg.getBoolean(Options.EnableDebugCode) && cfg.getBoolean(Options.EnableVarLogging) ? "LogVars" : "");
