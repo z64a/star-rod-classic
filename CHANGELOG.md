@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - (Audio Booth) Binary BGM files can now be imported as editable project XML
 
 ### Fixed
+- Update notifications no longer appear when running from the command line
 - Fixed audio memory overlap with battle loading that could corrupt music and sound effects
 - Audio builds now reject files that exceed fixed runtime buffer limits
 - (String Editor) Fixed a crash when saving messages while the save queue is being updated
