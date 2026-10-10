@@ -113,7 +113,9 @@ public class VADPCM
 				for (int i = 0; i < 8; i++) {
 					int idx = j * 8 + i;
 					inVec[ORDER + i] = rawSamples[idx];
-					state[idx] = rawSamples[idx] + innerProduct(ORDER + i, book.predictors[bestPred][i], inVec);
+					// the RSP saturates reconstructed samples to 16 bits
+					state[idx] = clip(rawSamples[idx] + innerProduct(ORDER + i, book.predictors[bestPred][i], inVec),
+						Short.MIN_VALUE, Short.MAX_VALUE);
 				}
 			}
 
@@ -179,12 +181,7 @@ public class VADPCM
 				// The decoder restarts an unaligned loop from the reconstructed frame containing its first sample.
 				if (loopStart > 0 && loopStart >= frameStart && loopStart < frameStart + 16) {
 					for (int i = 0; i < 16; i++) {
-						if (state[i] > Short.MAX_VALUE)
-							loopState[i] = Short.MAX_VALUE;
-						else if (state[i] < Short.MIN_VALUE)
-							loopState[i] = Short.MIN_VALUE;
-						else
-							loopState[i] = (short) state[i];
+						loopState[i] = (short) state[i];
 					}
 				}
 			}
@@ -294,7 +291,8 @@ public class VADPCM
 				maxClip = Math.max(maxClip, Math.abs(cV));
 				ix[i] += cV;
 				inVec[i + ORDER] = ix[i] * (1 << scale);
-				state[i] = prediction[i] + inVec[i + ORDER];
+				// saturate as the decoder does, so the predictor history matches playback
+				state[i] = clip(prediction[i] + inVec[i + ORDER], Short.MIN_VALUE, Short.MAX_VALUE);
 			}
 
 			for (int i = 0; i < ORDER; i++) {
@@ -309,7 +307,7 @@ public class VADPCM
 				maxClip = Math.max(maxClip, Math.abs(cV));
 				ix[8 + i] += cV;
 				inVec[i + ORDER] = ix[8 + i] * (1 << scale);
-				state[8 + i] = prediction[8 + i] + inVec[i + ORDER];
+				state[8 + i] = clip(prediction[8 + i] + inVec[i + ORDER], Short.MIN_VALUE, Short.MAX_VALUE);
 			}
 
 		}
