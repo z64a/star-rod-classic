@@ -2,6 +2,7 @@ package game.map.mesh;
 
 import static game.map.MapKey.*;
 
+import java.util.IdentityHashMap;
 import java.util.Objects;
 
 import org.w3c.dom.Element;
@@ -102,7 +103,15 @@ public class Triangle implements XmlSerializable, Selectable
 	 */
 	public Triangle deepCopy()
 	{
-		Triangle copy = new Triangle(vert[0].deepCopy(), vert[1].deepCopy(), vert[2].deepCopy());
+		return deepCopy(new IdentityHashMap<>());
+	}
+
+	public Triangle deepCopy(IdentityHashMap<Vertex, Vertex> vertexMap)
+	{
+		Triangle copy = new Triangle(
+			vertexMap.computeIfAbsent(vert[0], Vertex::deepCopy),
+			vertexMap.computeIfAbsent(vert[1], Vertex::deepCopy),
+			vertexMap.computeIfAbsent(vert[2], Vertex::deepCopy));
 		copy.doubleSided = doubleSided;
 		return copy;
 	}

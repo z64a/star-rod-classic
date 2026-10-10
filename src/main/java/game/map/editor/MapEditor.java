@@ -1595,18 +1595,17 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 				break;
 
 			case SEPARATE_VERTS:
-				if (editorMode == EditorMode.Modify) {
-					List<Triangle> triangles = selectionManager.getTrianglesFromSelection();
-					if (triangles.size() > 0)
-						commandManager.executeCommand(new SeparateVertices(triangles));
-				}
+				if (editorMode == EditorMode.Modify && !selectionManager.currentSelection.transforming())
+					commandManager.executeCommand(new SeparateVertices(selectionManager));
 				break;
 
 			case FUSE_VERTS:
-				if (editorMode == EditorMode.Modify) {
-					List<Triangle> triangles = selectionManager.getTrianglesFromSelection();
-					if (triangles.size() > 0)
-						commandManager.executeCommand(new FuseVertices(triangles));
+				if (editorMode == EditorMode.Modify && !selectionManager.currentSelection.transforming()) {
+					FuseVertices command = new FuseVertices(selectionManager);
+					if (command.shouldExec())
+						commandManager.executeCommand(command);
+					else
+						Logger.log("No vertices fused. Select coincident vertices with matching UVs and colors in the same triangle batch.");
 				}
 				break;
 
@@ -3884,7 +3883,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 			return false;
 		}
 
-		map.modified = false;
+		commandManager.markSaved();
 		lastBackupTime = time;
 		return true;
 	}
@@ -3906,7 +3905,7 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 			return false;
 		}
 
-		map.modified = false;
+		commandManager.markSaved();
 		lastBackupTime = time;
 
 		updateWindowTitle();
@@ -4088,15 +4087,17 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 		gui.setTitle(Environment.decorateTitle("Map Editor") + " - " + map.source.getName());
 	}
 
-	public void action_SaveShading()
+	public boolean action_SaveShading()
 	{
 		try {
 			SpriteShadingEditor.saveShadingProfiles(ProjectDatabase.SpriteShading);
 			ProjectDatabase.SpriteShading.modified = false;
 			Logger.log("Saved shading profiles.");
+			return true;
 		}
 		catch (Exception e) {
 			displayStackTrace(e);
+			return false;
 		}
 	}
 

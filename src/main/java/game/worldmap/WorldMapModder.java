@@ -351,9 +351,10 @@ public class WorldMapModder
 
 	public static void saveLocations(List<WorldLocation> locations) throws IOException
 	{
-		for (WorldLocation loc : locations) {
+		for (WorldLocation loc : locations)
 			loc.id = ProjectDatabase.LocationType.getID(loc.locationName);
 
+		for (WorldLocation loc : locations) {
 			if (loc.parent == null)
 				loc.parentID = 0;
 			else

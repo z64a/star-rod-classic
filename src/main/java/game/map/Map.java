@@ -776,7 +776,6 @@ public class Map implements XmlSerializable
 	public void saveMapAs(File file, String author, MapEditorMetadata editorData) throws Exception
 	{
 		this.editorData = editorData;
-		this.saveFile = file;
 		saveMapAs(file, author, true);
 	}
 
@@ -803,20 +802,28 @@ public class Map implements XmlSerializable
 
 	private void saveMapAs(File file, String author, boolean overrideName) throws Exception
 	{
-		if (modified)
-			this.author = author;
-
 		long t0 = System.nanoTime();
+		String oldName = name;
+		String oldAuthor = this.author;
 
-		if (overrideName)
-			name = FilenameUtils.getBaseName(file.getName());
+		try {
+			if (modified)
+				this.author = author;
+			if (overrideName)
+				name = FilenameUtils.getBaseName(file.getName());
 
-		markerTree.recalculateIndicies();
+			markerTree.recalculateIndicies();
 
-		try (XmlWriter xmw = new XmlWriter(file)) {
-			toXML(xmw);
-			xmw.save();
-		} // flushed on auto-close
+			try (XmlWriter xmw = new XmlWriter(file)) {
+				toXML(xmw);
+				xmw.save();
+			} // flushed on auto-close
+		}
+		catch (Exception e) {
+			name = oldName;
+			this.author = oldAuthor;
+			throw e;
+		}
 
 		source = file;
 		saveFile = file;
