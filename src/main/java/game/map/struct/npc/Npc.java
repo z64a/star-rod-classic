@@ -157,7 +157,7 @@ public class Npc extends BaseStruct
 				if (noItems)
 					pw.printf("%cNoItems ", SyntaxConstants.EXPRESSION_PREFIX);
 				else {
-					pw.printf("%cItems:%d", SyntaxConstants.EXPRESSION_PREFIX, dropChance);
+					pw.printf("%cItems:%d`", SyntaxConstants.EXPRESSION_PREFIX, dropChance);
 					int itemCount = 0;
 					for (int j = 0; j < 8; j++) {
 						if (itemDrops[j][0] == 0)

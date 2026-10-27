@@ -55,8 +55,6 @@ public class HemisphereGenerator extends ShapeGenerator
 		for (int j = 0; j <= longfaces; j++) {
 			rings[0][j] = new Vertex(centerX, centerY + radius, centerZ);
 			rings[0][j].uv = new UV(Math.round(UV_SCALE * j / longfaces), 0);
-			rings[latfaces][j] = new Vertex(centerX, centerY, centerZ);
-			rings[latfaces][j].uv = new UV(Math.round(UV_SCALE * j / longfaces), UV_SCALE);
 		}
 
 		for (int i = 1; i <= latfaces; i++)
@@ -78,9 +76,13 @@ public class HemisphereGenerator extends ShapeGenerator
 
 		for (int i = 0; i < latfaces; i++)
 			for (int j = 0; j < longfaces; j++) {
-				batch.triangles.add(new Triangle(rings[i][j], rings[i][j + 1], rings[i + 1][j]));
+				if (i > 0)
+					batch.triangles.add(new Triangle(rings[i][j], rings[i][j + 1], rings[i + 1][j]));
 				batch.triangles.add(new Triangle(rings[i][j + 1], rings[i + 1][j + 1], rings[i + 1][j]));
 			}
+
+		// Integer rounding can collapse faces at small radii.
+		batch.triangles.removeIf(t -> t.getArea() == 0.0f);
 
 		return batch;
 	}

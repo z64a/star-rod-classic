@@ -78,9 +78,14 @@ public class SphereGenerator extends ShapeGenerator
 
 		for (int i = 0; i < latfaces; i++)
 			for (int j = 0; j < longfaces; j++) {
-				batch.triangles.add(new Triangle(rings[i][j], rings[i][j + 1], rings[i + 1][j]));
-				batch.triangles.add(new Triangle(rings[i][j + 1], rings[i + 1][j + 1], rings[i + 1][j]));
+				if (i > 0)
+					batch.triangles.add(new Triangle(rings[i][j], rings[i][j + 1], rings[i + 1][j]));
+				if (i < latfaces - 1)
+					batch.triangles.add(new Triangle(rings[i][j + 1], rings[i + 1][j + 1], rings[i + 1][j]));
 			}
+
+		// Integer rounding can collapse faces at small radii.
+		batch.triangles.removeIf(t -> t.getArea() == 0.0f);
 
 		return batch;
 	}
