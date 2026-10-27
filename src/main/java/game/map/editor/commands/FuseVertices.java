@@ -8,6 +8,8 @@ import game.map.editor.selection.SelectionManager;
 import game.map.mesh.Triangle;
 import game.map.mesh.Vertex;
 import game.map.shape.TriangleBatch;
+import game.map.shape.UV;
+import util.identity.IdentityHashSet;
 
 public class FuseVertices extends ModifyVertices
 {
@@ -25,18 +27,18 @@ public class FuseVertices extends ModifyVertices
 		private final int a;
 		private final boolean useLocal;
 
-		private FusionKey(TriangleBatch batch, Vertex vertex)
+		private FusionKey(TriangleBatch batch, Vertex vertex, boolean force)
 		{
 			this.batch = batch;
 			x = vertex.getCurrentX();
 			y = vertex.getCurrentY();
 			z = vertex.getCurrentZ();
-			u = vertex.uv.getU();
-			v = vertex.uv.getV();
-			r = vertex.r;
-			g = vertex.g;
-			b = vertex.b;
-			a = vertex.a;
+			u = force ? 0 : vertex.uv.getU();
+			v = force ? 0 : vertex.uv.getV();
+			r = force ? 0 : vertex.r;
+			g = force ? 0 : vertex.g;
+			b = force ? 0 : vertex.b;
+			a = force ? 0 : vertex.a;
 			useLocal = vertex.useLocal;
 		}
 
@@ -78,12 +80,68 @@ public class FuseVertices extends ModifyVertices
 		}
 	}
 
+	private static final class FusionGroup
+	{
+		private final TriangleBatch batch;
+		private final IdentityHashSet<Vertex> members = new IdentityHashSet<>();
+		private Vertex vertex;
+
+		private FusionGroup(TriangleBatch batch, Vertex vertex)
+		{
+			this.batch = batch;
+			this.vertex = vertex;
+		}
+
+		private void fuse(boolean force)
+		{
+			if (!force || members.size() < 2)
+				return;
+
+			long u = 0, v = 0;
+			long r = 0, g = 0, b = 0, a = 0;
+			for (Vertex member : members) {
+				u += member.uv.getU();
+				v += member.uv.getV();
+				r += member.r;
+				g += member.g;
+				b += member.b;
+				a += member.a;
+			}
+
+			// Keep original attributes intact for undo and triangles outside the selection.
+			vertex = vertex.deepCopy();
+			vertex.parentMesh = batch.parentMesh;
+			double count = members.size();
+			vertex.uv = new UV((int) Math.round(u / count), (int) Math.round(v / count));
+			vertex.r = (int) Math.round(r / count);
+			vertex.g = (int) Math.round(g / count);
+			vertex.b = (int) Math.round(b / count);
+			vertex.a = (int) Math.round(a / count);
+		}
+	}
+
 	public FuseVertices(SelectionManager selectionManager)
 	{
-		super("Fuse Vertices", selectionManager);
+		this(selectionManager, false);
+	}
+
+	public FuseVertices(SelectionManager selectionManager, boolean force)
+	{
+		super(force ? "Force Fuse Vertices" : "Fuse Vertices", selectionManager);
 		List<Vertex> newVertices = new ArrayList<>(triangles.size() * 3);
 
-		HashMap<FusionKey, Vertex> vertexMap = new HashMap<>();
+		HashMap<FusionKey, FusionGroup> vertexMap = new HashMap<>();
+		for (Triangle t : triangles) {
+			for (Vertex v : t.vert) {
+				if (isVertexSelected(v)) {
+					FusionKey key = new FusionKey(t.parentBatch, v, force);
+					FusionGroup group = vertexMap.computeIfAbsent(key, k -> new FusionGroup(t.parentBatch, v));
+					group.members.add(v);
+				}
+			}
+		}
+		for (FusionGroup group : vertexMap.values())
+			group.fuse(force);
 
 		for (Triangle t : triangles) {
 			for (Vertex v : t.vert) {
@@ -92,11 +150,8 @@ public class FuseVertices extends ModifyVertices
 					continue;
 				}
 
-				FusionKey key = new FusionKey(t.parentBatch, v);
-				Vertex fused = vertexMap.putIfAbsent(key, v);
-				if (fused == null)
-					fused = v;
-				newVertices.add(fused);
+				FusionKey key = new FusionKey(t.parentBatch, v, force);
+				newVertices.add(vertexMap.get(key).vertex);
 			}
 		}
 

@@ -1600,10 +1600,14 @@ public class MapEditor extends GLEditor implements MouseManagerListener
 				break;
 
 			case FUSE_VERTS:
+			case FORCE_FUSE_VERTS:
 				if (editorMode == EditorMode.Modify && !selectionManager.currentSelection.transforming()) {
-					FuseVertices command = new FuseVertices(selectionManager);
+					boolean force = cmd == GuiCommand.FORCE_FUSE_VERTS;
+					FuseVertices command = new FuseVertices(selectionManager, force);
 					if (command.shouldExec())
 						commandManager.executeCommand(command);
+					else if (force)
+						Logger.log("No vertices fused. Select coincident vertices in the same triangle batch.");
 					else
 						Logger.log("No vertices fused. Select coincident vertices with matching UVs and colors in the same triangle batch.");
 				}

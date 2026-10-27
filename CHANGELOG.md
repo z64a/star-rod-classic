@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.2] - 2026-10-27
+
+### Added
+- (Map Editor) Added Force Fuse Vertices to merge dissimilar vertices with shared positions by averaging their UVs and colors
+
+### Fixed
+- (Map Editor) Generated spheres and hemispheres no longer contain triangles of zero area
+- Dumped NPC item drop chances now include the decimal marker so rebuilding preserves their values
+
 ## [0.6.1] - 2026-10-09
 
 ### Added

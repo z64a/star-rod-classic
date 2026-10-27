@@ -186,6 +186,11 @@ public class MapObjectPanel extends JTabbedPane implements TreeSelectionListener
 		gui.addButtonCommand(fuseVerticesButton, GuiCommand.FUSE_VERTS);
 		modifyMenu.add(fuseVerticesButton);
 
+		JMenuItem forceFuseVerticesButton = new JMenuItem("Force Fuse Vertices");
+		forceFuseVerticesButton.setToolTipText("Fuse coincident vertices within each triangle batch, averaging their UVs and colors.");
+		gui.addButtonCommand(forceFuseVerticesButton, GuiCommand.FORCE_FUSE_VERTS);
+		modifyMenu.add(forceFuseVerticesButton);
+
 		JMenuItem cleanDegeneratesButton = new JMenuItem("Cleanup Degenerates");
 		cleanDegeneratesButton.setToolTipText("Remove triangles of zero area.");
 		gui.addButtonCommand(cleanDegeneratesButton, GuiCommand.CLEANUP_TRIS);
@@ -286,6 +291,11 @@ public class MapObjectPanel extends JTabbedPane implements TreeSelectionListener
 		fuseVerticesButton.setToolTipText("Fuse coincident vertices with matching UVs and colors within each triangle batch.");
 		gui.addButtonCommand(fuseVerticesButton, GuiCommand.FUSE_VERTS);
 		modifyMenu.add(fuseVerticesButton);
+
+		JMenuItem forceFuseVerticesButton = new JMenuItem("Force Fuse Vertices");
+		forceFuseVerticesButton.setToolTipText("Fuse coincident vertices within each triangle batch, averaging their UVs and colors.");
+		gui.addButtonCommand(forceFuseVerticesButton, GuiCommand.FORCE_FUSE_VERTS);
+		modifyMenu.add(forceFuseVerticesButton);
 
 		JMenuItem cleanDegeneratesButton = new JMenuItem("Cleanup Degenerates");
 		cleanDegeneratesButton.setToolTipText("Remove triangles of zero area.");
@@ -389,6 +399,11 @@ public class MapObjectPanel extends JTabbedPane implements TreeSelectionListener
 		fuseVerticesButton.setToolTipText("Fuse coincident vertices with matching UVs and colors within each triangle batch.");
 		gui.addButtonCommand(fuseVerticesButton, GuiCommand.FUSE_VERTS);
 		modifyMenu.add(fuseVerticesButton);
+
+		JMenuItem forceFuseVerticesButton = new JMenuItem("Force Fuse Vertices");
+		forceFuseVerticesButton.setToolTipText("Fuse coincident vertices within each triangle batch, averaging their UVs and colors.");
+		gui.addButtonCommand(forceFuseVerticesButton, GuiCommand.FORCE_FUSE_VERTS);
+		modifyMenu.add(forceFuseVerticesButton);
 
 		JMenuItem cleanDegeneratesButton = new JMenuItem("Cleanup Degenerates");
 		cleanDegeneratesButton.setToolTipText("Remove triangles of zero area.");
