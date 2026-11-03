@@ -527,8 +527,6 @@ public class SpriteEditor extends BaseEditor
 		spriteID = id;
 		sprite.prepareForEditor();
 		sprite.enableStencilBuffer = true;
-		CommandAnimatorEditor.setModels(sprite);
-		KeyframeAnimatorEditor.setModels(sprite);
 
 		sprite.makeAtlas();
 		sprite.centerAtlas(sheetCamera, glCanvasWidth(), glCanvasHeight());
@@ -538,6 +536,9 @@ public class SpriteEditor extends BaseEditor
 		});
 
 		SwingUtilities.invokeLater(() -> {
+			CommandAnimatorEditor.setModels(sprite);
+			KeyframeAnimatorEditor.setModels(sprite);
+
 			//spriteList.setSelectedId(id);
 			rasterInfoPanel.setSpriteEDT(sprite);
 			paletteListPanel.setSpriteEDT(sprite);
