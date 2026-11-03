@@ -535,6 +535,8 @@ public class SpriteEditor extends BaseEditor
 			sprite.loadTextures();
 		});
 
+		referenceMaxPos = 0;
+
 		SwingUtilities.invokeLater(() -> {
 			CommandAnimatorEditor.setModels(sprite);
 			KeyframeAnimatorEditor.setModels(sprite);
@@ -543,13 +545,9 @@ public class SpriteEditor extends BaseEditor
 			rasterInfoPanel.setSpriteEDT(sprite);
 			paletteListPanel.setSpriteEDT(sprite);
 			paletteGroupsSpinner.setValue(sprite.numVariations);
-		});
 
-		referenceMaxPos = 0;
+			refreshAnimList();
 
-		refreshAnimList();
-
-		SwingUtilities.invokeLater(() -> {
 			if (!sprite.palettes.isEmpty()) {
 				paletteComboBox.setModel(new ListAdapterComboboxModel<>(sprite.palettes));
 				paletteComboBox.setSelectedIndex(0);
